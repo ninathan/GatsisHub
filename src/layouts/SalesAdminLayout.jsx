@@ -1,8 +1,13 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
+import Sidebar from '../components/SaleAdmin/sidebar'
 
 const SalesAdminLayout = () => {
   return (
-    <div>SalesAdminLayout</div>
+    <div className='flex min-h-screen'>
+      <Sidebar />
+      <Outlet />
+    </div>
   )
 }
 

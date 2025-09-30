@@ -31,7 +31,7 @@ const ReviewCard = ({ avatar, name, date, message, big = false }) => {
             <p className="text-base text-gray-700 line-clamp-5">
                 {message}
             </p>
-            <a href="#" className="text-sm text-blue-600 mt-4 hover:underline self-end">
+            <a href="" className="text-sm text-blue-600 mt-4 hover:underline self-end">
                 Read More
             </a>
         </div>
