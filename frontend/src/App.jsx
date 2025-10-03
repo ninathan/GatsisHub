@@ -29,8 +29,9 @@ import OrderDetail from './pages/SalesAdminPages/OrderDetail'
 import OperationalManLayout from './layouts/OperationalManLayout'
 import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM'
 import Employees from './pages/OperationalManagerPages/Employees'
-import employeeDetail from './pages/OperationalManagerPages/employeeDetail'
+//import employeeDetail from './pages/OperationalManagerPages/employeeDetail'
 import MessageSA from './pages/SalesAdminPages/messageSA'
+
 
 const router = createBrowserRouter(
   createRoutesFromElements(
