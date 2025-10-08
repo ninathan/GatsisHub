@@ -11,15 +11,14 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://gatsis-hub-client.vercel.app",
-      "https://gatsis-hub.vercel.app",
-      "http://localhost:5000"
+      "https://gatsis-hub.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   })
-)
+);
 
-// Test route
+// ✅ Test route
 app.get("/test-users", async (req, res) => {
   const { data, error } = await supabase.from("customers").select("*");
 
@@ -27,7 +26,5 @@ app.get("/test-users", async (req, res) => {
   res.json(data);
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`✅ Backend running at http://localhost:${PORT}`)
-);
+// ✅ Export Express app (don’t use app.listen on Vercel)
+export default app;
