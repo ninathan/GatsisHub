@@ -57,7 +57,7 @@ const Signup = () => {
     try {
       setLoading(true)
       // 👇 Change this URL to your deployed backend
-      const res = await fetch('https://gatsis-hub.vercel.app/api/auth/signup', {
+      const res = await fetch('https://gatsis-hub.vercel.app/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

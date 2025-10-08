@@ -4,8 +4,9 @@ import supabase from "./supabaseClient.js";
 import cors from "cors";
 
 const app = express();
-app.use(express.json());
 
+// Middleware
+app.use(express.json());
 app.use(
   cors({
     origin: [
@@ -21,10 +22,37 @@ app.use(
 // ✅ Test route
 app.get("/test-users", async (req, res) => {
   const { data, error } = await supabase.from("customers").select("*");
-
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// ✅ Export Express app (don’t use app.listen on Vercel)
+// ✅ Signup route
+app.post("/auth/signup", async (req, res) => {
+  try {
+    const { companyName, emailAddress, companyAddress, companyNumber, password } = req.body;
+
+    if (!companyName || !emailAddress || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Insert into Supabase table
+    const { data, error } = await supabase
+      .from("customers")
+      .insert([{ company_name: companyName, email: emailAddress, address: companyAddress, phone: companyNumber, password }])
+      .select();
+
+    if (error) throw error;
+
+    res.status(201).json({ message: "Signup successful!", user: data[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ Default route for health check
+app.get("/", (req, res) => {
+  res.send("✅ GatsisHub backend is running");
+});
+
+// ✅ Export app for Vercel
 export default app;
