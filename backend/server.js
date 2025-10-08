@@ -38,7 +38,7 @@ app.post("/auth/signup", async (req, res) => {
     // Insert into Supabase table
     const { data, error } = await supabase
       .from("customers")
-      .insert([{ company_name: companyName, email: emailAddress, address: companyAddress, phone: companyNumber, password }])
+      .insert([{ companyname: companyName, email: emailAddress, companyaddress: companyAddress, companynumber: companyNumber, password }])
       .select();
 
     if (error) throw error;
