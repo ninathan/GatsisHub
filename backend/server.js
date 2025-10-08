@@ -1,9 +1,23 @@
 // backend/server.js
 import express from "express";
 import supabase from "./supabaseClient.js";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://gatsis-hub-client.vercel.app",
+      "https://gatsis-hub.com",
+      "http://localhost:5000"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  })
+)
 
 // Test route
 app.get("/test-users", async (req, res) => {
