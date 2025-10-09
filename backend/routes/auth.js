@@ -38,8 +38,7 @@ router.post("/signup", async (req, res) => {
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
       .insert([
-        {
-          customerid: uuidv4(), // your app’s unique ID
+        { // your app’s unique ID
           userid: userId,
           companyname: companyName,
           emailaddress: emailAddress,
