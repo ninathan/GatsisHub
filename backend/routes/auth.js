@@ -14,7 +14,28 @@ router.post("/signup", async (req, res) => {
     if (!companyName || !emailAddress || !password) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailAddress)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
 
+    // 3️⃣ Validate password strength
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long." });
+    }
+
+    // 4️⃣ Check if email already exists
+    const { data: existingUser, error: findError } = await supabase
+      .from("customers")
+      .select("emailaddress")
+      .eq("emailaddress", emailAddress)
+      .maybeSingle();
+
+    if (findError) throw findError;
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email is already registered." });
+    }
     // 2️⃣ Hash the password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
