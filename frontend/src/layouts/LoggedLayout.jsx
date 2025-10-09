@@ -24,9 +24,7 @@ const LoggedLayout = () => {
   }
 
   // If no user, redirect to home ("/")
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+
 
   // If user exists, allow access to Logged routes
   return (
