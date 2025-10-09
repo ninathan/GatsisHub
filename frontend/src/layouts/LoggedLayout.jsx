@@ -1,29 +1,34 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
 import LoggedLanding from "../components/Landing/LoggedLanding";
 
 const LoggedLayout = () => {
-  const [session, setSession] = useState(undefined); // undefined = loading
+  const [isReady, setIsReady] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => listener.subscription.unsubscribe();
+    // Check if there's a user in localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error("Failed to parse user:", err);
+      }
+    }
+    setIsReady(true);
   }, []);
 
-  if (session === undefined) {
-    return <div className="text-white text-center mt-20">Loading...</div>; // avoid redirect while checking
+  if (!isReady) {
+    return <div className="text-white text-center mt-20">Loading...</div>;
   }
 
-  if (!session) {
+  // If no user, redirect to home ("/")
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 
+  // If user exists, allow access to Logged routes
   return (
     <>
       <LoggedLanding />
