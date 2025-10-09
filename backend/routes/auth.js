@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import supabase from "../supabaseClient.js";
+import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
@@ -9,37 +10,60 @@ router.post("/signup", async (req, res) => {
   try {
     const { companyName, emailAddress, companyAddress, companyNumber, password } = req.body;
 
+    // 1️⃣ Validate required fields
     if (!companyName || !emailAddress || !password) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Hash password
+    // 2️⃣ Hash the password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new customer
-    const { data, error } = await supabase
+    // 3️⃣ Create a Supabase Auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: emailAddress,
+      password: password
+    });
+
+    if (authError) {
+      console.error("Auth Error:", authError);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) {
+      return res.status(500).json({ error: "User creation failed, no user ID returned." });
+    }
+
+    // 4️⃣ Insert into your 'customers' table
+    const { data: customerData, error: dbError } = await supabase
       .from("customers")
       .insert([
         {
+          customerid: uuidv4(), // your app’s unique ID
+          userid: userId,
           companyname: companyName,
           emailaddress: emailAddress,
-          companyaddress: companyAddress,
-          companynumber: companyNumber,
+          companyaddress: companyAddress || null,
+          companynumber: companyNumber || null,
           password: hashedPassword,
-          accountstatus: "Active",
-          datecreated: new Date().toISOString(),
-          userid: crypto.randomUUID() // or Supabase UUID if you have auth
+          datetime: new Date().toISOString(),
+          activestatus: true
         }
       ])
       .select();
 
-    if (error) throw error;
+    if (dbError) {
+      console.error("DB Insert Error:", dbError);
+      return res.status(400).json({ error: dbError.message });
+    }
 
+    // 5️⃣ Return success
     res.status(201).json({
       message: "Signup successful!",
-      user: data[0]
+      customer: customerData[0]
     });
   } catch (err) {
+    console.error("Signup Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
