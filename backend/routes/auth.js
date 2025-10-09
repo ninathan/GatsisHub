@@ -46,7 +46,7 @@ router.post("/signup", async (req, res) => {
           companyaddress: companyAddress || null,
           companynumber: companyNumber || null,
           password: hashedPassword,
-          datetime: new Date().toISOString(),
+          datecreated: new Date().toISOString(),
           accountstatus: "active"
         }
       ])
