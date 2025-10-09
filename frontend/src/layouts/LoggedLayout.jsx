@@ -3,30 +3,32 @@ import { Outlet, Navigate } from "react-router-dom";
 import LoggedLanding from "../components/Landing/LoggedLanding";
 
 const LoggedLayout = () => {
-  const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isAuth, setIsAuth] = useState(null); // null = loading
 
   useEffect(() => {
-    // Check if there's a user in localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const user = JSON.parse(storedUser);
+        // you can also verify if user has a valid token property
+        setIsAuth(!!user);
       } catch (err) {
-        console.error("Failed to parse user:", err);
+        console.error("Error parsing stored user:", err);
+        setIsAuth(false);
       }
+    } else {
+      setIsAuth(false);
     }
-    setIsReady(true);
   }, []);
 
-  if (!isReady) {
-    return <div className="text-white text-center mt-20">Loading...</div>;
+  if (isAuth === null) {
+    return <div className="text-center mt-20 text-white">Loading...</div>;
   }
 
-  // If no user, redirect to home ("/")
+  if (!isAuth) {
+    return <Navigate to="/" replace />;
+  }
 
-
-  // If user exists, allow access to Logged routes
   return (
     <>
       <LoggedLanding />
