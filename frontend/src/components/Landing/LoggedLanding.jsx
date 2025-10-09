@@ -27,37 +27,39 @@ const LoggedLanding = () => {
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   // ✅ Fetch current user and track auth changes
-useEffect(() => {
-  let isMounted = true;
+    useEffect(() => {
+        let isMounted = true;
 
-  const initAuth = async () => {
-    const { data, error } = await supabase.auth.getUser();
+        const initAuth = async () => {
+            const { data, error } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error("Error fetching user:", error.message);
-      return;
-    }
+            if (error) {
+                console.error("Error fetching user:", error.message);
+                return;
+            }
 
-    if (data.user && isMounted) {
-      setUser(data.user);
-    } else if (isMounted) {
-      // only redirect once we’re sure there’s no user
-      navigate('/');
-    }
-  };
+            if (data.user && isMounted) {
+                setUser(data.user);
+            } else if (isMounted) {
+            // only redirect once we’re sure there’s no user
+            navigate('/');
+        }
+    };
 
-  initAuth();
+        initAuth();
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) setUser(session.user);
-    else navigate('/');
-  });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) setUser(session.user);
+            else navigate('/');
+        });
 
-  return () => {
-    isMounted = false;
-    subscription.unsubscribe();
-  };
-}, [navigate]);
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
+    }, [navigate]);
+
+
 
   // ✅ Logout
   const handleLogout = async () => {
