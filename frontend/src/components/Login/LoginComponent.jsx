@@ -24,7 +24,7 @@ const Login = () => {
     setLoading(true)
 
     try {
-      const res = await fetch('https://gatsis-hub.vercel.app/api/auth/login', {
+      const res = await fetch('https://gatsis-hub.vercel.app/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emailAddress, password }),
