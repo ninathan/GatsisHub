@@ -38,7 +38,7 @@ router.post("/signup", async (req, res) => {
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
       .insert([
-        { // your app’s unique ID
+        { 
           userid: userId,
           companyname: companyName,
           emailaddress: emailAddress,
@@ -46,7 +46,7 @@ router.post("/signup", async (req, res) => {
           companynumber: companyNumber || null,
           password: hashedPassword,
           datecreated: new Date().toISOString(),
-          accountstatus: "active"
+          accountstatus: 'Active'
         }
       ])
       .select();
