@@ -51,14 +51,14 @@ const router = createBrowserRouter(
 
       {/* Logged in layout */}
       <Route element={<LoggedLayout />}>
-        <Route path="/Logged" element={<Profile />} />
-        <Route path="/products" element={<Product />} />
-        <Route path="/orders" element={<Order />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/accountsetting" element={<AccountSetting />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/banktransfer" element={<BankTransferPage />} />
+        <Route path="Logged" element={<Profile />} />
+        <Route path="products" element={<Product />} />
+        <Route path="orders" element={<Order />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="messages" element={<Messages />} />
+        <Route path="accountsetting" element={<AccountSetting />} />
+        <Route path="payment" element={<PaymentPage />} />
+        <Route path="banktransfer" element={<BankTransferPage />} />
       </Route>
 
       {/* Sales Admin */}
