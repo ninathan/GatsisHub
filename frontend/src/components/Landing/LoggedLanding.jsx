@@ -27,7 +27,7 @@ const LoggedLanding = () => {
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   // ✅ Fetch current user and track auth changes
-seEffect(() => {
+useEffect(() => {
   let isMounted = true;
 
   const initAuth = async () => {
