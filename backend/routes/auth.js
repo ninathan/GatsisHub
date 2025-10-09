@@ -93,27 +93,38 @@ router.post("/login", async (req, res) => {
   try {
     const { emailAddress, password } = req.body;
 
-    const { data, error } = await supabase
+    if (!emailAddress || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Find user by email
+    const { data: user, error: userError } = await supabase
       .from("customers")
       .select("*")
       .eq("emailaddress", emailAddress)
       .single();
 
-    if (error || !data) {
-      return res.status(400).json({ error: "Invalid credentials" });
+    if (userError || !user) {
+      return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    const match = await bcrypt.compare(password, data.password);
-    if (!match) {
-      return res.status(400).json({ error: "Incorrect password" });
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
-
-    res.json({
+    // Successful login
+    res.status(200).json({
       message: "Login successful!",
-      user: data
+      user: {
+        userid: user.userid,
+        companyname: user.companyname,
+        emailaddress: user.emailaddress,
+      },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Login error:", err.message);
+    res.status(500).json({ error: "Server error during login" });
   }
 });
 
