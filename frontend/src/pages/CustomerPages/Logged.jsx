@@ -8,7 +8,7 @@ import ContanctUs from '../../components/Landing/ContanctUs'
 import Checkout from './Checkout'
 
 
-const Logged = () => {
+const logged = () => {
   return (
     <div>
         <Hero />
@@ -20,4 +20,4 @@ const Logged = () => {
   )
 }
 
-export default Logged
+export default logged

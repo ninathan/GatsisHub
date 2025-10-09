@@ -40,7 +40,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(data.user))
 
       // Redirect to dashboard or logged-in page
-      navigate('/Logged')
+      navigate('/logged')
     } catch (err) {
       console.error('❌ Login error:', err.message)
       setError(err.message)
