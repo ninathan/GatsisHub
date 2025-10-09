@@ -47,7 +47,7 @@ router.post("/signup", async (req, res) => {
           companynumber: companyNumber || null,
           password: hashedPassword,
           datetime: new Date().toISOString(),
-          activestatus: true
+          accountstatus: "active"
         }
       ])
       .select();
