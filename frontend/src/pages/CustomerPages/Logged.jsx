@@ -1,23 +1,25 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import Hero from '../../components/Landing/hero'
-import SampleCard from '../../components/Landing/sampleCard'
-import AboutUs from '../../components/Landing/AboutUs'
-import CustomerRv from '../../components/Landing/CustomerRv'
-import ContanctUs from '../../components/Landing/ContanctUs'
-import Checkout from './Checkout'
+import React from 'react';
+import Hero from '../../components/Landing/hero';
+import SampleCard from '../../components/Landing/sampleCard';
+import AboutUs from '../../components/Landing/AboutUs';
+import CustomerRv from '../../components/Landing/CustomerRv';
+import ContactUs from '../../components/Landing/ContanctUs'; // corrected typo
+import LoggedLanding from '../../components/Landing/LoggedLanding';
 
-
-const logged = () => {
+const Logged = () => {
   return (
     <div>
-        <Hero />
-        <SampleCard />
-        <AboutUs />
-        <CustomerRv />
-        <ContanctUs />
-    </div>
-  )
-}
+      {/* Logged-in Navbar */}
+      <LoggedLanding />
 
-export default logged
+      {/* Page Content */}
+      <Hero />
+      <SampleCard />
+      <AboutUs />
+      <CustomerRv />
+      <ContactUs />
+    </div>
+  );
+};
+
+export default Logged;

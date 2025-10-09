@@ -51,7 +51,7 @@ const router = createBrowserRouter(
 
       {/* Logged in layout */}
       <Route element={<LoggedLayout />}>
-        <Route path="/logged" element={<Profile />} />
+        <Route path="/Logged" element={<Profile />} />
         <Route path="/products" element={<Product />} />
         <Route path="/orders" element={<Order />} />
         <Route path="/checkout" element={<Checkout />} />
