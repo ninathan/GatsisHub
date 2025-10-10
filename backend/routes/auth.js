@@ -145,13 +145,13 @@ router.post('/google', async (req, res) => {
   try {
     console.log("📥 Received Google Login Request");
     console.log("🔹 Request Body:", req.body);
-    console.log("🔹 GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "Loaded ✅" : "❌ Missing");
 
     const { token } = req.body;
     if (!token) {
       return res.status(400).json({ error: "Missing token" });
     }
 
+    // Verify Google token
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -159,55 +159,58 @@ router.post('/google', async (req, res) => {
 
     const payload = ticket.getPayload();
     const { sub, email, name } = payload;
-    console.log("✅ Verified Google token:", payload.email);
+    console.log("✅ Verified Google token:", email);
 
-    // Check if user exists in Supabase
-    const { data: existingUser, error: fetchError } = await supabase
+    // Check if customer already exists
+    let { data: customer, error: fetchError } = await supabase
       .from('customers')
       .select('*')
       .eq('emailaddress', email)
-      .maybeSingle()
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      throw fetchError
-    }
+    if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-    let user = existingUser
+    // If not found, create a Supabase Auth user and insert into customers
+    if (!customer) {
+      // 1️⃣ Create Auth user
+      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+        email: email,
+        password: crypto.randomUUID(), // random password
+      });
+      if (authError) throw authError;
 
-    // Create new user if not found
-    if (!existingUser) {
-      const userId = uuidv4()
-      const { data: newUser, error: insertError } = await supabase
+      // 2️⃣ Insert into customers table using Supabase Auth UUID
+      const { data: newCustomer, error: insertError } = await supabase
         .from('customers')
-        .insert([
-          {
-            userid: userId,
-            google_id: sub,
-            companyname: name || "Google User",
-            emailaddress: email,
-            companyaddress: null,
-            companynumber: null,
-            password: null,
-            datecreated: new Date().toISOString(),
-            accountstatus: 'Active',
-          },
-        ])
+        .insert([{
+          userid: authUser.id,
+          google_id: sub,
+          companyname: name || "Google User",
+          emailaddress: email,
+          companyaddress: null,
+          companynumber: null,
+          password: null,
+          datecreated: new Date().toISOString(),
+          accountstatus: 'Active',
+        }])
         .select()
-        .maybeSingle()
+        .single();
 
       if (insertError) throw insertError;
+
       customer = newCustomer;
     }
 
-    // ✅ Return customer data to frontend
+    // ✅ Return customer data
     res.status(200).json({
       success: true,
       user: customer,
     });
+
   } catch (error) {
     console.error("❌ Google login error:", error);
     res.status(400).json({ error: "Google login failed" });
   }
-})
+});
 
 export default router;
