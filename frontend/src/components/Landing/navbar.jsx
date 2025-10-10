@@ -1,11 +1,14 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import logo from '../../images/logo.png';
 import { useAuth } from '../../context/AuthContext';
+
+
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -30,6 +33,20 @@ const Navbar = () => {
     navigate('/');
   };
 
+  useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      setDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, []);
+
+
   return (
     <nav className="bg-[#353f94] px-4 md:px-6 py-4 border-b-5 border-yellow-400 sticky top-0 z-50">
       <div className="flex items-center justify-between">
@@ -49,7 +66,7 @@ const Navbar = () => {
             {!user ? (
               <NavLink to="/login" className={linkClass}>Login</NavLink>
             ) : (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
                   className="text-white text-xl md:text-2xl hover:text-yellow-400 flex items-center space-x-2"
