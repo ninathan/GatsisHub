@@ -134,20 +134,22 @@ router.post("/login", async (req, res) => {
 
 router.post('/google', async (req, res) => {
   try {
-    const { token } = req.body || {}
+    console.log("📥 Received Google Login Request");
+    console.log("🔹 Request Body:", req.body);
+    console.log("🔹 GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "Loaded ✅" : "❌ Missing");
+
+    const { token } = req.body;
     if (!token) {
-      console.error('❌ Missing token in request body:', req.body)
-      return res.status(400).json({ error: 'Missing token' })
+      return res.status(400).json({ error: "Missing token" });
     }
 
-    // Verify Google token
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
-    })
+    });
 
-    const payload = ticket.getPayload()
-    const { email, name, picture, sub } = payload
+    const payload = ticket.getPayload();
+    console.log("✅ Verified Google token:", payload.email);
 
     // Check if user exists in Supabase
     const { data: existingUser, error: fetchError } = await supabase
@@ -185,10 +187,10 @@ router.post('/google', async (req, res) => {
       user = newUser
     }
 
-    return res.status(200).json({ user })
-  } catch (err) {
-    console.error('❌ Google Auth Error:', err)
-    return res.status(400).json({ error: 'Google login failed' })
+     res.status(200).json({ message: "Google verified!", email: payload.email });
+  } catch (error) {
+    console.error("❌ Google login error:", error);
+    res.status(400).json({ error: "Google login failed" });
   }
 })
 
