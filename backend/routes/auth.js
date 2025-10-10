@@ -184,7 +184,7 @@ router.post('/google', async (req, res) => {
           },
         ])
         .select()
-        .maybeSingles()
+        .maybeSingle()
 
       if (insertError) throw insertError;
       customer = newCustomer;
