@@ -120,6 +120,8 @@ router.post("/login", async (req, res) => {
         userid: user.userid,
         companyname: user.companyname,
         emailaddress: user.emailaddress,
+        companyaddress: user.companyaddress,
+        companynumber: user.companynumber,
       },
     });
   } catch (err) {

@@ -1,13 +1,30 @@
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, ChevronDown } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { a } from 'framer-motion/client';
+
 
 const ProfileComponent = () => {
+
+
+    const { user } = useAuth();
+
     const [activeTab, setActiveTab] = useState('Profile');
-    const [companyName, setCompanyName] = useState('Juan Corporation');
-    const [companyEmail, setCompanyEmail] = useState('JuanCorp@gmail.com');
-    const [contactNumber, setContactNumber] = useState('999-999-9999');
-    const [officeAddress, setOfficeAddress] = useState('#106 Pingkian I Central, Brgy Pasong Tamo, QC');
+    const [companyName, setCompanyName] = useState('');
+    const [companyEmail, setCompanyEmail] = useState('');
+    const [companyNumber, setCompanyNumber] = useState('');
+    const [companyAddress, setCompanyAddress] = useState('');
+
+    useEffect(() => {
+        if (user) {
+            setCompanyName(user.companyname || '');
+            setCompanyEmail(user.emailaddress || '');
+            setCompanyNumber(user.companynumber || '');
+            setCompanyAddress(user.companyaddress || '');
+        }
+    }, [user]);
+
 
     const [addresses, setAddresses] = useState([
         {
@@ -46,8 +63,8 @@ const ProfileComponent = () => {
             isDefault: addr.id === id
         })));
     };
-  return (
-    <div className="min-h-screen bg-gray-50">
+    return (
+        <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-6 py-8">
                 <div className="flex gap-6">
                     {/* Sidebar */}
@@ -81,7 +98,7 @@ const ProfileComponent = () => {
                                             <div className="w-24 h-24 bg-gray-400 rounded-full flex items-center justify-center mb-3">
                                                 <User size={48} className="text-white" />
                                             </div>
-                                            <p className="text-lg font-semibold">Juan Corporation</p>
+                                            <p className="text-lg font-semibold">{user.companyname}</p>
                                         </div>
 
                                         {/* Form Fields */}
@@ -109,19 +126,19 @@ const ProfileComponent = () => {
                                             <div>
                                                 <label className="block text-sm font-semibold mb-2">Contact Number</label>
                                                 <input
-                                                    type="tel"
-                                                    value={contactNumber}
-                                                    onChange={(e) => setContactNumber(e.target.value)}
+                                                    type="text"
+                                                    value={companyNumber}
+                                                    onChange={(e) => setCompanyNumber(e.target.value)}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold mb-2">Office address</label>
+                                                <label className="block text-sm font-semibold mb-2">Office Address</label>
                                                 <input
                                                     type="text"
-                                                    value={officeAddress}
-                                                    onChange={(e) => setOfficeAddress(e.target.value)}
+                                                    value={companyAddress}
+                                                    onChange={(e) => setCompanyAddress(e.target.value)}
                                                     className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                 />
                                             </div>
@@ -279,7 +296,7 @@ const ProfileComponent = () => {
                                                 <button className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded transition-colors">
                                                     Delete Account
                                                 </button>
-                                                
+
                                             </div>
                                         </div>
                                     </div>
@@ -290,7 +307,7 @@ const ProfileComponent = () => {
                 </div>
             </div>
         </div>
-  )
+    )
 }
 
 export default ProfileComponent

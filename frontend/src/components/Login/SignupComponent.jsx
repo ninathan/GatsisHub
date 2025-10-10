@@ -305,9 +305,12 @@ const Signup = () => {
           <p className='mt-4 text-lg max-w-md'>Premium Hanger Solutions Crafted for Quality and Style.</p>
           <Link
             to='/login'
-            className='bg-[#DAC325] text-black px-8 py-3 text-xl rounded-2xl mt-6 hover:bg-[#c4ad1f] transition-colors'>
+            className='bg-[#DAC325] text-black px-6 md:px-15 lg:px-25 py-2 md:py-3 text-lg md:text-2xl lg:text-3xl rounded-2xl md:rounded-4xl mt-5 md:mt-10 cursor-pointer transition-all hover:bg-[#c4ad1f]'>
             Sign In
           </Link>
+          <p className='text-white text-lg md:text-2xl lg:text-3xl mt-3 md:mt-5 text-center px-4'>
+              Don&apos;t have an account yet?
+          </p>
         </div>
       </div>
 
