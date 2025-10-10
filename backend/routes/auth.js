@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { OAuth2Client } from 'google-auth-library';
 
 const router = express.Router();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // 📝 Signup route
 router.post("/signup", async (req, res) => {
@@ -129,66 +130,66 @@ router.post("/login", async (req, res) => {
   }
 });
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-router.post("/google", async (req, res) => {
+
+router.post('/google', async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token } = req.body || {}
+    if (!token) {
+      console.error('❌ Missing token in request body:', req.body)
+      return res.status(400).json({ error: 'Missing token' })
+    }
 
-    // ✅ Verify Google token
+    // Verify Google token
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    })
 
-    const payload = ticket.getPayload();
-    const { email, name, picture, sub } = payload;
+    const payload = ticket.getPayload()
+    const { email, name, picture, sub } = payload
 
-    // ✅ Check if customer already exists
-    const { data: existingCustomer, error: fetchError } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("emailaddress", email)
-      .single();
+    // Check if user exists in Supabase
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('emailaddress', email)
+      .single()
 
-    if (fetchError && fetchError.code !== "PGRST116") {
-      throw fetchError;
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError
     }
 
-    let customer = existingCustomer;
+    let user = existingUser
 
-    // ✅ If not found, insert new customer with safe defaults
-    if (!existingCustomer) {
-      const { data: newCustomer, error: insertError } = await supabase
-        .from("customers")
+    // Create new user if not found
+    if (!existingUser) {
+      const { data: newUser, error: insertError } = await supabase
+        .from('customers')
         .insert([
           {
-            userid: sub, // Use Google 'sub' as unique ID
-            companyname: name || "Google User",
+            userid: sub,
+            companyname: name,
             emailaddress: email,
-            companyaddress: "Imported from Google",
-            companynumber: "N/A",
-            password: null, // No password since it's Google sign-in
+            companyaddress: null,
+            companynumber: null,
+            password: null,
             datecreated: new Date().toISOString(),
-            accountstatus: "Active",
+            accountstatus: 'Active',
           },
         ])
         .select()
-        .single();
+        .single()
 
-      if (insertError) throw insertError;
-      customer = newCustomer;
+      if (insertError) throw insertError
+      user = newUser
     }
 
-    // ✅ Return customer data to frontend
-    res.status(200).json({
-      success: true,
-      customer,
-    });
-  } catch (error) {
-    console.error("❌ Google login error:", error);
-    res.status(400).json({ success: false, message: "Invalid Google token" });
+    return res.status(200).json({ user })
+  } catch (err) {
+    console.error('❌ Google Auth Error:', err)
+    return res.status(400).json({ error: 'Google login failed' })
   }
-});
+})
 
 export default router;

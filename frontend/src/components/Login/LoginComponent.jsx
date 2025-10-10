@@ -65,7 +65,7 @@ const Login = () => {
       if (!res.ok) throw new Error(data.error || 'Google login failed')
 
       // Save user locally
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('user', JSON.stringify(data.user || decoded))
       login(data.user)
       navigate('/logged')
       window.dispatchEvent(new Event('user-updated'))
