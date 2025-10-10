@@ -57,6 +57,15 @@ router.post("/signup", async (req, res) => {
       return res.status(500).json({ error: "User creation failed, no user ID returned." });
     }
 
+    // Before inserting into customers
+const { data: newUser, error: userInsertError } = await supabase
+  .from('users')
+  .insert([{ id: sub }])
+  .single();
+
+if (userInsertError) throw userInsertError;
+
+
     // 4️⃣ Insert into your 'customers' table
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
