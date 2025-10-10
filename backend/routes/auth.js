@@ -149,7 +149,7 @@ router.post('/google', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { sub, email, name } = payload;
+    const { email, name } = payload;
     console.log("✅ Verified Google token:", payload.email);
 
     // Check if user exists in Supabase
@@ -171,8 +171,8 @@ router.post('/google', async (req, res) => {
         .from('customers')
         .insert([
           {
-            userid: sub,
-            companyname: name,
+            userid: userId,
+            companyname: name || "Google User",
             emailaddress: email,
             companyaddress: null,
             companynumber: null,
