@@ -21,6 +21,7 @@ const Signup = () => {
   const [Password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
 
   // modal & visibility states
   const [showTerms, setShowTerms] = useState(false)
@@ -167,7 +168,19 @@ const Signup = () => {
 
                 {/* Confirm Password */}
                 <div className='relative'>
-                  <label className='text-black text-lg md:text-2xl font-medium block'>Re-enter your Password</label>
+                  <div className='flex items-center gap-2 md:gap-4 flex-wrap'>
+                    {/* add ux */}
+                    <label className='text-black text-lg md:text-2xl font-medium block'>Re-enter your password</label>
+                    {passwordMatch ? (
+                      <span className='flex items-center justify-center w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full'>
+                        <Check className='w-3 h-3 md:w-4 md:h-4 text-white' />
+                      </span>
+                    ) : confirmPassword && (
+                      <span className='flex items-center justify-center w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full'>
+                        <X className='w-3 h-3 md:w-4 md:h-4 text-white' />
+                      </span>
+                    )}
+                  </div>
                   <img src={key} alt="" className='absolute left-4 top-11 md:top-13.5 w-5 h-5 md:w-6 md:h-6' />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
@@ -205,22 +218,54 @@ const Signup = () => {
               </div>
 
               {/* Terms checkbox */}
-              <div className='flex items-center space-x-3'>
-                <input
-                  type='checkbox'
-                  checked={agreeTerms}
-                  onChange={() => setAgreeTerms(!agreeTerms)}
-                  className='w-5 h-5 accent-[#35408E]'
-                />
-                <span className='text-sm md:text-base'>
-                  I agree to the{' '}
-                  <button
-                    type='button'
-                    onClick={() => setShowTerms(true)}
-                    className='text-[#35408E] underline font-semibold'>
-                    Terms and Conditions
-                  </button>
-                </span>
+              <div className='flex flex-col items-center'>
+                <div className='flex items-center'>
+                  <input
+                    type='checkbox'
+                    checked={agreeTerms}
+                    onChange={() => setAgreeTerms(!agreeTerms)}
+                    className='mr-2 accent-[#35408E]'
+                  />
+                  <span className='text-sm md:text-base'>
+                    I agree to the{' '}
+                    <button
+                      type='button'
+                      onClick={() => setModalOpen(true)}
+                      className='text-[#35408E] underline font-semibold cursor-pointer'>
+                      Terms and Conditions
+                    </button>
+                  </span>
+                </div>
+                {modalOpen && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50 p-4">
+                    <div className="bg-[#35408E] rounded-2xl p-6 md:p-8 max-w-lg w-full max-h-[90vh] shadow-xl relative overflow-hidden">
+                      <button
+                        className="absolute top-3 right-3 text-gray-500"
+                        onClick={() => setModalOpen(false)}
+                        aria-label="Close"
+                      >
+                        <span className='flex items-center justify-center w-6 h-6 bg-white rounded'>
+                          <X className="w-5 h-5 text-[#35408E]" />
+                        </span>
+                      </button>
+                      <h2 className="text-2xl md:text-4xl text-white font-bold mb-4 text-center">Terms and Conditions</h2>
+                      <div className="overflow-y-auto max-h-80 md:max-h-96 mb-4">
+                        <p className="text-white text-sm md:text-lg leading-6 md:leading-7">
+                          <Terms />
+                        </p>
+                      </div>
+                      <button
+                        className="bg-[#DAC325] text-black font-semibold px-6 md:px-8 py-2 rounded-xl block ml-auto mt-5 hover:bg-[#c4ad1f] transition-colors"
+                        onClick={() => {
+                          setAgreeTerms(true)
+                          setModalOpen(false)
+                        }}
+                      >
+                        Agree
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Feedback */}
@@ -266,7 +311,7 @@ const Signup = () => {
         </div>
       </div>
 
-      {showTerms && <Terms onClose={() => setShowTerms(false)} />}
+      {/* {showTerms && <Terms onClose={() => setShowTerms(false)} />} */}
     </PageTransition>
   )
 }
