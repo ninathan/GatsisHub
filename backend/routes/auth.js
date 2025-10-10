@@ -104,7 +104,7 @@ router.post("/login", async (req, res) => {
       .from("customers")
       .select("*")
       .eq("emailaddress", emailAddress)
-      .single();
+      .maybeSingle();
 
     if (userError || !user) {
       return res.status(400).json({ error: "Invalid email or password" });
@@ -149,7 +149,7 @@ router.post('/google', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { email, name } = payload;
+    const { sub, email, name } = payload;
     console.log("✅ Verified Google token:", payload.email);
 
     // Check if user exists in Supabase
@@ -157,7 +157,7 @@ router.post('/google', async (req, res) => {
       .from('customers')
       .select('*')
       .eq('emailaddress', email)
-      .single()
+      .maybeSingle()
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       throw fetchError
@@ -167,11 +167,13 @@ router.post('/google', async (req, res) => {
 
     // Create new user if not found
     if (!existingUser) {
+      const userId = uuidv4()
       const { data: newUser, error: insertError } = await supabase
         .from('customers')
         .insert([
           {
             userid: userId,
+            google_id: sub,
             companyname: name || "Google User",
             emailaddress: email,
             companyaddress: null,
@@ -182,13 +184,17 @@ router.post('/google', async (req, res) => {
           },
         ])
         .select()
-        .single()
+        .maybeSingles()
 
-      if (insertError) throw insertError
-      user = newUser
+      if (insertError) throw insertError;
+      customer = newCustomer;
     }
 
-     res.status(200).json({ message: "Google verified!", email: payload.email });
+    // ✅ Return customer data to frontend
+    res.status(200).json({
+      success: true,
+      user: customer,
+    });
   } catch (error) {
     console.error("❌ Google login error:", error);
     res.status(400).json({ error: "Google login failed" });
