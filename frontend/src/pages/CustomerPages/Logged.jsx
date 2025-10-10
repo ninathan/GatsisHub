@@ -9,8 +9,6 @@ import LoggedLanding from '../../components/Landing/LoggedLanding';
 const Logged = () => {
   return (
     <div>
-      {/* Logged-in Navbar */}
-      <LoggedLanding />
 
       {/* Page Content */}
       <Hero />
