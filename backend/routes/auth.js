@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import supabase from "../supabaseClient.js";
 import { v4 as uuidv4 } from "uuid";
+import { OAuth2Client } from 'google-auth-library';
 
 const router = express.Router();
 
@@ -125,6 +126,40 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("❌ Login error:", err.message);
     res.status(500).json({ error: "Server error during login" });
+  }
+});
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+router.post('/google', async (req, res) => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Upsert user in database
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        email,
+        companyname: name,
+        profileImage: picture,
+        authProvider: 'google',
+      });
+    }
+
+    // Issue your own JWT (or session)
+    const appToken = generateAppToken(user);
+
+    res.json({ user, token: appToken });
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    res.status(401).json({ error: 'Invalid Google token' });
   }
 });
 
