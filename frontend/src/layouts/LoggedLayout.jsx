@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import LoggedLanding from "../components/Landing/LoggedLanding";
+import Navbar from "../components/Landing/navbar";
 
 const LoggedLayout = () => {
   const [isAuth, setIsAuth] = useState(null); // null = loading
@@ -31,7 +32,7 @@ const LoggedLayout = () => {
 
   return (
     <>
-      <LoggedLanding />
+      <Navbar />
       <Outlet />
     </>
   );

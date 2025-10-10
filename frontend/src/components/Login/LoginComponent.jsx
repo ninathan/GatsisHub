@@ -5,9 +5,11 @@ import googlelogo from '../../images/googlelogo.png'
 import key from '../../images/key.png'
 import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../Transition/PageTransition'
+import { useAuth } from '../../context/AuthContext'
 
 const Login = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
@@ -36,11 +38,14 @@ const Login = () => {
       }
 
       console.log('✅ Logged in user:', data)
+
+      login(data.user)
+
       // Store token or user info in localStorage if needed
       localStorage.setItem('user', JSON.stringify(data.user))
 
       // Redirect to dashboard or logged-in page
-      navigate('/Logged')
+      navigate('/logged')
     } catch (err) {
       console.error('❌ Login error:', err.message)
       setError(err.message)
