@@ -131,35 +131,63 @@ router.post("/login", async (req, res) => {
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-router.post('/google', async (req, res) => {
+router.post("/google", async (req, res) => {
   try {
     const { token } = req.body;
+
+    // ✅ Verify Google token
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    const { email, name, picture, sub } = payload;
 
-    // Upsert user in database
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({
-        email,
-        companyname: name,
-        profileImage: picture,
-        authProvider: 'google',
-      });
+    // ✅ Check if customer already exists
+    const { data: existingCustomer, error: fetchError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("emailaddress", email)
+      .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw fetchError;
     }
 
-    // Issue your own JWT (or session)
-    const appToken = generateAppToken(user);
+    let customer = existingCustomer;
 
-    res.json({ user, token: appToken });
-  } catch (err) {
-    console.error('Google Auth Error:', err);
-    res.status(401).json({ error: 'Invalid Google token' });
+    // ✅ If not found, insert new customer with safe defaults
+    if (!existingCustomer) {
+      const { data: newCustomer, error: insertError } = await supabase
+        .from("customers")
+        .insert([
+          {
+            userid: sub, // Use Google 'sub' as unique ID
+            companyname: name || "Google User",
+            emailaddress: email,
+            companyaddress: "Imported from Google",
+            companynumber: "N/A",
+            password: null, // No password since it's Google sign-in
+            datecreated: new Date().toISOString(),
+            accountstatus: "Active",
+          },
+        ])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      customer = newCustomer;
+    }
+
+    // ✅ Return customer data to frontend
+    res.status(200).json({
+      success: true,
+      customer,
+    });
+  } catch (error) {
+    console.error("❌ Google login error:", error);
+    res.status(400).json({ success: false, message: "Invalid Google token" });
   }
 });
 
