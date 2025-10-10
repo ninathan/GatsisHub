@@ -18,6 +18,7 @@ import Profile from './pages/CustomerPages/Logged';
 import AccountSetting from './pages/CustomerPages/AccountSetting';
 import PaymentPage from './pages/CustomerPages/PaymentPage';
 import BankTransferPage from './components/Payment/BankTransferPage';
+import AuthLayout from './layouts/AuthLayout';
 
 import SalesAdminLayout from './layouts/SalesAdminLayout';
 import AuthSA from './pages/SalesAdminPages/AuthSA';
@@ -44,8 +45,6 @@ const router = createBrowserRouter(
       <Route element={<AppLayout />}>
         <Route path="/" element={<Homepage />} />
         <Route path="/products" element={<Product />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
 
         {/* Protected user routes */}
         <Route path="/logged" element={<ProtectedRoute element={<Profile />} />} />
@@ -58,6 +57,12 @@ const router = createBrowserRouter(
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
+      </Route>
+
+      {/* AuthLayout */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
       </Route>
 
       {/*  Sales Admin layout */}
