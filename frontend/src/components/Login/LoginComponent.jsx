@@ -88,7 +88,7 @@ const Login = () => {
             <Link to='/'>
               <img src={logo} alt='Logo' className='w-[120px] h-[120px] md:w-[170px] md:h-[170px] mx-auto mt-5 md:mt-10' />
             </Link>
-            <h1 className='text-white text-4xl font-semibold mt-5 text-center'>Welcome to Gatsishub</h1>
+            <h1 className='text-white text-4xl font-semibold mt-5 text-center'>Welcome to GatsisHub</h1>
             <p className='text-white text-lg md:text-xl text-center mt-5 font-medium px-4 max-w-md'>
               Premium Hanger Solutions Crafted for Quality and Style.
             </p>
@@ -105,7 +105,7 @@ const Login = () => {
         {/* Right side */}
         <div className='flex flex-col items-center justify-center py-10 md:py-20 px-4 order-1 lg:order-2'>
           <h1 className='text-[#35408E] text-4xl md:text-6xl font-semibold text-center mt-10'>
-            Sign In to Gatsishub
+            Sign In to GatsisHub
           </h1>
 
           <form onSubmit={handleLogin} className='flex flex-col mt-10 w-full max-w-md'>
