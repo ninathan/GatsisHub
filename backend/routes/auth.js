@@ -72,13 +72,15 @@ if (userInsertError) throw userInsertError;
       .insert([
         { 
           userid: userId,
+          google_id: null,
           companyname: companyName,
           emailaddress: emailAddress,
           companyaddress: companyAddress || null,
           companynumber: companyNumber || null,
           password: hashedPassword,
           datecreated: new Date().toISOString(),
-          accountstatus: 'Active'
+          accountstatus: 'Active',
+          profilePicture: null
         }
       ])
       .select();
@@ -160,7 +162,7 @@ router.post('/google', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { sub, email, name } = payload;
+    const { sub, email, name, picture } = payload;
     console.log("✅ Verified Google token:", email);
 
     // Check if customer already exists
@@ -194,6 +196,7 @@ router.post('/google', async (req, res) => {
           password: null,
           datecreated: new Date().toISOString(),
           accountstatus: 'Active',
+          profilePicture: picture || null
         }])
         .select()
         .single();

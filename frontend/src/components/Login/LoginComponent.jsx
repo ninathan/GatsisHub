@@ -154,7 +154,7 @@ const Login = () => {
             </button>
           </form>
 
-          <p className='text-black text-sm md:text-lg mt-5 opacity-50'>or sign in with</p>
+          <p className='text-black text-sm md:text-lg mt-5 opacity-50'>or</p>
 
           {/* ✅ GOOGLE LOGIN BUTTON */}
           <div className='flex justify-center mt-5'>
@@ -163,7 +163,7 @@ const Login = () => {
               onError={handleGoogleError}
               shape='pill'
               size='large'
-              text='signin_with'
+              text='continue_with'
             />
           </div>
         </div>
