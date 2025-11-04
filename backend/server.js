@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.js";
+import ordersRoutes from "./routes/orders.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/orders", ordersRoutes);
 
 // Health check
 app.get("/", (req, res) => {

@@ -1,25 +1,76 @@
+/**
+ * Checkout Component - Custom Hanger Order Form
+ * 
+ * This component handles the complete order submission flow for custom hangers.
+ * 
+ * THREE.JS INTEGRATION GUIDE:
+ * ==========================
+ * 1. Install Three.js: npm install three @react-three/fiber @react-three/drei
+ * 
+ * 2. The 3D viewer container is ready at `threeCanvasRef`
+ * 
+ * 3. Key integration points:
+ *    - updateThreeJsColor(color): Called when color changes, update material.color.set(color)
+ *    - customText, textPosition, textSize: Use TextGeometry or troika-three-text
+ *    - logoPreview, logoPosition, logoSize: Load texture and apply to plane/decal
+ *    - threeCanvasRef: Mount your Canvas component here
+ * 
+ * 4. Example Three.js setup:
+ *    - Create a separate ThreeScene component
+ *    - Pass color, text, logo props to control the scene
+ *    - Use OrbitControls for camera manipulation
+ *    - Load hanger model with GLTFLoader
+ *    - Apply color with MeshStandardMaterial
+ *    - Add TextGeometry for custom text
+ *    - Use texture loader for logo decals
+ * 
+ * 5. Model files should be placed in: /public/models/
+ *    - MB3.glb, MB7.glb, CQ-03.glb, 97-11.glb
+ */
+
 import { button, div, label, li, span } from 'framer-motion/client'
 import React from 'react'
-import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, X, Info } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
+import { supabase } from '../../../supabaseClient'
+import HangerScene from '../../components/Checkout/HangerScene'
 
 
 const Checkout = () => {
+    const navigate = useNavigate();
+    const threeCanvasRef = useRef(null);
 
     const [showModal, setShowModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
 
+    // Form state
+    const [companyName, setCompanyName] = useState('');
+    const [contactPerson, setContactPerson] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
     const [selectedHanger, setSelectedHanger] = useState('MB7');
     const [selectedMaterials, setSelectedMaterials] = useState({});
+    const [customDesignFile, setCustomDesignFile] = useState(null);
 
     const [color, setColor] = useState('#4F46E5');
     const [quantity, setQuantity] = useState(130);
     const [orderInstructions, setOrderInstructions] = useState('');
+    const [deliveryNotes, setDeliveryNotes] = useState('');
     const [selectedAddress, setSelectedAddress] = useState(0);
+
+    // 3D Customization state
+    const [customText, setCustomText] = useState('');
+    const [textColor, setTextColor] = useState('#000000'); // Default black
+    const [customLogo, setCustomLogo] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0.49 });
+    const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
+    const [textSize, setTextSize] = useState(0.5);
+    const [logoSize, setLogoSize] = useState(1);
+    const [addresses, setAddresses] = useState([]);
 
     const hangers = [
         { id: 'MB3', name: 'MB3' },
@@ -57,8 +108,210 @@ const Checkout = () => {
         setSelectedMaterials(prev => ({ ...prev, [materialName]: newValue }));
     };
 
-    // Show instructions modal when component mounts
+    const handleLogoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setCustomLogo(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCustomDesignUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setCustomDesignFile(file);
+        }
+    };
+
+    // Three.js color update callback (to be connected when Three.js is integrated)
+    const updateThreeJsColor = (newColor) => {
+        setColor(newColor);
+        // TODO: Update Three.js material color when integrated
+        // if (threeMaterialRef.current) {
+        //     threeMaterialRef.current.color.set(newColor);
+        // }
+    };
+
+    // Form validation
+    const validateForm = () => {
+        if (!companyName.trim()) {
+            alert('Please enter company name');
+            return false;
+        }
+        if (!contactPerson.trim()) {
+            alert('Please enter contact person name');
+            return false;
+        }
+        if (!contactPhone.trim()) {
+            alert('Please enter contact phone');
+            return false;
+        }
+        if (Object.keys(selectedMaterials).length === 0) {
+            alert('Please select at least one material');
+            return false;
+        }
+        const totalPercentage = Object.values(selectedMaterials).reduce((sum, val) => sum + val, 0);
+        if (Math.abs(totalPercentage - 100) > 0.1) {
+            alert(`Material percentages must total 100%. Current total: ${totalPercentage}%`);
+            return false;
+        }
+        if (quantity < 100) {
+            alert('Minimum order quantity is 100 pieces');
+            return false;
+        }
+        return true;
+    };
+
+    // Submit order
+    const handleSubmitOrder = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        // Get user data from localStorage (assuming user is logged in)
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = userData.userid || null;
+
+        const orderData = {
+            userid: userId,
+            companyName,
+            contactPerson,
+            contactPhone,
+            hangerType: selectedHanger,
+            materialType: Object.keys(selectedMaterials)[0], // Primary material
+            quantity: quantity,
+            materials: selectedMaterials,
+            designOption: selectedHanger === 'own' ? 'custom' : 'default',
+            customDesignUrl: customDesignFile ? customDesignFile.name : null,
+            selectedColor: color,
+            customText: customText || null,
+            textPosition: customText ? textPosition : null,
+            textSize: customText ? textSize : null,
+            customLogo: customLogo ? customLogo.name : null,
+            logoPosition: customLogo ? logoPosition : null,
+            logoSize: customLogo ? logoSize : null,
+            deliveryNotes: deliveryNotes || null
+        };
+
+        try {
+            // Submit to backend
+            const response = await fetch('https://gatsis-hub.vercel.app/orders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to create order');
+            }
+
+            console.log('✅ Order created:', result.order);
+
+            // Also save to localStorage for backward compatibility with Order.jsx
+            const localOrderData = {
+                id: result.order.orderid,
+                orderNumber: `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000) + 1000}`,
+                companyName,
+                contactPerson,
+                contactPhone,
+                customerName: contactPerson,
+                status: 'For Evaluation',
+                statusColor: 'bg-yellow-400',
+                price: '₱0',
+                details: {
+                    company: companyName,
+                    orderPlaced: new Date().toLocaleDateString(),
+                    quantity: `${quantity}x`,
+                    product: selectedHanger,
+                    color: color,
+                    materials: Object.entries(selectedMaterials).map(([name, percentage]) => ({
+                        name,
+                        percentage: `${percentage}%`
+                    })),
+                    deliveryAddress: addresses[selectedAddress],
+                    notesAndInstruction: orderInstructions,
+                    deliveryNotes: deliveryNotes,
+                    designFile: customDesignFile ? customDesignFile.name : null,
+                    customization: {
+                        text: customText,
+                        textPosition,
+                        textSize,
+                        hasLogo: !!customLogo,
+                        logoFileName: customLogo ? customLogo.name : null,
+                        logoPosition,
+                        logoSize
+                    }
+                }
+            };
+
+            const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+            existingOrders.unshift(localOrderData);
+            localStorage.setItem('orders', JSON.stringify(existingOrders));
+            
+            // Show success modal
+            setShowModal(true);
+        } catch (error) {
+            console.error('❌ Error creating order:', error);
+            alert(`Failed to create order: ${error.message}`);
+        }
+    };
+
+    // Fetch customer data from database
     useEffect(() => {
+        const fetchCustomerData = async () => {
+            try {
+                const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                const userId = userData.userid;
+
+                if (!userId) {
+                    console.warn('No user logged in');
+                    return;
+                }
+
+                // Fetch customer data from Supabase
+                const { data: customer, error } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .eq('userid', userId)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching customer data:', error);
+                    return;
+                }
+
+                if (customer) {
+                    // Pre-fill company information
+                    setCompanyName(customer.companyname || '');
+                    setContactPerson(customer.companyname || ''); // You can add a separate contact person field in DB if needed
+                    setContactPhone(customer.companynumber || '');
+
+                    // Set address from customer data
+                    if (customer.companyaddress) {
+                        setAddresses([
+                            {
+                                name: customer.companyname,
+                                phone: customer.companynumber || '',
+                                address: customer.companyaddress,
+                                isDefault: true
+                            }
+                        ]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading customer data:', error);
+            }
+        };
+
+        fetchCustomerData();
         setShowInstructionsModal(true);
     }, []);
 
@@ -110,25 +363,53 @@ const Checkout = () => {
         }
     ];
 
-    const addresses = [
-        {
-            name: 'Juan Corporation',
-            phone: '(+63) 9090069683',
-            address: 'San Juan City, 0900 Manugay St, Metro Manila-Quezon City',
-            isDefault: true
-        },
-        {
-            name: 'Juan Corporation',
-            phone: '(+63) 9090069683',
-            address: '#100 Tu aldea | Damilag, Brgy Paoay, Ilocos Sur, OC',
-            isDefault: false
-        }
-    ]
-
     return (
         <div>
+            {/* Company Information Section */}
+            <div className='flex flex-col items-center justify-center mt-10 mb-6'>
+                <h3 className='text-black text-4xl font-medium mb-6'>Start Your Order</h3>
+                <div className='w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-6'>
+                    <h4 className='text-xl font-semibold mb-4'>Company Information</h4>
+                    <div className='space-y-4'>
+                        <div>
+                            <label className='block text-sm font-semibold mb-2'>Company Name *</label>
+                            <input
+                                type='text'
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder='Enter company name'
+                                className='w-full border rounded px-3 py-2 bg-gray-50'
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className='block text-sm font-semibold mb-2'>Contact Person *</label>
+                            <input
+                                type='text'
+                                value={contactPerson}
+                                onChange={(e) => setContactPerson(e.target.value)}
+                                placeholder='Enter contact person name'
+                                className='w-full border rounded px-3 py-2 bg-gray-50'
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className='block text-sm font-semibold mb-2'>Contact Phone *</label>
+                            <input
+                                type='tel'
+                                value={contactPhone}
+                                onChange={(e) => setContactPhone(e.target.value)}
+                                placeholder='(+63) 9XX XXX XXXX'
+                                className='w-full border rounded px-3 py-2 bg-gray-50'
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className='flex flex-col items-center justify-center mt-10'>
-                <h3 className='text-black text-4xl font-medium mb-10'>Start Your Order</h3>
+                <h3 className='text-black text-4xl font-medium mb-10'>Select the type of hanger you want</h3>
                 <p className='text-black text-2xl font-normal'>Select the type of hanger you want</p>
             </div>
 
@@ -144,10 +425,28 @@ const Checkout = () => {
                             <div className="bg-white p-8 flex items-center justify-center w-90 h-90">
                                 <div className="text-6xl"><ProductCard /></div>
                             </div>
-                            {/* <div className="bg-yellow-500 py-3 font-semibold text-center">{hanger.name}</div> */}
+                            <div className="bg-gray-100 py-3 font-semibold text-center">{hanger.name}</div>
                         </button>
                     ))}
                 </div>
+                
+                {/* Custom Design Upload */}
+                {selectedHanger === 'own' && (
+                    <div className='mt-6 p-6 bg-white rounded-lg border-2 border-gray-300'>
+                        <h4 className='font-semibold mb-3'>Upload Your Custom Design</h4>
+                        <p className='text-sm text-gray-600 mb-3'>Accepted formats: STL, OBJ, STEP, PDF (technical drawing)</p>
+                        <label className='flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-indigo-600 transition-colors'>
+                            <Upload size={24} />
+                            <span>{customDesignFile ? customDesignFile.name : 'Click to upload design file'}</span>
+                            <input
+                                type='file'
+                                accept='.stl,.obj,.step,.pdf'
+                                onChange={handleCustomDesignUpload}
+                                className='hidden'
+                            />
+                        </label>
+                    </div>
+                )}
             </section>
 
             <div className='flex flex-col items-center justify-center mt-10'>
@@ -203,12 +502,33 @@ const Checkout = () => {
             <section>
                 <h2 className='flex flex-col items-center text-black text-4xl font-medium mb-10 '>Product Customization</h2>
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                    {/* preview product */}
-                    <div className='bg-gray-200 rounded-lg p-8 ml-5 flex items-center justify-center min-h-[400px] relative'>
-                        <img src={preview3d} alt="3D Preview" className='max-w-100 max-h-full object-contain' />
-                        <button className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-md">
-                            <span className="text-xl">🔍</span>
-                        </button>
+                    {/* Three.js 3D Preview Container */}
+                    <div className='bg-gray-900 rounded-lg p-8 ml-5 flex flex-col items-center justify-center min-h-[500px] relative'>
+                        {/* Three.js Canvas */}
+                        <div ref={threeCanvasRef} className='w-full h-full min-h-[500px] rounded-lg'>
+                            <Suspense fallback={
+                                <div className='w-full h-full flex items-center justify-center bg-gray-800 rounded-lg'>
+                                    <div className='text-center text-white'>
+                                        <div className='text-6xl mb-4'>⏳</div>
+                                        <p className='text-lg'>Loading 3D Model...</p>
+                                    </div>
+                                </div>
+                            }>
+                                <HangerScene
+                                    color={color}
+                                    hangerType={selectedHanger}
+                                    customText={customText}
+                                    textColor={textColor}
+                                    textPosition={textPosition}
+                                    textSize={textSize}
+                                    logoPreview={logoPreview}
+                                    logoPosition={logoPosition}
+                                    logoSize={logoSize}
+                                />
+                            </Suspense>
+                        </div>
+                        
+                        <p className='text-white text-xs mt-4 text-center'>Drag to rotate • Scroll to zoom • Right-click to pan</p>
                     </div>
 
                     {/* customization options */}
@@ -217,26 +537,223 @@ const Checkout = () => {
                         <div>
                             <h3 className='font-semibold mb-3'>Pick a Color</h3>
                             <div className='bg-white rounded-lg border p-4'>
-                                <div className='h-32 rounded mb-4' style={{ background: `linear-gradient(to bottom, ${color}, #000)` }}></div>
-                                <div className='flex items-center justify-between mb-4'>
-                                    <span className='text-sm'>Hex</span>
-                                    <input type="text"
+                                {/* Live Preview */}
+                                <div className='relative h-32 rounded-lg mb-4 overflow-hidden border-2' style={{ backgroundColor: color }}>
+                                    <div className='absolute inset-0 flex items-center justify-center'>
+                                        <div className='bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg'>
+                                            <span className='font-mono font-bold text-lg'>{color.toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Color Input Controls */}
+                                <div className='flex items-center gap-3 mb-4'>
+                                    <label className='text-sm font-medium'>Hex:</label>
+                                    <input 
+                                        type="text"
                                         value={color}
-                                        onChange={(e) => setColor(e.target.value)}
-                                        className='border rounded px-2 py-1 text-sm w-24'
+                                        onChange={(e) => updateThreeJsColor(e.target.value)}
+                                        className='flex-1 border-2 rounded-lg px-3 py-2 text-sm font-mono focus:border-indigo-600 focus:outline-none transition-colors'
+                                        placeholder='#4F46E5'
                                     />
-                                    <span className='text-sm'>Solid</span>
+                                    <input 
+                                        type="color"
+                                        value={color}
+                                        onChange={(e) => updateThreeJsColor(e.target.value)}
+                                        className='w-12 h-10 rounded-lg cursor-pointer border-2 border-gray-300 hover:border-indigo-600 transition-colors'
+                                        title='Pick a color'
+                                    />
                                 </div>
-                                <div className='grid grid-cols-6 gap-2'>
-                                    {colors.map(c => (
-                                        <button
-                                            key={c}
-                                            onClick={() => setColor(c)}
-                                            className='cursor-pointer w-8 h-8 rounded-full border-2 border-white shadow-md'
-                                            style={{ backgroundColor: c }}
+                                
+                                {/* Preset Colors Grid */}
+                                <div>
+                                    <label className='text-sm font-medium mb-2 block'>Quick Select:</label>
+                                    <div className='grid grid-cols-6 gap-2'>
+                                        {colors.map(c => (
+                                            <button
+                                                key={c}
+                                                onClick={() => updateThreeJsColor(c)}
+                                                className={`relative w-full aspect-square rounded-lg border-2 shadow-sm transition-all hover:scale-110 hover:shadow-md ${
+                                                    color === c 
+                                                        ? 'border-indigo-600 ring-2 ring-indigo-300 scale-105' 
+                                                        : 'border-gray-300 hover:border-indigo-400'
+                                                }`}
+                                                style={{ backgroundColor: c }}
+                                                title={c}
+                                            >
+                                                {color === c && (
+                                                    <div className='absolute inset-0 flex items-center justify-center'>
+                                                        <svg className='w-4 h-4 text-white drop-shadow-lg' fill='currentColor' viewBox='0 0 20 20'>
+                                                            <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Text */}
+                        <div>
+                            <h3 className='font-semibold mb-3'>Add Custom Text (Optional)</h3>
+                            <div className='bg-white rounded-lg border p-4 space-y-3'>
+                                <input
+                                    type='text'
+                                    value={customText}
+                                    onChange={(e) => setCustomText(e.target.value)}
+                                    placeholder='Enter text to display on hanger'
+                                    className='w-full border rounded px-3 py-2 text-sm'
+                                    maxLength={50}
+                                />
+                                <div className='flex gap-4'>
+                                    <div className='flex-1'>
+                                        <label className='text-xs text-gray-600'>Text Size</label>
+                                        <input
+                                            type='range'
+                                            min='0.5'
+                                            max='3'
+                                            step='0.1'
+                                            value={textSize}
+                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
+                                            className='w-full'
                                         />
-                                    ))}
+                                        <span className='text-xs'>{textSize.toFixed(1)}x</span>
+                                    </div>
                                 </div>
+                                <div>
+                                    <label className='text-xs text-gray-600 block mb-2'>Text Color</label>
+                                    <div className='flex items-center gap-3'>
+                                        <input
+                                            type='color'
+                                            value={textColor}
+                                            onChange={(e) => setTextColor(e.target.value)}
+                                            className='w-12 h-10 rounded cursor-pointer border'
+                                        />
+                                        <input
+                                            type='text'
+                                            value={textColor}
+                                            onChange={(e) => setTextColor(e.target.value)}
+                                            className='flex-1 border rounded px-3 py-2 text-sm font-mono'
+                                            placeholder='#000000'
+                                        />
+                                    </div>
+                                </div>
+                                <div className='grid grid-cols-3 gap-2 text-xs'>
+                                    <div>
+                                        <label className='text-gray-600'>X Position</label>
+                                        <input
+                                            type='number'
+                                            value={textPosition.x}
+                                            onChange={(e) => setTextPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
+                                            className='w-full border rounded px-2 py-1'
+                                            step='0.1'
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className='text-gray-600'>Y Position</label>
+                                        <input
+                                            type='number'
+                                            value={textPosition.y}
+                                            onChange={(e) => setTextPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
+                                            className='w-full border rounded px-2 py-1'
+                                            step='0.1'
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className='text-gray-600'>Z Position</label>
+                                        <input
+                                            type='number'
+                                            value={textPosition.z}
+                                            onChange={(e) => setTextPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
+                                            className='w-full border rounded px-2 py-1'
+                                            step='0.1'
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Logo */}
+                        <div>
+                            <h3 className='font-semibold mb-3'>Add Logo (Optional)</h3>
+                            <div className='bg-white rounded-lg border p-4 space-y-3'>
+                                <label className='flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition-colors'>
+                                    <ImageIcon size={20} />
+                                    <span className='text-sm'>{customLogo ? customLogo.name : 'Upload Logo (PNG, JPG, SVG)'}</span>
+                                    <input
+                                        type='file'
+                                        accept='image/png,image/jpeg,image/svg+xml'
+                                        onChange={handleLogoUpload}
+                                        className='hidden'
+                                    />
+                                </label>
+                                
+                                {logoPreview && (
+                                    <div className='flex items-center gap-3'>
+                                        <img src={logoPreview} alt='Logo preview' className='w-16 h-16 object-contain border rounded' />
+                                        <button
+                                            onClick={() => {
+                                                setCustomLogo(null);
+                                                setLogoPreview(null);
+                                            }}
+                                            className='text-red-600 text-sm hover:underline'
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+
+                                {customLogo && (
+                                    <>
+                                        <div className='flex-1'>
+                                            <label className='text-xs text-gray-600'>Logo Size</label>
+                                            <input
+                                                type='range'
+                                                min='0.5'
+                                                max='3'
+                                                step='0.1'
+                                                value={logoSize}
+                                                onChange={(e) => setLogoSize(parseFloat(e.target.value))}
+                                                className='w-full'
+                                            />
+                                            <span className='text-xs'>{logoSize.toFixed(1)}x</span>
+                                        </div>
+                                        <div className='grid grid-cols-3 gap-2 text-xs'>
+                                            <div>
+                                                <label className='text-gray-600'>X Position</label>
+                                                <input
+                                                    type='number'
+                                                    value={logoPosition.x}
+                                                    onChange={(e) => setLogoPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
+                                                    className='w-full border rounded px-2 py-1'
+                                                    step='0.1'
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className='text-gray-600'>Y Position</label>
+                                                <input
+                                                    type='number'
+                                                    value={logoPosition.y}
+                                                    onChange={(e) => setLogoPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
+                                                    className='w-full border rounded px-2 py-1'
+                                                    step='0.1'
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className='text-gray-600'>Z Position</label>
+                                                <input
+                                                    type='number'
+                                                    value={logoPosition.z}
+                                                    onChange={(e) => setLogoPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
+                                                    className='w-full border rounded px-2 py-1'
+                                                    step='0.1'
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -276,8 +793,13 @@ const Checkout = () => {
                         </div>
                         {/* action buttons */}
                         <div className='space-y-2'>
-                            <button className='w-full bg-[#ECBA0B] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer'>Download Preview</button>
-                            <button className='w-full bg-[#35408E] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer'>Save Design</button>
+                            <button className='w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
+                                <Download size={20} />
+                                Download Preview
+                            </button>
+                            <button className='w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
+                                Save Design
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -324,14 +846,19 @@ const Checkout = () => {
                         </div>
 
                         <div className='pt-4 border-t'>
-                            <label className='block font-semibold mb-2'> delivery Instruction</label>
-                            <textarea placeholder='Write a note...' className='w-full border rounded px-3 py-2 text-sm min-h-[80px]'></textarea>
+                            <label className='block font-semibold mb-2'>Delivery Instruction</label>
+                            <textarea 
+                                value={deliveryNotes}
+                                onChange={(e) => setDeliveryNotes(e.target.value)}
+                                placeholder='Write a note...' 
+                                className='w-full border rounded px-3 py-2 text-sm min-h-[80px]'
+                            ></textarea>
                         </div>
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <button
-                                className="cursor-pointer bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-4 px-12 rounded-lg text-lg"
-                                onClick={() => setShowModal(true)}
+                                className="cursor-pointer bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-4 px-12 rounded-lg text-lg transition-colors"
+                                onClick={handleSubmitOrder}
                             >
                                 Send for Evaluation
                             </button>
@@ -342,18 +869,29 @@ const Checkout = () => {
                 {/* Modal */}
                 {showModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
-                        <div className="bg-[#35408E] rounded-lg shadow-lg p-8 h-2/ text-center">
+                        <div className="bg-[#35408E] rounded-lg shadow-lg p-8 text-center max-w-md">
                             <img src={validationIcon} alt="Validation Icon" className="mx-auto mb-4 w-16 h-16" />
                             <h3 className="text-xl text-white font-semibold mb-4">Your order will be validated first</h3>
                             <p className="mb-6 text-white">We will maintain communication and provide updates as needed.</p>
-                            <Link to="/messages">
-                                <button
-                                    className="bg-[#ECBA0B] text-black px-15 py-2 rounded-lg font-semibold cursor-pointer"
-                                    onClick={() => setShowModal(false)}
-                                >
-                                    Go to messages
-                                </button>
-                            </Link>
+                            <p className="mb-6 text-white text-sm">Order Number: {companyName ? `ORD-${new Date().getFullYear()}...` : ''}</p>
+                            <div className='flex gap-3 justify-center'>
+                                <Link to="/order">
+                                    <button
+                                        className="bg-[#ECBA0B] text-black px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#d4a709] transition-colors"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        View My Orders
+                                    </button>
+                                </Link>
+                                <Link to="/messages">
+                                    <button
+                                        className="bg-white text-[#35408E] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        Go to Messages
+                                    </button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -426,11 +964,12 @@ const Checkout = () => {
                                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                                     <h4 className="font-semibold text-blue-800 mb-2">Important Notes:</h4>
                                     <ul className="text-blue-700 space-y-1 text-sm">
-                                        <li>• Minimum order quantity: -- pieces</li>
+                                        <li>• Minimum order quantity: 100 pieces</li>
                                         <li>• Material percentages should total 100%</li>
                                         <li>• All orders require validation before production</li>
                                         <li>• Production time varies based on complexity and quantity</li>
-                                        <li>• Custom designs may -- </li>
+                                        <li>• Custom designs may require additional review time</li>
+                                        <li>• Text and logo customizations available for all models</li>
                                     </ul>
                                 </div>
 
@@ -451,26 +990,33 @@ const Checkout = () => {
                     <h2 className='text-xl font-semibold mb-6'>My Address</h2>
 
                     <div className='space-y-4'>
-                        {addresses.map((addr, idx) => (
-                            <label key={idx} className='flex item-start gap-3 p-4 border-2 roudned-lg cursorpointer hover:bg-gray-50'>
-                                <input type="radio"
-                                    name='address'
-                                    checked={selectedAddress === idx}
-                                    onChange={() => setSelectedAddress(idx)}
-                                    className='mt-1'
-                                />
-                                <div className='flex-1'>
-                                    <div className='flex items-center gap-2 mb-1'>
-                                        <span className='font-semibold'>{addr.name}</span>
-                                        {addr.isDefault && (
-                                            <span className='bg-indigo-700 text-white text-xs px-2 py-0.5 rounded'>Defaualt</span>
-                                        )}
+                        {addresses.length > 0 ? (
+                            addresses.map((addr, idx) => (
+                                <label key={idx} className='flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50'>
+                                    <input type="radio"
+                                        name='address'
+                                        checked={selectedAddress === idx}
+                                        onChange={() => setSelectedAddress(idx)}
+                                        className='mt-1'
+                                    />
+                                    <div className='flex-1'>
+                                        <div className='flex items-center gap-2 mb-1'>
+                                            <span className='font-semibold'>{addr.name}</span>
+                                            {addr.isDefault && (
+                                                <span className='bg-indigo-700 text-white text-xs px-2 py-0.5 rounded'>Default</span>
+                                            )}
+                                        </div>
+                                        <p className='text-sm text-gray-600'>{addr.phone}</p>
+                                        <p className='text-sm text-gray-600'>{addr.address}</p>
                                     </div>
-                                    <p className='text-sm text-gray-600'>{addr.phone}</p>
-                                    <p className='text-sm text-gray-600'>{addr.address}</p>
-                                </div>
-                            </label>
-                        ))}
+                                </label>
+                            ))
+                        ) : (
+                            <div className='text-center py-8 text-gray-500'>
+                                <p className='mb-2'>No address found in your profile</p>
+                                <p className='text-sm'>Please update your company address in Account Settings</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
