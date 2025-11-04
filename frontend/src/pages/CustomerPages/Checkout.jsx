@@ -176,6 +176,23 @@ const Checkout = () => {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const userId = userData.userid || null;
 
+        // Prepare complete 3D design data for database storage and admin viewing
+        const threeDDesignData = {
+            hangerType: selectedHanger,
+            color: color,
+            customText: customText || null,
+            textColor: textColor,
+            textPosition: textPosition,
+            textSize: textSize,
+            logoFileName: customLogo ? customLogo.name : null,
+            logoPreview: logoPreview || null, // Base64 encoded image
+            logoPosition: logoPosition,
+            logoSize: logoSize,
+            materials: selectedMaterials,
+            quantity: quantity,
+            timestamp: new Date().toISOString()
+        };
+
         const orderData = {
             userid: userId,
             companyName,
@@ -189,12 +206,14 @@ const Checkout = () => {
             customDesignUrl: customDesignFile ? customDesignFile.name : null,
             selectedColor: color,
             customText: customText || null,
+            textColor: textColor,
             textPosition: customText ? textPosition : null,
             textSize: customText ? textSize : null,
             customLogo: customLogo ? customLogo.name : null,
             logoPosition: customLogo ? logoPosition : null,
             logoSize: customLogo ? logoSize : null,
-            deliveryNotes: deliveryNotes || null
+            deliveryNotes: deliveryNotes || null,
+            threeDDesignData: JSON.stringify(threeDDesignData) // Store complete design as JSON
         };
 
         try {
@@ -256,8 +275,11 @@ const Checkout = () => {
             existingOrders.unshift(localOrderData);
             localStorage.setItem('orders', JSON.stringify(existingOrders));
             
-            // Show success modal
+            // Show success modal and redirect to orders page after 2 seconds
             setShowModal(true);
+            setTimeout(() => {
+                navigate('/order');
+            }, 2000);
         } catch (error) {
             console.error('❌ Error creating order:', error);
             alert(`Failed to create order: ${error.message}`);

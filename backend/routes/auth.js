@@ -12,6 +12,8 @@ router.post("/signup", async (req, res) => {
   try {
     const { companyName, emailAddress, companyAddress, companyNumber, password } = req.body;
 
+    console.log("🔹 Signup attempt for:", emailAddress);
+
     // 1️⃣ Validate required fields
     if (!companyName || !emailAddress || !password) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -26,18 +28,23 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "Password must be at least 6 characters long." });
     }
 
-    // 4️⃣ Check if email already exists
+    // 4️⃣ Check if email already exists in customers table
     const { data: existingUser, error: findError } = await supabase
       .from("customers")
       .select("emailaddress")
       .eq("emailaddress", emailAddress)
       .maybeSingle();
 
-    if (findError) throw findError;
+    if (findError) {
+      console.error("Error checking existing user:", findError);
+      throw findError;
+    }
 
     if (existingUser) {
+      console.log("❌ Email already exists in customers table:", emailAddress);
       return res.status(400).json({ error: "Email is already registered." });
     }
+
     // 2️⃣ Hash the password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -48,25 +55,24 @@ router.post("/signup", async (req, res) => {
     });
 
     if (authError) {
-      console.error("Auth Error:", authError);
+      console.error("❌ Supabase Auth Error:", authError);
+      // If auth user already exists, check if it's in our customers table
+      if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
+        console.log("⚠️ Auth user exists but not in customers table - this shouldn't happen");
+      }
       return res.status(400).json({ error: authError.message });
     }
+
+    console.log("✅ Supabase Auth user created:", authData.user?.id);
 
     const userId = authData.user?.id;
     if (!userId) {
       return res.status(500).json({ error: "User creation failed, no user ID returned." });
     }
 
-    // Before inserting into customers
-const { data: newUser, error: userInsertError } = await supabase
-  .from('users')
-  .insert([{ id: sub }])
-  .single();
-
-if (userInsertError) throw userInsertError;
-
-
     // 4️⃣ Insert into your 'customers' table
+    console.log("📝 Attempting to insert customer:", { userId, emailAddress, companyName });
+    
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
       .insert([
@@ -86,9 +92,12 @@ if (userInsertError) throw userInsertError;
       .select();
 
     if (dbError) {
-      console.error("DB Insert Error:", dbError);
+      console.error("❌ DB Insert Error:", dbError);
+      console.error("❌ Error details:", JSON.stringify(dbError, null, 2));
       return res.status(400).json({ error: dbError.message });
     }
+
+    console.log("✅ Customer inserted successfully:", customerData[0]?.userid);
 
     // 5️⃣ Return success
     res.status(201).json({

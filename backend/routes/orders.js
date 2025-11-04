@@ -20,12 +20,14 @@ router.post("/create", async (req, res) => {
       customDesignUrl,
       selectedColor,
       customText,
+      textColor,
       textPosition,
       textSize,
       customLogo,
       logoPosition,
       logoSize,
-      deliveryNotes
+      deliveryNotes,
+      threeDDesignData // Complete 3D design JSON string
     } = req.body;
 
     // Validate required fields
@@ -55,12 +57,14 @@ router.post("/create", async (req, res) => {
           customdesignurl: customDesignUrl || null,
           selectedcolor: selectedColor || null,
           customtext: customText || null,
+          textcolor: textColor || '#000000',
           textposition: textPosition || null,
           textsize: textSize || null,
           customlogo: customLogo || null,
           logoposition: logoPosition || null,
           logosize: logoSize || null,
           deliverynotes: deliveryNotes || null,
+          threeddesigndata: threeDDesignData || null, // Store complete 3D design
           orderstatus: 'Pending',
           datecreated: new Date().toISOString()
         }
