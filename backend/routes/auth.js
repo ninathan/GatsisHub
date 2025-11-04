@@ -10,25 +10,45 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // 📝 Signup route
 router.post("/signup", async (req, res) => {
   try {
+    console.log("=" .repeat(50));
+    console.log("📥 SIGNUP REQUEST RECEIVED");
+    console.log("=" .repeat(50));
+    
     const { companyName, emailAddress, companyAddress, companyNumber, password } = req.body;
 
-    console.log("🔹 Signup attempt for:", emailAddress);
+    console.log("� Request body:", { 
+      companyName, 
+      emailAddress, 
+      companyAddress, 
+      companyNumber, 
+      passwordLength: password?.length 
+    });
 
     // 1️⃣ Validate required fields
     if (!companyName || !emailAddress || !password) {
+      console.log("❌ Missing required fields");
       return res.status(400).json({ error: "Missing required fields" });
     }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailAddress)) {
+      console.log("❌ Invalid email format:", emailAddress);
       return res.status(400).json({ error: "Invalid email format." });
     }
 
     // 3️⃣ Validate password strength
     if (password.length < 6) {
+      console.log("❌ Password too short");
       return res.status(400).json({ error: "Password must be at least 6 characters long." });
     }
 
+    console.log("✅ Validation passed");
+
+    console.log("✅ Validation passed");
+
     // 4️⃣ Check if email already exists in customers table
+    console.log("🔍 Checking if email exists in database...");
+    
     const { data: existingUser, error: findError } = await supabase
       .from("customers")
       .select("emailaddress")
@@ -36,36 +56,91 @@ router.post("/signup", async (req, res) => {
       .maybeSingle();
 
     if (findError) {
-      console.error("Error checking existing user:", findError);
-      throw findError;
+      console.error("❌ Error checking existing user:", findError);
+      return res.status(500).json({ error: "Database error: " + findError.message });
     }
 
     if (existingUser) {
       console.log("❌ Email already exists in customers table:", emailAddress);
-      return res.status(400).json({ error: "Email is already registered." });
+      return res.status(400).json({ error: "Email is already registered in our system." });
     }
 
+    console.log("✅ Email not found in customers table, proceeding...");
+
     // 2️⃣ Hash the password before storing
+    console.log("🔐 Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("✅ Password hashed");
 
     // 3️⃣ Create a Supabase Auth user
+    console.log("👤 Creating Supabase Auth user...");
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: emailAddress,
       password: password
     });
 
+    let userId;
+
     if (authError) {
       console.error("❌ Supabase Auth Error:", authError);
-      // If auth user already exists, check if it's in our customers table
-      if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
-        console.log("⚠️ Auth user exists but not in customers table - this shouldn't happen");
+      console.error("❌ Error message:", authError.message);
+      console.error("❌ Error status:", authError.status);
+      console.error("❌ Error code:", authError.code);
+      
+      // If auth user already exists, try to get their ID and add to customers table
+      if (authError.code === 'user_already_exists' || authError.message.includes("already")) {
+        console.log("⚠️ Auth user exists but not in customers table");
+        console.log("🔄 Attempting to sign in to get user ID...");
+        
+        // Try to sign in to get the user ID
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailAddress,
+          password: password
+        });
+        
+        if (signInError) {
+          console.error("❌ Cannot sign in with provided password:", signInError.message);
+          return res.status(400).json({ 
+            error: "This email is already registered. If you forgot your password, please use the password reset feature.",
+            code: "USER_EXISTS"
+          });
+        }
+        
+        userId = signInData.user?.id;
+        console.log("✅ Retrieved existing Auth user ID:", userId);
+        
+        if (!userId) {
+          return res.status(500).json({ error: "Could not retrieve user ID" });
+        }
+        
+        // Check one more time if they're in customers table
+        const { data: checkCustomer, error: checkError } = await supabase
+          .from("customers")
+          .select("userid")
+          .eq("userid", userId)
+          .maybeSingle();
+          
+        if (checkCustomer) {
+          console.log("ℹ️ User already exists in customers table");
+          return res.status(400).json({ 
+            error: "Account already exists. Please log in instead.",
+            code: "ACCOUNT_EXISTS"
+          });
+        }
+        
+        console.log("📝 Auth user exists but not in customers table - will add them now");
+      } else {
+        // Different error - return it
+        return res.status(400).json({ 
+          error: "Failed to create account: " + authError.message 
+        });
       }
-      return res.status(400).json({ error: authError.message });
+    } else {
+      userId = authData.user?.id;
+      console.log("✅ Supabase Auth user created:", userId);
+      console.log("📧 Auth user email:", authData.user?.email);
     }
 
-    console.log("✅ Supabase Auth user created:", authData.user?.id);
-
-    const userId = authData.user?.id;
     if (!userId) {
       return res.status(500).json({ error: "User creation failed, no user ID returned." });
     }
@@ -100,13 +175,26 @@ router.post("/signup", async (req, res) => {
     console.log("✅ Customer inserted successfully:", customerData[0]?.userid);
 
     // 5️⃣ Return success
+    console.log("🎉 Signup completed successfully!");
+    console.log("=" .repeat(50));
+    
     res.status(201).json({
       message: "Signup successful!",
       customer: customerData[0]
     });
   } catch (err) {
-    console.error("Signup Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("=" .repeat(50));
+    console.error("💥 SIGNUP ERROR CAUGHT");
+    console.error("=" .repeat(50));
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    console.error("=" .repeat(50));
+    
+    res.status(500).json({ 
+      error: "Server error: " + err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 
