@@ -10,6 +10,7 @@ import Homepage from './pages/CustomerPages/Home';
 import Product from './pages/CustomerPages/Product';
 import Order from './pages/CustomerPages/Order';
 import Checkout from './pages/CustomerPages/Checkout';
+import CreateDesign from './pages/CustomerPages/CreateDesign';
 import Login from './pages/CustomerPages/LoginPage';
 import Signup from './pages/CustomerPages/SignupPage';
 import NotFound from './pages/NotFound';
@@ -50,6 +51,7 @@ const router = createBrowserRouter(
         <Route path="/logged" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="/orders" element={<ProtectedRoute element={<Order />} />} />
         <Route path="/checkout" element={<ProtectedRoute element={<Checkout />} />} />
+        <Route path="/create-design" element={<ProtectedRoute element={<CreateDesign />} />} />
         <Route path="/messages" element={<ProtectedRoute element={<Messages />} />} />
         <Route path="/accountsetting" element={<ProtectedRoute element={<AccountSetting />} />} />
         <Route path="/payment" element={<ProtectedRoute element={<PaymentPage />} />} />

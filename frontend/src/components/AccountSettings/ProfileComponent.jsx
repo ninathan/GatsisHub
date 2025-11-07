@@ -746,7 +746,7 @@ const ProfileComponent = () => {
                                             <h3 className="text-xl font-semibold mb-2">No Saved Designs Yet</h3>
                                             <p className="text-gray-600 mb-6">Start creating custom hanger designs and save them here!</p>
                                             <a 
-                                                href="/product" 
+                                                href="/create-design" 
                                                 className="inline-block bg-[#35408E] text-white py-2 px-6 rounded hover:bg-[#2c3e50] transition-colors"
                                             >
                                                 Create Your First Design
@@ -828,7 +828,7 @@ const ProfileComponent = () => {
 
                                             {/* Add New Design Card */}
                                             <a 
-                                                href="/product"
+                                                href="/create-design"
                                                 className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-[360px] hover:border-[#35408E] transition-colors cursor-pointer"
                                             >
                                                 <div className="text-gray-400 text-4xl mb-4">+</div>
