@@ -19,6 +19,8 @@ const ProfileComponent = () => {
     const [companyAddress, setCompanyAddress] = useState('');
     const [savedDesigns, setSavedDesigns] = useState([]);
     const [loadingDesigns, setLoadingDesigns] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ type: '', message: '', onConfirm: null });
 
     useEffect(() => {
         if (user) {
@@ -56,23 +58,38 @@ const ProfileComponent = () => {
     };
 
     const handleDeleteDesign = async (designid) => {
-        if (!confirm('Are you sure you want to delete this design?')) return;
+        setModalConfig({
+            type: 'confirm',
+            message: 'Are you sure you want to delete this design? This action cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`https://gatsis-hub.vercel.app/designs/${designid}`, {
+                        method: 'DELETE'
+                    });
 
-        try {
-            const response = await fetch(`https://gatsis-hub.vercel.app/designs/${designid}`, {
-                method: 'DELETE'
-            });
+                    if (!response.ok) {
+                        throw new Error('Failed to delete design');
+                    }
 
-            if (!response.ok) {
-                throw new Error('Failed to delete design');
+                    setModalConfig({
+                        type: 'success',
+                        message: 'Design deleted successfully!',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+                    fetchSavedDesigns(); // Refresh the list
+                } catch (error) {
+                    console.error('❌ Error deleting design:', error);
+                    setModalConfig({
+                        type: 'error',
+                        message: 'Failed to delete design. Please try again.',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+                }
             }
-
-            alert('✅ Design deleted successfully!');
-            fetchSavedDesigns(); // Refresh the list
-        } catch (error) {
-            console.error('❌ Error deleting design:', error);
-            alert('Failed to delete design. Please try again.');
-        }
+        });
+        setShowModal(true);
     };
 
     const handleDuplicateDesign = (design) => {
@@ -90,7 +107,12 @@ const ProfileComponent = () => {
             });
         } catch (error) {
             console.error('❌ Error loading design:', error);
-            alert('Failed to load design. Please try again.');
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to load design. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
         }
     };
 
@@ -453,6 +475,65 @@ const ProfileComponent = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Component */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        {/* Modal Icon */}
+                        <div className="flex justify-center mb-4">
+                            {modalConfig.type === 'success' && (
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <span className="text-3xl">✓</span>
+                                </div>
+                            )}
+                            {modalConfig.type === 'error' && (
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                    <span className="text-3xl">✕</span>
+                                </div>
+                            )}
+                            {modalConfig.type === 'confirm' && (
+                                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                                    <span className="text-3xl">⚠</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Message */}
+                        <p className="text-center text-gray-700 mb-6">{modalConfig.message}</p>
+
+                        {/* Modal Buttons */}
+                        <div className="flex gap-3">
+                            {modalConfig.type === 'confirm' ? (
+                                <>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowModal(false);
+                                            if (modalConfig.onConfirm) modalConfig.onConfirm();
+                                        }}
+                                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                    >
+                                        Delete
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="flex-1 px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors"
+                                >
+                                    OK
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

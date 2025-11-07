@@ -55,6 +55,7 @@ const Checkout = () => {
     const [designName, setDesignName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
 
     // Form state
     const [companyName, setCompanyName] = useState('');
@@ -425,7 +426,11 @@ const Checkout = () => {
                         link.click();
                         document.body.removeChild(link);
                         URL.revokeObjectURL(url);
-                        alert('✅ Design downloaded successfully! (PNG + JSON files)');
+                        setNotificationModal({ 
+                            show: true, 
+                            type: 'success', 
+                            message: 'Design downloaded successfully! (PNG + JSON files)' 
+                        });
                     } else {
                         throw new Error('Failed to capture canvas');
                     }
@@ -440,12 +445,20 @@ const Checkout = () => {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                alert('✅ Design downloaded successfully! (PNG + JSON files)');
+                setNotificationModal({ 
+                    show: true, 
+                    type: 'success', 
+                    message: 'Design downloaded successfully! (PNG + JSON files)' 
+                });
             }
 
         } catch (error) {
             console.error('❌ Error downloading design:', error);
-            alert(`Failed to download design: ${error.message}`);
+            setNotificationModal({ 
+                show: true, 
+                type: 'error', 
+                message: `Failed to download design: ${error.message}` 
+            });
         } finally {
             setIsDownloading(false);
         }
@@ -454,7 +467,11 @@ const Checkout = () => {
     // Save design to database
     const handleSaveDesign = async () => {
         if (!user || !user.userid) {
-            alert('Please log in to save designs');
+            setNotificationModal({ 
+                show: true, 
+                type: 'error', 
+                message: 'Please log in to save designs' 
+            });
             return;
         }
 
@@ -464,7 +481,11 @@ const Checkout = () => {
 
     const confirmSaveDesign = async () => {
         if (!designName.trim()) {
-            alert('Please enter a name for your design');
+            setNotificationModal({ 
+                show: true, 
+                type: 'error', 
+                message: 'Please enter a name for your design' 
+            });
             return;
         }
 
@@ -615,18 +636,29 @@ const Checkout = () => {
             const result = await response.json();
             console.log('✅ Design saved:', result.design);
             
-            alert(`✅ Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.`);
             setSaveDesignModal(false);
             setDesignName('');
+            setNotificationModal({ 
+                show: true, 
+                type: 'success', 
+                message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.` 
+            });
         } catch (error) {
             console.error('❌ Error saving design:', error);
             
             // More detailed error message
+            let errorMessage = '';
             if (error.message.includes('Failed to fetch')) {
-                alert('⚠️ Cannot connect to server. The designs feature may not be deployed yet. Please:\n1. Make sure you ran the SQL update (designs_table_updates.sql)\n2. Push your code to GitHub to deploy the backend\n3. Try again after deployment completes');
+                errorMessage = 'Cannot connect to server. The designs feature may not be deployed yet. Please check that the SQL update was run and the backend is deployed.';
             } else {
-                alert(`Failed to save design: ${error.message}`);
+                errorMessage = `Failed to save design: ${error.message}`;
             }
+            
+            setNotificationModal({ 
+                show: true, 
+                type: 'error', 
+                message: errorMessage 
+            });
         } finally {
             setIsSaving(false);
         }
@@ -706,16 +738,22 @@ const Checkout = () => {
                 if (designData.logoSize) setLogoSize(designData.logoSize);
                 if (designData.materials) setSelectedMaterials(designData.materials);
                 
-                // Show success message
-                setTimeout(() => {
-                    alert(`✅ Design "${designData.designName || 'Untitled'}" loaded successfully! You can modify it and place an order.`);
-                }, 500);
+                // Show success message (without setTimeout to avoid doubling)
+                setNotificationModal({ 
+                    show: true, 
+                    type: 'success', 
+                    message: `Design "${designData.designName || 'Untitled'}" loaded successfully! You can modify it and place an order.` 
+                });
                 
                 // Clear the location state to prevent reloading on refresh
                 window.history.replaceState({}, document.title);
             } catch (error) {
                 console.error('❌ Error loading design data:', error);
-                alert('Failed to load design data. Please try again.');
+                setNotificationModal({ 
+                    show: true, 
+                    type: 'error', 
+                    message: 'Failed to load design data. Please try again.' 
+                });
             }
         }
     }, [location.state]);
@@ -1568,6 +1606,38 @@ const Checkout = () => {
                                 {isSaving ? 'Saving...' : 'Save Design'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Modal */}
+            {notificationModal.show && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        {/* Modal Icon */}
+                        <div className="flex justify-center mb-4">
+                            {notificationModal.type === 'success' && (
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <span className="text-3xl text-green-600">✓</span>
+                                </div>
+                            )}
+                            {notificationModal.type === 'error' && (
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                    <span className="text-3xl text-red-600">✕</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Message */}
+                        <p className="text-center text-gray-700 mb-6">{notificationModal.message}</p>
+
+                        {/* Modal Button */}
+                        <button
+                            onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                            className="w-full px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors"
+                        >
+                            OK
+                        </button>
                     </div>
                 </div>
             )}
