@@ -30,6 +30,12 @@ const Order = () => {
     const [notificationMessage, setNotificationMessage] = useState('');
     const [notificationType, setNotificationType] = useState('success'); // 'success' or 'error'
 
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [orderToRate, setOrderToRate] = useState(null);
+    const [rating, setRating] = useState(5);
+    const [reviewMessage, setReviewMessage] = useState('');
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed'];
 
     // Map tab names to their corresponding order statuses
@@ -176,6 +182,53 @@ const Order = () => {
     const closeNotificationModal = () => {
         setShowNotificationModal(false);
         setNotificationMessage('');
+    };
+
+    const openRatingModal = (order) => {
+        setOrderToRate(order);
+        setShowRatingModal(true);
+        setRating(5);
+        setReviewMessage('');
+    };
+
+    const closeRatingModal = () => {
+        setShowRatingModal(false);
+        setOrderToRate(null);
+        setRating(5);
+        setReviewMessage('');
+    };
+
+    const handleSubmitReview = async () => {
+        if (!orderToRate || !user) return;
+
+        setIsSubmittingReview(true);
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/feedbacks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerid: user.customerid,
+                    orderid: orderToRate.orderid,
+                    message: reviewMessage.trim() || 'Great service!',
+                    rating: rating
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to submit review');
+            }
+
+            closeRatingModal();
+            showNotification('Thank you for your review! Your feedback has been submitted successfully.');
+        } catch (err) {
+            console.error('Error submitting review:', err);
+            showNotification(err.message || 'Failed to submit review. Please try again.', 'error');
+        } finally {
+            setIsSubmittingReview(false);
+        }
     };
 
     const handleCancelOrder = async () => {
@@ -541,7 +594,10 @@ const Order = () => {
 
                                             {/* Rate - Only show when Completed */}
                                             {order.orderstatus === 'Completed' && (
-                                                <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold">
+                                                <button 
+                                                    onClick={() => openRatingModal(order)}
+                                                    className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                                                >
                                                     Rate
                                                 </button>
                                             )}
@@ -758,6 +814,120 @@ const Order = () => {
                                     </>
                                 ) : (
                                     'Yes, Cancel Order'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rating Modal */}
+            {showRatingModal && orderToRate && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-indigo-600 px-6 py-4">
+                            <h2 className="text-white text-2xl font-semibold">Rate Your Order</h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Order Info */}
+                            <div className="mb-6">
+                                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                                    <p className="text-sm font-semibold text-gray-800">
+                                        Order: ORD-{orderToRate.orderid.slice(0, 8).toUpperCase()}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        {orderToRate.hangertype} - {orderToRate.quantity}x
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Star Rating */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    How would you rate your experience?
+                                </label>
+                                <div className="flex gap-2 justify-center">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setRating(star)}
+                                            className="focus:outline-none transition-transform hover:scale-110"
+                                        >
+                                            <svg
+                                                className={`w-12 h-12 ${
+                                                    star <= rating
+                                                        ? 'text-yellow-400 fill-current'
+                                                        : 'text-gray-300'
+                                                }`}
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth="1"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                                />
+                                            </svg>
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-center text-sm text-gray-600 mt-2">
+                                    {rating === 1 && 'Poor'}
+                                    {rating === 2 && 'Fair'}
+                                    {rating === 3 && 'Good'}
+                                    {rating === 4 && 'Very Good'}
+                                    {rating === 5 && 'Excellent'}
+                                </p>
+                            </div>
+
+                            {/* Review Message */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Share your experience (optional):
+                                </label>
+                                <textarea
+                                    value={reviewMessage}
+                                    onChange={(e) => setReviewMessage(e.target.value)}
+                                    placeholder="Tell us about your experience with this order..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                    rows="4"
+                                />
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm text-blue-800">
+                                    💡 Your feedback helps us improve our service and assists other customers in making informed decisions.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={closeRatingModal}
+                                disabled={isSubmittingReview}
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmitReview}
+                                disabled={isSubmittingReview}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSubmittingReview ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    'Submit Review'
                                 )}
                             </button>
                         </div>
