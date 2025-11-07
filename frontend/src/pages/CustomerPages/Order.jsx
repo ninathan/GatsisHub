@@ -328,7 +328,11 @@ const Order = () => {
                                                 <h3 className="text-xl font-bold mb-2 mt-6">Delivery Address</h3>
                                                 <div className="text-sm mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                     {order.deliveryaddress ? (
-                                                        <p className="text-gray-700">{order.deliveryaddress}</p>
+                                                        <p className="text-gray-700">
+                                                            {typeof order.deliveryaddress === 'object' 
+                                                                ? order.deliveryaddress.address 
+                                                                : order.deliveryaddress}
+                                                        </p>
                                                     ) : (
                                                         <p className="text-gray-400 italic">No address provided</p>
                                                     )}

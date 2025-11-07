@@ -34,7 +34,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2 } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
@@ -370,7 +370,9 @@ const Checkout = () => {
                             percentage: `${percentage}%`,
                         })
                     ),
-                    deliveryAddress: addresses[selectedAddress],
+                    deliveryAddress: addresses.length > 0 && addresses[selectedAddress]?.address
+                        ? addresses[selectedAddress].address
+                        : `${companyName}, ${contactPhone}`,
                     notesAndInstruction: orderInstructions,
                     deliveryNotes: deliveryNotes,
                     designFile: customDesignFile ? customDesignFile.name : null,
@@ -736,10 +738,14 @@ const Checkout = () => {
                         console.log('✅ Addresses loaded from database:', customer.addresses);
                         
                         // Automatically select the default address
-                        const defaultAddress = customer.addresses.find(addr => addr.isDefault);
-                        if (defaultAddress) {
-                            setSelectedAddress(defaultAddress);
-                            console.log('✅ Default address selected:', defaultAddress);
+                        const defaultAddressIndex = customer.addresses.findIndex(addr => addr.isDefault);
+                        if (defaultAddressIndex !== -1) {
+                            setSelectedAddress(defaultAddressIndex);
+                            console.log('✅ Default address selected at index:', defaultAddressIndex, customer.addresses[defaultAddressIndex]);
+                        } else {
+                            // If no default, select the first address
+                            setSelectedAddress(0);
+                            console.log('✅ No default found, selected first address:', customer.addresses[0]);
                         }
                     } else {
                         console.log('⚠️ No addresses found in customer data');
@@ -1124,11 +1130,19 @@ const Checkout = () => {
                         </div>
                         {/* action buttons */}
                         <div className="space-y-2 mt-4">
-                            <button className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                            <button 
+                                onClick={handleDownloadDesign}
+                                disabled={isDownloading}
+                                className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 <Download size={20} />
-                                Download Preview
+                                {isDownloading ? 'Downloading...' : 'Download Preview'}
                             </button>
-                            <button className="w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                            <button 
+                                onClick={handleSaveDesign}
+                                className="w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                            >
+                                <Save size={20} />
                                 Save Design
                             </button>
                         </div>
