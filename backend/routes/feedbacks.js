@@ -81,7 +81,11 @@ router.post("/", async (req, res) => {
 
     if (error) {
       console.error("Error creating feedback:", error);
-      return res.status(500).json({ error: "Failed to create feedback" });
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      return res.status(500).json({ 
+        error: "Failed to create feedback",
+        details: error.message 
+      });
     }
 
     res.status(201).json({ 
