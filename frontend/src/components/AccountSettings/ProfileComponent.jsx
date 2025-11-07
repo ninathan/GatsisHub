@@ -82,7 +82,7 @@ const ProfileComponent = () => {
             console.log('🔄 Loading design into checkout:', designData);
             
             // Navigate to checkout with state
-            navigate('/product', { 
+            navigate('/checkout', { 
                 state: { 
                     loadDesign: true,
                     designData: designData 
