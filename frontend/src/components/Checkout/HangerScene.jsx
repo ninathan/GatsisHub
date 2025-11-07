@@ -119,6 +119,7 @@ export default function HangerScene({ color, hangerType, customText, textColor, 
         <Canvas
             camera={{ position: [0, 0, 8], fov: 20}}
             style={{ width: '100%', height: '100%', background: '#ffffff' }}
+            gl={{ preserveDrawingBuffer: true }}
         >
             <ambientLight intensity={0.7} />
             <directionalLight position={[5, 5, 5]} intensity={1} />

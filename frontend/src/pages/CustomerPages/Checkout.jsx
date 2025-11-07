@@ -363,7 +363,7 @@ const Checkout = () => {
         }
     };
 
-    // Download design as GLB file
+    // Download design as PNG + JSON
     const handleDownloadDesign = async () => {
         if (!threeCanvasRef.current) {
             alert('Please wait for the 3D model to load');
@@ -373,14 +373,18 @@ const Checkout = () => {
         setIsDownloading(true);
 
         try {
-            // Get the scene from the canvas
+            // Wait a moment for the canvas to fully render
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Get the canvas element
             const canvas = threeCanvasRef.current.querySelector('canvas');
             if (!canvas) {
-                throw new Error('Canvas not found');
+                throw new Error('Canvas not found. Make sure the 3D model is loaded.');
             }
 
-            // Create a simple JSON file with design data instead of GLB
-            // (GLB export requires capturing the actual Three.js scene which is complex)
+            console.log('📸 Canvas found:', canvas.width, 'x', canvas.height);
+
+            // Create design data JSON
             const designData = {
                 hangerType: selectedHanger,
                 color: color,
@@ -396,29 +400,51 @@ const Checkout = () => {
                 exportDate: new Date().toISOString()
             };
 
-            // For now, we'll download the design as a PNG screenshot + JSON data
-            // You can enhance this later with actual GLB export using GLTFExporter
-            
-            // Download as PNG
-            const dataUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `hanger-design-${selectedHanger}-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
-
-            // Also download JSON data
+            // Download JSON data first
             const jsonBlob = new Blob([JSON.stringify(designData, null, 2)], { type: 'application/json' });
             const jsonUrl = URL.createObjectURL(jsonBlob);
             const jsonLink = document.createElement('a');
             jsonLink.download = `hanger-design-${selectedHanger}-${Date.now()}.json`;
             jsonLink.href = jsonUrl;
+            document.body.appendChild(jsonLink);
             jsonLink.click();
+            document.body.removeChild(jsonLink);
             URL.revokeObjectURL(jsonUrl);
 
-            alert('✅ Design downloaded successfully! (PNG + JSON files)');
+            // Try to capture the canvas as PNG
+            try {
+                // Use toBlob for better quality
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.download = `hanger-design-${selectedHanger}-${Date.now()}.png`;
+                        link.href = url;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        alert('✅ Design downloaded successfully! (PNG + JSON files)');
+                    } else {
+                        throw new Error('Failed to capture canvas');
+                    }
+                }, 'image/png');
+            } catch (pngError) {
+                console.warn('⚠️ PNG capture failed, trying alternative method:', pngError);
+                // Fallback to toDataURL
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = `hanger-design-${selectedHanger}-${Date.now()}.png`;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                alert('✅ Design downloaded successfully! (PNG + JSON files)');
+            }
+
         } catch (error) {
             console.error('❌ Error downloading design:', error);
-            alert('Failed to download design. Please try again.');
+            alert(`Failed to download design: ${error.message}`);
         } finally {
             setIsDownloading(false);
         }
@@ -459,42 +485,56 @@ const Checkout = () => {
                 dateSaved: new Date().toISOString()
             };
 
+            const payload = {
+                userid: user.userid,
+                customerid: user.customerid || null,
+                designName: designName,
+                hangerType: selectedHanger,
+                selectedColor: color,
+                customText: customText,
+                textColor: textColor,
+                textPosition: textPosition,
+                textSize: textSize,
+                logoPreview: logoPreview,
+                logoPosition: logoPosition,
+                logoSize: logoSize,
+                materials: selectedMaterials,
+                designData: JSON.stringify(designData)
+            };
+
+            console.log('💾 Saving design with payload:', payload);
+
             const response = await fetch('https://gatsis-hub.vercel.app/designs/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userid: user.userid,
-                    customerid: user.customerid || null,
-                    designName: designName,
-                    hangerType: selectedHanger,
-                    selectedColor: color,
-                    customText: customText,
-                    textColor: textColor,
-                    textPosition: textPosition,
-                    textSize: textSize,
-                    logoPreview: logoPreview,
-                    logoPosition: logoPosition,
-                    logoSize: logoSize,
-                    materials: selectedMaterials,
-                    designData: JSON.stringify(designData)
-                })
+                body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
+            console.log('📡 Response status:', response.status);
 
             if (!response.ok) {
-                throw new Error(result.error || 'Failed to save design');
+                const errorText = await response.text();
+                console.error('❌ Response error:', errorText);
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
 
+            const result = await response.json();
             console.log('✅ Design saved:', result.design);
+            
             alert(`✅ Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.`);
             setSaveDesignModal(false);
             setDesignName('');
         } catch (error) {
             console.error('❌ Error saving design:', error);
-            alert(`Failed to save design: ${error.message}`);
+            
+            // More detailed error message
+            if (error.message.includes('Failed to fetch')) {
+                alert('⚠️ Cannot connect to server. The designs feature may not be deployed yet. Please:\n1. Make sure you ran the SQL update (designs_table_updates.sql)\n2. Push your code to GitHub to deploy the backend\n3. Try again after deployment completes');
+            } else {
+                alert(`Failed to save design: ${error.message}`);
+            }
         } finally {
             setIsSaving(false);
         }
