@@ -79,7 +79,7 @@ function CustomText({ text, position, size, color }) {
 
     return (
         <Text
-            position={[position.x, position.y, position.z - 0.5]} // Default behind the model
+            position={[position.x, position.y, position.z - 0.01]} // Default behind the model
             fontSize={size * 0.1} // Much smaller text size
             color={color || 'black'}
             anchorX="center"
@@ -106,8 +106,8 @@ function CustomLogo({ logoUrl, position, size }) {
     if (!texture) return null;
 
     return (
-        <mesh position={[position.x, position.y, position.z + 0.5]}>
-            <planeGeometry args={[size * 0.5, size * 0.5]} />
+        <mesh position={[position.x, position.y + 0.07, position.z + 0.5 - 0.512]}>
+            <planeGeometry args={[size * 0.1, size * 0.1]} />
             <meshBasicMaterial map={texture} transparent={true} side={THREE.DoubleSide} />
         </mesh>
     );

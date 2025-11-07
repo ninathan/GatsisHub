@@ -27,8 +27,13 @@ router.post("/create", async (req, res) => {
       logoPosition,
       logoSize,
       deliveryNotes,
+      deliveryAddress, // Add delivery address field
       threeDDesignData // Complete 3D design JSON string
     } = req.body;
+
+    console.log('📦 Received order data');
+    console.log('📍 Delivery Address from request:', deliveryAddress);
+    console.log('📍 Full request body:', JSON.stringify(req.body, null, 2));
 
     // Validate required fields
     if (!companyName || !contactPerson || !contactPhone || !hangerType || !quantity) {
@@ -41,40 +46,50 @@ router.post("/create", async (req, res) => {
     }
 
     // Insert order into database
+    const insertData = {
+      userid: userid || null,
+      companyname: companyName,
+      contactperson: contactPerson,
+      contactphone: contactPhone,
+      hangertype: hangerType,
+      materialtype: materialType || null,
+      quantity: quantity,
+      materials: materials || {},
+      designoption: designOption || 'default',
+      customdesignurl: customDesignUrl || null,
+      selectedcolor: selectedColor || null,
+      customtext: customText || null,
+      textcolor: textColor || '#000000',
+      textposition: textPosition || null,
+      textsize: textSize || null,
+      customlogo: customLogo || null,
+      logoposition: logoPosition || null,
+      logosize: logoSize || null,
+      deliverynotes: deliveryNotes || null,
+      deliveryaddress: deliveryAddress || null, // Store delivery address
+      threeddesigndata: threeDDesignData || null, // Store complete 3D design
+      orderstatus: 'Pending',
+      datecreated: new Date().toISOString()
+    };
+
+    console.log('💾 About to insert into database:');
+    console.log('📍 deliveryaddress value:', insertData.deliveryaddress);
+    console.log('📦 Full insert data:', JSON.stringify(insertData, null, 2));
+
     const { data: order, error: insertError } = await supabase
       .from("orders")
-      .insert([
-        {
-          userid: userid || null,
-          companyname: companyName,
-          contactperson: contactPerson,
-          contactphone: contactPhone,
-          hangertype: hangerType,
-          materialtype: materialType || null,
-          quantity: quantity,
-          materials: materials || {},
-          designoption: designOption || 'default',
-          customdesignurl: customDesignUrl || null,
-          selectedcolor: selectedColor || null,
-          customtext: customText || null,
-          textcolor: textColor || '#000000',
-          textposition: textPosition || null,
-          textsize: textSize || null,
-          customlogo: customLogo || null,
-          logoposition: logoPosition || null,
-          logosize: logoSize || null,
-          deliverynotes: deliveryNotes || null,
-          threeddesigndata: threeDDesignData || null, // Store complete 3D design
-          orderstatus: 'Pending',
-          datecreated: new Date().toISOString()
-        }
-      ])
+      .insert([insertData])
       .select();
 
     if (insertError) {
-      console.error("DB Insert Error:", insertError);
+      console.error("❌ DB Insert Error:", insertError);
+      console.error("❌ Error details:", JSON.stringify(insertError, null, 2));
       return res.status(400).json({ error: insertError.message });
     }
+
+    console.log('✅ Order created successfully');
+    console.log('📍 Returned order data:', JSON.stringify(order[0], null, 2));
+    console.log('📍 Saved delivery address:', order[0].deliveryaddress);
 
     res.status(201).json({
       message: "Order created successfully!",
@@ -91,6 +106,8 @@ router.get("/user/:userid", async (req, res) => {
   try {
     const { userid } = req.params;
 
+    console.log('🔍 Fetching orders for user:', userid);
+
     const { data: orders, error } = await supabase
       .from("orders")
       .select("*")
@@ -98,6 +115,17 @@ router.get("/user/:userid", async (req, res) => {
       .order("datecreated", { ascending: false });
 
     if (error) throw error;
+
+    console.log('✅ Found', orders?.length || 0, 'orders');
+    if (orders && orders.length > 0) {
+      console.log('📍 First order deliveryaddress:', orders[0].deliveryaddress);
+      console.log('📦 First order sample:', JSON.stringify({
+        orderid: orders[0].orderid,
+        companyname: orders[0].companyname,
+        deliveryaddress: orders[0].deliveryaddress,
+        datecreated: orders[0].datecreated
+      }, null, 2));
+    }
 
     res.status(200).json({
       orders: orders || []
