@@ -11,9 +11,9 @@ const CreateDesign = () => {
 
     // 3D Design state
     const [selectedHanger, setSelectedHanger] = useState(null);
-    const [color, setColor] = useState('#4F46E5');
+    const [color, setColor] = useState('#A39F9F');
     const [customText, setCustomText] = useState('');
-    const [textColor, setTextColor] = useState('#000000');
+    const [textColor, setTextColor] = useState('#FFFFFF');
     const [customLogo, setCustomLogo] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
     const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
@@ -338,6 +338,293 @@ const CreateDesign = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* Fullscreen Modal with Sidebar */}
+            {isFullscreen && (
+                <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
+                    {/* Header */}
+                    <div className="flex justify-between items-center p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-white text-xl font-semibold">3D Design Studio</h3>
+                            <span className="text-yellow-400 text-sm">({selectedHanger})</span>
+                        </div>
+                        <button
+                            onClick={toggleFullscreen}
+                            className="text-white hover:bg-yellow-400 hover:text-[#353f94] p-2 rounded-lg transition-colors"
+                            title="Exit Fullscreen"
+                        >
+                            <Minimize2 size={24} />
+                        </button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 flex overflow-hidden">
+                        {/* 3D Canvas */}
+                        <div className="flex-1 relative bg-gradient-to-br from-[#4a5899] to-[#353f94]">
+                            {selectedHanger && (
+                                <HangerScene
+                                    hangerType={selectedHanger}
+                                    color={color}
+                                    customText={customText}
+                                    textColor={textColor}
+                                    logoPreview={logoPreview}
+                                    textPosition={textPosition}
+                                    logoPosition={logoPosition}
+                                    textSize={textSize}
+                                    logoSize={logoSize}
+                                    onTextPositionChange={setTextPosition}
+                                    onLogoPositionChange={setLogoPosition}
+                                />
+                            )}
+                        </div>
+
+                        {/* Customization Sidebar */}
+                        <div className="w-80 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-4 space-y-4 border-l-2 border-yellow-400">
+                            {/* Hanger Type */}
+                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Hanger Type</h4>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {hangers.map((hanger) => (
+                                        <button
+                                            key={hanger.id}
+                                            onClick={() => setSelectedHanger(hanger.id)}
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                                                selectedHanger === hanger.id
+                                                    ? 'bg-yellow-400 text-[#353f94]'
+                                                    : 'bg-[#4a5899] text-white hover:bg-yellow-400 hover:text-[#353f94]'
+                                            }`}
+                                        >
+                                            {hanger.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Color */}
+                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Color</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={color}
+                                            onChange={(e) => setColor(e.target.value)}
+                                            className="w-12 h-12 rounded cursor-pointer border-2 border-yellow-400"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={color}
+                                            onChange={(e) => setColor(e.target.value)}
+                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-6 gap-2">
+                                        {colors.map((col) => (
+                                            <button
+                                                key={col}
+                                                onClick={() => setColor(col)}
+                                                className="w-full aspect-square rounded border-2 border-[#4a5899] hover:border-yellow-400 transition-colors"
+                                                style={{ backgroundColor: col }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Custom Text */}
+                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Custom Text</h4>
+                                <input
+                                    type="text"
+                                    value={customText}
+                                    onChange={(e) => setCustomText(e.target.value)}
+                                    placeholder="Enter text"
+                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                />
+                                <div className="flex items-center gap-2 mb-2">
+                                    <label className="text-white text-xs">Color:</label>
+                                    <input
+                                        type="color"
+                                        value={textColor}
+                                        onChange={(e) => setTextColor(e.target.value)}
+                                        className="w-8 h-8 rounded cursor-pointer border-2 border-yellow-400"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-white text-xs">Position:</label>
+                                        <button
+                                            onClick={() => {
+                                                setTextPosition({ x: 0, y: 0, z: 0 });
+                                                setTextSize(0.5);
+                                            }}
+                                            className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
+                                        >
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white text-xs w-4">X:</span>
+                                            <input
+                                                type="range"
+                                                min="-1"
+                                                max="1"
+                                                step="0.01"
+                                                value={textPosition.x}
+                                                onChange={(e) => setTextPosition({...textPosition, x: parseFloat(e.target.value)})}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-white text-xs w-12">{textPosition.x.toFixed(1)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white text-xs w-4">Y:</span>
+                                            <input
+                                                type="range"
+                                                min="-1"
+                                                max="1"
+                                                step="0.01"
+                                                value={textPosition.y}
+                                                onChange={(e) => setTextPosition({...textPosition, y: parseFloat(e.target.value)})}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-white text-xs w-12">{textPosition.y.toFixed(1)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white text-xs w-4">Z:</span>
+                                            <input
+                                                type="range"
+                                                min="-1"
+                                                max="1"
+                                                step="0.01"
+                                                value={textPosition.z}
+                                                onChange={(e) => setTextPosition({...textPosition, z: parseFloat(e.target.value)})}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-white text-xs w-12">{textPosition.z.toFixed(1)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-white text-xs w-16">Size:</label>
+                                        <input
+                                            type="range"
+                                            min="0.1"
+                                            max="1"
+                                            step="0.01"
+                                            value={textSize}
+                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
+                                            className="flex-1"
+                                        />
+                                        <span className="text-white text-xs w-10">{textSize.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Logo */}
+                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Logo</h4>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoUpload}
+                                    className="w-full text-xs text-white file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-400 file:text-[#353f94] hover:file:bg-yellow-300 cursor-pointer"
+                                />
+                                {logoPreview && (
+                                    <div className="mt-2 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain border-2 border-yellow-400 rounded bg-white" />
+                                            <button
+                                                onClick={() => {
+                                                    setCustomLogo(null);
+                                                    setLogoPreview(null);
+                                                }}
+                                                className="text-red-400 hover:text-red-300 text-xs font-semibold"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-white text-xs">Position:</label>
+                                                <button
+                                                    onClick={() => {
+                                                        setLogoPosition({ x: 0, y: 0, z: 0 });
+                                                        setLogoSize(1);
+                                                    }}
+                                                    className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
+                                                >
+                                                    Reset to Default
+                                                </button>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white text-xs w-4">X:</span>
+                                                    <input
+                                                        type="range"
+                                                        min="-1"
+                                                        max="1"
+                                                        step="0.01"
+                                                        value={logoPosition.x}
+                                                        onChange={(e) => setLogoPosition({...logoPosition, x: parseFloat(e.target.value)})}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="text-white text-xs w-12">{logoPosition.x.toFixed(1)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white text-xs w-4">Y:</span>
+                                                    <input
+                                                        type="range"
+                                                        min="-1"
+                                                        max="1"
+                                                        step="0.01"
+                                                        value={logoPosition.y}
+                                                        onChange={(e) => setLogoPosition({...logoPosition, y: parseFloat(e.target.value)})}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="text-white text-xs w-12">{logoPosition.y.toFixed(1)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white text-xs w-4">Z:</span>
+                                                    <input
+                                                        type="range"
+                                                        min="-1"
+                                                        max="1"
+                                                        step="0.01"
+                                                        value={logoPosition.z}
+                                                        onChange={(e) => setLogoPosition({...logoPosition, z: parseFloat(e.target.value)})}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="text-white text-xs w-12">{logoPosition.z.toFixed(1)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-white text-xs w-16">Size:</label>
+                                                <input
+                                                    type="range"
+                                                    min="0.1"
+                                                    max="2"
+                                                    step="0.01"
+                                                    value={logoSize}
+                                                    onChange={(e) => setLogoSize(parseFloat(e.target.value))}
+                                                    className="flex-1"
+                                                />
+                                                <span className="text-white text-xs w-10">{logoSize.toFixed(1)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-4 bg-[#2c3575] backdrop-blur-sm text-center border-t-2 border-yellow-400">
+                        <p className="text-white text-sm">
+                            Click and drag to rotate • Scroll to zoom • Press ESC to exit
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Hanger Selection Modal - Shows First */}
             {showHangerSelection && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -426,8 +713,8 @@ const CreateDesign = () => {
                     <div className="max-w-7xl mx-auto px-4 py-6">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Panel - 3D Viewer */}
-                    <div className={`lg:col-span-2 ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-4' : ''}`}>
-                        <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: isFullscreen ? 'calc(100vh - 2rem)' : '600px' }}>
+                    <div className="lg:col-span-2">
+                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg shadow-lg overflow-hidden border-2 border-yellow-400" style={{ height: '600px' }}>
                             <div className="relative h-full">
                                 {/* 3D Canvas */}
                                 <div ref={threeCanvasRef} className="w-full h-full">
@@ -451,14 +738,14 @@ const CreateDesign = () => {
                                 {/* Fullscreen Toggle */}
                                 <button
                                     onClick={toggleFullscreen}
-                                    className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg transition-colors"
+                                    className="absolute top-4 right-4 p-2 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] rounded-lg shadow-lg transition-colors"
                                 >
-                                    {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                                    <Maximize2 size={20} />
                                 </button>
 
                                 {/* Info Overlay */}
-                                <div className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
-                                    <p>Click and drag to rotate • Scroll to zoom</p>
+                                <div className="absolute bottom-4 left-4 bg-[#2c3575]/90 text-white px-4 py-2 rounded-lg text-sm border border-yellow-400">
+                                    <p className="font-semibold">Click and drag to rotate • Scroll to zoom</p>
                                 </div>
                             </div>
                         </div>
@@ -773,12 +1060,29 @@ const CreateDesign = () => {
                             )}
                         </div>
                         <p className="text-center text-gray-700 mb-6">{notificationModal.message}</p>
-                        <button
-                            onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                            className="w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
-                        >
-                            Close
-                        </button>
+                        {notificationModal.message.includes('log in') ? (
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
+                                >
+                                    Login
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                                className="w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
+                            >
+                                Close
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

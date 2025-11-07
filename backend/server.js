@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import ordersRoutes from "./routes/orders.js";
 import designsRoutes from "./routes/designs.js";
+import feedbacksRoutes from "./routes/feedbacks.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(
 app.use("/auth", authRoutes);
 app.use("/orders", ordersRoutes);
 app.use("/designs", designsRoutes);
+app.use("/feedbacks", feedbacksRoutes);
 
 // Health check
 app.get("/", (req, res) => {

@@ -66,6 +66,7 @@ const Navbar = () => {
           <div className="flex space-x-6 items-center">
             <NavLink to="/" className={linkClass} onClick={homeTop}>Home</NavLink>
             <NavLink to="/products" className={linkClass}>Products</NavLink>
+            <NavLink to="/create-design" className={linkClass}>Design</NavLink>
             <NavLink to="/orders" className={linkClass}>Orders</NavLink>
 
             {!user ? (
@@ -179,6 +180,7 @@ const Navbar = () => {
         <div className="mt-5 border-t-2 border-white">
           <NavLink to="/" className={mobileLinkClass} onClick={homeTop}>Home</NavLink>
           <NavLink to="/products" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Products</NavLink>
+          <NavLink to="/create-design" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Design</NavLink>
           <NavLink to="/orders" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Orders</NavLink>
 
           {!user ? (

@@ -7,3 +7,5 @@ DESIGN_SAVE_DOWNLOAD_GUIDE.md
 DATABASE_SCHEMA_REFERENCE.md
 backend/routes/auth.js
 add_addresses_column.sql
+add_feedbacks_timestamp.sql
+REVIEW_SYSTEM_IMPLEMENTATION.md

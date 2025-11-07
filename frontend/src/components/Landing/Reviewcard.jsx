@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Star, User } from 'lucide-react';
 
 const ReviewCard = ({ avatar, name, date, message, big = false }) => {
     return (
@@ -13,7 +13,13 @@ const ReviewCard = ({ avatar, name, date, message, big = false }) => {
             <div className="flex items-center justify-between mb-4">
                 {/* Avatar and user info */}
                 <div className="flex items-center gap-3">
-                    <img src={avatar} alt={name} className="w-10 h-10 rounded-full" />
+                    {avatar ? (
+                        <img src={avatar} alt={name} className="w-10 h-10 rounded-full" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#353f94] flex items-center justify-center">
+                            <User size={20} className="text-white" />
+                        </div>
+                    )}
                     <div className="flex flex-col">
                         <span className="text-base font-semibold">{name}</span>
                         <span className="text-sm text-gray-500">{date}</span>

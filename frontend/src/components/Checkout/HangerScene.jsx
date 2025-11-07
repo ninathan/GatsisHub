@@ -117,7 +117,7 @@ function CustomLogo({ logoUrl, position, size }) {
 export default function HangerScene({ color, hangerType, customText, textColor, textPosition, textSize, logoPreview, logoPosition, logoSize }) {
     return (
         <Canvas
-            camera={{ position: [0, 0, 8], fov: 20}}
+            camera={{ position: [0, 0, 2.5], fov: 25}}
             style={{ width: '100%', height: '100%', background: '#ffffff' }}
             gl={{ preserveDrawingBuffer: true }}
         >

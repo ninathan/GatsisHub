@@ -48,12 +48,12 @@ const router = createBrowserRouter(
       <Route element={<AppLayout />}>
         <Route path="/" element={<Homepage />} />
         <Route path="/products" element={<Product />} />
+        <Route path="/create-design" element={<CreateDesign />} />
 
         {/* Protected user routes */}
         <Route path="/logged" element={<ProtectedRoute element={<Profile />} />} />
         <Route path="/orders" element={<ProtectedRoute element={<Order />} />} />
         <Route path="/checkout" element={<ProtectedRoute element={<Checkout />} />} />
-        <Route path="/create-design" element={<ProtectedRoute element={<CreateDesign />} />} />
         <Route path="/messages" element={<ProtectedRoute element={<Messages />} />} />
         <Route path="/accountsetting" element={<ProtectedRoute element={<AccountSetting />} />} />
         <Route path="/payment" element={<ProtectedRoute element={<PaymentPage />} />} />

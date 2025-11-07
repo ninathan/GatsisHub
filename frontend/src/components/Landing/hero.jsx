@@ -22,9 +22,14 @@ const Hero = () => {
                         A beautiful dress may turn heads, but a quality hanger<br />
                         holds the story behind its grace.
                     </p>
-                    <Link to="/Checkout" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer text-black text-3xl font-light py-4 px-8 rounded-full transition duration-300">
-                        Order Now
-                    </Link>
+                    <div className="flex gap-4">
+                        <Link to="/checkout" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer text-black text-3xl font-light py-4 px-8 rounded-full transition duration-300">
+                            Order Now
+                        </Link>
+                        <Link to="/create-design" className="bg-[#353f94] hover:bg-[#2a3270] cursor-pointer text-white text-3xl font-light py-4 px-8 rounded-full transition duration-300">
+                            Design Now
+                        </Link>
+                    </div>
                 </div>
             </div>
             {/* Bottom Section with Explore Arrow */}
