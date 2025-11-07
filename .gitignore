@@ -9,3 +9,5 @@ backend/routes/auth.js
 add_addresses_column.sql
 add_feedbacks_timestamp.sql
 REVIEW_SYSTEM_IMPLEMENTATION.md
+add_feedback_rating.sql
+fix_feedback_orderid_type.sql

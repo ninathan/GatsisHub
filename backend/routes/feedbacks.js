@@ -13,6 +13,7 @@ router.get("/", async (req, res) => {
         feedbackid,
         orderid,
         message,
+        rating,
         created_at,
         customers (
           companyname,
@@ -36,12 +37,15 @@ router.get("/", async (req, res) => {
 // POST a new feedback
 router.post("/", async (req, res) => {
   try {
-    const { customerid, orderid, message } = req.body;
+    const { customerid, orderid, message, rating } = req.body;
 
     // Validate required fields
     if (!customerid || !message || message.trim() === "") {
       return res.status(400).json({ error: "Customer ID and message are required" });
     }
+
+    // Validate rating (1-5)
+    const validRating = rating && rating >= 1 && rating <= 5 ? rating : 5;
 
     // If orderid is provided, verify it belongs to the customer
     if (orderid) {
@@ -74,7 +78,8 @@ router.post("/", async (req, res) => {
         {
           customerid,
           orderid: orderid || null,
-          message: message.trim()
+          message: message.trim(),
+          rating: validRating
         }
       ])
       .select();

@@ -1,6 +1,6 @@
 import { Star, User } from 'lucide-react';
 
-const ReviewCard = ({ avatar, name, date, message, big = false }) => {
+const ReviewCard = ({ avatar, name, date, message, rating = 5, big = false }) => {
     return (
         // Card container with dynamic height based on 'big' prop
         // 'big' prop determines if the card is tall or short
@@ -30,16 +30,19 @@ const ReviewCard = ({ avatar, name, date, message, big = false }) => {
                     {Array(5)
                         .fill()
                         .map((_, i) => (
-                            <Star key={i} size={18} fill="currentColor" />
+                            <Star 
+                                key={i} 
+                                size={18} 
+                                fill={i < rating ? "currentColor" : "none"}
+                                stroke={i < rating ? "currentColor" : "currentColor"}
+                                className={i < rating ? "text-yellow-400" : "text-gray-300"}
+                            />
                         ))}
                 </div>
             </div>
-            <p className="text-base text-gray-700 line-clamp-5">
+            <p className="text-base text-gray-700">
                 {message}
             </p>
-            <a href="" className="text-sm text-blue-600 mt-4 hover:underline self-end">
-                Read More
-            </a>
         </div>
     );
 };
