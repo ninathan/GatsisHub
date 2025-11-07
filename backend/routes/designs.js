@@ -20,10 +20,11 @@ router.post('/save', async (req, res) => {
       logoPosition,
       logoSize,
       materials,
+      thumbnail, // Add thumbnail parameter
       designData // Complete 3D design JSON string
     } = req.body;
 
-    console.log('💾 Saving design:', { customerid, userid, designName, hangerType });
+    console.log('💾 Saving design:', { customerid, userid, designName, hangerType, hasThumbnail: !!thumbnail });
 
     // Prepare the design data object
     const designDataObject = {
@@ -38,19 +39,20 @@ router.post('/save', async (req, res) => {
       logoSize,
       materials,
       designName,
+      thumbnail, // Include thumbnail in design data
       dateSaved: new Date().toISOString()
     };
 
     const insertData = {
       customerid: customerid || null,
       orderid: null, // No order ID for saved designs
-      url: designData || JSON.stringify(designDataObject), // Store as JSON string
+      url: designData || JSON.stringify(designDataObject), // Store as JSON string with thumbnail
       designname: designName || `Design ${new Date().toLocaleDateString()}`,
       userid: userid || null,
       datecreated: new Date().toISOString()
     };
 
-    console.log('📦 Insert data:', insertData);
+    console.log('📦 Insert data:', { ...insertData, url: insertData.url ? '[JSON_DATA]' : null });
 
     const { data, error } = await supabase
       .from('designs')

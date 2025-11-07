@@ -470,6 +470,20 @@ const Checkout = () => {
         setIsSaving(true);
 
         try {
+            // Capture thumbnail from canvas
+            let thumbnailBase64 = null;
+            try {
+                await new Promise(resolve => setTimeout(resolve, 300)); // Wait for canvas to render
+                const canvas = threeCanvasRef.current?.querySelector('canvas');
+                if (canvas) {
+                    thumbnailBase64 = canvas.toDataURL('image/png', 0.8); // 80% quality for smaller size
+                    console.log('📸 Captured thumbnail');
+                }
+            } catch (thumbError) {
+                console.warn('⚠️ Could not capture thumbnail:', thumbError);
+                // Continue without thumbnail
+            }
+
             const designData = {
                 hangerType: selectedHanger,
                 color: color,
@@ -482,6 +496,7 @@ const Checkout = () => {
                 logoSize: logoSize,
                 materials: selectedMaterials,
                 designName: designName,
+                thumbnail: thumbnailBase64, // Add thumbnail to design data
                 dateSaved: new Date().toISOString()
             };
 
@@ -499,10 +514,11 @@ const Checkout = () => {
                 logoPosition: logoPosition,
                 logoSize: logoSize,
                 materials: selectedMaterials,
+                thumbnail: thumbnailBase64, // Include thumbnail
                 designData: JSON.stringify(designData)
             };
 
-            console.log('💾 Saving design with payload:', payload);
+            console.log('💾 Saving design with payload:', { ...payload, thumbnail: thumbnailBase64 ? '[BASE64_DATA]' : null });
 
             const response = await fetch('https://gatsis-hub.vercel.app/designs/save', {
                 method: 'POST',

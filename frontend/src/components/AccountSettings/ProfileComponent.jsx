@@ -288,17 +288,29 @@ const ProfileComponent = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {savedDesigns.map((design) => {
                                                 const designData = JSON.parse(design.url || '{}');
+                                                const hasThumbnail = designData.thumbnail;
+                                                
                                                 return (
                                                     <div key={design.designid} className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
                                                         {/* Design Preview */}
                                                         <div className="bg-gray-100 h-40 rounded-lg mb-4 flex flex-col items-center justify-center relative overflow-hidden">
-                                                            <span className="text-gray-500 text-5xl mb-2">🪝</span>
-                                                            {designData.color && (
-                                                                <div 
-                                                                    className="absolute bottom-2 right-2 w-8 h-8 rounded-full border-2 border-white shadow-md"
-                                                                    style={{ backgroundColor: designData.color }}
-                                                                    title={`Color: ${designData.color}`}
-                                                                ></div>
+                                                            {hasThumbnail ? (
+                                                                <img 
+                                                                    src={designData.thumbnail} 
+                                                                    alt={design.designname || 'Design preview'}
+                                                                    className="w-full h-full object-contain"
+                                                                />
+                                                            ) : (
+                                                                <>
+                                                                    <span className="text-gray-500 text-5xl mb-2">🪝</span>
+                                                                    {designData.color && (
+                                                                        <div 
+                                                                            className="absolute bottom-2 right-2 w-8 h-8 rounded-full border-2 border-white shadow-md"
+                                                                            style={{ backgroundColor: designData.color }}
+                                                                            title={`Color: ${designData.color}`}
+                                                                        ></div>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </div>
                                                         
