@@ -1251,9 +1251,7 @@ const Checkout = () => {
                                 placeholder='Type your instructions here...'
                                 className='w-full border rounded px-3 py-2 min-h-[100px] text-sm'
                             ></textarea>
-                            <div className='mt-4 text-center'>
-                                <p className='text-sm text-gray-600'>Note: Please download the order form and attach. <a href="/path/to/order-form.pdf" className="text-blue-500 underline">Download Order Form</a></p>
-                            </div>
+                            
                         </div>
                         {/* action buttons */}
                         <div className='space-y-2'>

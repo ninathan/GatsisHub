@@ -4,7 +4,7 @@ import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { a } from 'framer-motion/client';
-import supabase from '../../supabaseClient';
+import supabase from '../../../supabaseClient';
 
 
 const ProfileComponent = () => {
@@ -121,10 +121,10 @@ const ProfileComponent = () => {
     };
 
     useEffect(() => {
-        if (user) {
+        if (user?.userid) {
             fetchCustomerData();
         }
-    }, [user]);
+    }, [user?.userid]);
 
     const fetchCustomerData = async () => {
         if (!user?.userid) return;
@@ -136,7 +136,11 @@ const ProfileComponent = () => {
                 .eq('userid', user.userid)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching customer data:', error);
+                // Don't show error modal, just use default values from AuthContext
+                return;
+            }
 
             if (customer) {
                 // Set customer basic info
@@ -158,12 +162,7 @@ const ProfileComponent = () => {
             }
         } catch (error) {
             console.error('Error fetching customer data:', error);
-            setModalConfig({
-                type: 'error',
-                message: 'Failed to load customer data.',
-                onConfirm: null
-            });
-            setShowModal(true);
+            // Don't show modal on initial load failure
         }
     };
 
