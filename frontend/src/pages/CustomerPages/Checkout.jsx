@@ -694,20 +694,18 @@ const Checkout = () => {
                     setContactPerson(customer.companyname || ''); // You can add a separate contact person field in DB if needed
                     setContactPhone(customer.companynumber || '');
 
-                    // Set address from customer data
-                    if (customer.companyaddress) {
-                        const addressArray = [
-                            {
-                                name: customer.companyname,
-                                phone: customer.companynumber || '',
-                                address: customer.companyaddress,
-                                isDefault: true
-                            }
-                        ];
-                        setAddresses(addressArray);
-                        console.log('✅ Addresses set:', addressArray);
+                    // Load addresses from database (new JSONB column)
+                    if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
+                        setAddresses(customer.addresses);
+                        console.log('✅ Loaded addresses from database:', customer.addresses);
+                        
+                        // Set default address as selected
+                        const defaultIndex = customer.addresses.findIndex(addr => addr.isDefault);
+                        if (defaultIndex !== -1) {
+                            setSelectedAddress(defaultIndex);
+                        }
                     } else {
-                        console.log('⚠️ No company address found in customer data');
+                        console.log('⚠️ No addresses found. Please add an address in Account Settings.');
                     }
                 }
             } catch (error) {

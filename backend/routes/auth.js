@@ -14,12 +14,11 @@ router.post("/signup", async (req, res) => {
     console.log("📥 SIGNUP REQUEST RECEIVED");
     console.log("=" .repeat(50));
     
-    const { companyName, emailAddress, companyAddress, companyNumber, password } = req.body;
+    const { companyName, emailAddress, companyNumber, password } = req.body;
 
-    console.log("� Request body:", { 
+    console.log("📥 Request body:", { 
       companyName, 
       emailAddress, 
-      companyAddress, 
       companyNumber, 
       passwordLength: password?.length 
     });
@@ -156,9 +155,9 @@ router.post("/signup", async (req, res) => {
           google_id: null,
           companyname: companyName,
           emailaddress: emailAddress,
-          companyaddress: companyAddress || null,
           companynumber: companyNumber || null,
           password: hashedPassword,
+          addresses: [],
           datecreated: new Date().toISOString(),
           accountstatus: 'Active',
           profilePicture: null
@@ -230,8 +229,8 @@ router.post("/login", async (req, res) => {
         userid: user.userid,
         companyname: user.companyname,
         emailaddress: user.emailaddress,
-        companyaddress: user.companyaddress,
         companynumber: user.companynumber,
+        addresses: user.addresses || []
       },
     });
   } catch (err) {
@@ -288,9 +287,9 @@ router.post('/google', async (req, res) => {
           google_id: sub,
           companyname: name || "Google User",
           emailaddress: email,
-          companyaddress: null,
           companynumber: null,
           password: null,
+          addresses: [],
           datecreated: new Date().toISOString(),
           accountstatus: 'Active',
           profilePicture: picture || null

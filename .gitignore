@@ -5,3 +5,5 @@ view_database_schema.sql
 designs_table_updates.sql
 DESIGN_SAVE_DOWNLOAD_GUIDE.md
 DATABASE_SCHEMA_REFERENCE.md
+backend/routes/auth.js
+add_addresses_column.sql

@@ -16,7 +16,6 @@ const Signup = () => {
   // form data
   const [companyName, setCompanyName] = useState('')
   const [emailAddress, setEmailAddress] = useState('')
-  const [companyAddress, setCompanyAddress] = useState('')
   const [companyNumber, setCompanyNumber] = useState('')
   const [Password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -64,7 +63,6 @@ const Signup = () => {
         body: JSON.stringify({
           companyName,
           emailAddress,
-          companyAddress,
           companyNumber,
           password: Password,
         }),
@@ -119,19 +117,6 @@ const Signup = () => {
                     onChange={(e) => setEmailAddress(e.target.value)}
                     className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
                     placeholder='Enter your company email'
-                  />
-                </div>
-
-                {/* Office Address */}
-                <div className='relative'>
-                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Office Address</label>
-                  <img src={location} alt="" className='absolute left-3.5 top-15 md:top-15.5 w-5 h-6 md:w-6 md:h-7' />
-                  <input
-                    type="text"
-                    value={companyAddress}
-                    onChange={(e) => setCompanyAddress(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
-                    placeholder='Enter your Office Address'
                   />
                 </div>
 

@@ -10,14 +10,13 @@ import { supabase } from '../../../supabaseClient';
 const ProfileComponent = () => {
 
 
-    const { user } = useAuth();
+    const { user, login } = useAuth();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('Profile');
     const [companyName, setCompanyName] = useState('');
     const [companyEmail, setCompanyEmail] = useState('');
     const [companyNumber, setCompanyNumber] = useState('');
-    const [companyAddress, setCompanyAddress] = useState('');
     const [savedDesigns, setSavedDesigns] = useState([]);
     const [loadingDesigns, setLoadingDesigns] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -152,17 +151,14 @@ const ProfileComponent = () => {
                 setCompanyName(customer.companyname || '');
                 setCompanyEmail(customer.emailaddress || '');
                 setCompanyNumber(customer.companynumber || '');
-                setCompanyAddress(customer.companyaddress || '');
 
-                // Set address array
-                if (customer.companyaddress) {
-                    setAddresses([{
-                        id: customer.customerid,
-                        name: customer.companyname || '',
-                        phone: customer.companynumber || '',
-                        address: customer.companyaddress || '',
-                        isDefault: true
-                    }]);
+                // Load addresses from database
+                if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
+                    setAddresses(customer.addresses);
+                    console.log('✅ Loaded addresses from database:', customer.addresses);
+                } else {
+                    // No addresses yet - user can add them in the Addresses section
+                    console.log('⚠️ No addresses found, user can add new addresses');
                 }
             }
         } catch (error) {
@@ -194,12 +190,20 @@ const ProfileComponent = () => {
                 .update({
                     companyname: companyName,
                     emailaddress: companyEmail,
-                    companynumber: companyNumber,
-                    companyaddress: companyAddress
+                    companynumber: companyNumber
                 })
                 .eq('userid', user.userid);
 
             if (error) throw error;
+
+            // Update user in AuthContext and localStorage
+            const updatedUser = {
+                ...user,
+                companyname: companyName,
+                emailaddress: companyEmail,
+                companynumber: companyNumber
+            };
+            login(updatedUser);
 
             setIsEditing(false);
             setModalConfig({
@@ -231,7 +235,6 @@ const ProfileComponent = () => {
             setCompanyName(user.companyname || '');
             setCompanyEmail(user.emailaddress || '');
             setCompanyNumber(user.companynumber || '');
-            setCompanyAddress(user.companyaddress || '');
         }
         fetchCustomerData();
     };
@@ -265,15 +268,29 @@ const ProfileComponent = () => {
             };
 
             const updatedAddresses = [...addresses, newAddressEntry];
-            setAddresses(updatedAddresses);
+            
+            // Save addresses to database
+            const { error } = await supabase
+                .from('customers')
+                .update({ addresses: updatedAddresses })
+                .eq('userid', user.userid);
 
+            if (error) throw error;
+
+            setAddresses(updatedAddresses);
             setShowAddAddressModal(false);
+            
+            // Reset form
+            setNewAddress({ name: '', phone: '', address: '' });
+            
             setModalConfig({
                 type: 'success',
                 message: 'Address added successfully!',
                 onConfirm: null
             });
             setShowModal(true);
+            
+            console.log('✅ Address saved to database');
         } catch (error) {
             console.error('Error adding address:', error);
             setModalConfig({
@@ -287,18 +304,40 @@ const ProfileComponent = () => {
         }
     };
 
-    const handleDeleteAddress = (id) => {
+    const handleDeleteAddress = async (id) => {
         setModalConfig({
             type: 'confirm',
             message: 'Are you sure you want to delete this address?',
-            onConfirm: () => {
-                setAddresses(addresses.filter(addr => addr.id !== id));
-                setModalConfig({
-                    type: 'success',
-                    message: 'Address deleted successfully!',
-                    onConfirm: null
-                });
-                setShowModal(true);
+            onConfirm: async () => {
+                try {
+                    const updatedAddresses = addresses.filter(addr => addr.id !== id);
+                    
+                    // Save to database
+                    const { error } = await supabase
+                        .from('customers')
+                        .update({ addresses: updatedAddresses })
+                        .eq('userid', user.userid);
+
+                    if (error) throw error;
+
+                    setAddresses(updatedAddresses);
+                    setModalConfig({
+                        type: 'success',
+                        message: 'Address deleted successfully!',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+                    
+                    console.log('✅ Address deleted from database');
+                } catch (error) {
+                    console.error('Error deleting address:', error);
+                    setModalConfig({
+                        type: 'error',
+                        message: 'Failed to delete address. Please try again.',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+                }
             }
         });
         setShowModal(true);
@@ -318,11 +357,40 @@ const ProfileComponent = () => {
         }
     };
 
-    const handleSetDefault = (id) => {
-        setAddresses(addresses.map(addr => ({
-            ...addr,
-            isDefault: addr.id === id
-        })));
+    const handleSetDefault = async (id) => {
+        try {
+            const updatedAddresses = addresses.map(addr => ({
+                ...addr,
+                isDefault: addr.id === id
+            }));
+            
+            // Save to database
+            const { error } = await supabase
+                .from('customers')
+                .update({ addresses: updatedAddresses })
+                .eq('userid', user.userid);
+
+            if (error) throw error;
+
+            setAddresses(updatedAddresses);
+            
+            setModalConfig({
+                type: 'success',
+                message: 'Default address updated!',
+                onConfirm: null
+            });
+            setShowModal(true);
+            
+            console.log('✅ Default address updated in database');
+        } catch (error) {
+            console.error('Error setting default address:', error);
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to update default address.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        }
     };
 
     const handleChangePassword = async () => {
@@ -538,17 +606,6 @@ const ProfileComponent = () => {
                                                     value={companyNumber}
                                                     onChange={(e) => setCompanyNumber(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-semibold mb-2">Office Address</label>
-                                                <textarea
-                                                    value={companyAddress}
-                                                    onChange={(e) => setCompanyAddress(e.target.value)}
-                                                    disabled={!isEditing}
-                                                    rows={3}
                                                     className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
