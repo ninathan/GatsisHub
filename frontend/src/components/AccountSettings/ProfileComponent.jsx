@@ -93,7 +93,6 @@ const ProfileComponent = () => {
             alert('Failed to load design. Please try again.');
         }
     };
-    };
 
 
     const [addresses, setAddresses] = useState([
