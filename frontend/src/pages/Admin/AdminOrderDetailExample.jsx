@@ -86,9 +86,13 @@ const AdminOrderDetailExample = () => {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Status:</span>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    order.orderstatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.orderstatus === 'For Evaluation' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.orderstatus === 'Waiting for Payment' ? 'bg-orange-100 text-orange-800' :
                                     order.orderstatus === 'Approved' ? 'bg-green-100 text-green-800' :
                                     order.orderstatus === 'In Production' ? 'bg-blue-100 text-blue-800' :
+                                    order.orderstatus === 'Waiting for Shipment' ? 'bg-indigo-100 text-indigo-800' :
+                                    order.orderstatus === 'In Transit' ? 'bg-purple-100 text-purple-800' :
+                                    order.orderstatus === 'Completed' ? 'bg-green-100 text-green-800' :
                                     'bg-gray-100 text-gray-800'
                                 }`}>
                                     {order.orderstatus}
@@ -169,10 +173,12 @@ const AdminOrderDetailExample = () => {
                                 }
                             }}
                         >
-                            <option value="Pending">Pending</option>
                             <option value="For Evaluation">For Evaluation</option>
+                            <option value="Waiting for Payment">Waiting for Payment</option>
                             <option value="Approved">Approved</option>
                             <option value="In Production">In Production</option>
+                            <option value="Waiting for Shipment">Waiting for Shipment</option>
+                            <option value="In Transit">In Transit</option>
                             <option value="Completed">Completed</option>
                             <option value="Cancelled">Cancelled</option>
                         </select>

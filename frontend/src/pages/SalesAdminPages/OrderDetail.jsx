@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 
 
 const OrderDetail = () => {
-    const [orderStatus, setOrderStatus] = useState("Pending");
+    const [orderStatus, setOrderStatus] = useState("For Evaluation");
     const [validatedPrice, setValidatedPrice] = useState("");
     const [isEditingPrice, setIsEditingPrice] = useState(false);
 
@@ -96,15 +96,13 @@ const OrderDetail = () => {
                                 onChange={handleStatusChange}
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none"
                             >
-                                <option>Pending</option>
                                 <option>For Evaluation</option>
-                                <option>Ready for Payment</option>
+                                <option>Waiting for Payment</option>
                                 <option>Approved</option>
                                 <option>In Production</option>
-                                <option>Ready for Shipment</option>
-                                <option>Shipped</option>
+                                <option>Waiting for Shipment</option>
+                                <option>In Transit</option>
                                 <option>Completed</option>
-                                <option>Rejected</option>
                                 <option>Cancelled</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" size={16} />

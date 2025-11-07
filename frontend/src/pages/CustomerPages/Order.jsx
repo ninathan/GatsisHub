@@ -23,6 +23,17 @@ const Order = () => {
 
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed'];
 
+    // Map tab names to their corresponding order statuses
+    const getStatusesForTab = (tab) => {
+        const statusMap = {
+            'Pending': ['For Evaluation', 'Waiting for Payment'],
+            'Processing': ['Approved', 'In Production', 'Waiting for Shipment'],
+            'Shipped': ['In Transit'],
+            'Completed': ['Completed']
+        };
+        return statusMap[tab] || [];
+    };
+
     // Fetch orders when component mounts
     useEffect(() => {
         const fetchOrders = async () => {
@@ -59,10 +70,13 @@ const Order = () => {
     // Helper function to get status color
     const getStatusColor = (status) => {
         const statusColors = {
-            'Pending': 'bg-yellow-400',
-            'Processing': 'bg-blue-400',
-            'Shipped': 'bg-purple-400',
-            'Completed': 'bg-green-500',
+            'For Evaluation': 'bg-yellow-400',
+            'Waiting for Payment': 'bg-orange-400',
+            'Approved': 'bg-green-500',
+            'In Production': 'bg-blue-400',
+            'Waiting for Shipment': 'bg-indigo-400',
+            'In Transit': 'bg-purple-400',
+            'Completed': 'bg-green-600',
             'Cancelled': 'bg-red-500'
         };
         return statusColors[status] || 'bg-gray-400';
@@ -86,7 +100,12 @@ const Order = () => {
     // Filter orders based on active tab
     const filteredOrders = orders.filter(order => {
         if (activeTab === 'All Orders') return true;
-        return order.orderstatus === activeTab;
+        
+        // Get the statuses for the current tab
+        const tabStatuses = getStatusesForTab(activeTab);
+        
+        // Check if the order's status is in the current tab's statuses
+        return tabStatuses.includes(order.orderstatus);
     });
 
     const toggleExpand = (orderId) => {
@@ -390,7 +409,7 @@ const Order = () => {
                                                 <MessageCircle size={18} />
                                                 Contact Support
                                             </button>
-                                            {order.orderstatus === 'Pending' && (
+                                            {(order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment') && (
                                                 <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold">
                                                     Cancel Order
                                                 </button>

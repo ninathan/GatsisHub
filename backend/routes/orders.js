@@ -68,7 +68,7 @@ router.post("/create", async (req, res) => {
       deliverynotes: deliveryNotes || null,
       deliveryaddress: deliveryAddress || null, // Store delivery address
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
-      orderstatus: 'Pending',
+      orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()
     };
 
