@@ -272,6 +272,33 @@ const Checkout = () => {
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         const userId = userData.userid || null;
 
+        // Capture thumbnail from canvas before preparing order data
+        let thumbnailBase64 = null;
+        try {
+            await new Promise(resolve => setTimeout(resolve, 300)); // Wait for canvas to render
+            const canvas = threeCanvasRef.current?.querySelector('canvas');
+            if (canvas) {
+                const thumbnailCanvas = document.createElement('canvas');
+                const thumbnailSize = 400;
+                thumbnailCanvas.width = thumbnailSize;
+                thumbnailCanvas.height = thumbnailSize;
+                const ctx = thumbnailCanvas.getContext('2d');
+                
+                // Simple center crop
+                const sourceSize = Math.min(canvas.width, canvas.height);
+                const cropSize = sourceSize * 0.7;
+                const sourceX = (canvas.width - cropSize) / 2;
+                const sourceY = (canvas.height - cropSize) / 2;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
+                ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
+                thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.7);
+                console.log('📸 Captured order thumbnail');
+            }
+        } catch (thumbError) {
+            console.warn('⚠️ Could not capture thumbnail for order:', thumbError);
+        }
+
         // Prepare complete 3D design data for database storage and admin viewing
         const threeDDesignData = {
             hangerType: selectedHanger,
@@ -287,6 +314,7 @@ const Checkout = () => {
             materials: selectedMaterials,
             quantity: quantity,
             timestamp: new Date().toISOString(),
+            thumbnail: thumbnailBase64, // Add thumbnail for order preview
         };
 
         // Prepare order data

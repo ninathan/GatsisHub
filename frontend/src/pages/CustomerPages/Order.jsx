@@ -21,6 +21,11 @@ const Order = () => {
     const [showProofModal, setShowProofModal] = useState(false);
     const [proofImage, setProofImage] = useState(null);
 
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [orderToCancel, setOrderToCancel] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
+    const [isCancelling, setIsCancelling] = useState(false);
+
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed'];
 
     // Map tab names to their corresponding order statuses
@@ -54,6 +59,7 @@ const Order = () => {
                 const data = await response.json();
                 console.log('📦 Fetched orders:', data.orders);
                 console.log('📍 First order delivery address:', data.orders[0]?.deliveryaddress);
+                console.log('🎨 First order 3D design data:', data.orders[0]?.threeddesigndata);
                 setOrders(data.orders || []);
                 setError(null);
             } catch (err) {
@@ -108,6 +114,14 @@ const Order = () => {
         return tabStatuses.includes(order.orderstatus);
     });
 
+    // Helper function to determine if order is customized
+    const getOrderDescription = (order) => {
+        const hasCustomization = order.customtext || order.customlogo;
+        return hasCustomization 
+            ? `Customized ${order.hangertype}` 
+            : `Plain ${order.hangertype}`;
+    };
+
     const toggleExpand = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
     };
@@ -135,6 +149,52 @@ const Order = () => {
     const close3DModal = () => {
         setShow3DModal(false);
         setSelected3DDesign(null);
+    };
+
+    const openCancelModal = (order) => {
+        setOrderToCancel(order);
+        setShowCancelModal(true);
+        setCancelReason('');
+    };
+
+    const closeCancelModal = () => {
+        setShowCancelModal(false);
+        setOrderToCancel(null);
+        setCancelReason('');
+    };
+
+    const handleCancelOrder = async () => {
+        if (!orderToCancel) return;
+
+        setIsCancelling(true);
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderToCancel.orderid}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    reason: cancelReason || 'No reason provided'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to cancel order');
+            }
+
+            // Remove the cancelled order from the local state
+            setOrders(orders.filter(order => order.orderid !== orderToCancel.orderid));
+            
+            closeCancelModal();
+            
+            // Show success message (you can add a toast notification here if you have one)
+            alert('Order cancelled successfully');
+        } catch (err) {
+            console.error('Error cancelling order:', err);
+            alert('Failed to cancel order. Please try again or contact support.');
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
     if (loading) {
@@ -216,10 +276,31 @@ const Order = () => {
                                 <div className="grid grid-cols-12 gap-4 items-center mb-4">
                                     {/* Product Image & Name */}
                                     <div className="col-span-3 flex items-center gap-4">
-                                        <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white">
-                                            <span className="text-3xl">🪝</span>
+                                        <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden">
+                                            {(() => {
+                                                try {
+                                                    if (order.threeddesigndata) {
+                                                        const designData = typeof order.threeddesigndata === 'string' 
+                                                            ? JSON.parse(order.threeddesigndata) 
+                                                            : order.threeddesigndata;
+                                                        
+                                                        if (designData && designData.thumbnail) {
+                                                            return (
+                                                                <img 
+                                                                    src={designData.thumbnail} 
+                                                                    alt="Design preview"
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            );
+                                                        }
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Error parsing design data:', error);
+                                                }
+                                                return <span className="text-3xl">🪝</span>;
+                                            })()}
                                         </div>
-                                        <span className="font-medium">{order.companyname}</span>
+                                        <span className="font-medium">{getOrderDescription(order)}</span>
                                     </div>
 
                                     {/* Order Number */}
@@ -389,31 +470,51 @@ const Order = () => {
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex gap-3 mt-6">
-                                            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                <Download size={18} />
-                                                Download Invoice
-                                            </button>
-                                            <button
-                                                onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
-                                                className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold"
-                                            >
-                                                <FileText size={18} />
-                                                Proof of Payment
-                                            </button>
-                                            <Link to="/payment" className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                <CreditCard size={18} />
-                                                Payment
-                                            </Link>
+                                        <div className="flex gap-3 mt-6 flex-wrap">
+                                            {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
+                                            {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                    <Download size={18} />
+                                                    Download Invoice
+                                                </button>
+                                            )}
+
+                                            {/* View Proof of Payment - Only show in Processing phase */}
+                                            {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                <button
+                                                    onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
+                                                    className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                >
+                                                    <FileText size={18} />
+                                                    View Proof of Payment
+                                                </button>
+                                            )}
+
+                                            {/* Payment - Only show when Waiting for Payment */}
+                                            {order.orderstatus === 'Waiting for Payment' && (
+                                                <Link to="/payment" className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                    <CreditCard size={18} />
+                                                    Payment
+                                                </Link>
+                                            )}
+
+                                            {/* Contact Support - Always visible */}
                                             <button className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold">
                                                 <MessageCircle size={18} />
                                                 Contact Support
                                             </button>
+
+                                            {/* Cancel Order - Only show in For Evaluation or Waiting for Payment (before Processing) */}
                                             {(order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment') && (
-                                                <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold">
+                                                <button 
+                                                    onClick={() => openCancelModal(order)}
+                                                    className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold"
+                                                >
                                                     Cancel Order
                                                 </button>
                                             )}
+
+                                            {/* Rate - Only show when Completed */}
                                             {order.orderstatus === 'Completed' && (
                                                 <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold">
                                                     Rate
@@ -560,6 +661,79 @@ const Order = () => {
                                 className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cancel Order Modal */}
+            {showCancelModal && orderToCancel && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-red-600 px-6 py-4">
+                            <h2 className="text-white text-2xl font-semibold">Cancel Order</h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="mb-4">
+                                <p className="text-gray-700 mb-2">
+                                    Are you sure you want to cancel this order?
+                                </p>
+                                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                                    <p className="text-sm font-semibold text-gray-800">
+                                        Order: ORD-{orderToCancel.orderid.slice(0, 8).toUpperCase()}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        {orderToCancel.hangertype} - {orderToCancel.quantity}x
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Reason for cancellation (optional):
+                                </label>
+                                <textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    placeholder="Tell us why you're cancelling this order..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                    rows="4"
+                                />
+                            </div>
+
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                                <p className="text-sm text-yellow-800">
+                                    ⚠️ <strong>Warning:</strong> This action cannot be undone. The order will be permanently deleted from our system.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={closeCancelModal}
+                                disabled={isCancelling}
+                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Keep Order
+                            </button>
+                            <button
+                                onClick={handleCancelOrder}
+                                disabled={isCancelling}
+                                className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isCancelling ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Cancelling...
+                                    </>
+                                ) : (
+                                    'Yes, Cancel Order'
+                                )}
                             </button>
                         </div>
                     </div>

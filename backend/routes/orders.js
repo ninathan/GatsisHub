@@ -199,4 +199,56 @@ router.put("/:orderid/status", async (req, res) => {
   }
 });
 
+// 🗑️ Delete/Cancel order
+router.delete("/:orderid", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { reason } = req.body;
+
+    console.log(`🗑️ Cancelling order: ${orderid}`);
+    console.log(`📝 Cancellation reason: ${reason || 'No reason provided'}`);
+
+    // Verify order exists
+    const { data: existingOrder, error: fetchError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("orderid", orderid)
+      .single();
+
+    if (fetchError || !existingOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Check if order can be cancelled (only For Evaluation or Waiting for Payment)
+    const cancellableStatuses = ['For Evaluation', 'Waiting for Payment'];
+    if (!cancellableStatuses.includes(existingOrder.orderstatus)) {
+      return res.status(400).json({ 
+        error: "Order cannot be cancelled at this stage",
+        currentStatus: existingOrder.orderstatus 
+      });
+    }
+
+    // Delete the order
+    const { error: deleteError } = await supabase
+      .from("orders")
+      .delete()
+      .eq("orderid", orderid);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    console.log(`✅ Order ${orderid} cancelled successfully`);
+
+    res.status(200).json({ 
+      message: "Order cancelled successfully",
+      orderid: orderid,
+      reason: reason || 'No reason provided'
+    });
+  } catch (err) {
+    console.error("Delete Order Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
