@@ -25,6 +25,9 @@ const ProfileComponent = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [addresses, setAddresses] = useState([]);
+    const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+    const [newAddress, setNewAddress] = useState({ name: '', phone: '', address: '' });
+    const [isSavingAddress, setIsSavingAddress] = useState(false);
 
     // Fetch customer data when user is available
     useEffect(() => {
@@ -230,16 +233,85 @@ const ProfileComponent = () => {
     };
 
     const handleAddAddress = () => {
+        setNewAddress({ name: '', phone: '', address: '' });
+        setShowAddAddressModal(true);
+    };
+
+    const handleSaveNewAddress = async () => {
+        if (!newAddress.name.trim() || !newAddress.address.trim()) {
+            setModalConfig({
+                type: 'error',
+                message: 'Please fill in at least the name and address fields.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            return;
+        }
+
+        setIsSavingAddress(true);
+
+        try {
+            // Add new address to the addresses array
+            const newAddressEntry = {
+                id: Date.now(), // temporary ID
+                name: newAddress.name,
+                phone: newAddress.phone,
+                address: newAddress.address,
+                isDefault: addresses.length === 0 // First address is default
+            };
+
+            const updatedAddresses = [...addresses, newAddressEntry];
+            setAddresses(updatedAddresses);
+
+            setShowAddAddressModal(false);
+            setModalConfig({
+                type: 'success',
+                message: 'Address added successfully!',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } catch (error) {
+            console.error('Error adding address:', error);
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to add address. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } finally {
+            setIsSavingAddress(false);
+        }
+    };
+
+    const handleDeleteAddress = (id) => {
         setModalConfig({
-            type: 'error',
-            message: 'Address management coming soon!',
-            onConfirm: null
+            type: 'confirm',
+            message: 'Are you sure you want to delete this address?',
+            onConfirm: () => {
+                setAddresses(addresses.filter(addr => addr.id !== id));
+                setModalConfig({
+                    type: 'success',
+                    message: 'Address deleted successfully!',
+                    onConfirm: null
+                });
+                setShowModal(true);
+            }
         });
         setShowModal(true);
     };
 
     const handleEditAddress = (id) => {
-        console.log('Edit Address:', id);
+        const addressToEdit = addresses.find(addr => addr.id === id);
+        if (addressToEdit) {
+            setNewAddress({
+                name: addressToEdit.name,
+                phone: addressToEdit.phone,
+                address: addressToEdit.address
+            });
+            // Remove old address before editing
+            setAddresses(addresses.filter(addr => addr.id !== id));
+            setShowAddAddressModal(true);
+        }
     };
 
     const handleSetDefault = (id) => {
@@ -364,31 +436,75 @@ const ProfileComponent = () => {
 
                                     {/* Right Column - My Address */}
                                     <div>
-                                        <h2 className="text-xl font-bold mb-6">My Address</h2>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className="text-xl font-bold">My Addresses</h2>
+                                            <button
+                                                onClick={handleAddAddress}
+                                                className="bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-4 rounded text-sm transition-colors flex items-center gap-2"
+                                            >
+                                                <span className="text-lg">+</span>
+                                                Add Address
+                                            </button>
+                                        </div>
 
                                         <div className="space-y-4">
                                             {addresses.length === 0 ? (
                                                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                                                     <p className="text-gray-500 mb-4">No address saved yet</p>
-                                                    <p className="text-sm text-gray-400">Add your address in the profile form above</p>
+                                                    <button
+                                                        onClick={handleAddAddress}
+                                                        className="text-[#35408E] hover:text-[#2c3e50] font-medium"
+                                                    >
+                                                        + Add your first address
+                                                    </button>
                                                 </div>
                                             ) : (
-                                                addresses.map((address) => (
+                                                addresses.map((address, index) => (
                                                     <div
                                                         key={address.id}
-                                                        className="border-2 border-[#35408E] rounded-lg p-4 bg-blue-50"
+                                                        className={`border-2 rounded-lg p-4 ${
+                                                            address.isDefault 
+                                                                ? 'border-[#35408E] bg-blue-50' 
+                                                                : 'border-gray-300 bg-white'
+                                                        }`}
                                                     >
-                                                        <div className="flex items-start gap-3">
+                                                        <div className="flex items-start justify-between gap-3">
                                                             <div className="flex-1">
                                                                 <div className="flex items-center gap-2 mb-2">
-                                                                    <span className="text-xs bg-[#35408E] text-white px-2 py-1 rounded font-semibold">
-                                                                        DEFAULT ADDRESS
-                                                                    </span>
+                                                                    {address.isDefault && (
+                                                                        <span className="text-xs bg-[#35408E] text-white px-2 py-1 rounded font-semibold">
+                                                                            DEFAULT
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <p className="font-semibold mb-1">
                                                                     {address.name} {address.phone && `| ${address.phone}`}
                                                                 </p>
                                                                 <p className="text-sm text-gray-700 whitespace-pre-line">{address.address}</p>
+                                                                
+                                                                {/* Action Buttons */}
+                                                                <div className="flex gap-2 mt-3">
+                                                                    {!address.isDefault && (
+                                                                        <button
+                                                                            onClick={() => handleSetDefault(address.id)}
+                                                                            className="text-xs text-[#35408E] hover:text-[#2c3e50] font-medium"
+                                                                        >
+                                                                            Set as Default
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleEditAddress(address.id)}
+                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteAddress(address.id)}
+                                                                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -396,11 +512,13 @@ const ProfileComponent = () => {
                                             )}
 
                                             {/* Info Text */}
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                <p className="text-sm text-blue-800">
-                                                    <span className="font-semibold">💡 Tip:</span> Your company address is automatically used for deliveries. Edit your profile above to update it.
-                                                </p>
-                                            </div>
+                                            {addresses.length > 0 && (
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                    <p className="text-sm text-blue-800">
+                                                        <span className="font-semibold">💡 Tip:</span> Set a default address to be used automatically for deliveries.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -638,6 +756,66 @@ const ProfileComponent = () => {
                                     OK
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Address Modal */}
+            {showAddAddressModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-xl font-bold mb-4">Add New Address</h3>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">Name / Label *</label>
+                                <input
+                                    type="text"
+                                    value={newAddress.name}
+                                    onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
+                                    placeholder="e.g., Home, Office, Warehouse"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">Phone Number</label>
+                                <input
+                                    type="text"
+                                    value={newAddress.phone}
+                                    onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                                    placeholder="Contact number for this address"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">Full Address *</label>
+                                <textarea
+                                    value={newAddress.address}
+                                    onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                                    placeholder="Street, City, State, Postal Code"
+                                    rows={4}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setShowAddAddressModal(false)}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveNewAddress}
+                                disabled={isSavingAddress}
+                                className="flex-1 px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSavingAddress ? 'Saving...' : 'Save Address'}
+                            </button>
                         </div>
                     </div>
                 </div>
