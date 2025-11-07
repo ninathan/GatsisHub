@@ -227,6 +227,7 @@ router.post("/login", async (req, res) => {
       message: "Login successful!",
       user: {
         userid: user.userid,
+        customerid: user.customerid,
         companyname: user.companyname,
         emailaddress: user.emailaddress,
         companynumber: user.companynumber,
@@ -441,6 +442,29 @@ router.delete("/delete-account", async (req, res) => {
   } catch (err) {
     console.error("❌ Delete account error:", err.message);
     res.status(500).json({ error: "Server error while deleting account" });
+  }
+});
+
+// 🔍 Get customer by userid
+router.get("/customer/:userid", async (req, res) => {
+  try {
+    const { userid } = req.params;
+
+    const { data: customer, error } = await supabase
+      .from("customers")
+      .select("customerid, userid, companyname, emailaddress")
+      .eq("userid", userid)
+      .single();
+
+    if (error || !customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    res.status(200).json(customer);
+
+  } catch (err) {
+    console.error("❌ Get customer error:", err.message);
+    res.status(500).json({ error: "Server error while fetching customer" });
   }
 });
 

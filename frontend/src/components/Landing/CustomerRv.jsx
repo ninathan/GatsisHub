@@ -3,7 +3,7 @@ import ReviewCard from "./Reviewcard";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const CustomerRv = () => {
     const { user } = useAuth();
@@ -45,10 +45,15 @@ const CustomerRv = () => {
 
     const fetchUserOrders = async () => {
         try {
+            console.log('Fetching orders for user:', user.userid);
             const response = await fetch(`${API_BASE_URL}/orders/user/${user.userid}`);
+            console.log('Orders response status:', response.status);
+            
             if (!response.ok) throw new Error("Failed to fetch orders");
             
             const data = await response.json();
+            console.log('Orders data received:', data);
+            console.log('Number of orders:', data.orders?.length || 0);
             setUserOrders(data.orders || []);
         } catch (error) {
             console.error("Error fetching orders:", error);
@@ -87,16 +92,41 @@ const CustomerRv = () => {
             return;
         }
 
+        console.log('User object:', user);
+
         setSubmitting(true);
 
         try {
+            // If customerid is not in user object, fetch it from the customer data
+            let customerid = user.customerid;
+            
+            if (!customerid) {
+                console.log('Fetching customerid from API...');
+                const customerResponse = await fetch(`${API_BASE_URL}/auth/customer/${user.userid}`);
+                if (customerResponse.ok) {
+                    const customerData = await customerResponse.json();
+                    customerid = customerData.customerid;
+                    console.log('Retrieved customerid:', customerid);
+                }
+            }
+
+            if (!customerid) {
+                throw new Error("Unable to retrieve customer ID. Please log out and log back in.");
+            }
+
+            console.log('Submitting review with:', {
+                customerid,
+                orderid: selectedOrderId || null,
+                message: reviewMessage.trim()
+            });
+
             const response = await fetch(`${API_BASE_URL}/feedbacks`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    customerid: user.customerid,
+                    customerid,
                     orderid: selectedOrderId || null,
                     message: reviewMessage.trim()
                 })
