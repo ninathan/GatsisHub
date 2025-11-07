@@ -34,19 +34,26 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2 } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
+import { useAuth } from '../../context/AuthContext'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 
 
 const Checkout = () => {
     const navigate = useNavigate();
     const threeCanvasRef = useRef(null);
+    const { user } = useAuth();
 
     const [showModal, setShowModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [saveDesignModal, setSaveDesignModal] = useState(false);
+    const [designName, setDesignName] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Form state
     const [companyName, setCompanyName] = useState('');
@@ -353,6 +360,143 @@ const Checkout = () => {
         } catch (error) {
             console.error('❌ Error creating order:', error);
             alert(`Failed to create order: ${error.message}`);
+        }
+    };
+
+    // Download design as GLB file
+    const handleDownloadDesign = async () => {
+        if (!threeCanvasRef.current) {
+            alert('Please wait for the 3D model to load');
+            return;
+        }
+
+        setIsDownloading(true);
+
+        try {
+            // Get the scene from the canvas
+            const canvas = threeCanvasRef.current.querySelector('canvas');
+            if (!canvas) {
+                throw new Error('Canvas not found');
+            }
+
+            // Create a simple JSON file with design data instead of GLB
+            // (GLB export requires capturing the actual Three.js scene which is complex)
+            const designData = {
+                hangerType: selectedHanger,
+                color: color,
+                customText: customText || '',
+                textColor: textColor,
+                textPosition: textPosition,
+                textSize: textSize,
+                logoPreview: logoPreview || null,
+                logoPosition: logoPosition,
+                logoSize: logoSize,
+                materials: selectedMaterials,
+                quantity: quantity,
+                exportDate: new Date().toISOString()
+            };
+
+            // For now, we'll download the design as a PNG screenshot + JSON data
+            // You can enhance this later with actual GLB export using GLTFExporter
+            
+            // Download as PNG
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `hanger-design-${selectedHanger}-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            // Also download JSON data
+            const jsonBlob = new Blob([JSON.stringify(designData, null, 2)], { type: 'application/json' });
+            const jsonUrl = URL.createObjectURL(jsonBlob);
+            const jsonLink = document.createElement('a');
+            jsonLink.download = `hanger-design-${selectedHanger}-${Date.now()}.json`;
+            jsonLink.href = jsonUrl;
+            jsonLink.click();
+            URL.revokeObjectURL(jsonUrl);
+
+            alert('✅ Design downloaded successfully! (PNG + JSON files)');
+        } catch (error) {
+            console.error('❌ Error downloading design:', error);
+            alert('Failed to download design. Please try again.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    // Save design to database
+    const handleSaveDesign = async () => {
+        if (!user || !user.userid) {
+            alert('Please log in to save designs');
+            return;
+        }
+
+        // Open modal to get design name
+        setSaveDesignModal(true);
+    };
+
+    const confirmSaveDesign = async () => {
+        if (!designName.trim()) {
+            alert('Please enter a name for your design');
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            const designData = {
+                hangerType: selectedHanger,
+                color: color,
+                customText: customText || '',
+                textColor: textColor,
+                textPosition: textPosition,
+                textSize: textSize,
+                logoPreview: logoPreview || null,
+                logoPosition: logoPosition,
+                logoSize: logoSize,
+                materials: selectedMaterials,
+                designName: designName,
+                dateSaved: new Date().toISOString()
+            };
+
+            const response = await fetch('https://gatsis-hub.vercel.app/designs/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userid: user.userid,
+                    customerid: user.customerid || null,
+                    designName: designName,
+                    hangerType: selectedHanger,
+                    selectedColor: color,
+                    customText: customText,
+                    textColor: textColor,
+                    textPosition: textPosition,
+                    textSize: textSize,
+                    logoPreview: logoPreview,
+                    logoPosition: logoPosition,
+                    logoSize: logoSize,
+                    materials: selectedMaterials,
+                    designData: JSON.stringify(designData)
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to save design');
+            }
+
+            console.log('✅ Design saved:', result.design);
+            alert(`✅ Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.`);
+            setSaveDesignModal(false);
+            setDesignName('');
+        } catch (error) {
+            console.error('❌ Error saving design:', error);
+            alert(`Failed to save design: ${error.message}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -910,12 +1054,21 @@ const Checkout = () => {
                         </div>
                         {/* action buttons */}
                         <div className='space-y-2'>
-                            <button className='w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
+                            <button 
+                                onClick={handleDownloadDesign}
+                                disabled={isDownloading}
+                                className='w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            >
                                 <Download size={20} />
-                                Download Preview
+                                {isDownloading ? 'Downloading...' : 'Download Preview'}
                             </button>
-                            <button className='w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
-                                Save Design
+                            <button 
+                                onClick={handleSaveDesign}
+                                disabled={isSaving}
+                                className='w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            >
+                                <Save size={20} />
+                                {isSaving ? 'Saving...' : 'Save Design'}
                             </button>
                         </div>
                     </div>
@@ -1192,6 +1345,64 @@ const Checkout = () => {
                                 here
                             </button> to exit
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Save Design Modal */}
+            {saveDesignModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold">Save Design</h3>
+                            <button 
+                                onClick={() => setSaveDesignModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="mb-6">
+                            <label className="block text-sm font-semibold mb-2">Design Name</label>
+                            <input
+                                type="text"
+                                value={designName}
+                                onChange={(e) => setDesignName(e.target.value)}
+                                placeholder="e.g., Red MB7 with Logo"
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                            <h4 className="font-semibold mb-2 text-sm">Design Details:</h4>
+                            <div className="space-y-1 text-sm text-gray-600">
+                                <p>• Hanger: <span className="font-medium">{selectedHanger}</span></p>
+                                <p>• Color: <span className="inline-block w-4 h-4 rounded border" style={{ backgroundColor: color }}></span> {color}</p>
+                                {customText && <p>• Text: <span className="font-medium">"{customText}"</span></p>}
+                                {logoPreview && <p>• Logo: <span className="font-medium">✓ Included</span></p>}
+                                {Object.keys(selectedMaterials).length > 0 && (
+                                    <p>• Materials: <span className="font-medium">{Object.keys(selectedMaterials).join(', ')}</span></p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setSaveDesignModal(false)}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmSaveDesign}
+                                disabled={isSaving || !designName.trim()}
+                                className="flex-1 px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2d3575] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSaving ? 'Saving...' : 'Save Design'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

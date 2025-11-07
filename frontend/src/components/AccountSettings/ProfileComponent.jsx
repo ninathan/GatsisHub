@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState, useEffect } from 'react';
-import { User, ChevronDown } from 'lucide-react';
+import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { a } from 'framer-motion/client';
 
@@ -15,6 +15,8 @@ const ProfileComponent = () => {
     const [companyEmail, setCompanyEmail] = useState('');
     const [companyNumber, setCompanyNumber] = useState('');
     const [companyAddress, setCompanyAddress] = useState('');
+    const [savedDesigns, setSavedDesigns] = useState([]);
+    const [loadingDesigns, setLoadingDesigns] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -24,6 +26,59 @@ const ProfileComponent = () => {
             setCompanyAddress(user.companyaddress || '');
         }
     }, [user]);
+
+    // Fetch saved designs when Designs tab is active
+    useEffect(() => {
+        if (activeTab === 'Designs' && user?.userid) {
+            fetchSavedDesigns();
+        }
+    }, [activeTab, user]);
+
+    const fetchSavedDesigns = async () => {
+        if (!user?.userid) return;
+        
+        setLoadingDesigns(true);
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/designs/user/${user.userid}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch designs');
+            }
+            const data = await response.json();
+            setSavedDesigns(data);
+            console.log('✅ Loaded designs:', data);
+        } catch (error) {
+            console.error('❌ Error fetching designs:', error);
+        } finally {
+            setLoadingDesigns(false);
+        }
+    };
+
+    const handleDeleteDesign = async (designid) => {
+        if (!confirm('Are you sure you want to delete this design?')) return;
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/designs/${designid}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete design');
+            }
+
+            alert('✅ Design deleted successfully!');
+            fetchSavedDesigns(); // Refresh the list
+        } catch (error) {
+            console.error('❌ Error deleting design:', error);
+            alert('Failed to delete design. Please try again.');
+        }
+    };
+
+    const handleDuplicateDesign = (design) => {
+        // TODO: Implement duplicate functionality
+        // This could open the checkout page with the design pre-loaded
+        console.log('Duplicate design:', design);
+        alert('Duplicate feature coming soon!');
+    };
 
 
     const [addresses, setAddresses] = useState([
@@ -211,31 +266,97 @@ const ProfileComponent = () => {
                             {activeTab === 'Designs' && (
                                 <div>
                                     <h2 className="text-2xl font-bold mb-6">My Designs</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {/* Design Card Example */}
-                                        <div className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                            <div className="bg-gray-100 h-40 rounded-lg mb-4 flex items-center justify-center">
-                                                <span className="text-gray-500 text-4xl">🪝</span>
-                                            </div>
-                                            <h3 className="font-semibold mb-2">Custom Hanger Design 1</h3>
-                                            <p className="text-sm text-gray-600 mb-3">Created: May 26, 2025</p>
-                                            <div className="flex gap-2">
-                                                <button className="flex-1 bg-[#35408E] text-white py-2 px-4 rounded text-sm hover:bg-[#2c3e50] transition-colors">
-                                                    Edit
-                                                </button>
-                                                <button className="flex-1 border border-gray-300 py-2 px-4 rounded text-sm hover:bg-gray-50 transition-colors">
-                                                    Duplicate
-                                                </button>
-                                            </div>
+                                    
+                                    {loadingDesigns ? (
+                                        <div className="text-center py-12">
+                                            <div className="text-4xl mb-4">⏳</div>
+                                            <p className="text-gray-600">Loading your designs...</p>
                                         </div>
+                                    ) : savedDesigns.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <div className="text-6xl mb-4">🪝</div>
+                                            <h3 className="text-xl font-semibold mb-2">No Saved Designs Yet</h3>
+                                            <p className="text-gray-600 mb-6">Start creating custom hanger designs and save them here!</p>
+                                            <a 
+                                                href="/product" 
+                                                className="inline-block bg-[#35408E] text-white py-2 px-6 rounded hover:bg-[#2c3e50] transition-colors"
+                                            >
+                                                Create Your First Design
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {savedDesigns.map((design) => {
+                                                const designData = JSON.parse(design.url || '{}');
+                                                return (
+                                                    <div key={design.designid} className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                                        {/* Design Preview */}
+                                                        <div className="bg-gray-100 h-40 rounded-lg mb-4 flex flex-col items-center justify-center relative overflow-hidden">
+                                                            <span className="text-gray-500 text-5xl mb-2">🪝</span>
+                                                            {designData.color && (
+                                                                <div 
+                                                                    className="absolute bottom-2 right-2 w-8 h-8 rounded-full border-2 border-white shadow-md"
+                                                                    style={{ backgroundColor: designData.color }}
+                                                                    title={`Color: ${designData.color}`}
+                                                                ></div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Design Info */}
+                                                        <h3 className="font-semibold mb-1 truncate">{design.designname || 'Untitled Design'}</h3>
+                                                        <p className="text-xs text-gray-500 mb-2">
+                                                            {designData.hangerType && `Model: ${designData.hangerType}`}
+                                                        </p>
+                                                        <p className="text-xs text-gray-600 mb-3">
+                                                            Created: {new Date(design.datecreated).toLocaleDateString()}
+                                                        </p>
+                                                        
+                                                        {/* Design Details */}
+                                                        <div className="bg-gray-50 rounded p-2 mb-3 text-xs space-y-1">
+                                                            {designData.customText && (
+                                                                <p className="truncate">✓ Text: "{designData.customText}"</p>
+                                                            )}
+                                                            {designData.logoPreview && (
+                                                                <p>✓ Logo included</p>
+                                                            )}
+                                                            {designData.materials && Object.keys(designData.materials).length > 0 && (
+                                                                <p className="truncate">✓ {Object.keys(designData.materials).length} material(s)</p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Action Buttons */}
+                                                        <div className="flex gap-2">
+                                                            <button 
+                                                                onClick={() => handleDuplicateDesign(design)}
+                                                                className="flex-1 border border-[#35408E] text-[#35408E] py-2 px-3 rounded text-sm hover:bg-[#35408E] hover:text-white transition-colors flex items-center justify-center gap-1"
+                                                                title="Use this design"
+                                                            >
+                                                                <Copy size={14} />
+                                                                Use
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeleteDesign(design.designid)}
+                                                                className="border border-red-500 text-red-500 py-2 px-3 rounded text-sm hover:bg-red-500 hover:text-white transition-colors"
+                                                                title="Delete design"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
 
-                                        {/* Add New Design Card */}
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-60 hover:border-[#35408E] transition-colors cursor-pointer">
-                                            <div className="text-gray-400 text-4xl mb-4">+</div>
-                                            <h3 className="font-semibold text-gray-600 mb-2">Create New Design</h3>
-                                            <p className="text-sm text-gray-500 text-center">Start designing your custom hanger</p>
+                                            {/* Add New Design Card */}
+                                            <a 
+                                                href="/product"
+                                                className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-[360px] hover:border-[#35408E] transition-colors cursor-pointer"
+                                            >
+                                                <div className="text-gray-400 text-4xl mb-4">+</div>
+                                                <h3 className="font-semibold text-gray-600 mb-2">Create New Design</h3>
+                                                <p className="text-sm text-gray-500 text-center">Start designing your custom hanger</p>
+                                            </a>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
