@@ -4,7 +4,7 @@ import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { a } from 'framer-motion/client';
-import supabase from '../../../supabaseClient';
+import { supabase } from '../../../supabaseClient';
 
 
 const ProfileComponent = () => {
