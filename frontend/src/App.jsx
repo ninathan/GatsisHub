@@ -13,6 +13,8 @@ import Checkout from './pages/CustomerPages/Checkout';
 import CreateDesign from './pages/CustomerPages/CreateDesign';
 import Login from './pages/CustomerPages/LoginPage';
 import Signup from './pages/CustomerPages/SignupPage';
+import ForgotPassword from './pages/ForgotPassword/fogotpassword';
+import ChangePassword from './pages/ForgotPassword/changepassword';
 import NotFound from './pages/NotFound';
 import Messages from './pages/CustomerPages/messages';
 import Profile from './pages/CustomerPages/Logged';
@@ -65,6 +67,8 @@ const router = createBrowserRouter(
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgotpassword" element={<ForgotPassword />} />
+        <Route path="/changepassword" element={<ChangePassword />} />
       </Route>
 
       {/*  Sales Admin layout */}

@@ -125,7 +125,7 @@ const Login = () => {
             <div className='grid grid-cols-2 gap-2 mb-2'>
               <label className='text-lg font-medium'>Password</label>
               <p className='text-[#35408E] text-sm underline text-right'>
-                <Link to=''>Forgot password?</Link>
+                <Link to='/forgotpassword'>Forgot password?</Link>
               </p>
             </div>
 
