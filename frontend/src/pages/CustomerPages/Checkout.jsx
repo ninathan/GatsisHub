@@ -38,6 +38,7 @@ import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as Ima
 import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
+import { useAuth } from '../../context/AuthContext'
 
 
 const Checkout = () => {
@@ -853,7 +854,8 @@ const Checkout = () => {
     ];
 
     return (
-        <div>
+        <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="max-w-7xl mx-auto px-4 py-8">
             {/* Company Information Section */}
             <div className="flex flex-col items-center justify-center mt-10 mb-6">
                 <h3 className="text-black text-4xl font-medium mb-6">
@@ -1021,14 +1023,15 @@ const Checkout = () => {
             </section>
 
             {/* product customization */}
-            <section>
-                <h2 className="flex flex-col items-center text-black text-4xl font-medium mb-10 ">
+            <section className="px-4 py-8">
+                <h2 className="text-center text-black text-4xl font-medium mb-10">
                     Product Customization
                 </h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="flex flex-col gap-6">
                         {/* Three.js 3D Preview Container */}
-                        <div className="bg-gray-900 rounded-lg p-8 ml-5 flex flex-col items-center justify-center w-225 h-150 relative">
+                        <div className="bg-gray-900 rounded-lg p-8 flex flex-col items-center justify-center relative" style={{ minHeight: '500px' }}>
                             {/* Fullscreen Button */}
                             <button
                                 onClick={toggleFullscreen}
@@ -1039,7 +1042,7 @@ const Checkout = () => {
                             </button>
 
                             {/* Three.js Canvas */}
-                            <div ref={threeCanvasRef} className="w-200 h-130 rounded-lg">
+                            <div ref={threeCanvasRef} className="w-full h-96 rounded-lg">
                                 <Suspense
                                     fallback={
                                         <div className="w-full h-full flex items-center justify-center bg-gray-800 rounded-lg">
@@ -1097,7 +1100,7 @@ const Checkout = () => {
                             </div>
                         </div>
                         {/* order instructions */}
-                        <div className="flex flex-col justify-center ml-6">
+                        <div className="flex flex-col justify-center">
                             <h3 className="font-semibold mb-3">
                                 Order Instruction (optional)
                             </h3>
@@ -1120,7 +1123,7 @@ const Checkout = () => {
                             </div>
                         </div>
                         {/* action buttons */}
-                        <div className="space-y-2 mt-4 ml-6">
+                        <div className="space-y-2 mt-4">
                             <button className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors">
                                 <Download size={20} />
                                 Download Preview
@@ -1412,52 +1415,8 @@ const Checkout = () => {
                                 )}
                             </div>
                         </div>
-
-                        {/* quantity selector */}
-                        <div>
-                            <h3 className='font-semibold mb-3'>Quantity of Hangers</h3>
-                            <p className='text-xs text-gray-600 mb-2'>Minimum order quantity is 100 pieces</p>
-                            <div className='flex items-center gap-3'>
-                                <button onClick={() => handleQuantityChange(-10)} className='bg-white border rounded p-2 hover:bg-gray-100'>
-                                    <Minus size={20} />
-                                </button>
-                                <input
-                                    type="number"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                                    className='border rounded px-4 py-2 text-center w-24'
-                                />
-                                <button
-                                    onClick={() => handleQuantityChange(10)}
-                                    className='bg-white border rounded p-2 hover:bg-gray-100'
-                                >
-                                    <Plus size={20} />
-                                </button>
-                            </div>
-                        </div>
-                        {/* order instructions */}
-                        <div>
-                            <h3 className="font-semibold mb-3">Order Instruction (optional)</h3>
-                            <textarea value={orderInstructions}
-                                onChange={(e) => setOrderInstructions(e.target.value)}
-                                placeholder='Type your instructions here...'
-                                className='w-full border rounded px-3 py-2 min-h-[100px] text-sm'
-                            ></textarea>
-                            <div className='mt-4 text-center'>
-                                <p className='text-sm text-gray-600'>Note: Please download the order form and attach. <a href="/path/to/order-form.pdf" className="text-blue-500 underline">Download Order Form</a></p>
-                            </div>
-                        </div>
-                        {/* action buttons */}
-                        <div className='space-y-2'>
-                            <button className='w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
-                                <Download size={20} />
-                                Download Preview
-                            </button>
-                            <button className='w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors'>
-                                Save Design
-                            </button>
-                        </div>
                     </div>
+                </div>
                 </div>
             </section>
 
@@ -1915,6 +1874,7 @@ const Checkout = () => {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };

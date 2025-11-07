@@ -422,8 +422,9 @@ const CreateDesign = () => {
                         </div>
                     </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Content Area */}
+                    <div className="max-w-7xl mx-auto px-4 py-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Panel - 3D Viewer */}
                     <div className={`lg:col-span-2 ${isFullscreen ? 'fixed inset-0 z-50 bg-white p-4' : ''}`}>
                         <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: isFullscreen ? 'calc(100vh - 2rem)' : '600px' }}>
