@@ -729,20 +729,19 @@ const Checkout = () => {
                     setContactPerson(customer.companyname || ""); // You can add a separate contact person field in DB if needed
                     setContactPhone(customer.companynumber || "");
 
-                    // Set address from customer data
-                    if (customer.companyaddress) {
-                        const addressArray = [
-                            {
-                                name: customer.companyname,
-                                phone: customer.companynumber || '',
-                                address: customer.companyaddress,
-                                isDefault: true
-                            }
-                        ];
-                        setAddresses(addressArray);
-                        console.log('✅ Addresses set:', addressArray);
+                    // Load addresses from database
+                    if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
+                        setAddresses(customer.addresses);
+                        console.log('✅ Addresses loaded from database:', customer.addresses);
+                        
+                        // Automatically select the default address
+                        const defaultAddress = customer.addresses.find(addr => addr.isDefault);
+                        if (defaultAddress) {
+                            setSelectedAddress(defaultAddress);
+                            console.log('✅ Default address selected:', defaultAddress);
+                        }
                     } else {
-                        console.log('⚠️ No company address found in customer data');
+                        console.log('⚠️ No addresses found in customer data');
                     }
                 }
             } catch (error) {
