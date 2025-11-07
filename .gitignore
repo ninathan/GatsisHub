@@ -11,3 +11,8 @@ add_feedbacks_timestamp.sql
 REVIEW_SYSTEM_IMPLEMENTATION.md
 add_feedback_rating.sql
 fix_feedback_orderid_type.sql
+add_order_instructions_column.sql
+backend/routes/orders.js
+frontend/src/pages/Admin/AdminOrderDetailExample.jsx
+frontend/src/pages/CustomerPages/Checkout.jsx
+frontend/src/pages/CustomerPages/Order.jsx

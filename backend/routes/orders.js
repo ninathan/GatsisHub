@@ -27,6 +27,7 @@ router.post("/create", async (req, res) => {
       logoPosition,
       logoSize,
       deliveryNotes,
+      orderInstructions,
       deliveryAddress, // Add delivery address field
       threeDDesignData // Complete 3D design JSON string
     } = req.body;
@@ -66,6 +67,7 @@ router.post("/create", async (req, res) => {
       logoposition: logoPosition || null,
       logosize: logoSize || null,
       deliverynotes: deliveryNotes || null,
+      orderinstructions: orderInstructions || null,
       deliveryaddress: deliveryAddress || null, // Store delivery address
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
       orderstatus: 'For Evaluation',

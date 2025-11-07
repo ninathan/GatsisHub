@@ -227,22 +227,31 @@ const Checkout = () => {
         setIsFullscreen(!isFullscreen);
     };
 
+    // Show notification modal
+    const showNotification = (message, type = 'error') => {
+        setNotificationModal({ show: true, type, message });
+    };
+
+    const closeNotification = () => {
+        setNotificationModal({ show: false, type: '', message: '' });
+    };
+
     // Form validation
     const validateForm = () => {
         if (!companyName.trim()) {
-            alert("Please enter company name");
+            showNotification("Please enter company name");
             return false;
         }
         if (!contactPerson.trim()) {
-            alert("Please enter contact person name");
+            showNotification("Please enter contact person name");
             return false;
         }
         if (!contactPhone.trim()) {
-            alert("Please enter contact phone");
+            showNotification("Please enter contact phone");
             return false;
         }
         if (Object.keys(selectedMaterials).length === 0) {
-            alert("Please select at least one material");
+            showNotification("Please select at least one material");
             return false;
         }
         const totalPercentage = Object.values(selectedMaterials).reduce(
@@ -250,13 +259,13 @@ const Checkout = () => {
             0
         );
         if (Math.abs(totalPercentage - 100) > 0.1) {
-            alert(
+            showNotification(
                 `Material percentages must total 100%. Current total: ${totalPercentage}%`
             );
             return false;
         }
         if (quantity < 100) {
-            alert("Minimum order quantity is 100 pieces");
+            showNotification("Minimum order quantity is 100 pieces");
             return false;
         }
         return true;
@@ -338,6 +347,7 @@ const Checkout = () => {
             logoPosition: customLogo ? logoPosition : null,
             logoSize: customLogo ? logoSize : null,
             deliveryNotes: deliveryNotes || null,
+            orderInstructions: orderInstructions || null,
             deliveryAddress:
                 addresses.length > 0 && addresses[selectedAddress]?.address
                     ? addresses[selectedAddress].address
@@ -427,14 +437,14 @@ const Checkout = () => {
             }, 500);
         } catch (error) {
             console.error("❌ Error creating order:", error);
-            alert(`Failed to create order: ${error.message}`);
+            showNotification(`Failed to create order: ${error.message}`);
         }
     };
 
     // Download design as PNG + JSON
     const handleDownloadDesign = async () => {
         if (!threeCanvasRef.current) {
-            alert('Please wait for the 3D model to load');
+            showNotification('Please wait for the 3D model to load');
             return;
         }
 

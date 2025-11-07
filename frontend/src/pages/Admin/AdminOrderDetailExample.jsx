@@ -13,6 +13,20 @@ const AdminOrderDetailExample = () => {
     const { orderId } = useParams();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationType, setNotificationType] = useState('success');
+
+    const showNotification = (message, type = 'success') => {
+        setNotificationMessage(message);
+        setNotificationType(type);
+        setShowNotificationModal(true);
+    };
+
+    const closeNotificationModal = () => {
+        setShowNotificationModal(false);
+        setNotificationMessage('');
+    };
 
     // Fetch order data from backend
     useEffect(() => {
@@ -165,11 +179,11 @@ const AdminOrderDetailExample = () => {
                                     );
                                     if (response.ok) {
                                         setOrder({ ...order, orderstatus: newStatus });
-                                        alert('Status updated successfully!');
+                                        showNotification('Status updated successfully!');
                                     }
                                 } catch (error) {
                                     console.error('Error updating status:', error);
-                                    alert('Failed to update status');
+                                    showNotification('Failed to update status', 'error');
                                 }
                             }}
                         >
@@ -200,6 +214,39 @@ const AdminOrderDetailExample = () => {
                     )}
                 </div>
             </div>
+
+            {/* Notification Modal */}
+            {showNotificationModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className={`px-6 py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                            <h2 className="text-white text-xl font-semibold">
+                                {notificationType === 'success' ? '✓ Success' : '✕ Error'}
+                            </h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <p className="text-gray-700 text-lg">{notificationMessage}</p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                            <button
+                                onClick={closeNotificationModal}
+                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                                    notificationType === 'success'
+                                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

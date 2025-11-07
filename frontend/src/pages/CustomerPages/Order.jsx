@@ -26,6 +26,10 @@ const Order = () => {
     const [cancelReason, setCancelReason] = useState('');
     const [isCancelling, setIsCancelling] = useState(false);
 
+    const [showNotificationModal, setShowNotificationModal] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationType, setNotificationType] = useState('success'); // 'success' or 'error'
+
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed'];
 
     // Map tab names to their corresponding order statuses
@@ -163,6 +167,17 @@ const Order = () => {
         setCancelReason('');
     };
 
+    const showNotification = (message, type = 'success') => {
+        setNotificationMessage(message);
+        setNotificationType(type);
+        setShowNotificationModal(true);
+    };
+
+    const closeNotificationModal = () => {
+        setShowNotificationModal(false);
+        setNotificationMessage('');
+    };
+
     const handleCancelOrder = async () => {
         if (!orderToCancel) return;
 
@@ -187,11 +202,11 @@ const Order = () => {
             
             closeCancelModal();
             
-            // Show success message (you can add a toast notification here if you have one)
-            alert('Order cancelled successfully');
+            // Show success notification
+            showNotification('Order cancelled successfully');
         } catch (err) {
             console.error('Error cancelling order:', err);
-            alert('Failed to cancel order. Please try again or contact support.');
+            showNotification('Failed to cancel order. Please try again or contact support.', 'error');
         } finally {
             setIsCancelling(false);
         }
@@ -438,10 +453,20 @@ const Order = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Notes Section */}
+                                                {/* Order Instructions Section */}
+                                                {order.orderinstructions && (
+                                                    <>
+                                                        <h3 className="text-xl font-bold mb-2 mt-4">Order Instructions</h3>
+                                                        <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
+                                                            <p className="text-sm text-gray-700">{order.orderinstructions}</p>
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {/* Delivery Notes Section */}
                                                 {order.deliverynotes && (
                                                     <>
-                                                        <h3 className="text-xl font-bold mb-2 mt-4">Notes and Instructions</h3>
+                                                        <h3 className="text-xl font-bold mb-2 mt-4">Delivery Notes</h3>
                                                         <div className="border rounded-lg p-3 bg-gray-50 mb-3">
                                                             <p className="text-sm text-gray-700">{order.deliverynotes}</p>
                                                         </div>
@@ -734,6 +759,39 @@ const Order = () => {
                                 ) : (
                                     'Yes, Cancel Order'
                                 )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Modal */}
+            {showNotificationModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className={`px-6 py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                            <h2 className="text-white text-xl font-semibold">
+                                {notificationType === 'success' ? '✓ Success' : '✕ Error'}
+                            </h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <p className="text-gray-700 text-lg">{notificationMessage}</p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                            <button
+                                onClick={closeNotificationModal}
+                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                                    notificationType === 'success'
+                                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                                        : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                            >
+                                OK
                             </button>
                         </div>
                     </div>
