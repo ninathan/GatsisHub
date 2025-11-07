@@ -415,6 +415,60 @@ const ProfileComponent = () => {
         }
     };
 
+    const handleDeleteAccount = () => {
+        setModalConfig({
+            type: 'confirm',
+            message: 'Are you sure you want to delete your account? This action cannot be undone. All your designs and data will be permanently deleted.',
+            onConfirm: async () => {
+                try {
+                    // Call backend API to delete account
+                    const response = await fetch('https://gatsis-hub.vercel.app/auth/delete-account', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userid: user.userid
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to delete account');
+                    }
+
+                    console.log('✅ Account deleted successfully');
+
+                    // Show success message
+                    setModalConfig({
+                        type: 'success',
+                        message: 'Your account has been deleted successfully. You will be redirected to the home page.',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+
+                    // Redirect to home page after 2 seconds
+                    setTimeout(() => {
+                        localStorage.removeItem('user');
+                        navigate('/');
+                        window.location.reload();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('❌ Error deleting account:', error);
+                    setModalConfig({
+                        type: 'error',
+                        message: error.message || 'Failed to delete account. Please try again.',
+                        onConfirm: null
+                    });
+                    setShowModal(true);
+                }
+            }
+        });
+        setShowModal(true);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-6 py-8">
@@ -803,7 +857,10 @@ const ProfileComponent = () => {
                                         <div>
                                             <h3 className="text-lg font-semibold mb-4">Account Actions</h3>
                                             <div className="space-y-3">
-                                                <button className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded transition-colors">
+                                                <button 
+                                                    onClick={handleDeleteAccount}
+                                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded transition-colors"
+                                                >
                                                     Delete Account
                                                 </button>
 

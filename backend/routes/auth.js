@@ -384,4 +384,65 @@ router.post("/change-password", async (req, res) => {
   }
 });
 
+// 🗑️ Delete Account route
+router.delete("/delete-account", async (req, res) => {
+  try {
+    const { userid } = req.body;
+
+    console.log("🗑️ Delete account request for user:", userid);
+
+    if (!userid) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Delete user's designs first (foreign key constraint)
+    const { error: designsError } = await supabase
+      .from("designs")
+      .delete()
+      .eq("userid", userid);
+
+    if (designsError) {
+      console.error("❌ Error deleting designs:", designsError);
+      // Continue anyway, might not have any designs
+    }
+
+    // Delete user's orders (if any)
+    const { error: ordersError } = await supabase
+      .from("orders")
+      .delete()
+      .eq("userid", userid);
+
+    if (ordersError) {
+      console.error("❌ Error deleting orders:", ordersError);
+      // Continue anyway, might not have any orders
+    }
+
+    // Delete customer record from database
+    const { error: customerError } = await supabase
+      .from("customers")
+      .delete()
+      .eq("userid", userid);
+
+    if (customerError) {
+      console.error("❌ Error deleting customer:", customerError);
+      return res.status(500).json({ error: "Failed to delete account" });
+    }
+
+    // Delete user from Supabase Auth
+    const { error: authError } = await supabase.auth.admin.deleteUser(userid);
+
+    if (authError) {
+      console.warn("⚠️ Could not delete Supabase Auth user:", authError.message);
+      // Continue anyway since the main customer record is deleted
+    }
+
+    console.log("✅ Account deleted successfully");
+    res.status(200).json({ message: "Account deleted successfully" });
+
+  } catch (err) {
+    console.error("❌ Delete account error:", err.message);
+    res.status(500).json({ error: "Server error while deleting account" });
+  }
+});
+
 export default router;
