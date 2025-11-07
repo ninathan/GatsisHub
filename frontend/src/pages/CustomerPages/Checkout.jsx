@@ -393,7 +393,7 @@ const Checkout = () => {
             setShowModal(true);
             setTimeout(() => {
                 navigate("/orders");
-            }, 2000);
+            }, 500);
         } catch (error) {
             console.error("❌ Error creating order:", error);
             alert(`Failed to create order: ${error.message}`);
