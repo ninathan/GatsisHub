@@ -2,6 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { a } from 'framer-motion/client';
 
 
@@ -9,6 +10,7 @@ const ProfileComponent = () => {
 
 
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('Profile');
     const [companyName, setCompanyName] = useState('');
@@ -74,10 +76,23 @@ const ProfileComponent = () => {
     };
 
     const handleDuplicateDesign = (design) => {
-        // TODO: Implement duplicate functionality
-        // This could open the checkout page with the design pre-loaded
-        console.log('Duplicate design:', design);
-        alert('Duplicate feature coming soon!');
+        // Navigate to checkout page with design data pre-loaded
+        try {
+            const designData = JSON.parse(design.url || '{}');
+            console.log('🔄 Loading design into checkout:', designData);
+            
+            // Navigate to checkout with state
+            navigate('/product', { 
+                state: { 
+                    loadDesign: true,
+                    designData: designData 
+                } 
+            });
+        } catch (error) {
+            console.error('❌ Error loading design:', error);
+            alert('Failed to load design. Please try again.');
+        }
+    };
     };
 
 
@@ -298,7 +313,7 @@ const ProfileComponent = () => {
                                                                 <img 
                                                                     src={designData.thumbnail} 
                                                                     alt={design.designname || 'Design preview'}
-                                                                    className="w-full h-full object-contain"
+                                                                    className="w-full h-full object-cover"
                                                                 />
                                                             ) : (
                                                                 <>

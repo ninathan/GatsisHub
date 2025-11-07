@@ -30,7 +30,7 @@
 
 import { button, div, label, li, span } from 'framer-motion/client'
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
@@ -44,6 +44,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 
 const Checkout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const threeCanvasRef = useRef(null);
     const { user } = useAuth();
 
@@ -470,14 +471,89 @@ const Checkout = () => {
         setIsSaving(true);
 
         try {
-            // Capture thumbnail from canvas
+            // Capture thumbnail from canvas with better framing
             let thumbnailBase64 = null;
             try {
                 await new Promise(resolve => setTimeout(resolve, 300)); // Wait for canvas to render
                 const canvas = threeCanvasRef.current?.querySelector('canvas');
                 if (canvas) {
-                    thumbnailBase64 = canvas.toDataURL('image/png', 0.8); // 80% quality for smaller size
-                    console.log('📸 Captured thumbnail');
+                    // Create a thumbnail by detecting the non-background bounds so the hanger is centered
+                    const thumbnailCanvas = document.createElement('canvas');
+                    const thumbnailSize = 400; // square thumbnail
+                    thumbnailCanvas.width = thumbnailSize;
+                    thumbnailCanvas.height = thumbnailSize;
+                    const ctx = thumbnailCanvas.getContext('2d');
+
+                    // Read pixel data from source canvas
+                    try {
+                        const sw = canvas.width;
+                        const sh = canvas.height;
+                        const tmpCtx = canvas.getContext('2d');
+                        const imgData = tmpCtx.getImageData(0, 0, sw, sh).data;
+
+                        // detect bounds of non-white pixels (simple background detection)
+                        let minX = sw, minY = sh, maxX = 0, maxY = 0;
+                        const thresh = 250; // near-white threshold
+                        for (let y = 0; y < sh; y += 2) { // step by 2 for speed
+                            for (let x = 0; x < sw; x += 2) {
+                                const i = (y * sw + x) * 4;
+                                const r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3];
+                                // consider pixel non-background if not nearly white and not transparent
+                                if (a > 10 && !(r > thresh && g > thresh && b > thresh)) {
+                                    if (x < minX) minX = x;
+                                    if (y < minY) minY = y;
+                                    if (x > maxX) maxX = x;
+                                    if (y > maxY) maxY = y;
+                                }
+                            }
+                        }
+
+                        // if no non-background detected, fallback to center crop
+                        if (minX > maxX || minY > maxY) {
+                            const sourceSize = Math.min(sw, sh);
+                            const cropSize = sourceSize * 0.7; // slightly zoomed
+                            const sourceX = (sw - cropSize) / 2;
+                            const sourceY = (sh - cropSize) / 2;
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
+                            ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
+                        } else {
+                            // add padding around detected bounds
+                            const pad = 20; // pixels
+                            minX = Math.max(0, minX - pad);
+                            minY = Math.max(0, minY - pad);
+                            maxX = Math.min(sw, maxX + pad);
+                            maxY = Math.min(sh, maxY + pad);
+
+                            const cropW = maxX - minX;
+                            const cropH = maxY - minY;
+                            // make crop square by expanding the smaller dimension
+                            const cropSize = Math.max(cropW, cropH);
+                            let sx = minX - Math.floor((cropSize - cropW) / 2);
+                            let sy = minY - Math.floor((cropSize - cropH) / 2);
+                            // clamp
+                            sx = Math.max(0, Math.min(sx, sw - cropSize));
+                            sy = Math.max(0, Math.min(sy, sh - cropSize));
+
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
+                            ctx.drawImage(canvas, sx, sy, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
+                        }
+
+                        thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.7);
+                        console.log('📸 Captured processed thumbnail');
+                    } catch (e) {
+                        // If reading pixel data fails (tainted canvas), fallback to simple center draw
+                        console.warn('⚠️ Could not access pixel data, falling back to center crop:', e);
+                        const sourceSize = Math.min(canvas.width, canvas.height);
+                        const cropSize = sourceSize * 0.7;
+                        const sourceX = (canvas.width - cropSize) / 2;
+                        const sourceY = (canvas.height - cropSize) / 2;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
+                        ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
+                        thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.7);
+                    }
                 }
             } catch (thumbError) {
                 console.warn('⚠️ Could not capture thumbnail:', thumbError);
@@ -610,6 +686,39 @@ const Checkout = () => {
         fetchCustomerData();
         setShowInstructionsModal(true);
     }, []);
+
+    // Load saved design if navigated from saved designs
+    useEffect(() => {
+        if (location.state?.loadDesign && location.state?.designData) {
+            const designData = location.state.designData;
+            console.log('📥 Loading saved design:', designData);
+            
+            try {
+                // Apply design data to state
+                if (designData.hangerType) setSelectedHanger(designData.hangerType);
+                if (designData.color || designData.selectedColor) setColor(designData.color || designData.selectedColor);
+                if (designData.customText) setCustomText(designData.customText);
+                if (designData.textColor) setTextColor(designData.textColor);
+                if (designData.textPosition) setTextPosition(designData.textPosition);
+                if (designData.textSize) setTextSize(designData.textSize);
+                if (designData.logoPreview) setLogoPreview(designData.logoPreview);
+                if (designData.logoPosition) setLogoPosition(designData.logoPosition);
+                if (designData.logoSize) setLogoSize(designData.logoSize);
+                if (designData.materials) setSelectedMaterials(designData.materials);
+                
+                // Show success message
+                setTimeout(() => {
+                    alert(`✅ Design "${designData.designName || 'Untitled'}" loaded successfully! You can modify it and place an order.`);
+                }, 500);
+                
+                // Clear the location state to prevent reloading on refresh
+                window.history.replaceState({}, document.title);
+            } catch (error) {
+                console.error('❌ Error loading design data:', error);
+                alert('Failed to load design data. Please try again.');
+            }
+        }
+    }, [location.state]);
 
     // Handle ESC key to exit fullscreen
     useEffect(() => {
