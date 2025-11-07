@@ -26,14 +26,12 @@ const ProfileComponent = () => {
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [addresses, setAddresses] = useState([]);
 
+    // Fetch customer data when user is available
     useEffect(() => {
-        if (user) {
-            setCompanyName(user.companyname || '');
-            setCompanyEmail(user.emailaddress || '');
-            setCompanyNumber(user.companynumber || '');
-            setCompanyAddress(user.companyaddress || '');
+        if (user?.userid) {
+            fetchCustomerData();
         }
-    }, [user]);
+    }, [user?.userid]);
 
     // Fetch saved designs when Designs tab is active
     useEffect(() => {
