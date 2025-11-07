@@ -28,6 +28,10 @@ const ProfileComponent = () => {
     const [showAddAddressModal, setShowAddAddressModal] = useState(false);
     const [newAddress, setNewAddress] = useState({ name: '', phone: '', address: '' });
     const [isSavingAddress, setIsSavingAddress] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     // Fetch customer data when user is available
     useEffect(() => {
@@ -320,6 +324,97 @@ const ProfileComponent = () => {
             isDefault: addr.id === id
         })));
     };
+
+    const handleChangePassword = async () => {
+        // Validation
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            setModalConfig({
+                type: 'error',
+                message: 'Please fill in all password fields.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            setModalConfig({
+                type: 'error',
+                message: 'New password must be at least 6 characters long.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setModalConfig({
+                type: 'error',
+                message: 'New password and confirmation do not match.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            return;
+        }
+
+        if (currentPassword === newPassword) {
+            setModalConfig({
+                type: 'error',
+                message: 'New password must be different from current password.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            return;
+        }
+
+        setIsChangingPassword(true);
+
+        try {
+            // Call backend API to change password
+            const response = await fetch('https://gatsis-hub.vercel.app/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userid: user.userid,
+                    currentPassword,
+                    newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to change password');
+            }
+
+            console.log('✅ Password changed successfully via backend');
+
+            // Clear password fields
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+
+            setModalConfig({
+                type: 'success',
+                message: 'Password updated successfully! Please use your new password for future logins.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } catch (error) {
+            console.error('❌ Error changing password:', error);
+            setModalConfig({
+                type: 'error',
+                message: error.message || 'Failed to update password. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-6 py-8">
@@ -641,27 +736,47 @@ const ProfileComponent = () => {
                                     <div className="space-y-6">
                                         {/* Password Section */}
                                         <div className="border-b border-gray-200 pb-6">
-                                            <h3 className="text-lg font-semibold mb-4">Password</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+                                            <div className="space-y-4">
                                                 <div>
                                                     <label className="block text-sm font-medium mb-2">Current Password</label>
                                                     <input
                                                         type="password"
+                                                        value={currentPassword}
+                                                        onChange={(e) => setCurrentPassword(e.target.value)}
                                                         className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                         placeholder="Enter current password"
                                                     />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">New Password</label>
-                                                    <input
-                                                        type="password"
-                                                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                                        placeholder="Enter new password"
-                                                    />
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">New Password</label>
+                                                        <input
+                                                            type="password"
+                                                            value={newPassword}
+                                                            onChange={(e) => setNewPassword(e.target.value)}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            placeholder="Enter new password (min 6 characters)"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                                                        <input
+                                                            type="password"
+                                                            value={confirmPassword}
+                                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                                            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            placeholder="Confirm new password"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <button className="mt-4 bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-6 rounded transition-colors">
-                                                Update Password
+                                            <button 
+                                                onClick={handleChangePassword}
+                                                disabled={isChangingPassword}
+                                                className="mt-4 bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isChangingPassword ? 'Updating...' : 'Update Password'}
                                             </button>
                                         </div>
 

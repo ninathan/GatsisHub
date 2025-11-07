@@ -315,4 +315,73 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// 🔐 Change Password route
+router.post("/change-password", async (req, res) => {
+  try {
+    const { userid, currentPassword, newPassword } = req.body;
+
+    console.log("🔐 Change password request for user:", userid);
+
+    if (!userid || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters long" });
+    }
+
+    // Find user by userid
+    const { data: user, error: userError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("userid", userid)
+      .single();
+
+    if (userError || !user) {
+      console.error("❌ User not found:", userError);
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      console.log("❌ Current password is incorrect");
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    // Hash new password
+    console.log("🔐 Hashing new password...");
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    const { error: updateError } = await supabase
+      .from("customers")
+      .update({ password: hashedPassword })
+      .eq("userid", userid);
+
+    if (updateError) {
+      console.error("❌ Error updating password:", updateError);
+      return res.status(500).json({ error: "Failed to update password" });
+    }
+
+    // Also update in Supabase Auth
+    const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
+      userid,
+      { password: newPassword }
+    );
+
+    if (authUpdateError) {
+      console.warn("⚠️ Could not update Supabase Auth password:", authUpdateError.message);
+      // Continue anyway since the main password is updated
+    }
+
+    console.log("✅ Password updated successfully");
+    res.status(200).json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error("❌ Change password error:", err.message);
+    res.status(500).json({ error: "Server error while changing password" });
+  }
+});
+
 export default router;
