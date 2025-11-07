@@ -4,6 +4,7 @@ import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { a } from 'framer-motion/client';
+import supabase from '../../supabaseClient';
 
 
 const ProfileComponent = () => {
@@ -21,6 +22,9 @@ const ProfileComponent = () => {
     const [loadingDesigns, setLoadingDesigns] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalConfig, setModalConfig] = useState({ type: '', message: '', onConfirm: null });
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [addresses, setAddresses] = useState([]);
 
     useEffect(() => {
         if (user) {
@@ -116,32 +120,125 @@ const ProfileComponent = () => {
         }
     };
 
-
-    const [addresses, setAddresses] = useState([
-        {
-            id: 1,
-            name: 'Juan Corporation',
-            phone: '(+63) 9060069683',
-            address: 'San Juan City #551 Barangay SJ, Metro Manila,Quezon City,',
-            isDefault: true
-        },
-        {
-            id: 2,
-            name: 'Juan Corporation',
-            phone: '(+63) 9060069683',
-            address: '#106 Pingkian I Central, Brgy Pasong Tamo, QC',
-            isDefault: false
+    useEffect(() => {
+        if (user) {
+            fetchCustomerData();
         }
-    ]);
+    }, [user]);
+
+    const fetchCustomerData = async () => {
+        if (!user?.userid) return;
+
+        try {
+            const { data: customer, error } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('userid', user.userid)
+                .single();
+
+            if (error) throw error;
+
+            if (customer) {
+                // Set customer basic info
+                setCompanyName(customer.companyname || '');
+                setCompanyEmail(customer.emailaddress || '');
+                setCompanyNumber(customer.companynumber || '');
+                setCompanyAddress(customer.companyaddress || '');
+
+                // Set address array
+                if (customer.companyaddress) {
+                    setAddresses([{
+                        id: customer.customerid,
+                        name: customer.companyname || '',
+                        phone: customer.companynumber || '',
+                        address: customer.companyaddress || '',
+                        isDefault: true
+                    }]);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching customer data:', error);
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to load customer data.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        }
+    };
 
     const tabs = ['Profile', 'Designs', 'Settings'];
 
     const handleEditProfile = () => {
-        console.log('Edit Profile clicked');
+        if (isEditing) {
+            // Save profile
+            saveProfile();
+        } else {
+            // Enable editing
+            setIsEditing(true);
+        }
+    };
+
+    const saveProfile = async () => {
+        if (!user?.userid) return;
+
+        setIsSavingProfile(true);
+
+        try {
+            const { error } = await supabase
+                .from('customers')
+                .update({
+                    companyname: companyName,
+                    emailaddress: companyEmail,
+                    companynumber: companyNumber,
+                    companyaddress: companyAddress
+                })
+                .eq('userid', user.userid);
+
+            if (error) throw error;
+
+            setIsEditing(false);
+            setModalConfig({
+                type: 'success',
+                message: 'Profile updated successfully!',
+                onConfirm: null
+            });
+            setShowModal(true);
+
+            // Refresh user data in AuthContext if needed
+            fetchCustomerData();
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to update profile. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        // Reset to original values
+        if (user) {
+            setCompanyName(user.companyname || '');
+            setCompanyEmail(user.emailaddress || '');
+            setCompanyNumber(user.companynumber || '');
+            setCompanyAddress(user.companyaddress || '');
+        }
+        fetchCustomerData();
     };
 
     const handleAddAddress = () => {
-        console.log('Add Address clicked');
+        setModalConfig({
+            type: 'error',
+            message: 'Address management coming soon!',
+            onConfirm: null
+        });
+        setShowModal(true);
     };
 
     const handleEditAddress = (id) => {
@@ -200,7 +297,8 @@ const ProfileComponent = () => {
                                                     type="text"
                                                     value={companyName}
                                                     onChange={(e) => setCompanyName(e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    disabled={!isEditing}
+                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -210,7 +308,8 @@ const ProfileComponent = () => {
                                                     type="email"
                                                     value={companyEmail}
                                                     onChange={(e) => setCompanyEmail(e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    disabled={!isEditing}
+                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -220,26 +319,49 @@ const ProfileComponent = () => {
                                                     type="text"
                                                     value={companyNumber}
                                                     onChange={(e) => setCompanyNumber(e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    disabled={!isEditing}
+                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
                                             <div>
                                                 <label className="block text-sm font-semibold mb-2">Office Address</label>
-                                                <input
-                                                    type="text"
+                                                <textarea
                                                     value={companyAddress}
                                                     onChange={(e) => setCompanyAddress(e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    disabled={!isEditing}
+                                                    rows={3}
+                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
-                                            <button
-                                                onClick={handleEditProfile}
-                                                className="w-full bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-6 rounded transition-colors"
-                                            >
-                                                Edit Profile
-                                            </button>
+                                            <div className="flex gap-2">
+                                                {isEditing ? (
+                                                    <>
+                                                        <button
+                                                            onClick={handleCancelEdit}
+                                                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={handleEditProfile}
+                                                            disabled={isSavingProfile}
+                                                            className="flex-1 bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        onClick={handleEditProfile}
+                                                        className="w-full bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-6 rounded transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <Edit size={16} />
+                                                        Edit Profile
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -248,51 +370,40 @@ const ProfileComponent = () => {
                                         <h2 className="text-xl font-bold mb-6">My Address</h2>
 
                                         <div className="space-y-4">
-                                            {addresses.map((address) => (
-                                                <div
-                                                    key={address.id}
-                                                    className="border-2 border-gray-300 rounded-lg p-4"
-                                                >
-                                                    <div className="flex items-start gap-3 mb-3">
-                                                        <input
-                                                            type="radio"
-                                                            name="defaultAddress"
-                                                            checked={address.isDefault}
-                                                            onChange={() => handleSetDefault(address.id)}
-                                                            className="mt-1 w-5 h-5 text-[#35408E] cursor-pointer"
-                                                        />
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <p className="text-xs text-gray-500">Address: Edit</p>
-                                                            </div>
-                                                            <p className="font-semibold mb-1">
-                                                                {address.name} | {address.phone}
-                                                            </p>
-                                                            <p className="text-sm text-gray-600">{address.address}</p>
-                                                            <div className="flex gap-2 mt-2">
-                                                                <button
-                                                                    onClick={() => handleEditAddress(address.id)}
-                                                                    className="text-xs text-[#35408E] underline hover:text-[#2c3e50]"
-                                                                >
-                                                                    Edit to Address
-                                                                </button>
-                                                                {address.isDefault && (
-                                                                    <span className="text-xs bg-[#35408E] text-white px-2 py-1 rounded">
-                                                                        MAKE AS DEFAULT
+                                            {addresses.length === 0 ? (
+                                                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                                                    <p className="text-gray-500 mb-4">No address saved yet</p>
+                                                    <p className="text-sm text-gray-400">Add your address in the profile form above</p>
+                                                </div>
+                                            ) : (
+                                                addresses.map((address) => (
+                                                    <div
+                                                        key={address.id}
+                                                        className="border-2 border-[#35408E] rounded-lg p-4 bg-blue-50"
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xs bg-[#35408E] text-white px-2 py-1 rounded font-semibold">
+                                                                        DEFAULT ADDRESS
                                                                     </span>
-                                                                )}
+                                                                </div>
+                                                                <p className="font-semibold mb-1">
+                                                                    {address.name} {address.phone && `| ${address.phone}`}
+                                                                </p>
+                                                                <p className="text-sm text-gray-700 whitespace-pre-line">{address.address}</p>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
 
-                                            <button
-                                                onClick={handleAddAddress}
-                                                className="w-full text-[#35408E] hover:text-[#2c3e50] font-medium py-2 text-sm"
-                                            >
-                                                +Add Address
-                                            </button>
+                                            {/* Info Text */}
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <p className="text-sm text-blue-800">
+                                                    <span className="font-semibold">💡 Tip:</span> Your company address is automatically used for deliveries. Edit your profile above to update it.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
