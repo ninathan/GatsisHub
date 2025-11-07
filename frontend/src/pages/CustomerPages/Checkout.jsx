@@ -34,7 +34,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2 } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
@@ -46,6 +46,7 @@ const Checkout = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Form state
     const [companyName, setCompanyName] = useState('');
@@ -66,7 +67,7 @@ const Checkout = () => {
     const [textColor, setTextColor] = useState('#000000'); // Default black
     const [customLogo, setCustomLogo] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
-    const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0.49 });
+    const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
     const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
     const [textSize, setTextSize] = useState(0.5);
     const [logoSize, setLogoSize] = useState(1);
@@ -93,19 +94,74 @@ const Checkout = () => {
     const toggleMaterial = (materialName) => {
         setSelectedMaterials(prev => {
             const newMaterials = { ...prev };
+            
             if (newMaterials[materialName]) {
+                // Remove material
                 delete newMaterials[materialName];
+                
+                // Redistribute percentages evenly among remaining materials
+                const remainingCount = Object.keys(newMaterials).length;
+                if (remainingCount > 0) {
+                    const evenPercentage = 100 / remainingCount;
+                    Object.keys(newMaterials).forEach(key => {
+                        newMaterials[key] = evenPercentage;
+                    });
+                }
             } else {
-                const remainingPercentage = 100 - Object.values(newMaterials).reduce((sum, val) => sum + val, 0);
-                newMaterials[materialName] = remainingPercentage > 0 ? remainingPercentage : 50;
+                // Add material
+                newMaterials[materialName] = 0; // Temporarily set to 0
+                
+                // Redistribute percentages evenly among all materials
+                const totalCount = Object.keys(newMaterials).length;
+                const evenPercentage = 100 / totalCount;
+                Object.keys(newMaterials).forEach(key => {
+                    newMaterials[key] = evenPercentage;
+                });
             }
+            
             return newMaterials;
         });
     };
 
     const updateMaterialPercentage = (materialName, value) => {
         const newValue = Math.max(0, Math.min(100, parseInt(value) || 0));
-        setSelectedMaterials(prev => ({ ...prev, [materialName]: newValue }));
+        
+        setSelectedMaterials(prev => {
+            const newMaterials = { ...prev };
+            const otherMaterials = Object.keys(newMaterials).filter(key => key !== materialName);
+            
+            // If there are no other materials, just set the value
+            if (otherMaterials.length === 0) {
+                newMaterials[materialName] = newValue;
+                return newMaterials;
+            }
+            
+            // Set the new value for the changed material
+            newMaterials[materialName] = newValue;
+            
+            // Calculate remaining percentage to distribute among other materials
+            const remainingPercentage = 100 - newValue;
+            
+            // Get current total of other materials
+            const otherTotal = otherMaterials.reduce((sum, key) => sum + prev[key], 0);
+            
+            // Redistribute remaining percentage proportionally among other materials
+            if (otherTotal > 0) {
+                // Distribute proportionally based on current percentages
+                otherMaterials.forEach(key => {
+                    const proportion = prev[key] / otherTotal;
+                    newMaterials[key] = remainingPercentage * proportion;
+                });
+            } else {
+                // If other materials are at 0, distribute evenly
+                const evenShare = remainingPercentage / otherMaterials.length;
+                otherMaterials.forEach(key => {
+                    newMaterials[key] = evenShare;
+                });
+            }
+            
+            return newMaterials;
+        });
     };
 
     const handleLogoUpload = (e) => {
@@ -134,6 +190,11 @@ const Checkout = () => {
         // if (threeMaterialRef.current) {
         //     threeMaterialRef.current.color.set(newColor);
         // }
+    };
+
+    // Toggle fullscreen for 3D viewer
+    const toggleFullscreen = () => {
+        setIsFullscreen(!isFullscreen);
     };
 
     // Form validation
@@ -176,6 +237,23 @@ const Checkout = () => {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const userId = userData.userid || null;
 
+        // Prepare complete 3D design data for database storage and admin viewing
+        const threeDDesignData = {
+            hangerType: selectedHanger,
+            color: color,
+            customText: customText || null,
+            textColor: textColor,
+            textPosition: textPosition,
+            textSize: textSize,
+            logoFileName: customLogo ? customLogo.name : null,
+            logoPreview: logoPreview || null, // Base64 encoded image
+            logoPosition: logoPosition,
+            logoSize: logoSize,
+            materials: selectedMaterials,
+            quantity: quantity,
+            timestamp: new Date().toISOString()
+        };
+
         const orderData = {
             userid: userId,
             companyName,
@@ -189,13 +267,24 @@ const Checkout = () => {
             customDesignUrl: customDesignFile ? customDesignFile.name : null,
             selectedColor: color,
             customText: customText || null,
+            textColor: textColor,
             textPosition: customText ? textPosition : null,
             textSize: customText ? textSize : null,
             customLogo: customLogo ? customLogo.name : null,
             logoPosition: customLogo ? logoPosition : null,
             logoSize: customLogo ? logoSize : null,
-            deliveryNotes: deliveryNotes || null
+            deliveryNotes: deliveryNotes || null,
+            deliveryAddress: addresses.length > 0 && addresses[selectedAddress]?.address 
+                ? addresses[selectedAddress].address 
+                : `${companyName}, ${contactPhone}`, // Use company info as fallback address
+            threeDDesignData: JSON.stringify(threeDDesignData) // Store complete design as JSON
         };
+
+        console.log('📦 Order Data being sent:', orderData);
+        console.log('📍 Addresses array:', addresses);
+        console.log('📍 Selected Address Index:', selectedAddress);
+        console.log('📍 Selected Address Object:', addresses[selectedAddress]);
+        console.log('📍 Delivery Address:', orderData.deliveryAddress);
 
         try {
             // Submit to backend
@@ -256,8 +345,11 @@ const Checkout = () => {
             existingOrders.unshift(localOrderData);
             localStorage.setItem('orders', JSON.stringify(existingOrders));
             
-            // Show success modal
+            // Show success modal and redirect to orders page after 2 seconds
             setShowModal(true);
+            setTimeout(() => {
+                navigate('/orders');
+            }, 2000);
         } catch (error) {
             console.error('❌ Error creating order:', error);
             alert(`Failed to create order: ${error.message}`);
@@ -296,14 +388,18 @@ const Checkout = () => {
 
                     // Set address from customer data
                     if (customer.companyaddress) {
-                        setAddresses([
+                        const addressArray = [
                             {
                                 name: customer.companyname,
                                 phone: customer.companynumber || '',
                                 address: customer.companyaddress,
                                 isDefault: true
                             }
-                        ]);
+                        ];
+                        setAddresses(addressArray);
+                        console.log('✅ Addresses set:', addressArray);
+                    } else {
+                        console.log('⚠️ No company address found in customer data');
                     }
                 }
             } catch (error) {
@@ -314,6 +410,18 @@ const Checkout = () => {
         fetchCustomerData();
         setShowInstructionsModal(true);
     }, []);
+
+    // Handle ESC key to exit fullscreen
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullscreen]);
 
     const materials = [
         {
@@ -504,6 +612,15 @@ const Checkout = () => {
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                     {/* Three.js 3D Preview Container */}
                     <div className='bg-gray-900 rounded-lg p-8 ml-5 flex flex-col items-center justify-center min-h-[500px] relative'>
+                        {/* Fullscreen Button */}
+                        <button
+                            onClick={toggleFullscreen}
+                            className='absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg transition-colors'
+                            title='Fullscreen'
+                        >
+                            <Maximize2 size={20} />
+                        </button>
+                        
                         {/* Three.js Canvas */}
                         <div ref={threeCanvasRef} className='w-full h-full min-h-[500px] rounded-lg'>
                             <Suspense fallback={
@@ -1012,14 +1129,72 @@ const Checkout = () => {
                                 </label>
                             ))
                         ) : (
-                            <div className='text-center py-8 text-gray-500'>
-                                <p className='mb-2'>No address found in your profile</p>
-                                <p className='text-sm'>Please update your company address in Account Settings</p>
+                            <div className='text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg'>
+                                <p className='mb-2 text-yellow-800 font-semibold'>⚠️ No delivery address found</p>
+                                <p className='text-sm text-yellow-700'>Please update your company address in Account Settings</p>
+                                <p className='text-xs text-yellow-600 mt-2'>Orders without a proper address may experience delivery delays</p>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Fullscreen 3D Viewer Modal */}
+            {isFullscreen && (
+                <div className="fixed inset-0 bg-black z-50 flex flex-col">
+                    {/* Header with Close Button */}
+                    <div className="flex justify-between items-center p-4 bg-gray-900/90 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            <h3 className="text-white text-xl font-semibold">3D Preview</h3>
+                            <span className="text-gray-400 text-sm">({selectedHanger})</span>
+                        </div>
+                        <button
+                            onClick={toggleFullscreen}
+                            className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors"
+                            title="Exit Fullscreen"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    {/* Fullscreen 3D Canvas */}
+                    <div className="flex-1 relative">
+                        <Suspense fallback={
+                            <div className='w-full h-full flex items-center justify-center bg-gray-900'>
+                                <div className='text-center text-white'>
+                                    <div className='text-6xl mb-4'>⏳</div>
+                                    <p className='text-lg'>Loading 3D Model...</p>
+                                </div>
+                            </div>
+                        }>
+                            <HangerScene
+                                color={color}
+                                hangerType={selectedHanger}
+                                customText={customText}
+                                textColor={textColor}
+                                textPosition={textPosition}
+                                textSize={textSize}
+                                logoPreview={logoPreview}
+                                logoPosition={logoPosition}
+                                logoSize={logoSize}
+                            />
+                        </Suspense>
+                    </div>
+
+                    {/* Footer with Info */}
+                    <div className="p-4 bg-gray-900/90 backdrop-blur-sm text-center">
+                        <p className="text-white text-sm">
+                            Drag to rotate • Scroll to zoom • Right-click to pan • Press ESC or click 
+                            <button 
+                                onClick={toggleFullscreen}
+                                className="text-indigo-400 hover:text-indigo-300 underline ml-1"
+                            >
+                                here
+                            </button> to exit
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
