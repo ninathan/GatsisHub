@@ -63,13 +63,13 @@ const Dashboard = () => {
 
     // Stat card component for reusable metric displays
     const StatCard = ({ title, value, subtitle, trend }) => (
-        <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-600">
-            <div className="text-2xl text-gray-600 font-medium mb-2">{title}</div>
-            <div className="text-4xl font-bold text-gray-900 mb-2">{value}</div>
-            {subtitle && <div className="text-sm text-gray-500">{subtitle}</div>}
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-blue-600">
+            <div className="text-lg md:text-2xl text-gray-600 font-medium mb-2">{title}</div>
+            <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
+            {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
             {trend && (
-                <div className={`flex items-center mt-2 text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {trend > 0 ? <TrendingUp size={16} className="mr-1" /> : <TrendingDown size={16} className="mr-1" />}
+                <div className={`flex items-center mt-2 text-xs md:text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {trend > 0 ? <TrendingUp size={14} className="mr-1 md:w-4 md:h-4" /> : <TrendingDown size={14} className="mr-1 md:w-4 md:h-4" />}
                     <span>{Math.abs(trend)}% vs last period</span>
                 </div>
             )}
@@ -78,20 +78,20 @@ const Dashboard = () => {
 
     // Quota card component for displaying progress metrics
     const QuotaCard = ({ title, subtitle, percentage, reached, target }) => (
-        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg p-8 text-white">
-            <h3 className="text-xl font-bold mb-2">{title}</h3>
-            <p className="text-blue-200 text-sm mb-6">{subtitle}</p>
+        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg p-6 md:p-8 text-white">
+            <h3 className="text-lg md:text-xl font-bold mb-2">{title}</h3>
+            <p className="text-blue-200 text-xs md:text-sm mb-4 md:mb-6">{subtitle}</p>
 
             {/* Circular progress indicator */}
-            <div className="flex justify-center items-center mb-6 relative">
-                <CircularProgress percentage={percentage} />
-                <div className="absolute text-3xl font-bold">{percentage}%</div>
+            <div className="flex justify-center items-center mb-4 md:mb-6 relative">
+                <CircularProgress percentage={percentage} size={100} strokeWidth={10} />
+                <div className="absolute text-2xl md:text-3xl font-bold">{percentage}%</div>
             </div>
 
             {/* Progress statistics */}
             {reached !== undefined && target !== undefined && (
                 <div className="text-center">
-                    <p className="text-blue-200 text-sm">
+                    <p className="text-blue-200 text-xs md:text-sm">
                         Quota reached: <span className="font-bold text-white">{reached}</span> / {target}
                     </p>
                 </div>
@@ -112,22 +112,22 @@ const Dashboard = () => {
             <div className='bg-white shadow-sm border-b top-0 z-10'>
                 <div 
                     ref={titleAnim.ref}
-                    className={`px-8 py-6 ${
+                    className={`px-4 md:px-8 py-4 md:py-6 ${
                         titleAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
                     }`}
                 >
-                    <h1 className='text-4xl font-bold text-gray-900'>Dashboard</h1>
+                    <h1 className='text-2xl md:text-4xl font-bold text-gray-900'>Dashboard</h1>
                     {/* <p>Welcome back, {User.name}! Here's your business overview </p> */}
-                    <p className='text-gray-600 mt-1'>Welcome back user! Here's your business overview</p>
+                    <p className='text-gray-600 mt-1 text-sm md:text-base'>Welcome back user! Here's your business overview</p>
                 </div>
             </div>
 
             {/* Dashboard content */}
-            <div className='p-8'>
+            <div className='p-4 md:p-8'>
                 {/* Top Statistics card */}
                 <div 
                     ref={statsAnim.ref}
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 ${
                         statsAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                     }`}
                 >
@@ -154,67 +154,67 @@ const Dashboard = () => {
                 {/* Main Quota Overview card */}
                 <div 
                     ref={quotaAnim.ref}
-                    className={`bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-8 mb-8 mt-8 ${
+                    className={`bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8 ${
                         quotaAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
                     }`}
                 >
-                    <h2 className='text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
+                    <h2 className='text-xl md:text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
 
-                    <div className='grid grid-cols-1 lg:grid-col-2 gap-8'>
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8'>
                         {/* Large circle progress indicator */}
                         <div className='flex flex-col items-center justify-center'>
                             <div className='relative mb-4'>
-                                <CircularProgress percentage={dashboardData.finalQuota.percentage} size={200} strokeWidth={16} />
+                                <CircularProgress percentage={dashboardData.finalQuota.percentage} size={160} strokeWidth={14} />
                                 <div className='absolute inset-0 flex items-center justify-center'>
-                                    <span className='text-5xl font-bold text-white'>
+                                    <span className='text-3xl md:text-5xl font-bold text-white'>
                                         {dashboardData.finalQuota.percentage}%
                                     </span>
                                 </div>
                             </div>
-                            <p className='text-center text-white'>Overall Progress</p>
+                            <p className='text-center text-white text-sm md:text-base'>Overall Progress</p>
                         </div>
 
                         {/* Progress breakdown bars */}
-                        <div className='flex flex-col justify-center space-y-6'>
+                        <div className='flex flex-col justify-center space-y-4 md:space-y-6'>
                             {/* first bar */}
                             <div>
                                 <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-sm font-medium'>End Quota to be reached</span>
+                                    <span className='text-xs md:text-sm font-medium'>End Quota to be reached</span>
                                 </div>
-                                <div className='w-full bg-blue-800 rounded-full h-3'>
-                                    <div className='bg-[#EC6666] h-3 rounded-full' style={{ width: '100%' }}></div>
+                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
+                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full' style={{ width: '100%' }}></div>
                                 </div>
 
                             </div>
                             {/* second bar */}
                             <div>
                                 <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-sm font-medium'>Today's Quota</span>
-                                    <span className='text-sm'>{dashboardData.finalQuota.dailyProgress}%</span>
+                                    <span className='text-xs md:text-sm font-medium'>Today's Quota</span>
+                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.dailyProgress}%</span>
                                 </div>
-                                <div className='w-full bg-blue-800 rounded-full h-3'>
-                                    <div className='bg-[#DAC325] h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.dailyProgress}%` }}></div>
+                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
+                                    <div className='bg-[#DAC325] h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.dailyProgress}%` }}></div>
                                 </div>
                             </div>
 
                             {/* third bar */}
                             <div>
                                 <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-sm font-medium'>Weekly Quota</span>
-                                    <span className='text-sm'>{dashboardData.finalQuota.weeklyProgress}%</span>
+                                    <span className='text-xs md:text-sm font-medium'>Weekly Quota</span>
+                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.weeklyProgress}%</span>
                                 </div>
-                                <div className='w-full bg-blue-800 rounded-full h-3'>
-                                    <div className='bg-blue-400 h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
+                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
+                                    <div className='bg-blue-400 h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-white mb-2">
-                                    <span className="text-sm font-medium">Current Quota</span>
-                                    <span className="text-sm">{dashboardData.finalQuota.currentProgress}%</span>
+                                    <span className="text-xs md:text-sm font-medium">Current Quota</span>
+                                    <span className="text-xs md:text-sm">{dashboardData.finalQuota.currentProgress}%</span>
                                 </div>
-                                <div className="w-full bg-blue-800 rounded-full h-3">
-                                    <div className="bg-blue-400 h-3 rounded-full transition-all duration-1000"
+                                <div className="w-full bg-blue-800 rounded-full h-2 md:h-3">
+                                    <div className="bg-blue-400 h-2 md:h-3 rounded-full transition-all duration-1000"
                                         style={{ width: `${dashboardData.finalQuota.currentProgress}%` }}></div>
                                 </div>
                             </div>
@@ -225,7 +225,7 @@ const Dashboard = () => {
                     {/* bottom quota cards row */}
                     <div 
                         ref={dailyWeeklyAnim.ref}
-                        className={`grid grid-cols-1 mt-5 md:grid-cols-2 gap-8 ${
+                        className={`grid grid-cols-1 mt-4 md:mt-5 md:grid-cols-2 gap-4 md:gap-8 ${
                             dailyWeeklyAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                         }`}
                     >

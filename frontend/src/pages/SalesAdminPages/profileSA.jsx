@@ -176,50 +176,50 @@ const profileSA = () => {
         <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
             {/* Header Section */}
             <div className="bg-white shadow-sm border-b">
-                <div className="px-8 py-6">
-                    <h1 className="text-4xl font-bold text-gray-900">Profile</h1>
+                <div className="px-4 md:px-8 py-4 md:py-6">
+                    <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Profile</h1>
                 </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="p-8 flex justify-center">
+            <div className="p-4 md:p-8 flex justify-center">
                 {/* Profile Card */}
                 <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl">
                     {/* Card Header */}
-                    <div className="bg-[#35408E] text-white px-6 py-4 rounded-t-2xl">
-                        <h2 className="text-xl font-semibold">Profile Details</h2>
+                    <div className="bg-[#35408E] text-white px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
+                        <h2 className="text-lg md:text-xl font-semibold">Profile Details</h2>
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-8">
+                    <div className="p-4 md:p-8">
                         {/* Success/Error Messages */}
                         {success && (
-                            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm md:text-base">
                                 {success}
                             </div>
                         )}
                         {error && (
-                            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm md:text-base">
                                 {error}
                             </div>
                         )}
 
                         {/* Profile Picture Section */}
-                        <div className="flex flex-col items-center mb-8">
-                            <div className="w-32 h-32 rounded-full bg-gray-400 flex items-center justify-center mb-3">
-                                <span className="text-4xl font-bold text-white">
+                        <div className="flex flex-col items-center mb-6 md:mb-8">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-400 flex items-center justify-center mb-3">
+                                <span className="text-3xl md:text-4xl font-bold text-white">
                                     {getInitials(profileData.employeename)}
                                 </span>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900">{profileData.employeename}</h3>
-                            <p className="text-gray-600 text-sm">{employee?.role || 'Sales Admin'}</p>
+                            <h3 className="text-lg md:text-xl font-bold text-gray-900 text-center">{profileData.employeename}</h3>
+                            <p className="text-gray-600 text-xs md:text-sm">{employee?.role || 'Sales Admin'}</p>
                         </div>
 
                         {/* Profile Form Fields */}
-                        <div className="space-y-6">
+                        <div className="space-y-4 md:space-y-6">
                             {/* Employee Name Field */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                     Full Name
                                 </label>
                                 <input
@@ -228,13 +228,13 @@ const profileSA = () => {
                                     value={profileData.employeename}
                                     onChange={handleInputChange}
                                     disabled={!isEditing}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
                                 />
                             </div>
 
                             {/* Email Field */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                     Email
                                 </label>
                                 <input
@@ -243,14 +243,14 @@ const profileSA = () => {
                                     value={profileData.email}
                                     onChange={handleInputChange}
                                     disabled
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                             </div>
 
                             {/* Contact Details Field */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                     Contact Number
                                 </label>
                                 <input
@@ -259,13 +259,13 @@ const profileSA = () => {
                                     value={profileData.contactdetails}
                                     onChange={handleInputChange}
                                     disabled={!isEditing}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
                                 />
                             </div>
 
                             {/* Department Field */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                     Department
                                 </label>
                                 <input
@@ -273,13 +273,13 @@ const profileSA = () => {
                                     name="assigneddepartment"
                                     value={profileData.assigneddepartment}
                                     disabled
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                                 />
                             </div>
 
                             {/* Shift Hours Field */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">
+                                <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                     Shift Hours
                                 </label>
                                 <input
@@ -288,24 +288,24 @@ const profileSA = () => {
                                     value={profileData.shifthours}
                                     onChange={handleInputChange}
                                     disabled={!isEditing}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
+                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-600"
                                 />
                             </div>
 
                             {/* Password Change Section */}
-                            <div className="border-t pt-6">
+                            <div className="border-t pt-4 md:pt-6">
                                 <button
                                     onClick={() => setIsChangingPassword(!isChangingPassword)}
-                                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-semibold"
+                                    className="text-xs md:text-sm text-blue-600 hover:text-blue-800 hover:underline font-semibold"
                                 >
                                     {isChangingPassword ? 'Cancel password change' : 'Change password?'}
                                 </button>
 
                                 {isChangingPassword && (
-                                    <div className="mt-4 space-y-4 bg-gray-50 p-4 rounded-lg">
+                                    <div className="mt-4 space-y-4 bg-gray-50 p-3 md:p-4 rounded-lg">
                                         {/* Current Password */}
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-900 mb-2">
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                                 Current Password
                                             </label>
                                             <div className="relative">
@@ -314,21 +314,21 @@ const profileSA = () => {
                                                     name="currentPassword"
                                                     value={passwordData.currentPassword}
                                                     onChange={handlePasswordChange}
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                                 >
-                                                    {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                 </button>
                                             </div>
                                         </div>
 
                                         {/* New Password */}
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-900 mb-2">
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                                 New Password
                                             </label>
                                             <div className="relative">
@@ -337,21 +337,21 @@ const profileSA = () => {
                                                     name="newPassword"
                                                     value={passwordData.newPassword}
                                                     onChange={handlePasswordChange}
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowNewPassword(!showNewPassword)}
                                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                                 >
-                                                    {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                 </button>
                                             </div>
                                         </div>
 
                                         {/* Confirm Password */}
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-900 mb-2">
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
                                                 Confirm New Password
                                             </label>
                                             <div className="relative">
@@ -360,14 +360,14 @@ const profileSA = () => {
                                                     name="confirmPassword"
                                                     value={passwordData.confirmPassword}
                                                     onChange={handlePasswordChange}
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                                 >
-                                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                 </button>
                                             </div>
                                         </div>
@@ -375,7 +375,7 @@ const profileSA = () => {
                                         <button
                                             onClick={handleChangePassword}
                                             disabled={isSaving}
-                                            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                                            className="w-full bg-green-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 text-sm md:text-base"
                                         >
                                             {isSaving ? 'Changing Password...' : 'Change Password'}
                                         </button>
@@ -385,11 +385,11 @@ const profileSA = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-4 mt-8">
+                        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8">
                             {/* Edit Profile Button */}
                             <button
                                 onClick={handleEditProfile}
-                                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                                className="flex-1 bg-blue-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm md:text-base"
                             >
                                 {isEditing ? 'Save Profile' : 'Edit Profile'}
                             </button>
@@ -397,9 +397,9 @@ const profileSA = () => {
                             {/* Logout Button */}
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm md:text-base"
                             >
-                                <LogOut size={20} />
+                                <LogOut size={18} className="md:w-5 md:h-5" />
                                 Logout
                             </button>
                         </div>
