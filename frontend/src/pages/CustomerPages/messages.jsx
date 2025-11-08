@@ -127,7 +127,7 @@ const MessagesPage = () => {
                 },
                 body: JSON.stringify({
                     customerid: customerid,
-                    employeeid: selectedContact.employeeid,
+                    senderType: 'customer', // Explicitly mark as customer message
                     message: messageText,
                     file: fileData,
                     fileName: selectedFile?.name
@@ -165,8 +165,8 @@ const MessagesPage = () => {
                 { method: 'PATCH' }
             );
             
-            // Navigate to order detail
-            navigate(`/orderdetail/${notification.orderId}`);
+            // Navigate to customer orders page (not admin order detail)
+            navigate('/orders');
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -278,8 +278,25 @@ const MessagesPage = () => {
                                         }`}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center text-2xl bg-white flex-shrink-0">
-                                                {getNotificationIcon(notification.type)}
+                                            <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0 overflow-hidden">
+                                                {notification.thumbnail ? (
+                                                    <img 
+                                                        src={notification.thumbnail} 
+                                                        alt="Order thumbnail"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : notification.hangerColor ? (
+                                                    <div 
+                                                        className="w-full h-full flex items-center justify-center text-xs font-semibold"
+                                                        style={{ backgroundColor: notification.hangerColor }}
+                                                    >
+                                                        🪝
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-2xl">
+                                                        {getNotificationIcon(notification.type)}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>

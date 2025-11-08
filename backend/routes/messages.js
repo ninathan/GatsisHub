@@ -174,9 +174,9 @@ router.get('/conversation/:customerid/:employeeid', async (req, res) => {
 // Send a new message
 router.post('/send', async (req, res) => {
   try {
-    const { customerid, employeeid, message, file, fileName } = req.body;
+    const { customerid, employeeid, message, file, fileName, senderType } = req.body;
 
-    console.log('📨 Sending message:', { customerid, employeeid, hasFile: !!file });
+    console.log('📨 Sending message:', { customerid, employeeid, senderType, hasFile: !!file });
 
     if (!customerid || !message) {
       return res.status(400).json({ error: 'Customer ID and message are required' });
@@ -196,9 +196,14 @@ router.post('/send', async (req, res) => {
       }
     }
 
+    // Determine who sent the message:
+    // - If senderType is 'admin' OR employeeid is provided without senderType, it's from admin
+    // - If senderType is 'customer' OR no employeeid, it's from customer
+    const isAdminSender = senderType === 'admin' || (employeeid && !senderType);
+    
     const insertData = {
       customerid,
-      employeeid: employeeid || null,
+      employeeid: isAdminSender ? employeeid : null, // Only set employeeid if admin is sending
       message,
       timesent: new Date().toISOString()
     };

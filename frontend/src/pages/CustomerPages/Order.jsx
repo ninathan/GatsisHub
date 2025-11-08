@@ -187,6 +187,7 @@ const Order = () => {
                 body: JSON.stringify({
                     customerid: customer.customerid,
                     employeeid: defaultSalesAdminId,
+                    senderType: 'customer', // Customer is sending the message
                     message: initialMessage
                 })
             });

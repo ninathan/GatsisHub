@@ -22,7 +22,10 @@ router.get('/customer/:customerid', async (req, res) => {
         orders (
           orderid,
           companyname,
-          orderstatus
+          orderstatus,
+          hangertype,
+          selectedcolor,
+          threeddesigndata
         )
       `)
       .eq('customerid', customerid)
@@ -37,25 +40,47 @@ router.get('/customer/:customerid', async (req, res) => {
     if (error) throw error;
 
     // Format notifications
-    const formattedNotifications = notifications.map(notif => ({
-      id: notif.notificationid,
-      title: notif.title,
-      message: notif.message,
-      type: notif.type,
-      isRead: notif.isread,
-      orderId: notif.orderid,
-      orderStatus: notif.orders?.orderstatus,
-      companyName: notif.orders?.companyname,
-      timestamp: new Date(notif.datecreated).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }),
-      rawDate: notif.datecreated
-    }));
+    const formattedNotifications = notifications.map(notif => {
+      // Extract design data for thumbnail
+      let designData = null;
+      let thumbnail = null;
+      
+      if (notif.orders?.threeddesigndata) {
+        try {
+          designData = typeof notif.orders.threeddesigndata === 'string' 
+            ? JSON.parse(notif.orders.threeddesigndata)
+            : notif.orders.threeddesigndata;
+          
+          // Get logo preview as thumbnail if available
+          thumbnail = designData.logoPreview || null;
+        } catch (e) {
+          console.error('Error parsing design data:', e);
+        }
+      }
+
+      return {
+        id: notif.notificationid,
+        title: notif.title,
+        message: notif.message,
+        type: notif.type,
+        isRead: notif.isread,
+        orderId: notif.orderid,
+        orderStatus: notif.orders?.orderstatus,
+        companyName: notif.orders?.companyname,
+        hangerType: notif.orders?.hangertype,
+        hangerColor: notif.orders?.selectedcolor,
+        thumbnail: thumbnail, // Logo preview from design data
+        timestamp: new Date(notif.datecreated).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        rawDate: notif.datecreated
+      };
+    });
 
     res.json({ 
       notifications: formattedNotifications,

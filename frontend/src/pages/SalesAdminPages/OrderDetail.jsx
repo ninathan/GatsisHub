@@ -303,6 +303,7 @@ const OrderDetail = () => {
                 body: JSON.stringify({
                     customerid: customerid,
                     employeeid: employee.employeeid,
+                    senderType: 'admin', // Sales admin is sending the message
                     message: initialMessage
                 })
             });

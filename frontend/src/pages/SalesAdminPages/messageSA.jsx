@@ -107,6 +107,7 @@ const Messages = () => {
                 body: JSON.stringify({
                     customerid: selectedCustomer.customerid,
                     employeeid: employee.employeeid,
+                    senderType: 'admin', // Explicitly mark as admin message
                     message: messageText,
                     file: fileData,
                     fileName: selectedFile?.name
