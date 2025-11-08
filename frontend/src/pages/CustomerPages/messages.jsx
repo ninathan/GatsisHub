@@ -224,6 +224,15 @@ const MessagesPage = () => {
         return date.toLocaleDateString();
     };
 
+    const formatMessageTime = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+        });
+    };
+
     const getNotificationIcon = (type) => {
         const icons = {
             'order_update': '🪝',
@@ -440,7 +449,9 @@ const MessagesPage = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="text-xs text-gray-400 mt-1">{msg.time}</span>
+                                            <span className="text-xs text-gray-400 mt-1" title={msg.timestamp}>
+                                                {formatMessageTime(msg.timestamp)}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}

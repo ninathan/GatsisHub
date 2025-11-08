@@ -170,6 +170,15 @@ const Messages = () => {
         return date.toLocaleDateString();
     };
 
+    const formatMessageTime = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+        });
+    };
+
     return (
         <div className="flex w-full bg-gray-100 h-screen">
             {/* People + Chat */}
@@ -267,8 +276,8 @@ const Messages = () => {
                                                     </a>
                                                 </div>
                                             )}
-                                            <span className="text-xs block mt-1 text-right opacity-75">
-                                                {msg.time}
+                                            <span className="text-xs block mt-1 text-right opacity-75" title={msg.timestamp}>
+                                                {formatMessageTime(msg.timestamp)}
                                             </span>
                                         </div>
                                     </div>
