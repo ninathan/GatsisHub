@@ -151,9 +151,22 @@ const Messages = () => {
         const now = new Date();
         const diffInMinutes = Math.floor((now - date) / 60000);
         
+        // Get start of today and yesterday
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        
         if (diffInMinutes < 1) return 'now';
         if (diffInMinutes < 60) return `${diffInMinutes}m`;
         if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+        
+        // Check if message is from today
+        if (date >= todayStart) return 'Today';
+        
+        // Check if message is from yesterday
+        if (date >= yesterdayStart) return 'Yesterday';
+        
+        // For older messages, show the date
         return date.toLocaleDateString();
     };
 
@@ -227,15 +240,32 @@ const Messages = () => {
                                                     : "bg-[#35408E] text-white"
                                             }`}
                                         >
-                                            <p>{msg.text}</p>
+                                            {/* Show message text only if it's not just a file indicator */}
+                                            {!msg.text.startsWith('📎 ') && (
+                                                <p>{msg.text}</p>
+                                            )}
+                                            
+                                            {/* File attachment display */}
                                             {msg.hasFile && msg.file && (
-                                                <a 
-                                                    href={msg.file} 
-                                                    download
-                                                    className="block mt-2 underline text-sm"
-                                                >
-                                                    📎 Download File
-                                                </a>
+                                                <div className={`${msg.text.startsWith('📎 ') ? '' : 'mt-2'} ${
+                                                    msg.sender === 'admin' 
+                                                        ? 'bg-yellow-300 border border-yellow-500' 
+                                                        : 'bg-indigo-700 border border-indigo-600'
+                                                } rounded-lg p-2`}>
+                                                    <a 
+                                                        href={msg.file} 
+                                                        download={msg.text.startsWith('📎 ') ? msg.text.replace('📎 ', '') : 'attachment'}
+                                                        className={`flex items-center gap-2 text-sm font-medium ${
+                                                            msg.sender === 'admin' ? 'text-gray-800' : 'text-white'
+                                                        }`}
+                                                    >
+                                                        <span className="text-lg">📎</span>
+                                                        <span className="flex-1">
+                                                            {msg.text.startsWith('📎 ') ? msg.text.replace('📎 ', '') : 'Download File'}
+                                                        </span>
+                                                        <span className="text-xs opacity-75">↓</span>
+                                                    </a>
+                                                </div>
                                             )}
                                             <span className="text-xs block mt-1 text-right opacity-75">
                                                 {msg.time}

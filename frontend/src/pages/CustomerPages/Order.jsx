@@ -198,26 +198,39 @@ const Order = () => {
                 return;
             }
 
-            // Fetch one active and present Sales Admin employee
-            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&ispresent=true&limit=1');
+            // Try to fetch an active and present Sales Admin first (priority: online)
+            let employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&ispresent=true&limit=1');
             
             if (!employeesResponse.ok) {
                 showNotification('Failed to load support team. Please try again.', 'error');
                 return;
             }
 
-            const employeesData = await employeesResponse.json();
-            
-            // Get Sales Admins from response (already filtered by query params)
-            const salesAdmins = employeesData.employees || [];
+            let employeesData = await employeesResponse.json();
+            let salesAdmins = employeesData.employees || [];
+
+            // If no online Sales Admin found, fetch any active Sales Admin (online or offline)
+            if (salesAdmins.length === 0) {
+                console.log('No online Sales Admin found, fetching any available Sales Admin...');
+                employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&limit=1');
+                
+                if (!employeesResponse.ok) {
+                    showNotification('Failed to load support team. Please try again.', 'error');
+                    return;
+                }
+
+                employeesData = await employeesResponse.json();
+                salesAdmins = employeesData.employees || [];
+            }
 
             if (salesAdmins.length === 0) {
-                showNotification('No support agents are currently available. Please try again later.', 'error');
+                showNotification('No support agents available. Please try again later.', 'error');
                 return;
             }
 
             // Use the first (and only) available Sales Admin
             const supportAgent = salesAdmins[0];
+            const isOnline = supportAgent.ispresent;
 
             // Create an initial message to start the conversation
             const initialMessage = `Hi, I have a question about my order ${order.orderid.slice(0, 8).toUpperCase()}`;
@@ -244,11 +257,14 @@ const Order = () => {
             });
 
             if (response.ok) {
-                showNotification(`Message sent to ${supportAgent.employeename}! Redirecting...`, 'success');
+                const statusMessage = isOnline 
+                    ? `Message sent to ${supportAgent.employeename} (Online)! Redirecting...` 
+                    : `Message sent to ${supportAgent.employeename}! They will respond when available. Redirecting...`;
+                showNotification(statusMessage, 'success');
                 // Navigate to messages page after a short delay
                 setTimeout(() => {
                     navigate('/messages');
-                }, 1000);
+                }, 1500);
             } else {
                 const responseData = await response.json();
                 const errorMsg = responseData.error || 'Failed to start conversation';
