@@ -253,4 +253,81 @@ router.delete("/:orderid", async (req, res) => {
   }
 });
 
+// 💰 Update order price (PATCH)
+router.patch("/:orderid/price", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { price } = req.body;
+
+    console.log(`💰 Updating price for order ${orderid}: ${price}`);
+
+    // Validate price
+    if (price === undefined || price === null || isNaN(price)) {
+      return res.status(400).json({ error: "Invalid price value" });
+    }
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ totalprice: price })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) throw error;
+
+    console.log(`✅ Price updated successfully for order ${orderid}`);
+
+    res.status(200).json({
+      message: "Order price updated",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error("Update Price Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔄 Update order status (PATCH)
+router.patch("/:orderid/status", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { status } = req.body;
+
+    console.log(`🔄 Updating status for order ${orderid}: ${status}`);
+
+    // Validate status
+    const validStatuses = [
+      'For Evaluation',
+      'Waiting for Payment',
+      'Approved',
+      'In Production',
+      'Waiting for Shipment',
+      'In Transit',
+      'Completed',
+      'Cancelled'
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid order status" });
+    }
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ orderstatus: status })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) throw error;
+
+    console.log(`✅ Status updated successfully for order ${orderid}`);
+
+    res.status(200).json({
+      message: "Order status updated",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error("Update Status Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

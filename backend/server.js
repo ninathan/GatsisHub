@@ -21,7 +21,7 @@ app.use(
       "https://www.gatsishub.com",
       "http://www.gatsishub.com"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true
   })
 );
