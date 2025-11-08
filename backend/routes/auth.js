@@ -558,16 +558,22 @@ router.post("/forgot-password", async (req, res) => {
         })
       });
 
-      const responseData = await emailResponse.json();
+      let responseData;
+      try {
+        responseData = await emailResponse.json();
+      } catch (parseError) {
+        console.error("❌ Failed to parse Resend response:", parseError);
+        throw new Error("Invalid response from email service");
+      }
       
       if (!emailResponse.ok) {
         console.error("❌ Resend API error status:", emailResponse.status);
         console.error("❌ Resend API error response:", JSON.stringify(responseData, null, 2));
-        throw new Error(`Resend API error: ${responseData.message || 'Unknown error'}`);
+        throw new Error(`Resend API error: ${responseData.message || responseData.error || 'Unknown error'}`);
       }
 
       console.log("✅ Verification email sent successfully. Email ID:", responseData.id);
-      res.status(200).json({ 
+      return res.status(200).json({ 
         message: "Verification code sent to your email",
         email: emailAddress 
       });
