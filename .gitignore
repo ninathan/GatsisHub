@@ -16,3 +16,4 @@ backend/routes/orders.js
 frontend/src/pages/Admin/AdminOrderDetailExample.jsx
 frontend/src/pages/CustomerPages/Checkout.jsx
 frontend/src/pages/CustomerPages/Order.jsx
+create_password_reset_codes_table.sql

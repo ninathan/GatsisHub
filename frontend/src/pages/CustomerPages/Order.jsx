@@ -86,16 +86,16 @@ const Order = () => {
     // Helper function to get status color
     const getStatusColor = (status) => {
         const statusColors = {
-            'For Evaluation': 'bg-yellow-400',
-            'Waiting for Payment': 'bg-orange-400',
-            'Approved': 'bg-green-500',
-            'In Production': 'bg-blue-400',
-            'Waiting for Shipment': 'bg-indigo-400',
-            'In Transit': 'bg-purple-400',
-            'Completed': 'bg-green-600',
-            'Cancelled': 'bg-red-500'
+            'For Evaluation': '#fbbf24',
+            'Waiting for Payment': '#fb923c',
+            'Approved': '#22c55e',
+            'In Production': '#60a5fa',
+            'Waiting for Shipment': '#818cf8',
+            'In Transit': '#a78bfa',
+            'Completed': '#16a34a',
+            'Cancelled': '#ef4444'
         };
-        return statusColors[status] || 'bg-gray-400';
+        return statusColors[status] || '#9ca3af';
     };
 
     // Helper function to format date
@@ -376,12 +376,16 @@ const Order = () => {
                                                 <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
                                             </div>
 
-                                             {/* Status */}
-                                            <div className="flex-1 flex justify-center">
-                                                <span className={`${statusColor} text-black px-4 py-1 rounded font-semibold text-sm`}>
-                                                    {order.orderstatus}
-                                                </span>
-                                            </div>
+                                             
+                                    {/* Status */}
+                                    <div className="flex-1 text-center">
+                                        <span 
+                                            className="text-black px-4 py-1 rounded font-semibold text-sm inline-block"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
+                                            {order.orderstatus}
+                                        </span>
+                                    </div>
 
                                             {/* Price */}
                                             <div className="flex-1 text-center">

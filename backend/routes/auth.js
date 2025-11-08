@@ -468,4 +468,242 @@ router.get("/customer/:userid", async (req, res) => {
   }
 });
 
+// 📧 Forgot Password - Send verification code
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { emailAddress } = req.body;
+
+    console.log("📧 Forgot password request for:", emailAddress);
+
+    // Validate email
+    if (!emailAddress) {
+      return res.status(400).json({ error: "Email address is required" });
+    }
+
+    // Check if user exists
+    const { data: customer, error: findError } = await supabase
+      .from("customers")
+      .select("customerid, emailaddress, companyname")
+      .eq("emailaddress", emailAddress)
+      .single();
+
+    if (findError || !customer) {
+      console.error("❌ Customer lookup error:", findError);
+      return res.status(404).json({ error: "No account found with this email address" });
+    }
+
+    console.log("✅ Customer found:", customer.emailaddress);
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    console.log("🔐 Generated code:", verificationCode, "expires at:", expiresAt);
+
+    // Store verification code in database
+    const { error: insertError } = await supabase
+      .from("password_reset_codes")
+      .insert([{
+        email: emailAddress,
+        code: verificationCode,
+        expires_at: expiresAt.toISOString(),
+        used: false
+      }]);
+
+    if (insertError) {
+      console.error("❌ Error storing verification code:", insertError);
+      console.error("❌ Full error details:", JSON.stringify(insertError, null, 2));
+      return res.status(500).json({ 
+        error: "Database error. Please ensure password_reset_codes table exists.",
+        details: insertError.message 
+      });
+    }
+
+    console.log("✅ Verification code stored in database");
+
+    // Send email using Resend API
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (!resendApiKey) {
+        console.error("❌ RESEND_API_KEY not found in environment variables");
+        return res.status(500).json({ error: "Email service not configured" });
+      }
+
+      console.log("📧 Attempting to send email to:", emailAddress);
+      
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'GatsisHub <noreply@gatsishub.com>',
+          to: [emailAddress],
+          subject: 'Password Reset Verification Code',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #35408E;">Password Reset Request</h2>
+              <p>Hello ${customer.companyname || 'there'},</p>
+              <p>You requested to reset your password. Use the verification code below:</p>
+              <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                ${verificationCode}
+              </div>
+              <p>This code will expire in 15 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+              <p>Best regards,<br/>GatsisHub Team</p>
+            </div>
+          `
+        })
+      });
+
+      let responseData;
+      try {
+        responseData = await emailResponse.json();
+      } catch (parseError) {
+        console.error("❌ Failed to parse Resend response:", parseError);
+        throw new Error("Invalid response from email service");
+      }
+      
+      if (!emailResponse.ok) {
+        console.error("❌ Resend API error status:", emailResponse.status);
+        console.error("❌ Resend API error response:", JSON.stringify(responseData, null, 2));
+        throw new Error(`Resend API error: ${responseData.message || responseData.error || 'Unknown error'}`);
+      }
+
+      console.log("✅ Verification email sent successfully. Email ID:", responseData.id);
+      return res.status(200).json({ 
+        message: "Verification code sent to your email",
+        email: emailAddress 
+      });
+
+    } catch (emailError) {
+      console.error("❌ Email sending error:", emailError.message);
+      console.error("❌ Full error:", emailError);
+      res.status(500).json({ 
+        error: "Failed to send verification email",
+        details: emailError.message 
+      });
+    }
+
+  } catch (err) {
+    console.error("❌ Forgot password error:", err.message);
+    res.status(500).json({ error: "Server error during password reset" });
+  }
+});
+
+// 🔐 Verify reset code
+router.post("/verify-reset-code", async (req, res) => {
+  try {
+    const { emailAddress, code } = req.body;
+
+    console.log("🔐 Verifying code for:", emailAddress);
+
+    if (!emailAddress || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    // Find valid code
+    const { data: resetCode, error: findError } = await supabase
+      .from("password_reset_codes")
+      .select("*")
+      .eq("email", emailAddress)
+      .eq("code", code)
+      .eq("used", false)
+      .single();
+
+    if (findError || !resetCode) {
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    // Check if code is expired
+    const now = new Date();
+    const expiresAt = new Date(resetCode.expires_at);
+
+    if (now > expiresAt) {
+      return res.status(400).json({ error: "Verification code has expired" });
+    }
+
+    // Mark code as used
+    await supabase
+      .from("password_reset_codes")
+      .update({ used: true })
+      .eq("email", emailAddress)
+      .eq("code", code);
+
+    console.log("✅ Code verified successfully");
+    res.status(200).json({ 
+      message: "Code verified successfully",
+      email: emailAddress 
+    });
+
+  } catch (err) {
+    console.error("❌ Verify code error:", err.message);
+    res.status(500).json({ error: "Server error during code verification" });
+  }
+});
+
+// 🔄 Reset password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { emailAddress, newPassword } = req.body;
+
+    console.log("🔄 Resetting password for:", emailAddress);
+
+    if (!emailAddress || !newPassword) {
+      return res.status(400).json({ error: "Email and new password are required" });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+
+    // Find customer
+    const { data: customer, error: findError } = await supabase
+      .from("customers")
+      .select("customerid, userid")
+      .eq("emailaddress", emailAddress)
+      .single();
+
+    if (findError || !customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    const { error: updateError } = await supabase
+      .from("customers")
+      .update({ password: hashedPassword })
+      .eq("emailaddress", emailAddress);
+
+    if (updateError) {
+      console.error("❌ Error updating password:", updateError);
+      return res.status(500).json({ error: "Failed to update password" });
+    }
+
+    // Update Supabase Auth password if userid exists
+    if (customer.userid) {
+      try {
+        await supabase.auth.admin.updateUserById(customer.userid, {
+          password: newPassword
+        });
+      } catch (authError) {
+        console.warn("⚠️ Could not update Supabase Auth password:", authError.message);
+        // Continue anyway since the main password is updated
+      }
+    }
+
+    console.log("✅ Password reset successfully");
+    res.status(200).json({ message: "Password reset successfully" });
+
+  } catch (err) {
+    console.error("❌ Reset password error:", err.message);
+    res.status(500).json({ error: "Server error during password reset" });
+  }
+});
+
 export default router;

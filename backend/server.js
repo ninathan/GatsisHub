@@ -16,6 +16,10 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://gatsis-hub-client.vercel.app",
+      "https://gatsishub.com",
+      "http://gatsishub.com",
+      "https://www.gatsishub.com",
+      "http://www.gatsishub.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
