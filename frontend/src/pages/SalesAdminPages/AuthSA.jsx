@@ -1,12 +1,64 @@
-import React from 'react'
+import React, { useState } from 'react'
 import logo from '../../images/logo.png'
 import userav from '../../images/user-alt.png'
-import googlelogo from '../../images/googlelogo.png'
 import key from '../../images/key.png'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
 
 const AuthSA = () => {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            console.log('✅ Login successful:', data.employee);
+
+            // Store employee data in localStorage
+            localStorage.setItem('employee', JSON.stringify(data.employee));
+            
+            if (rememberMe) {
+                localStorage.setItem('rememberEmployee', 'true');
+            }
+
+            // Redirect based on role
+            if (data.employee.role === 'Sales Admin') {
+                navigate('/orderpage');
+            } else if (data.employee.role === 'Operational Manager') {
+                navigate('/operational-manager');
+            } else {
+                navigate('/employee-dashboard');
+            }
+
+        } catch (err) {
+            console.error('❌ Login error:', err);
+            setError(err.message || 'Invalid email or password');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const IntputField =
   'border border-gray-300 rounded-2xl px-4 md:px-12 py-3 w-full max-w-[460px] text-lg md:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
     return (
@@ -32,12 +84,25 @@ const AuthSA = () => {
                     <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
                         Sign In as Gatsishub</h1>
 
-                    <form className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
-                        {/* username */}
+                    {error && (
+                        <div className='mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md lg:max-w-lg w-full'>
+                            <p className='text-sm md:text-base'>{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleLogin} className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
+                        {/* Email */}
                         <div className='relative mb-6'>
-                            <label htmlFor="username" className='block text-lg md:text-2xl font-medium mb-2'>Username</label>
+                            <label htmlFor="email" className='block text-lg md:text-2xl font-medium mb-2'>Email</label>
                             <img src={userav} alt="" className='absolute left-4 top-12 md:top-14.5 w-5 h-5 md:w-6 md:h-6' />
-                            <input type="text" placeholder='Enter your username' className={IntputField} />
+                            <input 
+                                type="email" 
+                                placeholder='Enter your email' 
+                                className={IntputField}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
                         </div>
 
                         {/* Password */}
@@ -51,21 +116,37 @@ const AuthSA = () => {
                         {/* Password Input */}
                         <div className='relative mb-6'>
                             <img src={key} alt="key" className='absolute left-4 top-4 md:top-5 w-5 h-5 md:w-6 md:h-6' />
-                            <input type="password" placeholder='Enter your Password' className={IntputField} />
+                            <input 
+                                type="password" 
+                                placeholder='Enter your Password' 
+                                className={IntputField}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
                         </div>
 
                         {/* Remember Me */}
                         <div className='flex w-full mb-6'>
                             <div className='flex items-center'>
-                                <input type="checkbox" className='mr-2' />
+                                <input 
+                                    type="checkbox" 
+                                    className='mr-2'
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
                                 <span className='text-black text-base md:text-xl font-medium'>Remember me</span>
                             </div>
                         </div>
 
                         {/* Sign In Button */}
-                        <Link to="/orderpage">
-                            <button type="submit" className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575]'>Sign In</button>
-                        </Link>
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </button>
                     </form>
                 </div>
             </div>

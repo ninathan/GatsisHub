@@ -10,6 +10,36 @@ This file tracks all database schema changes for the GatsisHub project. Always u
 
 ---
 
+## 2024-11-08 - Add Employee Authentication System
+
+**Migration:** `add_salesadmin_auth.sql`
+
+**Purpose:**
+- Enable login system for Sales Admin, Operational Manager, and other employees
+- Secure employee accounts with bcrypt password hashing
+- Create fallback admin account for initial access
+
+**Changes:**
+- Added `email` VARCHAR(150) UNIQUE to `employees` table
+- Added `password` VARCHAR(60) to `employees` table (for bcrypt hashes)
+- Added `role` VARCHAR(30) to `employees` table (Sales Admin, Operational Manager, Employee)
+- Added `accountstatus` VARCHAR(20) to `employees` table (Active, Inactive, Suspended)
+- Created index `idx_employees_email` for faster login queries
+- Inserted fallback Sales Admin account:
+  - Email: `admin@gatsishub.com`
+  - Password: `Admin@123` (can be changed after first login)
+  - Role: Sales Admin
+
+**Tables Affected:**
+- `employees`
+
+**Related Files:**
+- `backend/routes/employees.js` - NEW: Employee login, profile, and password change endpoints
+- `backend/server.js` - Added `/employees` route
+- `frontend/src/pages/SalesAdminPages/AuthSA.jsx` - Functional login with authentication
+
+---
+
 ## 2024-11-08 - Add Deadline Column to Orders
 
 **Migration:** `add_deadline_column.sql`

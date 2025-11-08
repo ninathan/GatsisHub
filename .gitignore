@@ -21,3 +21,6 @@ add_totalprice_column.sql
 add_deadline_column.sql
 DATABASE_CHANGELOG.md
 
+add_salesadmin_auth.sql
+DATABASE_CHANGELOG.md
+SALES_ADMIN_LOGIN.md
