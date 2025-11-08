@@ -12,6 +12,7 @@ const AuthSA = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -107,9 +108,13 @@ const AuthSA = () => {
                         {/* Password */}
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-2 mb-2'>
                             <label htmlFor="password" className='text-black text-lg md:text-2xl font-medium'>Password</label>
-                            <p className='text-[#35408E] text-sm md:text-1xl font-medium underline'>
-                                <Link to="">Forgot password?</Link>
-                            </p>
+                            <button 
+                                type="button"
+                                onClick={() => setShowForgotPasswordModal(true)}
+                                className='text-[#35408E] text-sm md:text-1xl font-medium underline hover:text-[#2d3575] text-left md:text-right'
+                            >
+                                Forgot password?
+                            </button>
                         </div>
 
                         {/* Password Input */}
@@ -149,6 +154,50 @@ const AuthSA = () => {
                     </form>
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            {showForgotPasswordModal && (
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-[#35408E] px-6 py-4">
+                            <h2 className="text-white text-2xl font-semibold">Password Reset</h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                    <svg className="w-8 h-8 text-[#35408E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                                    Contact System Administrator
+                                </h3>
+                                <p className="text-gray-600 mb-4">
+                                    For password reset requests, please contact your System Administrator directly.
+                                </p>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 w-full">
+                                    <p className="text-sm text-gray-700">
+                                        <strong>Note:</strong> Only the System Administrator can reset employee passwords for security purposes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setShowForgotPasswordModal(false)}
+                                className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </PageTransition>
     )
 }

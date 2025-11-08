@@ -43,7 +43,7 @@ const Sidebar = () => {
         localStorage.removeItem('employee');
         localStorage.removeItem('rememberEmployee');
         // Redirect to login
-        navigate('/authsa');
+        navigate('/authsaleadmin');
     };
 
     // Get initials from employee name
