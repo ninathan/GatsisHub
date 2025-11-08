@@ -24,6 +24,11 @@ const CustomerRv = () => {
     const reviewsColumn = useScrollAnimation({ threshold: 0.2 });
     const formColumn = useScrollAnimation({ threshold: 0.2 });
 
+    // Always show sections (fixed visibility)
+    const headingShown = true;
+    const reviewsShown = true;
+    const formShown = true;
+
     // Fetch all reviews
     useEffect(() => {
         fetchReviews();
@@ -211,8 +216,8 @@ const CustomerRv = () => {
                     ref={heading.ref}
                     className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37"
                     style={{ 
-                        opacity: heading.isVisible ? 1 : 0,
-                        transform: heading.isVisible ? 'translateY(0)' : 'translateY(30px)',
+                        opacity: headingShown ? 1 : 0,
+                        transform: headingShown ? 'translateY(0)' : 'translateY(30px)',
                         transition: 'opacity 0.6s ease-out, transform 0.6s ease-out'
                     }}
                 >
@@ -231,8 +236,8 @@ const CustomerRv = () => {
                             ref={reviewsColumn.ref}
                             className="flex flex-col gap-8"
                             style={{ 
-                                opacity: reviewsColumn.isVisible ? 1 : 0,
-                                transform: reviewsColumn.isVisible ? 'translateX(0)' : 'translateX(-60px)',
+                                opacity: reviewsShown ? 1 : 0,
+                                transform: reviewsShown ? 'translateX(0)' : 'translateX(-60px)',
                                 transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
                             }}
                         >
@@ -265,8 +270,8 @@ const CustomerRv = () => {
                             ref={formColumn.ref}
                             className="flex flex-col gap-8"
                             style={{ 
-                                opacity: formColumn.isVisible ? 1 : 0,
-                                transform: formColumn.isVisible ? 'translateX(0)' : 'translateX(60px)',
+                                opacity: formShown ? 1 : 0,
+                                transform: formShown ? 'translateX(0)' : 'translateX(60px)',
                                 transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
                             }}
                         >
