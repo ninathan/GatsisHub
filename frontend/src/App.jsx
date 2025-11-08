@@ -39,10 +39,76 @@ import ProductSA from './pages/SalesAdminPages/ProductSA';
 import ProfileSA from './pages/SalesAdminPages/profileSA';
 
 
-// ✅ Protect logged-in routes
+// ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   return user ? element : <Navigate to="/login" replace />;
+};
+
+// ✅ Protect Sales Admin routes (Department-based access control)
+const ProtectedAdminRoute = ({ element, allowedDepartments = ['Admin'] }) => {
+  const employee = JSON.parse(localStorage.getItem('employee'));
+  
+  if (!employee) {
+    console.log('❌ No employee session found');
+    return <Navigate to="/authSaleAdmin" replace />;
+  }
+  
+  // Check if employee's department is allowed
+  if (!allowedDepartments.includes(employee.assigneddepartment)) {
+    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
+    return <Navigate to="/authSaleAdmin" replace />;
+  }
+  
+  // Additional role check for Sales Admin
+  if (employee.role !== 'Sales Admin') {
+    console.log(`❌ Access denied. Role: ${employee.role}, Required: Sales Admin`);
+    return <Navigate to="/authSaleAdmin" replace />;
+  }
+  
+  return element;
+};
+
+// ✅ Protect Operational Manager routes (Department-based access control)
+const ProtectedOMRoute = ({ element, allowedDepartments = ['Operational Manager'] }) => {
+  const employee = JSON.parse(localStorage.getItem('employee'));
+  
+  if (!employee) {
+    console.log('❌ No employee session found');
+    return <Navigate to="/authOM" replace />;
+  }
+  
+  // Check if employee's department is allowed
+  if (!allowedDepartments.includes(employee.assigneddepartment)) {
+    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
+    return <Navigate to="/authOM" replace />;
+  }
+  
+  // Additional role check for Operational Manager
+  if (employee.role !== 'Operational Manager') {
+    console.log(`❌ Access denied. Role: ${employee.role}, Required: Operational Manager`);
+    return <Navigate to="/authOM" replace />;
+  }
+  
+  return element;
+};
+
+// ✅ Protect Production/Assembly routes (for future use)
+const ProtectedProductionRoute = ({ element, allowedDepartments = ['Production', 'Assembly'] }) => {
+  const employee = JSON.parse(localStorage.getItem('employee'));
+  
+  if (!employee) {
+    console.log('❌ No employee session found');
+    return <Navigate to="/authSaleAdmin" replace />;
+  }
+  
+  // Check if employee's department is allowed
+  if (!allowedDepartments.includes(employee.assigneddepartment)) {
+    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
+    return <Navigate to="/authSaleAdmin" replace />;
+  }
+  
+  return element;
 };
 
 const router = createBrowserRouter(
@@ -77,20 +143,20 @@ const router = createBrowserRouter(
 
       {/*  Sales Admin layout */}
       <Route element={<SalesAdminLayout />}>
-        <Route path="/orderpage" element={<OrderPage />} />
-        <Route path="/orderdetail/:orderid" element={<OrderDetail />} />
-        <Route path="/messageSA" element={<MessageSA />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/dashboardSA" element={<DashboardSA />} />
-        <Route path="/productSA" element={<ProductSA />} />
-        <Route path="/profileSA" element={<ProfileSA />} />
+        <Route path="/orderpage" element={<ProtectedAdminRoute element={<OrderPage />} />} />
+        <Route path="/orderdetail/:orderid" element={<ProtectedAdminRoute element={<OrderDetail />} />} />
+        <Route path="/messageSA" element={<ProtectedAdminRoute element={<MessageSA />} />} />
+        <Route path="/calendar" element={<ProtectedAdminRoute element={<Calendar />} />} />
+        <Route path="/dashboardSA" element={<ProtectedAdminRoute element={<DashboardSA />} />} />
+        <Route path="/productSA" element={<ProtectedAdminRoute element={<ProductSA />} />} />
+        <Route path="/profileSA" element={<ProtectedAdminRoute element={<ProfileSA />} />} />
       </Route>
 
       {/*  Operational Manager layout */}
       <Route element={<OperationalManLayout />}>
-        <Route path="/orderpageOM" element={<OrderPageOM />} />
-        <Route path="/employees" element={<Employees />} />
-        <Route path="/employeeDetail" element={<Employees />} /> {/* placeholder */}
+        <Route path="/orderpageOM" element={<ProtectedOMRoute element={<OrderPageOM />} />} />
+        <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
+        <Route path="/employeeDetail" element={<ProtectedOMRoute element={<Employees />} />} /> {/* placeholder */}
       </Route>
 
       {/* Admin/Manager Auth */}

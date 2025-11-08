@@ -1,12 +1,70 @@
-import React from 'react'
+import React, { useState } from 'react'
 import logo from '../../images/logo.png'
 import userav from '../../images/user-alt.png'
-import googlelogo from '../../images/googlelogo.png'
 import key from '../../images/key.png'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
 
 const AuthOM = () => {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            // Validate inputs
+            if (!email || !password) {
+                throw new Error('Please enter both email and password');
+            }
+
+            console.log('🔐 Attempting OM login:', email);
+
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            console.log('✅ Login successful:', data.employee);
+
+            // Verify role is Operational Manager and department matches
+            if (data.employee.role !== 'Operational Manager' || data.employee.assigneddepartment !== 'Operational Manager') {
+                throw new Error('Access denied. This login is for Operational Managers only.');
+            }
+
+            // Store employee data in localStorage
+            localStorage.setItem('employee', JSON.stringify(data.employee));
+            
+            if (rememberMe) {
+                localStorage.setItem('rememberEmployee', 'true');
+            }
+
+            // Redirect to OM dashboard
+            navigate('/orderpageOM');
+
+        } catch (err) {
+            console.error('❌ Login error:', err);
+            setError(err.message || 'Invalid email or password');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const IntputField =
   'border border-gray-300 rounded-2xl px-4 md:px-12 py-3 w-full max-w-[460px] text-lg md:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
     return (
@@ -30,14 +88,29 @@ const AuthOM = () => {
                 {/* right */}
                 <div className='flex flex-col items-center justify-center py-10 md:py-20 lg:mt-35 px-4 order-1 lg:order-2'>
                     <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
-                        Sign In as Gatsishub</h1>
+                        Sign In as Operational Manager</h1>
 
-                    <form className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
-                        {/* username */}
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
+                            <p className="text-base md:text-lg">{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleLogin} className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
+                        {/* email */}
                         <div className='relative mb-6'>
-                            <label htmlFor="username" className='block text-lg md:text-2xl font-medium mb-2'>Username</label>
+                            <label htmlFor="email" className='block text-lg md:text-2xl font-medium mb-2'>Email</label>
                             <img src={userav} alt="" className='absolute left-4 top-12 md:top-14.5 w-5 h-5 md:w-6 md:h-6' />
-                            <input type="text" placeholder='Enter your username' className={IntputField} />
+                            <input 
+                                type="email" 
+                                id="email"
+                                placeholder='Enter your email' 
+                                className={IntputField}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={loading}
+                            />
                         </div>
 
                         {/* Password */}
@@ -51,21 +124,39 @@ const AuthOM = () => {
                         {/* Password Input */}
                         <div className='relative mb-6'>
                             <img src={key} alt="key" className='absolute left-4 top-4 md:top-5 w-5 h-5 md:w-6 md:h-6' />
-                            <input type="password" placeholder='Enter your Password' className={IntputField} />
+                            <input 
+                                type="password" 
+                                id="password"
+                                placeholder='Enter your Password' 
+                                className={IntputField}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={loading}
+                            />
                         </div>
 
                         {/* Remember Me */}
                         <div className='flex w-full mb-6'>
                             <div className='flex items-center'>
-                                <input type="checkbox" className='mr-2' />
+                                <input 
+                                    type="checkbox" 
+                                    className='mr-2'
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    disabled={loading}
+                                />
                                 <span className='text-black text-base md:text-xl font-medium'>Remember me</span>
                             </div>
                         </div>
 
                         {/* Sign In Button */}
-                        <Link to="/orderpageOM">
-                            <button type="submit" className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575]'>Sign In</button>
-                        </Link>
+                        <button 
+                            type="submit" 
+                            className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
+                            disabled={loading}
+                        >
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </button>
                     </form>
                 </div>
             </div>

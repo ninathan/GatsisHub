@@ -35,6 +35,11 @@ const AuthSA = () => {
 
             console.log('✅ Login successful:', data.employee);
 
+            // Verify this is a Sales Admin account
+            if (data.employee.role !== 'Sales Admin' || data.employee.assigneddepartment !== 'Admin') {
+                throw new Error('Access denied. This login is for Sales Admin only. Please use the appropriate login page.');
+            }
+
             // Store employee data in localStorage
             localStorage.setItem('employee', JSON.stringify(data.employee));
             
@@ -42,14 +47,8 @@ const AuthSA = () => {
                 localStorage.setItem('rememberEmployee', 'true');
             }
 
-            // Redirect based on role
-            if (data.employee.role === 'Sales Admin') {
-                navigate('/orderpage');
-            } else if (data.employee.role === 'Operational Manager') {
-                navigate('/operational-manager');
-            } else {
-                navigate('/employee-dashboard');
-            }
+            // Redirect to Sales Admin dashboard
+            navigate('/orderpage');
 
         } catch (err) {
             console.error('❌ Login error:', err);

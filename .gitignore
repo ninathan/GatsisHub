@@ -24,3 +24,5 @@ DATABASE_CHANGELOG.md
 add_salesadmin_auth.sql
 DATABASE_CHANGELOG.md
 SALES_ADMIN_LOGIN.md
+create_test_employees.sql
+DEPARTMENT_ACCESS_CONTROL.md
