@@ -216,7 +216,7 @@ router.post("/signup", async (req, res) => {
                 </div>
 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.FRONTEND_URL || 'https://gatsis-hub.vercel.app'}/login" 
+                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
                      style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                     Login to Your Account
                   </a>
