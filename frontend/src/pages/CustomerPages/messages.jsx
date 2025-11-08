@@ -195,7 +195,7 @@ const MessagesPage = () => {
             );
             
             // Navigate to customer orders page (not admin order detail)
-            navigate('/orders');
+            navigate(`/orders/${notification.orderId}`); // ✅ Direct to specific order detail page
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -308,20 +308,31 @@ const MessagesPage = () => {
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0 overflow-hidden">
-                                                {notification.thumbnail ? (
+                                                {notification.thumbnailType === 'logo' && notification.thumbnail ? (
+                                                    // Show logo image
                                                     <img 
                                                         src={notification.thumbnail} 
-                                                        alt="Order thumbnail"
-                                                        className="w-full h-full object-cover"
+                                                        alt="Order logo"
+                                                        className="w-full h-full object-contain p-1"
                                                     />
-                                                ) : notification.hangerColor ? (
+                                                ) : notification.thumbnailType === 'color' && notification.thumbnail ? (
+                                                    // Show colored box with hanger icon
                                                     <div 
-                                                        className="w-full h-full flex items-center justify-center text-xs font-semibold"
+                                                        className="w-full h-full flex items-center justify-center text-white text-xl"
+                                                        style={{ backgroundColor: notification.thumbnail }}
+                                                    >
+                                                        🪝
+                                                    </div>
+                                                ) : notification.hangerColor ? (
+                                                    // Fallback to hanger color
+                                                    <div 
+                                                        className="w-full h-full flex items-center justify-center text-white text-xl"
                                                         style={{ backgroundColor: notification.hangerColor }}
                                                     >
                                                         🪝
                                                     </div>
                                                 ) : (
+                                                    // Final fallback to notification type icon
                                                     <div className="text-2xl">
                                                         {getNotificationIcon(notification.type)}
                                                     </div>

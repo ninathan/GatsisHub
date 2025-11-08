@@ -44,6 +44,7 @@ router.get('/customer/:customerid', async (req, res) => {
       // Extract design data for thumbnail
       let designData = null;
       let thumbnail = null;
+      let thumbnailType = 'icon'; // 'logo', 'color', or 'icon'
       
       if (notif.orders?.threeddesigndata) {
         try {
@@ -51,11 +52,24 @@ router.get('/customer/:customerid', async (req, res) => {
             ? JSON.parse(notif.orders.threeddesigndata)
             : notif.orders.threeddesigndata;
           
-          // Get logo preview as thumbnail if available
-          thumbnail = designData.logoPreview || null;
+          // Priority 1: Use logo preview as thumbnail if available
+          if (designData.logoPreview) {
+            thumbnail = designData.logoPreview;
+            thumbnailType = 'logo';
+          }
+          // Priority 2: Use hanger color if no logo
+          else if (designData.color || notif.orders?.selectedcolor) {
+            thumbnail = designData.color || notif.orders?.selectedcolor;
+            thumbnailType = 'color';
+          }
         } catch (e) {
           console.error('Error parsing design data:', e);
         }
+      }
+      // Fallback to selectedcolor if no design data
+      else if (notif.orders?.selectedcolor) {
+        thumbnail = notif.orders?.selectedcolor;
+        thumbnailType = 'color';
       }
 
       return {
@@ -69,7 +83,8 @@ router.get('/customer/:customerid', async (req, res) => {
         companyName: notif.orders?.companyname,
         hangerType: notif.orders?.hangertype,
         hangerColor: notif.orders?.selectedcolor,
-        thumbnail: thumbnail, // Logo preview from design data
+        thumbnail: thumbnail, // Logo preview or color
+        thumbnailType: thumbnailType, // Type of thumbnail
         timestamp: new Date(notif.datecreated).toLocaleString('en-US', {
           month: 'short',
           day: 'numeric',
