@@ -10,6 +10,28 @@ This file tracks all database schema changes for the GatsisHub project. Always u
 
 ---
 
+## 2024-11-08 - Add Deadline Column to Orders
+
+**Migration:** `add_deadline_column.sql`
+
+**Purpose:**
+- Allow Sales Admin to set expected completion deadline for orders
+- Display deadline to customers in their order information
+
+**Changes:**
+- Added `deadline` DATE column to `orders` table
+- Column is nullable (optional)
+
+**Tables Affected:**
+- `orders`
+
+**Related Files:**
+- `backend/routes/orders.js` - Added PATCH `/orders/:orderid/deadline` endpoint
+- `frontend/src/pages/SalesAdminPages/OrderDetail.jsx` - Added deadline input field with edit/save functionality
+- `frontend/src/pages/CustomerPages/Order.jsx` - Display deadline in order details if set
+
+---
+
 ## 2024-11-08 - Fix Payment OrderID Type Mismatch
 
 **Migration:** `fix_payment_orderid_type.sql`

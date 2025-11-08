@@ -29,8 +29,11 @@ const OrderDetail = () => {
     const [error, setError] = useState(null);
     const [orderStatus, setOrderStatus] = useState("");
     const [validatedPrice, setValidatedPrice] = useState("");
+    const [deadline, setDeadline] = useState("");
     const [isEditingPrice, setIsEditingPrice] = useState(false);
+    const [isEditingDeadline, setIsEditingDeadline] = useState(false);
     const [isSavingPrice, setIsSavingPrice] = useState(false);
+    const [isSavingDeadline, setIsSavingDeadline] = useState(false);
     const [isSavingStatus, setIsSavingStatus] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState('');
@@ -60,6 +63,7 @@ const OrderDetail = () => {
                 setOrder(data.order);
                 setOrderStatus(data.order.orderstatus);
                 setValidatedPrice(data.order.totalprice || '');
+                setDeadline(data.order.deadline || '');
                 setError(null);
             } catch (err) {
                 console.error('Error fetching order:', err);
@@ -144,6 +148,45 @@ const OrderDetail = () => {
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
+        }
+    };
+
+    const handleDeadlineUpdate = async () => {
+        if (!isEditingDeadline) {
+            setIsEditingDeadline(true);
+            return;
+        }
+
+        if (!deadline) {
+            showNotificationMessage('Please select a deadline date', 'error');
+            return;
+        }
+
+        setIsSavingDeadline(true);
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/deadline`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ deadline })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update deadline');
+            }
+
+            console.log('✅ Deadline updated:', data.order);
+            setOrder(data.order);
+            setIsEditingDeadline(false);
+            showNotificationMessage('Deadline updated successfully', 'success');
+        } catch (err) {
+            console.error('Error updating deadline:', err);
+            showNotificationMessage(err.message || 'Failed to update deadline', 'error');
+        } finally {
+            setIsSavingDeadline(false);
         }
     };
 
@@ -385,26 +428,51 @@ const OrderDetail = () => {
                             )}
                         </div>
 
-                        {/* Validated Price */}
-                        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                            <label className="font-semibold text-gray-800 block mb-2">Validated Price:</label>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="number"
-                                    value={validatedPrice}
-                                    onChange={(e) => setValidatedPrice(e.target.value)}
-                                    disabled={!isEditingPrice}
-                                    className="border border-gray-300 rounded px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
-                                    placeholder="Enter validated price"
-                                />
-                                <button
-                                    onClick={handlePriceUpdate}
-                                    disabled={isSavingPrice}
-                                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 disabled:opacity-50"
-                                >
-                                    <Edit2 size={16} />
-                                    {isSavingPrice ? 'Saving...' : isEditingPrice ? "Save" : "Edit"}
-                                </button>
+                        {/* Validated Price and Deadline */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Validated Price */}
+                            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                                <label className="font-semibold text-gray-800 block mb-2">Validated Price:</label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        value={validatedPrice}
+                                        onChange={(e) => setValidatedPrice(e.target.value)}
+                                        disabled={!isEditingPrice}
+                                        className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                                        placeholder="Enter validated price"
+                                    />
+                                    <button
+                                        onClick={handlePriceUpdate}
+                                        disabled={isSavingPrice}
+                                        className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        <Edit2 size={16} />
+                                        {isSavingPrice ? 'Saving...' : isEditingPrice ? "Save" : "Edit"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Deadline */}
+                            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                                <label className="font-semibold text-gray-800 block mb-2">Deadline:</label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="date"
+                                        value={deadline}
+                                        onChange={(e) => setDeadline(e.target.value)}
+                                        disabled={!isEditingDeadline}
+                                        className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                                    />
+                                    <button
+                                        onClick={handleDeadlineUpdate}
+                                        disabled={isSavingDeadline}
+                                        className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        <Edit2 size={16} />
+                                        {isSavingDeadline ? 'Saving...' : isEditingDeadline ? "Save" : "Edit"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

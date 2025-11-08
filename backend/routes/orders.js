@@ -307,7 +307,60 @@ router.patch("/:orderid/price", async (req, res) => {
   }
 });
 
-// 🔄 Update order status (PATCH)
+// � Update order deadline (PATCH)
+router.patch("/:orderid/deadline", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { deadline } = req.body;
+
+    console.log(`📅 Updating deadline for order ${orderid}: ${deadline}`);
+    console.log(`📊 Request body:`, req.body);
+
+    // Validate deadline (should be a valid date string)
+    if (!deadline) {
+      console.error(`❌ Deadline is required`);
+      return res.status(400).json({ error: "Deadline is required" });
+    }
+
+    // Check if deadline is a valid date
+    const deadlineDate = new Date(deadline);
+    if (isNaN(deadlineDate.getTime())) {
+      console.error(`❌ Invalid deadline date: ${deadline}`);
+      return res.status(400).json({ error: "Invalid deadline date format" });
+    }
+
+    console.log(`📆 Parsed deadline date: ${deadlineDate.toISOString()}`);
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ deadline: deadline })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      console.error(`❌ Supabase error:`, error);
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      console.error(`❌ Order not found: ${orderid}`);
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    console.log(`✅ Deadline updated successfully for order ${orderid}`);
+
+    res.status(200).json({
+      message: "Order deadline updated",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error("💥 Update Deadline Error:", err);
+    console.error("💥 Error details:", err.message, err.stack);
+    res.status(500).json({ error: err.message || "Failed to update deadline" });
+  }
+});
+
+// �🔄 Update order status (PATCH)
 router.patch("/:orderid/status", async (req, res) => {
   try {
     const { orderid } = req.params;

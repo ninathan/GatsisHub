@@ -484,6 +484,18 @@ const Order = () => {
                                                                     <span className="capitalize">{order.designoption}</span>
                                                                 </div>
                                                             )}
+                                                            {order.totalprice && (
+                                                                <div className="flex justify-between border-t pt-2 mt-2">
+                                                                    <span className="font-semibold text-lg">Total Price:</span>
+                                                                    <span className="text-lg font-bold text-green-600">₱{parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                </div>
+                                                            )}
+                                                            {order.deadline && (
+                                                                <div className="flex justify-between border-t pt-2 mt-2">
+                                                                    <span className="font-semibold text-lg">Expected Deadline:</span>
+                                                                    <span className="text-lg font-bold text-indigo-600">{formatDate(order.deadline)}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 
