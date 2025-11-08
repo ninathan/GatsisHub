@@ -4,7 +4,41 @@ import supabase from '../supabaseClient.js';
 
 const router = express.Router();
 
-// 🔐 Employee Login (Sales Admin, Operational Manager, etc.)
+// � Get all employees (optionally filter by role and status)
+router.get("/", async (req, res) => {
+  try {
+    const { role, status } = req.query;
+
+    let query = supabase
+      .from("employees")
+      .select("employeeid, employeename, email, assigneddepartment, role, accountstatus, contactdetails, shifthours, ispresent")
+      .order('employeename', { ascending: true });
+
+    // Apply filters if provided
+    if (role) {
+      query = query.eq('role', role);
+    }
+    if (status) {
+      query = query.eq('accountstatus', status);
+    }
+
+    const { data: employees, error } = await query;
+
+    if (error) {
+      console.error('❌ Error fetching employees:', error);
+      throw error;
+    }
+
+    console.log(`✅ Fetched ${employees.length} employees${role ? ` with role: ${role}` : ''}${status ? ` with status: ${status}` : ''}`);
+
+    res.status(200).json({ employees });
+  } catch (err) {
+    console.error("💥 Get Employees Error:", err);
+    res.status(500).json({ error: "Failed to fetch employees" });
+  }
+});
+
+// �🔐 Employee Login (Sales Admin, Operational Manager, etc.)
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;

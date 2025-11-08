@@ -199,7 +199,7 @@ const Order = () => {
             }
 
             // Fetch all active Sales Admin employees
-            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees');
+            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active');
             
             if (!employeesResponse.ok) {
                 showNotification('Failed to load support team. Please try again.', 'error');
@@ -208,11 +208,8 @@ const Order = () => {
 
             const employeesData = await employeesResponse.json();
             
-            // Filter for active Sales Admins
-            const salesAdmins = employeesData.employees?.filter(emp => 
-                emp.role === 'Sales Admin' && 
-                emp.accountstatus === 'Active'
-            ) || [];
+            // Get Sales Admins from response (already filtered by query params)
+            const salesAdmins = employeesData.employees || [];
 
             if (salesAdmins.length === 0) {
                 showNotification('No support agents available. Please try again later.', 'error');
