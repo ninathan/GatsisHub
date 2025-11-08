@@ -32,6 +32,14 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  const handleDesignClick = (e) => {
+    if (user) {
+      e.preventDefault();
+      navigate('/accountsetting', { state: { defaultTab: 'Designs' } });
+      setIsMenuOpen(false);
+    }
+  };
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
@@ -77,7 +85,7 @@ const Navbar = () => {
           <div className="flex space-x-3 lg:space-x-4 xl:space-x-6 items-center">
             <NavLink to="/" className={linkClass} onClick={homeTop}>Home</NavLink>
             <NavLink to="/products" className={linkClass}>Products</NavLink>
-            <NavLink to="/create-design" className={linkClass}>Design</NavLink>
+            <NavLink to="/create-design" className={linkClass} onClick={handleDesignClick}>Design</NavLink>
             <NavLink to="/orders" className={linkClass}>Orders</NavLink>
 
             {!user ? (
@@ -219,7 +227,7 @@ const Navbar = () => {
         <div className="mt-3 border-t-2 border-white pt-3 pb-2">
           <NavLink to="/" className={mobileLinkClass} onClick={homeTop}>Home</NavLink>
           <NavLink to="/products" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Products</NavLink>
-          <NavLink to="/create-design" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Design</NavLink>
+          <NavLink to="/create-design" className={mobileLinkClass} onClick={handleDesignClick}>Design</NavLink>
           <NavLink to="/orders" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Orders</NavLink>
 
           {!user ? (

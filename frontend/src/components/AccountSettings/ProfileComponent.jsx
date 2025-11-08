@@ -2,7 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import { User, ChevronDown, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { a } from 'framer-motion/client';
 import { supabase } from '../../../supabaseClient';
 
@@ -12,6 +12,7 @@ const ProfileComponent = () => {
 
     const { user, login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [activeTab, setActiveTab] = useState('Profile');
     
@@ -36,6 +37,16 @@ const ProfileComponent = () => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(false);
     const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+    // Handle default tab from navigation state
+    useEffect(() => {
+        if (location.state?.defaultTab) {
+            console.log('Setting tab from navigation:', location.state.defaultTab);
+            setActiveTab(location.state.defaultTab);
+            // Clear the state to avoid re-setting tab on refresh
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, location.pathname, navigate]);
 
     // Fetch customer data when user is available
     useEffect(() => {
