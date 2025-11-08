@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, CalendarDays, ShoppingCart, Package, MessageSquare, LayoutDashboard } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
 
-const Calendar = () => {
+const CalendarOM = () => {
     const navigate = useNavigate();
     
     // State management for current date, events, and view mode
@@ -58,7 +58,7 @@ const Calendar = () => {
         'July', 'August', 'September', 'October', 'November', 'December']
 
     // Array of day names for calendar header
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturdays']
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
     // Navigation handlers to move between periods based on view mode
     const previousPeriod = () => {
@@ -125,9 +125,11 @@ const Calendar = () => {
         );
     };
 
-    // Handle deadline click to navigate to order detail
+    // Handle deadline click to navigate to order detail (OM doesn't have order detail page yet)
     const handleDeadlineClick = (orderId) => {
-        navigate(`/orderdetail/${orderId}`);
+        // For now, navigate to orders page
+        // TODO: Create OM order detail page
+        navigate('/orderpageOM');
     };
 
     // Handle month click in year view
@@ -349,4 +351,4 @@ const Calendar = () => {
     )
 }
 
-export default Calendar
+export default CalendarOM

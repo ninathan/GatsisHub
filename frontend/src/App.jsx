@@ -31,6 +31,7 @@ import OrderDetail from './pages/SalesAdminPages/OrderDetail';
 import OperationalManLayout from './layouts/OperationalManLayout';
 import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM';
 import Employees from './pages/OperationalManagerPages/Employees';
+import CalendarOM from './pages/OperationalManagerPages/CalendarOM';
 import MessageSA from './pages/SalesAdminPages/messageSA';
 import AppLayout from './layouts/AppLayout';
 import Calendar from './pages/SalesAdminPages/Calendar';
@@ -155,6 +156,7 @@ const router = createBrowserRouter(
       {/*  Operational Manager layout */}
       <Route element={<OperationalManLayout />}>
         <Route path="/orderpageOM" element={<ProtectedOMRoute element={<OrderPageOM />} />} />
+        <Route path="/calendarOM" element={<ProtectedOMRoute element={<CalendarOM />} />} />
         <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
         <Route path="/employeeDetail" element={<ProtectedOMRoute element={<Employees />} />} /> {/* placeholder */}
       </Route>

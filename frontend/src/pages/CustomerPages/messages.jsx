@@ -1,75 +1,151 @@
-import React, { useState } from 'react';
-import { Send, Plus, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Plus, MoreVertical, Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const MessagesPage = () => {
-    const [selectedContact, setSelectedContact] = useState('Jane Delacruz');
+    const [selectedContact, setSelectedContact] = useState(null);
     const [message, setMessage] = useState('');
     const [activeTab, setActiveTab] = useState('Messages');
+    const [conversations, setConversations] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [notifications, setNotifications] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [sendingMessage, setSendingMessage] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const navigate = useNavigate();
+    const fileInputRef = React.useRef(null);
+    
+    const customer = JSON.parse(localStorage.getItem('customer'));
+    const customerid = customer?.customerid;
 
-    const contacts = [
-        {
-            id: 1,
-            name: 'Jane Delacruz',
-            role: 'Sales Admin',
-            lastMessage: '9m',
-            avatar: '👤'
+    useEffect(() => {
+        if (customerid) {
+            fetchConversations();
+            fetchNotifications();
         }
-    ];
+    }, [customerid]);
 
-    const notifications = [
-        {
-            id: 1,
-            title: 'Order Validated',
-            message: 'Your order has been validated',
-            orderId: 'ORD-20250529-8743',
-            timestamp: 'Tap to view it',
-            icon: '🪝'
+    const fetchConversations = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/messages/conversations/customer/${customerid}`
+            );
+            const data = await response.json();
+            
+            setConversations(data.conversations || []);
+            
+            // Auto-select first conversation (usually Sales Admin)
+            if (data.conversations && data.conversations.length > 0) {
+                const firstConvo = data.conversations[0];
+                setSelectedContact(firstConvo);
+                fetchMessages(firstConvo.employeeid);
+            }
+        } catch (error) {
+            console.error('Error fetching conversations:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
-    const messages = [
-        {
-            id: 1,
-            sender: 'Jane Dela Cruz',
-            role: 'Administrator',
-            text: 'Good Evening!, we had receive your order kindly, and have already evaluated it and have attached the file kindly check the attached file for the details and please continue with you order. Thank you!',
-            time: '8:30pm',
-            isOwn: false,
-            type: 'text'
-        },
-        {
-            id: 2,
-            sender: 'Jane Dela Cruz',
-            role: 'Administrator',
-            text: 'Contract.pdf',
-            time: '8:30pm',
-            isOwn: false,
-            type: 'file'
-        },
-        {
-            id: 3,
-            sender: 'You',
-            text: 'Hi, I have read the contract details and I\'m happy to continue with my order!',
-            time: '9:30pm',
-            isOwn: true,
-            type: 'text'
-        },
-        {
-            id: 4,
-            sender: 'Jane Dela Cruz',
-            role: 'Administrator',
-            text: 'Great! we will update you once your order is ready for shipment.',
-            time: '9:34pm',
-            isOwn: false,
-            type: 'text'
+    const fetchMessages = async (employeeid) => {
+        try {
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/messages/conversation/${customerid}/${employeeid}`
+            );
+            const data = await response.json();
+            setMessages(data.messages || []);
+        } catch (error) {
+            console.error('Error fetching messages:', error);
         }
-    ];
+    };
 
-    const handleSendMessage = () => {
-        if (message.trim()) {
-            // Handle send message logic here
-            console.log('Sending message:', message);
-            setMessage('');
+    const fetchNotifications = async () => {
+        try {
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/notifications/customer/${customerid}`
+            );
+            const data = await response.json();
+            setNotifications(data.notifications || []);
+            setUnreadCount(data.unreadCount || 0);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+            setSelectedFile(file);
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const convertFileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleSendMessage = async () => {
+        if ((message.trim() === '' && !selectedFile) || !selectedContact) return;
+
+        try {
+            setSendingMessage(true);
+            
+            let fileData = null;
+            let messageText = message;
+
+            // If file is selected, convert to base64
+            if (selectedFile) {
+                fileData = await convertFileToBase64(selectedFile);
+                if (!messageText.trim()) {
+                    messageText = `📎 ${selectedFile.name}`;
+                }
+            }
+
+            const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerid: customerid,
+                    employeeid: selectedContact.employeeid,
+                    message: messageText,
+                    file: fileData,
+                    fileName: selectedFile?.name
+                })
+            });
+
+            if (response.ok) {
+                setMessage('');
+                setSelectedFile(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                // Refresh messages
+                fetchMessages(selectedContact.employeeid);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        } finally {
+            setSendingMessage(false);
         }
     };
 
@@ -78,6 +154,43 @@ const MessagesPage = () => {
             e.preventDefault();
             handleSendMessage();
         }
+    };
+
+    const handleNotificationClick = async (notification) => {
+        try {
+            // Mark as read
+            await fetch(
+                `https://gatsis-hub.vercel.app/notifications/${notification.id}/read`,
+                { method: 'PATCH' }
+            );
+            
+            // Navigate to order detail
+            navigate(`/orderdetail/${notification.orderId}`);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const formatTime = (timestamp) => {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffInMinutes = Math.floor((now - date) / 60000);
+        
+        if (diffInMinutes < 1) return 'now';
+        if (diffInMinutes < 60) return `${diffInMinutes}m`;
+        if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+        return date.toLocaleDateString();
+    };
+
+    const getNotificationIcon = (type) => {
+        const icons = {
+            'order_update': '🪝',
+            'order_validated': '✅',
+            'order_shipped': '🚚',
+            'order_completed': '🎉',
+            'order_cancelled': '❌'
+        };
+        return icons[type] || '🔔';
     };
 
     return (
@@ -97,12 +210,17 @@ const MessagesPage = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('Notifications')}
-                        className={`flex-1 py-3 text-sm font-semibold ${activeTab === 'Notifications'
+                        className={`flex-1 py-3 text-sm font-semibold relative ${activeTab === 'Notifications'
                                 ? 'bg-[#ECBA0B] text-black'
                                 : 'bg-[#35408E] text-white hover:bg-indigo-800'
                             }`}
                     >
                         Notifications
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {unreadCount}
+                            </span>
+                        )}
                     </button>
                 </div>
 
@@ -111,48 +229,69 @@ const MessagesPage = () => {
                     {activeTab === 'Messages' ? (
                         // Messages List
                         <>
-                            {contacts.map((contact) => (
-                                <button
-                                    key={contact.id}
-                                    onClick={() => setSelectedContact(contact.name)}
-                                    className={`w-full p-4 flex items-center gap-3 border-b hover:bg-gray-50 ${selectedContact === contact.name ? 'bg-gray-100' : ''
+                            {loading ? (
+                                <div className="p-4 text-center text-gray-500">Loading...</div>
+                            ) : conversations.length === 0 ? (
+                                <div className="p-4 text-center text-gray-500">No messages yet</div>
+                            ) : (
+                                conversations.map((contact) => (
+                                    <button
+                                        key={contact.employeeid}
+                                        onClick={() => {
+                                            setSelectedContact(contact);
+                                            fetchMessages(contact.employeeid);
+                                        }}
+                                        className={`w-full p-4 flex items-center gap-3 border-b hover:bg-gray-50 ${
+                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100' : ''
                                         }`}
-                                >
-                                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-xl">
-                                        {contact.avatar}
-                                    </div>
-                                    <div className="flex-1 text-left">
-                                        <div className="font-semibold text-sm">{contact.name}</div>
-                                        <div className="text-xs text-gray-500">{contact.role}</div>
-                                    </div>
-                                    <div className="text-xs text-gray-400">{contact.lastMessage}</div>
-                                    <button className="text-gray-400 hover:text-gray-600">
-                                        <MoreVertical size={16} />
+                                    >
+                                        <div className="w-10 h-10 bg-[#35408E] text-white rounded-full flex items-center justify-center text-xl font-semibold">
+                                            {contact.employeename?.charAt(0) || 'A'}
+                                        </div>
+                                        <div className="flex-1 text-left">
+                                            <div className="font-semibold text-sm">{contact.employeename}</div>
+                                            <div className="text-xs text-gray-500">{contact.role}</div>
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            {formatTime(contact.lastMessageTime)}
+                                        </div>
+                                        <button className="text-gray-400 hover:text-gray-600">
+                                            <MoreVertical size={16} />
+                                        </button>
                                     </button>
-                                </button>
-                            ))}
+                                ))
+                            )}
                         </>
                     ) : (
                         // Notifications List
                         <>
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className="p-4 border-b hover:bg-gray-50 cursor-pointer"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center text-2xl bg-white flex-shrink-0">
-                                            {notification.icon}
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
-                                            <p className="text-sm text-gray-700 mb-1">{notification.message}</p>
-                                            <p className="text-xs text-gray-500 mb-1">{notification.orderId}</p>
-                                            <p className="text-xs text-blue-600">{notification.timestamp}</p>
+                            {notifications.length === 0 ? (
+                                <div className="p-4 text-center text-gray-500">No notifications</div>
+                            ) : (
+                                notifications.map((notification) => (
+                                    <div
+                                        key={notification.id}
+                                        onClick={() => handleNotificationClick(notification)}
+                                        className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
+                                            !notification.isRead ? 'bg-blue-50' : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center text-2xl bg-white flex-shrink-0">
+                                                {getNotificationIcon(notification.type)}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
+                                                <p className="text-sm text-gray-700 mb-1">{notification.message}</p>
+                                                <p className="text-xs text-gray-500 mb-1">
+                                                    Order: {notification.orderId?.substring(0, 18)}...
+                                                </p>
+                                                <p className="text-xs text-blue-600">{notification.timestamp}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </>
                     )}
                 </div>
@@ -166,73 +305,117 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Messages Container */}
-                <div className="flex-1 bg-white p-6 overflow-y-auto">
-                    {/* Contact Info Header */}
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-3xl mb-2">
-                            👤
-                        </div>
-                        <h3 className="font-semibold text-lg">Jane Dela Cruz</h3>
-                        <p className="text-sm text-gray-500">Administrator</p>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                        {messages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`flex gap-3 ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
-                            >
-                                {!msg.isOwn && (
-                                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0 text-xl">
-                                        👤
-                                    </div>
-                                )}
-
-                                <div className={`flex flex-col ${msg.isOwn ? 'items-end' : 'items-start'}`}>
-                                    {msg.type === 'file' ? (
-                                        <button className="bg-[#35408E] text-white px-4 py-2 rounded-lg hover:bg-indigo-800 transition-colors font-medium text-sm">
-                                            {msg.text}
-                                        </button>
-                                    ) : (
-                                        <div
-                                            className={`rounded-2xl px-5 py-3 max-w-md ${msg.isOwn
-                                                    ? 'bg-[#ECBA0B] text-black'
-                                                    : 'bg-[#35408E] text-white'
-                                                }`}
-                                        >
-                                            <p className="text-sm leading-relaxed">{msg.text}</p>
-                                        </div>
-                                    )}
-                                    <span className="text-xs text-gray-400 mt-1">{msg.time}</span>
+                {selectedContact ? (
+                    <>
+                        <div className="flex-1 bg-white p-6 overflow-y-auto">
+                            {/* Contact Info Header */}
+                            <div className="flex flex-col items-center mb-8">
+                                <div className="w-16 h-16 bg-[#35408E] text-white rounded-full flex items-center justify-center text-3xl mb-2 font-semibold">
+                                    {selectedContact.employeename?.charAt(0) || 'A'}
                                 </div>
+                                <h3 className="font-semibold text-lg">{selectedContact.employeename}</h3>
+                                <p className="text-sm text-gray-500">{selectedContact.role}</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
 
-                {/* Message Input */}
-                <div className="bg-white border-t px-6 py-4">
-                    <div className="flex items-center gap-3 max-w-4xl mx-auto">
-                        <button className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors">
-                            <Plus size={20} />
-                        </button>
-                        <input
-                            type="text"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Type a message..."
-                            className="flex-1 border border-gray-300 rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <button
-                            onClick={handleSendMessage}
-                            className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors"
-                        >
-                            <Send size={18} />
-                        </button>
+                            {/* Messages */}
+                            <div className="space-y-4 max-w-4xl mx-auto">
+                                {messages.map((msg) => (
+                                    <div
+                                        key={msg.messageid}
+                                        className={`flex gap-3 ${
+                                            msg.sender === 'customer' ? 'justify-end' : 'justify-start'
+                                        }`}
+                                    >
+                                        {msg.sender === 'admin' && (
+                                            <div className="w-10 h-10 bg-[#35408E] text-white rounded-full flex items-center justify-center flex-shrink-0 text-xl font-semibold">
+                                                {msg.senderName?.charAt(0) || 'A'}
+                                            </div>
+                                        )}
+
+                                        <div className={`flex flex-col ${
+                                            msg.sender === 'customer' ? 'items-end' : 'items-start'
+                                        }`}>
+                                            <div
+                                                className={`rounded-2xl px-5 py-3 max-w-md ${
+                                                    msg.sender === 'customer'
+                                                        ? 'bg-[#ECBA0B] text-black'
+                                                        : 'bg-[#35408E] text-white'
+                                                }`}
+                                            >
+                                                <p className="text-sm leading-relaxed">{msg.text}</p>
+                                                {msg.hasFile && msg.file && (
+                                                    <a 
+                                                        href={msg.file} 
+                                                        download
+                                                        className={`block mt-2 underline text-sm ${
+                                                            msg.sender === 'customer' ? 'text-blue-700' : 'text-white'
+                                                        }`}
+                                                    >
+                                                        📎 Download File
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-gray-400 mt-1">{msg.time}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Message Input */}
+                        <div className="bg-white border-t px-6 py-4">
+                            {selectedFile && (
+                                <div className="mb-2 max-w-4xl mx-auto px-3 py-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                                    <span className="text-sm text-blue-700">
+                                        📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                                    </span>
+                                    <button
+                                        onClick={handleRemoveFile}
+                                        className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-3 max-w-4xl mx-auto">
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                                />
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors"
+                                    title="Attach file"
+                                >
+                                    <Plus size={20} />
+                                </button>
+                                <input
+                                    type="text"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    placeholder="Type a message..."
+                                    className="flex-1 border border-gray-300 rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    disabled={sendingMessage}
+                                />
+                                <button
+                                    onClick={handleSendMessage}
+                                    disabled={sendingMessage}
+                                    className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors disabled:opacity-50"
+                                >
+                                    <Send size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                        <p className="text-gray-500">No conversation selected</p>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

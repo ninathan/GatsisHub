@@ -407,6 +407,57 @@ router.patch("/:orderid/status", async (req, res) => {
 
     console.log(`✅ Status updated successfully for order ${orderid}`);
 
+    // Create notification for customer about order status change
+    try {
+      // Get customer ID from order
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("customerid")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (!customerError && customerData) {
+        const notificationTitles = {
+          'Pending': 'Order Pending',
+          'Validated': 'Order Validated',
+          'Processing': 'Order Processing',
+          'In Production': 'Order In Production',
+          'Shipped': 'Order Shipped',
+          'Completed': 'Order Completed',
+          'Cancelled': 'Order Cancelled'
+        };
+
+        const notificationMessages = {
+          'Pending': 'Your order is pending review.',
+          'Validated': 'Your order has been validated and approved.',
+          'Processing': 'Your order is now being processed.',
+          'In Production': 'Your order is currently in production.',
+          'Shipped': 'Your order has been shipped and is on its way!',
+          'Completed': 'Your order has been completed successfully.',
+          'Cancelled': 'Your order has been cancelled.'
+        };
+
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: notificationTitles[status] || 'Order Status Updated',
+              message: notificationMessages[status] || `Your order status has been updated to ${status}.`,
+              type: 'order_update',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+
+        console.log(`✅ Notification created for order ${orderid} status change to ${status}`);
+      }
+    } catch (notifErr) {
+      console.warn('⚠️ Failed to create notification:', notifErr.message);
+      // Don't fail the request if notification creation fails
+    }
+
     res.status(200).json({
       message: "Order status updated",
       order: order[0]

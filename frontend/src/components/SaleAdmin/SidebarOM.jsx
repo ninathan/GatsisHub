@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut } from 'lucide-react'
+import { EllipsisVertical, LogOut, Calendar } from 'lucide-react'
 
 
 const SidebarOM = () => {
@@ -52,7 +52,10 @@ const SidebarOM = () => {
                             <NavLink to="/orderpageOM" className="block">Orders</NavLink>
                         </li>
                         <li className="hover:bg-[#1D2D5F] p-2 rounded">
-                            <NavLink to="#" className="block">Calendar</NavLink>
+                            <NavLink to="/calendarOM" className="block">
+                                <Calendar size={20} className='mr-2 inline' />
+                                Calendar
+                            </NavLink>
                         </li>
                         <li className='hover:bg-[#1D2D5F] p-2 rounded'>
                             <button onClick={handleLogout} className="block w-full text-left">
