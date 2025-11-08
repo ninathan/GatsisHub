@@ -45,13 +45,15 @@ const fogotpassword = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to send verification code');
+                const errorMessage = data.details || data.error || 'Failed to send verification code';
+                throw new Error(errorMessage);
             }
 
             showNotificationModal('Verification code sent to your email!');
             setShowCodeModal(true);
         } catch (err) {
             console.error('Error:', err);
+            console.error('Full error details:', err.message);
             showNotificationModal(err.message || 'Failed to send verification code', 'error');
         } finally {
             setIsLoading(false);
