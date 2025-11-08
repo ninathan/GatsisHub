@@ -78,7 +78,7 @@ const router = createBrowserRouter(
       {/*  Sales Admin layout */}
       <Route element={<SalesAdminLayout />}>
         <Route path="/orderpage" element={<OrderPage />} />
-        <Route path="/orderdetail" element={<OrderDetail />} />
+        <Route path="/orderdetail/:orderid" element={<OrderDetail />} />
         <Route path="/messageSA" element={<MessageSA />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/dashboardSA" element={<DashboardSA />} />
