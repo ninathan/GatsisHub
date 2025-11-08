@@ -19,45 +19,54 @@ export const useScrollAnimation = (options = {}) => {
 
     const ref = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
+    const hasTriggered = useRef(false);
 
     useEffect(() => {
         const element = ref.current;
         if (!element) return;
 
+        // Check if element is already in viewport on mount
+        const checkInitialVisibility = () => {
+            const rect = element.getBoundingClientRect();
+            const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+            const isInViewport = rect.top < windowHeight && rect.bottom > 0;
+            if (isInViewport && !hasTriggered.current) {
+                setIsVisible(true);
+                hasTriggered.current = true;
+            }
+        };
+        
+        // Check immediately
+        checkInitialVisibility();
+
         const observer = new IntersectionObserver(
             ([entry]) => {
                 // If element is intersecting (visible in viewport)
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !hasTriggered.current) {
                     setIsVisible(true);
+                    hasTriggered.current = true;
                     // If triggerOnce is true, stop observing after first trigger
                     if (triggerOnce) {
                         observer.unobserve(element);
                     }
-                } else if (!triggerOnce) {
+                } else if (!triggerOnce && !entry.isIntersecting) {
                     // If triggerOnce is false, allow re-triggering
                     setIsVisible(false);
+                    hasTriggered.current = false;
                 }
             },
             { threshold, rootMargin }
         );
 
-        observer.observe(element);
-
-        // Check if element is already in viewport on mount
-        // This fixes blank sections that load in viewport
-        const checkInitialVisibility = () => {
-            const rect = element.getBoundingClientRect();
-            const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-            const isInViewport = rect.top < windowHeight && rect.bottom > 0;
-            if (isInViewport) {
-                setIsVisible(true);
+        // Small delay to ensure DOM is ready
+        const timeoutId = setTimeout(() => {
+            if (element) {
+                observer.observe(element);
             }
-        };
-        
-        // Use setTimeout to ensure DOM is ready
-        setTimeout(checkInitialVisibility, 0);
+        }, 100);
 
         return () => {
+            clearTimeout(timeoutId);
             if (element) {
                 observer.unobserve(element);
             }

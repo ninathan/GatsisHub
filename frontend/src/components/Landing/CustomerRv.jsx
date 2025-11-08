@@ -209,9 +209,12 @@ const CustomerRv = () => {
             <section className="px-4 md:px-8 lg:px-20 py-12 md:py-16 lg:py-20">
                 <h2 
                     ref={heading.ref}
-                    className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37 ${
-                        heading.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
-                    }`}
+                    className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37"
+                    style={{ 
+                        opacity: heading.isVisible ? 1 : 0,
+                        transform: heading.isVisible ? 'translateY(0)' : 'translateY(30px)',
+                        transition: 'opacity 0.6s ease-out, transform 0.6s ease-out'
+                    }}
                 >
                     Customer Reviews
                 </h2>
@@ -226,9 +229,12 @@ const CustomerRv = () => {
                         {/* LEFT COLUMN: Reviews */}
                         <div 
                             ref={reviewsColumn.ref}
-                            className={`flex flex-col gap-8 ${
-                                reviewsColumn.isVisible ? 'scroll-slide-right' : 'scroll-hidden'
-                            }`}
+                            className="flex flex-col gap-8"
+                            style={{ 
+                                opacity: reviewsColumn.isVisible ? 1 : 0,
+                                transform: reviewsColumn.isVisible ? 'translateX(0)' : 'translateX(-60px)',
+                                transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
+                            }}
                         >
                             {reviews.length > 0 ? (
                                 reviews.slice(0, 2).map((review, index) => (
@@ -257,9 +263,12 @@ const CustomerRv = () => {
                         {/* RIGHT COLUMN: Third Review + Review Form */}
                         <div 
                             ref={formColumn.ref}
-                            className={`flex flex-col gap-8 ${
-                                formColumn.isVisible ? 'scroll-slide-left' : 'scroll-hidden'
-                            }`}
+                            className="flex flex-col gap-8"
+                            style={{ 
+                                opacity: formColumn.isVisible ? 1 : 0,
+                                transform: formColumn.isVisible ? 'translateX(0)' : 'translateX(60px)',
+                                transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
+                            }}
                         >
                             {reviews.length > 2 && (
                                 <div>
