@@ -176,6 +176,8 @@ router.post('/send', async (req, res) => {
   try {
     const { customerid, employeeid, message, file, fileName } = req.body;
 
+    console.log('📨 Sending message:', { customerid, employeeid, hasFile: !!file });
+
     if (!customerid || !message) {
       return res.status(400).json({ error: 'Customer ID and message are required' });
     }
@@ -183,26 +185,41 @@ router.post('/send', async (req, res) => {
     // Convert base64 to buffer if file is present
     let fileBuffer = null;
     if (file) {
-      // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-      const base64Data = file.includes(',') ? file.split(',')[1] : file;
-      fileBuffer = Buffer.from(base64Data, 'base64');
+      try {
+        // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+        const base64Data = file.includes(',') ? file.split(',')[1] : file;
+        fileBuffer = Buffer.from(base64Data, 'base64');
+      } catch (fileError) {
+        console.error('❌ File conversion error:', fileError.message);
+        // Continue without file if conversion fails
+        fileBuffer = null;
+      }
+    }
+
+    const insertData = {
+      customerid,
+      employeeid: employeeid || null,
+      message,
+      timesent: new Date().toISOString()
+    };
+
+    // Only add file if it exists
+    if (fileBuffer) {
+      insertData.file = fileBuffer;
     }
 
     const { data, error } = await supabase
       .from('messages')
-      .insert([
-        {
-          customerid,
-          employeeid: employeeid || null,
-          message,
-          file: fileBuffer,
-          timesent: new Date().toISOString()
-        }
-      ])
+      .insert([insertData])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Database error:', error);
+      throw error;
+    }
+
+    console.log('✅ Message sent successfully');
 
     res.status(201).json({ 
       message: 'Message sent successfully',

@@ -3,13 +3,14 @@ import { ChevronDown, MessageCircle, Eye } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { Download, CreditCard } from 'lucide-react';
 import logo from '../../images/logo.png'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 
 
 const Order = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('All Orders');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [orders, setOrders] = useState([]);
@@ -159,6 +160,47 @@ const Order = () => {
     const close3DModal = () => {
         setShow3DModal(false);
         setSelected3DDesign(null);
+    };
+
+    const handleContactSupport = async (order) => {
+        try {
+            // Get customer data from localStorage (stored as 'user')
+            const customer = JSON.parse(localStorage.getItem('user'));
+            
+            if (!customer || !customer.customerid) {
+                showNotification('Please log in to contact support', 'error');
+                return;
+            }
+
+            // Get first Sales Admin employee (you can enhance this to fetch from API)
+            // For now, we'll assume employee ID 1 is the default Sales Admin
+            const defaultSalesAdminId = 1;
+
+            // Create an initial message to start the conversation
+            const initialMessage = `Hi, I have a question about my order ${order.orderid.slice(0, 8).toUpperCase()}`;
+
+            const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerid: customer.customerid,
+                    employeeid: defaultSalesAdminId,
+                    message: initialMessage
+                })
+            });
+
+            if (response.ok) {
+                // Navigate to messages page
+                navigate('/messages');
+            } else {
+                showNotification('Failed to start conversation. Please try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Error starting conversation:', error);
+            showNotification('Failed to contact support. Please try again.', 'error');
+        }
     };
 
     const openCancelModal = (order) => {
@@ -593,7 +635,10 @@ const Order = () => {
                                                     )}
 
                                                     {/* Contact Support - Always visible */}
-                                                    <button className="bg-[#35408E] text-white px-6 py-2 rounded hover:bg-[#2c3e50] transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                    <button 
+                                                        onClick={() => handleContactSupport(order)}
+                                                        className="bg-[#35408E] text-white px-6 py-2 rounded hover:bg-[#2c3e50] transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                    >
                                                         <MessageCircle size={18} />
                                                         Contact Support
                                                     </button>

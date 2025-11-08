@@ -260,9 +260,62 @@ const OrderDetail = () => {
         }
     };
 
-    const handleContactCustomer = () => {
-        if (order && order.contactphone) {
-            window.location.href = `tel:${order.contactphone}`;
+    const handleContactCustomer = async () => {
+        try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
+            if (!employee || !employee.employeeid) {
+                showNotificationMessage('Please log in to contact customer', 'error');
+                return;
+            }
+
+            if (!order || !order.userid) {
+                showNotificationMessage('Customer information not available', 'error');
+                return;
+            }
+
+            // Get customer ID from userid
+            const customerResponse = await fetch(`https://gatsis-hub.vercel.app/auth/customer/${order.userid}`);
+            
+            if (!customerResponse.ok) {
+                showNotificationMessage('Failed to get customer information', 'error');
+                return;
+            }
+
+            const customerData = await customerResponse.json();
+            
+            // The API returns customer data directly, not wrapped
+            const customerid = customerData.customerid;
+
+            if (!customerid) {
+                showNotificationMessage('Customer not found', 'error');
+                return;
+            }
+
+            // Create an initial message to start the conversation
+            const initialMessage = `Hello, regarding your order ${order.orderid.slice(0, 8).toUpperCase()}`;
+
+            const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerid: customerid,
+                    employeeid: employee.employeeid,
+                    message: initialMessage
+                })
+            });
+
+            if (response.ok) {
+                // Navigate to messages page
+                navigate('/messageSA');
+            } else {
+                showNotificationMessage('Failed to start conversation. Please try again.', 'error');
+            }
+        } catch (error) {
+            console.error('Error starting conversation:', error);
+            showNotificationMessage('Failed to contact customer. Please try again.', 'error');
         }
     };
 

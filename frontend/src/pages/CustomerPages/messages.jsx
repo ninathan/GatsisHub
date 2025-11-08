@@ -16,7 +16,8 @@ const MessagesPage = () => {
     const navigate = useNavigate();
     const fileInputRef = React.useRef(null);
     
-    const customer = JSON.parse(localStorage.getItem('customer'));
+    // Customer data is stored as 'user' in localStorage
+    const customer = JSON.parse(localStorage.getItem('user'));
     const customerid = customer?.customerid;
 
     useEffect(() => {
