@@ -21,7 +21,7 @@ const Sidebar = () => {
                         <li className="hover:bg-[#1D2D5F] p-2 rounded">
                             <NavLink to="/dashboardSA" className="block">
                                 <LayoutDashboard size={20} className="mr-2 inline" />
-                                DashBoard
+                                Dashboard
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#1D2D5F] p-2 rounded">
