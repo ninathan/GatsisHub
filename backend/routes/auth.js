@@ -525,6 +525,13 @@ router.post("/forgot-password", async (req, res) => {
     try {
       const resendApiKey = process.env.RESEND_API_KEY;
       
+      if (!resendApiKey) {
+        console.error("❌ RESEND_API_KEY not found in environment variables");
+        return res.status(500).json({ error: "Email service not configured" });
+      }
+
+      console.log("📧 Attempting to send email to:", emailAddress);
+      
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -532,13 +539,13 @@ router.post("/forgot-password", async (req, res) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'GatsisHub <noreply@gatsishub.com>', // Replace with your verified domain
+          from: 'GatsisHub <noreply@gatsishub.com>',
           to: [emailAddress],
           subject: 'Password Reset Verification Code',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #35408E;">Password Reset Request</h2>
-              <p>Hello ${customer.companyname},</p>
+              <p>Hello ${customer.companyname || 'there'},</p>
               <p>You requested to reset your password. Use the verification code below:</p>
               <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
                 ${verificationCode}
@@ -551,21 +558,27 @@ router.post("/forgot-password", async (req, res) => {
         })
       });
 
+      const responseData = await emailResponse.json();
+      
       if (!emailResponse.ok) {
-        const errorData = await emailResponse.json();
-        console.error("❌ Resend API error:", errorData);
-        throw new Error("Failed to send email");
+        console.error("❌ Resend API error status:", emailResponse.status);
+        console.error("❌ Resend API error response:", JSON.stringify(responseData, null, 2));
+        throw new Error(`Resend API error: ${responseData.message || 'Unknown error'}`);
       }
 
-      console.log("✅ Verification email sent successfully");
+      console.log("✅ Verification email sent successfully. Email ID:", responseData.id);
       res.status(200).json({ 
         message: "Verification code sent to your email",
         email: emailAddress 
       });
 
     } catch (emailError) {
-      console.error("❌ Email sending error:", emailError);
-      res.status(500).json({ error: "Failed to send verification email" });
+      console.error("❌ Email sending error:", emailError.message);
+      console.error("❌ Full error:", emailError);
+      res.status(500).json({ 
+        error: "Failed to send verification email",
+        details: emailError.message 
+      });
     }
 
   } catch (err) {
