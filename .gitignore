@@ -32,3 +32,4 @@ FILE_UPLOAD_FEATURE.md
 ensure_messages_table.sql
 CONVERSATION_INITIATION_FEATURE.md
 DEPLOYMENT_TROUBLESHOOTING.md
+add_sender_type_to_messages.sql

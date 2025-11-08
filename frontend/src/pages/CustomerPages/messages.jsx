@@ -127,6 +127,7 @@ const MessagesPage = () => {
                 },
                 body: JSON.stringify({
                     customerid: customerid,
+                    employeeid: selectedContact.employeeid, // Include employeeid to identify conversation
                     senderType: 'customer', // Explicitly mark as customer message
                     message: messageText,
                     file: fileData,

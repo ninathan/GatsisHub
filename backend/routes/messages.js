@@ -125,6 +125,7 @@ router.get('/conversation/:customerid/:employeeid', async (req, res) => {
         file,
         customerid,
         employeeid,
+        sender_type,
         customers (
           companyname
         ),
@@ -156,8 +157,8 @@ router.get('/conversation/:customerid/:employeeid', async (req, res) => {
           hour12: true 
         }),
         timestamp: msg.timesent,
-        sender: msg.employeeid ? 'admin' : 'customer',
-        senderName: msg.employeeid ? msg.employees?.employeename : msg.customers?.companyname,
+        sender: msg.sender_type || (msg.employeeid ? 'admin' : 'customer'), // Use sender_type if available
+        senderName: msg.sender_type === 'admin' ? msg.employees?.employeename : msg.customers?.companyname,
         senderRole: msg.employees?.role || 'Customer',
         hasFile: !!msg.file,
         file: fileBase64
@@ -196,15 +197,14 @@ router.post('/send', async (req, res) => {
       }
     }
 
-    // Determine who sent the message:
-    // - If senderType is 'admin' OR employeeid is provided without senderType, it's from admin
-    // - If senderType is 'customer' OR no employeeid, it's from customer
-    const isAdminSender = senderType === 'admin' || (employeeid && !senderType);
-    
+    // NEW LOGIC: Store a sender_type field to identify who sent it
+    // employeeid is ALWAYS stored (identifies the conversation)
+    // senderType determines if it was sent by customer or admin
     const insertData = {
       customerid,
-      employeeid: isAdminSender ? employeeid : null, // Only set employeeid if admin is sending
+      employeeid: employeeid, // Required to identify conversation
       message,
+      sender_type: senderType || 'customer', // Explicitly track who sent it
       timesent: new Date().toISOString()
     };
 
