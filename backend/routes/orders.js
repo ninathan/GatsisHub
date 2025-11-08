@@ -260,19 +260,39 @@ router.patch("/:orderid/price", async (req, res) => {
     const { price } = req.body;
 
     console.log(`💰 Updating price for order ${orderid}: ${price}`);
+    console.log(`📊 Request body:`, req.body);
+    console.log(`📊 Price type:`, typeof price);
 
     // Validate price
     if (price === undefined || price === null || isNaN(price)) {
+      console.error(`❌ Invalid price value: ${price}`);
       return res.status(400).json({ error: "Invalid price value" });
     }
 
+    // Convert to number and ensure it's valid
+    const priceValue = parseFloat(price);
+    if (isNaN(priceValue)) {
+      console.error(`❌ Price is not a valid number: ${price}`);
+      return res.status(400).json({ error: "Price must be a valid number" });
+    }
+
+    console.log(`💵 Converted price value: ${priceValue}`);
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ totalprice: price })
+      .update({ totalprice: priceValue })
       .eq("orderid", orderid)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error(`❌ Supabase error:`, error);
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      console.error(`❌ Order not found: ${orderid}`);
+      return res.status(404).json({ error: "Order not found" });
+    }
 
     console.log(`✅ Price updated successfully for order ${orderid}`);
 
@@ -281,8 +301,9 @@ router.patch("/:orderid/price", async (req, res) => {
       order: order[0]
     });
   } catch (err) {
-    console.error("Update Price Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("💥 Update Price Error:", err);
+    console.error("💥 Error details:", err.message, err.stack);
+    res.status(500).json({ error: err.message || "Failed to update price" });
   }
 });
 
@@ -293,6 +314,7 @@ router.patch("/:orderid/status", async (req, res) => {
     const { status } = req.body;
 
     console.log(`🔄 Updating status for order ${orderid}: ${status}`);
+    console.log(`📊 Request body:`, req.body);
 
     // Validate status
     const validStatuses = [
@@ -306,8 +328,12 @@ router.patch("/:orderid/status", async (req, res) => {
       'Cancelled'
     ];
 
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid order status" });
+    if (!status || !validStatuses.includes(status)) {
+      console.error(`❌ Invalid order status: ${status}`);
+      return res.status(400).json({ 
+        error: "Invalid order status",
+        validStatuses: validStatuses 
+      });
     }
 
     const { data: order, error } = await supabase
@@ -316,7 +342,15 @@ router.patch("/:orderid/status", async (req, res) => {
       .eq("orderid", orderid)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error(`❌ Supabase error:`, error);
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      console.error(`❌ Order not found: ${orderid}`);
+      return res.status(404).json({ error: "Order not found" });
+    }
 
     console.log(`✅ Status updated successfully for order ${orderid}`);
 
@@ -325,8 +359,9 @@ router.patch("/:orderid/status", async (req, res) => {
       order: order[0]
     });
   } catch (err) {
-    console.error("Update Status Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("💥 Update Status Error:", err);
+    console.error("💥 Error details:", err.message, err.stack);
+    res.status(500).json({ error: err.message || "Failed to update status" });
   }
 });
 

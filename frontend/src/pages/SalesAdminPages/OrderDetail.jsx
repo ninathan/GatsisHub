@@ -99,14 +99,16 @@ const OrderDetail = () => {
                 body: JSON.stringify({ status: newStatus })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to update order status');
+                throw new Error(data.error || 'Failed to update order status');
             }
 
             showNotificationMessage('Order status updated successfully', 'success');
         } catch (err) {
             console.error('Error updating status:', err);
-            showNotificationMessage('Failed to update order status', 'error');
+            showNotificationMessage(err.message || 'Failed to update order status', 'error');
             setOrderStatus(order.orderstatus); // Revert on error
         } finally {
             setIsSavingStatus(false);
@@ -129,15 +131,17 @@ const OrderDetail = () => {
                 body: JSON.stringify({ price: parseFloat(validatedPrice) })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to update price');
+                throw new Error(data.error || 'Failed to update price');
             }
 
             setIsEditingPrice(false);
             showNotificationMessage('Price updated successfully', 'success');
         } catch (err) {
             console.error('Error updating price:', err);
-            showNotificationMessage('Failed to update price', 'error');
+            showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
         }
