@@ -194,8 +194,7 @@ const MessagesPage = () => {
                 { method: 'PATCH' }
             );
             
-            // Navigate to customer orders page (not admin order detail)
-            navigate(`/orders/${notification.orderId}`); // ✅ Direct to specific order detail page
+            navigate(`/orders/`);
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }

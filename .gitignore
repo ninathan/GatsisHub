@@ -35,3 +35,4 @@ DEPLOYMENT_TROUBLESHOOTING.md
 add_sender_type_to_messages.sql
 enable_realtime.sql
 REALTIME_SETUP_GUIDE.md
+create_default_support_employee.sql

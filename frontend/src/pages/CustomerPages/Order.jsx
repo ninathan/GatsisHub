@@ -198,31 +198,68 @@ const Order = () => {
                 return;
             }
 
-            // Get first Sales Admin employee (you can enhance this to fetch from API)
-            // For now, we'll assume employee ID 1 is the default Sales Admin
-            const defaultSalesAdminId = 1;
+            // Fetch all active Sales Admin employees
+            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees');
+            
+            if (!employeesResponse.ok) {
+                showNotification('Failed to load support team. Please try again.', 'error');
+                return;
+            }
+
+            const employeesData = await employeesResponse.json();
+            
+            // Filter for active Sales Admins
+            const salesAdmins = employeesData.employees?.filter(emp => 
+                emp.role === 'Sales Admin' && 
+                emp.accountstatus === 'Active'
+            ) || [];
+
+            if (salesAdmins.length === 0) {
+                showNotification('No support agents available. Please try again later.', 'error');
+                return;
+            }
 
             // Create an initial message to start the conversation
             const initialMessage = `Hi, I have a question about my order ${order.orderid.slice(0, 8).toUpperCase()}`;
 
-            const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    customerid: customer.customerid,
-                    employeeid: defaultSalesAdminId,
-                    senderType: 'customer', // Customer is sending the message
-                    message: initialMessage
-                })
+            console.log('Sending contact support message to all Sales Admins:', {
+                customerid: customer.customerid,
+                salesAdminCount: salesAdmins.length,
+                message: initialMessage
             });
 
-            if (response.ok) {
-                // Navigate to messages page
-                navigate('/messages');
+            // Send message to ALL Sales Admins
+            const messagePromises = salesAdmins.map(admin => 
+                fetch('https://gatsis-hub.vercel.app/messages/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        customerid: customer.customerid,
+                        employeeid: admin.employeeid,
+                        senderType: 'customer',
+                        message: initialMessage
+                    })
+                })
+            );
+
+            // Wait for all messages to be sent
+            const responses = await Promise.all(messagePromises);
+            
+            // Check if at least one message was sent successfully
+            const successCount = responses.filter(r => r.ok).length;
+
+            if (successCount > 0) {
+                showNotification(`Message sent to ${successCount} support agent(s)! Redirecting...`, 'success');
+                // Navigate to messages page after a short delay
+                setTimeout(() => {
+                    navigate('/messages');
+                }, 1000);
             } else {
-                showNotification('Failed to start conversation. Please try again.', 'error');
+                const firstError = await responses[0].json();
+                console.error('Error response:', firstError);
+                showNotification(`Failed to start conversation: ${firstError.error || 'Unknown error'}`, 'error');
             }
         } catch (error) {
             console.error('Error starting conversation:', error);

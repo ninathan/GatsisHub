@@ -183,6 +183,10 @@ router.post('/send', async (req, res) => {
       return res.status(400).json({ error: 'Customer ID and message are required' });
     }
 
+    if (!employeeid) {
+      return res.status(400).json({ error: 'Employee ID is required to identify conversation' });
+    }
+
     // Convert base64 to buffer if file is present
     let fileBuffer = null;
     if (file) {
@@ -221,6 +225,20 @@ router.post('/send', async (req, res) => {
 
     if (error) {
       console.error('❌ Database error:', error);
+      
+      // Check if it's a foreign key constraint error
+      if (error.code === '23503') {
+        if (error.message.includes('employeeid')) {
+          return res.status(400).json({ 
+            error: 'Invalid employee ID. Please ensure the employee exists in the system.' 
+          });
+        }
+        if (error.message.includes('customerid')) {
+          return res.status(400).json({ 
+            error: 'Invalid customer ID. Please ensure you are logged in correctly.' 
+          });
+        }
+      }
       throw error;
     }
 
