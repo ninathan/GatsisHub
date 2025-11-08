@@ -53,7 +53,7 @@ const fogotpassword = () => {
                     </button>
                 </form>
 
-                <button className='mt-6 bg-[#DAC325] text-black px-6 py-3 text-xl rounded-2xl hover:bg-[#c4ad1f]'>
+                <button className='mt-6 bg-[#DAC325] text-black px-6 py-3 text-xl rounded-2xl hover:bg-[#c4ad1f] cursor-pointer'>
                     <Link to='/login'>Back to Login</Link>
                 </button>
             </div>

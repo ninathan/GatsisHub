@@ -1,5 +1,5 @@
 import React from 'react'
-import productpic from '../../images/product.png'
+import productpic from '../../images/samplelang.png'
 
 const ProductCard = () => {
   return (

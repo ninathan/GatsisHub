@@ -627,7 +627,7 @@ const CreateDesign = () => {
 
             {/* Hanger Selection Modal - Shows First */}
             {showHangerSelection && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-3xl w-full p-8">
                         <h2 className="text-3xl font-bold text-[#35408E] mb-2 text-center">Choose Your Hanger Type</h2>
                         <p className="text-gray-600 text-center mb-8">Select a hanger model to start designing</p>
@@ -966,7 +966,7 @@ const CreateDesign = () => {
 
             {/* Instructions Modal */}
             {showInstructionsModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                         <div className="p-6">
                             <h2 className="text-2xl font-bold mb-4">Design Instructions</h2>
@@ -1012,7 +1012,7 @@ const CreateDesign = () => {
 
             {/* Save Design Modal */}
             {saveDesignModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <h2 className="text-xl font-bold mb-4">Save Design</h2>
                         <input
@@ -1045,7 +1045,7 @@ const CreateDesign = () => {
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-md w-full p-6">
                         <div className="flex justify-center mb-4">
                             {notificationModal.type === 'success' && (

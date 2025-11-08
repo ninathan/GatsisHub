@@ -61,7 +61,7 @@ const Order = () => {
             try {
                 setLoading(true);
                 const response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}`);
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch orders');
                 }
@@ -116,10 +116,10 @@ const Order = () => {
     // Filter orders based on active tab
     const filteredOrders = orders.filter(order => {
         if (activeTab === 'All Orders') return true;
-        
+
         // Get the statuses for the current tab
         const tabStatuses = getStatusesForTab(activeTab);
-        
+
         // Check if the order's status is in the current tab's statuses
         return tabStatuses.includes(order.orderstatus);
     });
@@ -127,8 +127,8 @@ const Order = () => {
     // Helper function to determine if order is customized
     const getOrderDescription = (order) => {
         const hasCustomization = order.customtext || order.customlogo;
-        return hasCustomization 
-            ? `Customized ${order.hangertype}` 
+        return hasCustomization
+            ? `Customized ${order.hangertype}`
             : `Plain ${order.hangertype}`;
     };
 
@@ -252,9 +252,9 @@ const Order = () => {
 
             // Remove the cancelled order from the local state
             setOrders(orders.filter(order => order.orderid !== orderToCancel.orderid));
-            
+
             closeCancelModal();
-            
+
             // Show success notification
             showNotification('Order cancelled successfully');
         } catch (err) {
@@ -300,8 +300,8 @@ const Order = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`text-xl pb-2 transition-all ${activeTab === tab
-                                    ? 'border-b-4 border-yellow-400 font-semibold'
-                                    : 'text-gray-600 hover:text-gray-900'
+                                ? 'border-b border-yellow-400 font-semibold'
+                                : 'text-gray-600 hover:border-b border-gray-900 cursor-pointer'
                                 }`}
                         >
                             {tab}
@@ -315,12 +315,12 @@ const Order = () => {
                         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
                             <p className="text-2xl text-gray-600">No orders found</p>
                             <p className="text-gray-500 mt-2">
-                                {activeTab === 'All Orders' 
-                                    ? 'You haven\'t placed any orders yet.' 
+                                {activeTab === 'All Orders'
+                                    ? 'You haven\'t placed any orders yet.'
                                     : `No orders with status "${activeTab}"`
                                 }
                             </p>
-                            <Link to="/checkout" className="inline-block mt-4 bg-yellow-400 text-black px-6 py-2 rounded hover:bg-yellow-500 font-semibold">
+                            <Link to="/checkout" className="inline-block mt-4 mb-4 bg-yellow-400 text-black px-6 py-2 rounded hover:bg-yellow-500 font-semibold">
                                 Place an Order
                             </Link>
                         </div>
@@ -328,284 +328,284 @@ const Order = () => {
                         filteredOrders.map(order => {
                             const materials = formatMaterials(order.materials);
                             const statusColor = getStatusColor(order.orderstatus);
-                            
+
                             return (
                                 <div key={order.orderid} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                            {/* Order Header */}
-                            <div className="bg-gray-50 px-6 py-3 grid grid-cols-12 gap-4 items-center font-semibold border-b">
-                                <div className="col-span-3">Order details</div>
-                                <div className="col-span-3 text-center">Order Number</div>
-                                <div className="col-span-2 text-center">Status</div>
-                                <div className="col-span-3 text-center">Price</div>
-                                <div className="col-span-1"></div>
-                            </div>
+                                    {/* Order Header */}
+                                    <div className="bg-gray-50 px-6 py-4 flex items-center font-semibold border-b">
+                                        <div className="flex-1">Product</div>
+                                        <div className="flex-1 text-center">Order Number</div>
+                                        <div className="flex-1 text-center">Status</div>
+                                        <div className="flex-1 text-center">Price</div>
+                                        <div className="flex-1"></div>
+                                    </div>
 
-                            <div className="p-6">
-                                <div className="grid grid-cols-12 gap-4 items-center mb-4">
-                                    {/* Product Image & Name */}
-                                    <div className="col-span-3 flex items-center gap-4">
-                                        <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden">
-                                            {(() => {
-                                                try {
-                                                    if (order.threeddesigndata) {
-                                                        const designData = typeof order.threeddesigndata === 'string' 
-                                                            ? JSON.parse(order.threeddesigndata) 
-                                                            : order.threeddesigndata;
-                                                        
-                                                        if (designData && designData.thumbnail) {
-                                                            return (
-                                                                <img 
-                                                                    src={designData.thumbnail} 
-                                                                    alt="Design preview"
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            );
+                                    <div className='px-6 py-4'>
+                                        <div className="flex items-center">
+                                            {/* Product Image & Name */}
+                                            <div className="flex-1 flex items-center gap-4">
+                                                <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                                                    {(() => {
+                                                        try {
+                                                            if (order.threeddesigndata) {
+                                                                const designData = typeof order.threeddesigndata === 'string'
+                                                                    ? JSON.parse(order.threeddesigndata)
+                                                                    : order.threeddesigndata;
+
+                                                                if (designData && designData.thumbnail) {
+                                                                    return (
+                                                                        <img
+                                                                            src={designData.thumbnail}
+                                                                            alt="Design preview"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    );
+                                                                }
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Error parsing design data:', error);
                                                         }
-                                                    }
-                                                } catch (error) {
-                                                    console.error('Error parsing design data:', error);
-                                                }
-                                                return <span className="text-3xl">🪝</span>;
-                                            })()}
+                                                        return <span className="text-3xl">🪝</span>;
+                                                    })()}
+                                                </div>
+                                                <span className="font-medium">{getOrderDescription(order)}</span>
+                                            </div>
+
+                                            {/* Order Number */}
+                                            <div className="flex-1 text-center">
+                                                <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
+                                            </div>
+
+                                             {/* Status */}
+                                            <div className="flex-1 flex justify-center">
+                                                <span className={`${statusColor} text-black px-4 py-1 rounded font-semibold text-sm`}>
+                                                    {order.orderstatus}
+                                                </span>
+                                            </div>
+
+                                            {/* Price */}
+                                            <div className="flex-1 text-center">
+                                                <span className="text-xl font-semibold">
+                                                    {order.totalprice ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '₱0.00'}
+                                                </span>
+                                            </div>
+
+                                            {/* Expand Button */}
+                                            <div className="flex-1 flex justify-end">
+                                                <button
+                                                    onClick={() => toggleExpand(order.orderid)}
+                                                    className="p-2 hover:bg-gray-100 rounded-full transition-all"
+                                                >
+                                                    <ChevronDown
+                                                        size={24}
+                                                        className={`transition-transform ${expandedOrder === order.orderid ? 'rotate-180' : ''
+                                                            }`}
+                                                    />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span className="font-medium">{getOrderDescription(order)}</span>
-                                    </div>
 
-                                    {/* Order Number */}
-                                    <div className="col-span-3 text-center">
-                                        <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
-                                    </div>
+                                        {/* Expanded Details */}
+                                        {expandedOrder === order.orderid && (
+                                            <div className="border-t pt-6 px-6 pb-6">
+                                                <div className="grid grid-cols-2 gap-8">
+                                                    {/* Left Column - Order Details */}
+                                                    <div>
+                                                        <h3 className="text-xl font-bold mb-4">{order.companyname}</h3>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="font-semibold">Order Number:</span>
+                                                                <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="font-semibold">Order placed:</span>
+                                                                <span>{formatDate(order.datecreated)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="font-semibold">Order Quantity:</span>
+                                                                <span>{order.quantity}x</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="font-semibold">Product:</span>
+                                                                <span>{order.hangertype}</span>
+                                                            </div>
+                                                            {order.selectedcolor && (
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="font-semibold">Color:</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div
+                                                                            className="w-6 h-6 rounded border border-gray-300"
+                                                                            style={{ backgroundColor: order.selectedcolor }}
+                                                                        ></div>
+                                                                        <span>{order.selectedcolor}</span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {materials.length > 0 && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-semibold">Material:</span>
+                                                                    <div className="text-right">
+                                                                        {materials.map((material, idx) => (
+                                                                            <div key={idx}>
+                                                                                {material.name} {material.percentage}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {order.customtext && (
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="font-semibold">Custom Text:</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="italic">"{order.customtext}"</span>
+                                                                        {order.textcolor && (
+                                                                            <div
+                                                                                className="w-4 h-4 rounded border border-gray-300"
+                                                                                style={{ backgroundColor: order.textcolor }}
+                                                                                title={order.textcolor}
+                                                                            ></div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {order.customlogo && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-semibold">Custom Logo:</span>
+                                                                    <span>✓ Included</span>
+                                                                </div>
+                                                            )}
+                                                            {order.designoption && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="font-semibold">Design Option:</span>
+                                                                    <span className="capitalize">{order.designoption}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
 
-                                    {/* Status */}
-                                    <div className="col-span-2 flex justify-center">
-                                        <span className={`${statusColor} text-black px-4 py-1 rounded font-semibold text-sm`}>
-                                            {order.orderstatus}
-                                        </span>
-                                    </div>
+                                                    {/* Right Column - Contact & Address Information */}
+                                                    <div>
+                                                        <h3 className="text-xl font-bold mb-4">Contact Information</h3>
+                                                        <div className="text-sm mb-4">
+                                                            <p className="font-semibold">{order.contactperson}</p>
+                                                            <p>{order.contactphone}</p>
+                                                            <p className="text-gray-600">{order.companyname}</p>
+                                                        </div>
 
-                                    {/* Price */}
-                                    <div className="col-span-3 text-center">
-                                        <span className="text-xl font-semibold">
-                                            {order.totalprice ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '₱0.00'}
-                                        </span>
-                                    </div>
+                                                        {/* Delivery Address Section */}
+                                                        <h3 className="text-xl font-bold mb-2 mt-6">Delivery Address</h3>
+                                                        <div className="text-sm mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                            {order.deliveryaddress ? (
+                                                                <p className="text-gray-700">
+                                                                    {typeof order.deliveryaddress === 'object'
+                                                                        ? order.deliveryaddress.address
+                                                                        : order.deliveryaddress}
+                                                                </p>
+                                                            ) : (
+                                                                <p className="text-gray-400 italic">No address provided</p>
+                                                            )}
+                                                        </div>
 
-                                    {/* Expand Button */}
-                                    <div className="col-span-1 flex justify-end">
-                                        <button
-                                            onClick={() => toggleExpand(order.orderid)}
-                                            className="p-2 hover:bg-gray-100 rounded-full transition-all"
-                                        >
-                                            <ChevronDown
-                                                size={24}
-                                                className={`transition-transform ${expandedOrder === order.orderid ? 'rotate-180' : ''
-                                                    }`}
-                                            />
-                                        </button>
+                                                        {/* Order Instructions Section */}
+                                                        {order.orderinstructions && (
+                                                            <>
+                                                                <h3 className="text-xl font-bold mb-2 mt-4">Order Instructions</h3>
+                                                                <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
+                                                                    <p className="text-sm text-gray-700">{order.orderinstructions}</p>
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {/* Delivery Notes Section */}
+                                                        {order.deliverynotes && (
+                                                            <>
+                                                                <h3 className="text-xl font-bold mb-2 mt-4">Delivery Notes</h3>
+                                                                <div className="border rounded-lg p-3 bg-gray-50 mb-3">
+                                                                    <p className="text-sm text-gray-700">{order.deliverynotes}</p>
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {/* View 3D Design Button */}
+                                                        {order.threeddesigndata && (
+                                                            <button
+                                                                onClick={() => open3DModal(order.threeddesigndata)}
+                                                                className="w-full bg-[#35408E] text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-[#2c3e50] mt-3"
+                                                            >
+                                                                <Eye size={16} />
+                                                                View 3D Design
+                                                            </button>
+                                                        )}
+
+                                                        {/* Design File Button */}
+                                                        {order.customdesignurl && (
+                                                            <button className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-red-700 mt-3">
+                                                                <FileText size={16} />
+                                                                View Design File
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Action Buttons */}
+                                                <div className="flex gap-3 mt-6 flex-wrap">
+                                                    {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
+                                                    {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                        <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                            <Download size={18} />
+                                                            Download Invoice
+                                                        </button>
+                                                    )}
+
+                                                    {/* View Proof of Payment - Only show in Processing phase */}
+                                                    {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                        <button
+                                                            onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
+                                                            className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                        >
+                                                            <FileText size={18} />
+                                                            View Proof of Payment
+                                                        </button>
+                                                    )}
+
+                                                    {/* Payment - Only show when Waiting for Payment */}
+                                                    {order.orderstatus === 'Waiting for Payment' && (
+                                                        <Link to="/payment" className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                            <CreditCard size={18} />
+                                                            Payment
+                                                        </Link>
+                                                    )}
+
+                                                    {/* Contact Support - Always visible */}
+                                                    <button className="bg-[#35408E] text-white px-6 py-2 rounded hover:bg-[#2c3e50] transition-colors flex items-center gap-2 text-sm font-semibold">
+                                                        <MessageCircle size={18} />
+                                                        Contact Support
+                                                    </button>
+
+                                                    {/* Cancel Order - Only show in For Evaluation or Waiting for Payment (before Processing) */}
+                                                    {(order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment') && (
+                                                        <button
+                                                            onClick={() => openCancelModal(order)}
+                                                            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold"
+                                                        >
+                                                            Cancel Order
+                                                        </button>
+                                                    )}
+
+                                                    {/* Rate - Only show when Completed */}
+                                                    {order.orderstatus === 'Completed' && (
+                                                        <button
+                                                            onClick={() => openRatingModal(order)}
+                                                            className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                                                        >
+                                                            Rate
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* Expanded Details */}
-                                {expandedOrder === order.orderid && (
-                                    <div className="border-t pt-6">
-                                        <div className="grid grid-cols-2 gap-8">
-                                            {/* Left Column - Order Details */}
-                                            <div>
-                                                <h3 className="text-xl font-bold mb-4">{order.companyname}</h3>
-                                                <div className="space-y-2 text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Order Number:</span>
-                                                        <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Order placed:</span>
-                                                        <span>{formatDate(order.datecreated)}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Order Quantity:</span>
-                                                        <span>{order.quantity}x</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Product:</span>
-                                                        <span>{order.hangertype}</span>
-                                                    </div>
-                                                    {order.selectedcolor && (
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-semibold">Color:</span>
-                                                            <div className="flex items-center gap-2">
-                                                                <div
-                                                                    className="w-6 h-6 rounded border border-gray-300"
-                                                                    style={{ backgroundColor: order.selectedcolor }}
-                                                                ></div>
-                                                                <span>{order.selectedcolor}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {materials.length > 0 && (
-                                                        <div className="flex justify-between">
-                                                            <span className="font-semibold">Material:</span>
-                                                            <div className="text-right">
-                                                                {materials.map((material, idx) => (
-                                                                    <div key={idx}>
-                                                                        {material.name} {material.percentage}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {order.customtext && (
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-semibold">Custom Text:</span>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="italic">"{order.customtext}"</span>
-                                                                {order.textcolor && (
-                                                                    <div
-                                                                        className="w-4 h-4 rounded border border-gray-300"
-                                                                        style={{ backgroundColor: order.textcolor }}
-                                                                        title={order.textcolor}
-                                                                    ></div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {order.customlogo && (
-                                                        <div className="flex justify-between">
-                                                            <span className="font-semibold">Custom Logo:</span>
-                                                            <span>✓ Included</span>
-                                                        </div>
-                                                    )}
-                                                    {order.designoption && (
-                                                        <div className="flex justify-between">
-                                                            <span className="font-semibold">Design Option:</span>
-                                                            <span className="capitalize">{order.designoption}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Right Column - Contact & Address Information */}
-                                            <div>
-                                                <h3 className="text-xl font-bold mb-4">Contact Information</h3>
-                                                <div className="text-sm mb-4">
-                                                    <p className="font-semibold">{order.contactperson}</p>
-                                                    <p>{order.contactphone}</p>
-                                                    <p className="text-gray-600">{order.companyname}</p>
-                                                </div>
-
-                                                {/* Delivery Address Section */}
-                                                <h3 className="text-xl font-bold mb-2 mt-6">Delivery Address</h3>
-                                                <div className="text-sm mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                                    {order.deliveryaddress ? (
-                                                        <p className="text-gray-700">
-                                                            {typeof order.deliveryaddress === 'object' 
-                                                                ? order.deliveryaddress.address 
-                                                                : order.deliveryaddress}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-gray-400 italic">No address provided</p>
-                                                    )}
-                                                </div>
-
-                                                {/* Order Instructions Section */}
-                                                {order.orderinstructions && (
-                                                    <>
-                                                        <h3 className="text-xl font-bold mb-2 mt-4">Order Instructions</h3>
-                                                        <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
-                                                            <p className="text-sm text-gray-700">{order.orderinstructions}</p>
-                                                        </div>
-                                                    </>
-                                                )}
-
-                                                {/* Delivery Notes Section */}
-                                                {order.deliverynotes && (
-                                                    <>
-                                                        <h3 className="text-xl font-bold mb-2 mt-4">Delivery Notes</h3>
-                                                        <div className="border rounded-lg p-3 bg-gray-50 mb-3">
-                                                            <p className="text-sm text-gray-700">{order.deliverynotes}</p>
-                                                        </div>
-                                                    </>
-                                                )}
-
-                                                {/* View 3D Design Button */}
-                                                {order.threeddesigndata && (
-                                                    <button 
-                                                        onClick={() => open3DModal(order.threeddesigndata)}
-                                                        className="w-full bg-indigo-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-indigo-700 mt-3"
-                                                    >
-                                                        <Eye size={16} />
-                                                        View 3D Design
-                                                    </button>
-                                                )}
-
-                                                {/* Design File Button */}
-                                                {order.customdesignurl && (
-                                                    <button className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-red-700 mt-3">
-                                                        <FileText size={16} />
-                                                        View Design File
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-3 mt-6 flex-wrap">
-                                            {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
-                                            {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                    <Download size={18} />
-                                                    Download Invoice
-                                                </button>
-                                            )}
-
-                                            {/* View Proof of Payment - Only show in Processing phase */}
-                                            {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                <button
-                                                    onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
-                                                    className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold"
-                                                >
-                                                    <FileText size={18} />
-                                                    View Proof of Payment
-                                                </button>
-                                            )}
-
-                                            {/* Payment - Only show when Waiting for Payment */}
-                                            {order.orderstatus === 'Waiting for Payment' && (
-                                                <Link to="/payment" className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                    <CreditCard size={18} />
-                                                    Payment
-                                                </Link>
-                                            )}
-
-                                            {/* Contact Support - Always visible */}
-                                            <button className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                <MessageCircle size={18} />
-                                                Contact Support
-                                            </button>
-
-                                            {/* Cancel Order - Only show in For Evaluation or Waiting for Payment (before Processing) */}
-                                            {(order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment') && (
-                                                <button 
-                                                    onClick={() => openCancelModal(order)}
-                                                    className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold"
-                                                >
-                                                    Cancel Order
-                                                </button>
-                                            )}
-
-                                            {/* Rate - Only show when Completed */}
-                                            {order.orderstatus === 'Completed' && (
-                                                <button 
-                                                    onClick={() => openRatingModal(order)}
-                                                    className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold"
-                                                >
-                                                    Rate
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                             );
                         })
                     )}
@@ -654,13 +654,13 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-[#35408E] px-6 py-4 flex items-center justify-between">
                             <div>
                                 <h2 className="text-white text-2xl font-semibold">3D Design Preview</h2>
-                                <p className="text-indigo-200 text-sm mt-1">Interactive view of your customized hanger</p>
+                                <p className="text-white text-sm mt-1">Interactive view of your customized hanger</p>
                             </div>
                             <button
                                 onClick={close3DModal}
@@ -826,7 +826,7 @@ const Order = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-indigo-600 px-6 py-4">
+                        <div className="bg-[#35408E] px-6 py-4">
                             <h2 className="text-white text-2xl font-semibold">Rate Your Order</h2>
                         </div>
 
@@ -858,11 +858,10 @@ const Order = () => {
                                             className="focus:outline-none transition-transform hover:scale-110"
                                         >
                                             <svg
-                                                className={`w-12 h-12 ${
-                                                    star <= rating
+                                                className={`w-12 h-12 ${star <= rating
                                                         ? 'text-yellow-400 fill-current'
                                                         : 'text-gray-300'
-                                                }`}
+                                                    }`}
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 viewBox="0 0 24 24"
                                                 stroke="currentColor"
@@ -955,11 +954,10 @@ const Order = () => {
                         <div className="bg-gray-50 px-6 py-4 flex justify-end">
                             <button
                                 onClick={closeNotificationModal}
-                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                                    notificationType === 'success'
+                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${notificationType === 'success'
                                         ? 'bg-green-600 hover:bg-green-700 text-white'
                                         : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}
+                                    }`}
                             >
                                 OK
                             </button>

@@ -33,6 +33,10 @@ import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM';
 import Employees from './pages/OperationalManagerPages/Employees';
 import MessageSA from './pages/SalesAdminPages/messageSA';
 import AppLayout from './layouts/AppLayout';
+import Calendar from './pages/SalesAdminPages/Calendar';
+import DashboardSA from './pages/SalesAdminPages/Dashboard';
+import ProductSA from './pages/SalesAdminPages/ProductSA';
+import ProfileSA from './pages/SalesAdminPages/profileSA';
 
 
 // ✅ Protect logged-in routes
@@ -76,6 +80,10 @@ const router = createBrowserRouter(
         <Route path="/orderpage" element={<OrderPage />} />
         <Route path="/orderdetail" element={<OrderDetail />} />
         <Route path="/messageSA" element={<MessageSA />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/dashboardSA" element={<DashboardSA />} />
+        <Route path="/productSA" element={<ProductSA />} />
+        <Route path="/profileSA" element={<ProfileSA />} />
       </Route>
 
       {/*  Operational Manager layout */}

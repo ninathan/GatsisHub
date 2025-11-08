@@ -973,7 +973,7 @@ const Checkout = () => {
                                     <ProductCard />
                                 </div>
                             </div>
-                            <div className="bg-gray-100 py-3 font-semibold text-center">
+                            <div className="bg-[#ECBA0B] py-3 font-semibold text-center">
                                 {hanger.name}
                             </div>
                         </button>
@@ -1075,7 +1075,7 @@ const Checkout = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="flex flex-col gap-6">
                         {/* Three.js 3D Preview Container */}
-                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg p-8 flex flex-col items-center justify-center relative border-2 border-yellow-400" style={{ minHeight: '500px' }}>
+                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg p-8 flex flex-col items-center justify-center relative border-2 border-yellow-400" style={{ minHeight: '600px' }}>
                             {/* Fullscreen Button */}
                             <button
                                 onClick={toggleFullscreen}
@@ -1541,7 +1541,7 @@ const Checkout = () => {
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <button
-                                className="cursor-pointer bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-4 px-12 rounded-lg text-lg transition-colors"
+                                className="cursor-pointer bg-[#35408E] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#2d3575] transition-colors w-full"
                                 onClick={handleSubmitOrder}
                             >
                                 Send for Evaluation
@@ -1845,7 +1845,7 @@ const Checkout = () => {
                                     </div>
                                     <div className="grid grid-cols-6 gap-2">
                                         {['#FF6B6B', '#FF8E8E', '#FFA07A', '#FFB347', '#9B59B6', '#E91E63', 
-                                          '#3B82F6', '#10B981', '#06B6D4', '#14B8A6', '#84CC16', '#EAB308'].map((c) => (
+                                        '#3B82F6', '#10B981', '#06B6D4', '#14B8A6', '#84CC16', '#EAB308'].map((c) => (
                                             <button
                                                 key={c}
                                                 onClick={() => updateThreeJsColor(c)}
@@ -2133,7 +2133,7 @@ const Checkout = () => {
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
                         {/* Modal Icon */}
                         <div className="flex justify-center mb-4">

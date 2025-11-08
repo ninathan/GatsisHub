@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Home,
     Package,
@@ -15,8 +15,7 @@ import {
     Edit2
 } from "lucide-react";
 import logo from '../../images/logo.png'
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 
 const OrderDetail = () => {
@@ -25,6 +24,15 @@ const OrderDetail = () => {
     const [isEditingPrice, setIsEditingPrice] = useState(false);
 
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get orderId from navigation state if available
+    useEffect(() => {
+        if (location.state?.orderId) {
+            console.log('Viewing order from calendar:', location.state.orderId);
+            // You can fetch order details here based on orderId if needed
+        }
+    }, [location.state]);
 
 
     const menuItems = [

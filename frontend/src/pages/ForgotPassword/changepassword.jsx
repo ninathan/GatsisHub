@@ -100,10 +100,9 @@ const changepassword = () => {
                             </p>
                         </div>
                         <button
-                            className="bg-[#DAC325] text-black font-semibold px-6 py-3 rounded-2xl hover:bg-[#c4ad1f] mx-auto block"
-                            Link to='/login'
+                            className="bg-[#DAC325] text-black font-semibold px-6 py-3 rounded-2xl hover:bg-[#c4ad1f] mx-auto block cursor-pointer"
                         >
-                            Back to Login
+                            <Link to='/login'>Back to Login</Link>
                         </button>
                     </div>
                 </div>

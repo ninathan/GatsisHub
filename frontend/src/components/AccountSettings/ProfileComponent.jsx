@@ -14,6 +14,9 @@ const ProfileComponent = () => {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('Profile');
+    
+    // Debug: Log active tab changes
+    console.log('Current active tab:', activeTab);
     const [companyName, setCompanyName] = useState('');
     const [companyEmail, setCompanyEmail] = useState('');
     const [companyNumber, setCompanyNumber] = useState('');
@@ -552,6 +555,7 @@ const ProfileComponent = () => {
                                         ? 'bg-[#35408E] text-white font-semibold'
                                         : 'text-gray-700 hover:bg-gray-100'
                                         }`}
+                                    style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
                                 >
                                     {tab}
                                 </button>
