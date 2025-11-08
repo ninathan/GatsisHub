@@ -7,7 +7,7 @@ const router = express.Router();
 // � Get all employees (optionally filter by role and status)
 router.get("/", async (req, res) => {
   try {
-    const { role, status } = req.query;
+    const { role, status, ispresent, limit } = req.query;
 
     let query = supabase
       .from("employees")
@@ -21,6 +21,14 @@ router.get("/", async (req, res) => {
     if (status) {
       query = query.eq('accountstatus', status);
     }
+    if (ispresent !== undefined) {
+      // Convert string 'true'/'false' to boolean
+      const isPresent = ispresent === 'true' || ispresent === true;
+      query = query.eq('ispresent', isPresent);
+    }
+    if (limit) {
+      query = query.limit(parseInt(limit));
+    }
 
     const { data: employees, error } = await query;
 
@@ -29,7 +37,7 @@ router.get("/", async (req, res) => {
       throw error;
     }
 
-    console.log(`✅ Fetched ${employees.length} employees${role ? ` with role: ${role}` : ''}${status ? ` with status: ${status}` : ''}`);
+    console.log(`✅ Fetched ${employees.length} employees${role ? ` with role: ${role}` : ''}${status ? ` with status: ${status}` : ''}${ispresent !== undefined ? ` ispresent: ${ispresent}` : ''}`);
 
     res.status(200).json({ employees });
   } catch (err) {
@@ -76,10 +84,22 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    console.log(`✅ Employee logged in successfully: ${email} (${employee.role})`);
+    // Set ispresent to true when employee logs in
+    const { error: updateError } = await supabase
+      .from("employees")
+      .update({ ispresent: true })
+      .eq("employeeid", employee.employeeid);
 
-    // Return employee data (excluding password)
+    if (updateError) {
+      console.error(`⚠️ Failed to update presence for ${email}:`, updateError);
+      // Don't fail login if presence update fails, just log it
+    }
+
+    console.log(`✅ Employee logged in successfully: ${email} (${employee.role}) - Presence set to true`);
+
+    // Return employee data (excluding password, with updated ispresent)
     const { password: _, ...employeeData } = employee;
+    employeeData.ispresent = true; // Ensure the returned data reflects the update
 
     res.status(200).json({
       message: "Login successful",
@@ -92,7 +112,43 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 📊 Get employee profile (authenticated)
+// � Employee Logout
+router.post("/logout", async (req, res) => {
+  try {
+    const { employeeid } = req.body;
+
+    console.log(`🚪 Employee logout attempt: ${employeeid}`);
+
+    // Validate input
+    if (!employeeid) {
+      return res.status(400).json({ error: "Employee ID is required" });
+    }
+
+    // Set ispresent to false when employee logs out
+    const { error } = await supabase
+      .from("employees")
+      .update({ ispresent: false })
+      .eq("employeeid", employeeid);
+
+    if (error) {
+      console.error(`❌ Failed to update presence for employee ${employeeid}:`, error);
+      return res.status(500).json({ error: "Failed to update presence status" });
+    }
+
+    console.log(`✅ Employee logged out successfully: ${employeeid} - Presence set to false`);
+
+    res.status(200).json({ 
+      message: "Logout successful",
+      ispresent: false 
+    });
+
+  } catch (err) {
+    console.error("💥 Employee Logout Error:", err);
+    res.status(500).json({ error: "Logout failed. Please try again." });
+  }
+});
+
+// �📊 Get employee profile (authenticated)
 router.get("/profile/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;

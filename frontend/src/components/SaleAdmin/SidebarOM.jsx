@@ -17,7 +17,28 @@ const SidebarOM = () => {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const employee = JSON.parse(localStorage.getItem('employee'));
+    
+    // Call backend to set ispresent to false
+    if (employee && employee.employeeid) {
+      try {
+        await fetch('https://gatsis-hub.vercel.app/employees/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employeeid: employee.employeeid
+          })
+        });
+        console.log('Employee presence set to false');
+      } catch (error) {
+        console.error('Failed to update presence status:', error);
+        // Continue with logout even if presence update fails
+      }
+    }
+    
     // Clear employee data from localStorage
     localStorage.removeItem('employee');
     localStorage.removeItem('rememberEmployee');

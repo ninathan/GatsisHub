@@ -198,8 +198,8 @@ const Order = () => {
                 return;
             }
 
-            // Fetch all active Sales Admin employees
-            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active');
+            // Fetch one active and present Sales Admin employee
+            const employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&ispresent=true&limit=1');
             
             if (!employeesResponse.ok) {
                 showNotification('Failed to load support team. Please try again.', 'error');
@@ -212,51 +212,48 @@ const Order = () => {
             const salesAdmins = employeesData.employees || [];
 
             if (salesAdmins.length === 0) {
-                showNotification('No support agents available. Please try again later.', 'error');
+                showNotification('No support agents are currently available. Please try again later.', 'error');
                 return;
             }
+
+            // Use the first (and only) available Sales Admin
+            const supportAgent = salesAdmins[0];
 
             // Create an initial message to start the conversation
             const initialMessage = `Hi, I have a question about my order ${order.orderid.slice(0, 8).toUpperCase()}`;
 
-            console.log('Sending contact support message to all Sales Admins:', {
+            console.log('Sending contact support message to available Sales Admin:', {
                 customerid: customer.customerid,
-                salesAdminCount: salesAdmins.length,
+                employeeid: supportAgent.employeeid,
+                employeename: supportAgent.employeename,
                 message: initialMessage
             });
 
-            // Send message to ALL Sales Admins
-            const messagePromises = salesAdmins.map(admin => 
-                fetch('https://gatsis-hub.vercel.app/messages/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        customerid: customer.customerid,
-                        employeeid: admin.employeeid,
-                        senderType: 'customer',
-                        message: initialMessage
-                    })
+            // Send message to the available Sales Admin
+            const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customerid: customer.customerid,
+                    employeeid: supportAgent.employeeid,
+                    senderType: 'customer',
+                    message: initialMessage
                 })
-            );
+            });
 
-            // Wait for all messages to be sent
-            const responses = await Promise.all(messagePromises);
-            
-            // Check if at least one message was sent successfully
-            const successCount = responses.filter(r => r.ok).length;
-
-            if (successCount > 0) {
-                showNotification(`Message sent to ${successCount} support agent(s)! Redirecting...`, 'success');
+            if (response.ok) {
+                showNotification(`Message sent to ${supportAgent.employeename}! Redirecting...`, 'success');
                 // Navigate to messages page after a short delay
                 setTimeout(() => {
                     navigate('/messages');
                 }, 1000);
             } else {
-                const firstError = await responses[0].json();
-                console.error('Error response:', firstError);
-                showNotification(`Failed to start conversation: ${firstError.error || 'Unknown error'}`, 'error');
+                const responseData = await response.json();
+                const errorMsg = responseData.error || 'Failed to start conversation';
+                console.error('Error response:', errorMsg);
+                showNotification(`Failed to start conversation: ${errorMsg}`, 'error');
             }
         } catch (error) {
             console.error('Error starting conversation:', error);
