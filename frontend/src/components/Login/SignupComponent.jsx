@@ -22,10 +22,18 @@ const Signup = () => {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
 
+  // Company Address fields
+  const [street, setStreet] = useState('')
+  const [city, setCity] = useState('')
+  const [province, setProvince] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [country, setCountry] = useState('Philippines')
+
   // modal & visibility states
   const [showTerms, setShowTerms] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   // feedback
   const [loading, setLoading] = useState(false)
@@ -54,6 +62,19 @@ const Signup = () => {
       return
     }
 
+    // Build address object
+    const companyAddress = {
+      name: 'Company Address',
+      street: street.trim(),
+      city: city.trim(),
+      province: province.trim(),
+      postalCode: postalCode.trim(),
+      country: country.trim()
+    };
+
+    // Street is now required, so always include the address
+    const addresses = [companyAddress];
+
     try {
       setLoading(true)
       // 👇 Change this URL to your deployed backend
@@ -65,14 +86,15 @@ const Signup = () => {
           emailAddress,
           companyNumber,
           password: Password,
+          addresses: addresses,
         }),
       })
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Signup failed')
 
-      setSuccess('Signup successful! Redirecting...')
-      setTimeout(() => navigate('/login'), 2000)
+      // Show success modal instead of immediate redirect
+      setShowSuccessModal(true)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -130,6 +152,72 @@ const Signup = () => {
                     onChange={(e) => setCompanyNumber(e.target.value)}
                     className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
                     placeholder='Enter your Company Number'
+                  />
+                </div>
+
+                {/* Street Address */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Street Address</label>
+                  <img src={location} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='Street Address'
+                    required
+                  />
+                </div>
+
+                {/* City */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>City</label>
+                  <img src={location} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='City'
+                  />
+                </div>
+
+                {/* Province/State */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Province/State</label>
+                  <img src={location} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='Province/State'
+                  />
+                </div>
+
+                {/* Postal Code */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Postal Code</label>
+                  <img src={location} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='Postal Code'
+                  />
+                </div>
+
+                {/* Country */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Country</label>
+                  <img src={location} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='Country'
                   />
                 </div>
 
@@ -298,6 +386,53 @@ const Signup = () => {
           </p>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-green-600 px-6 py-4">
+              <h2 className="text-white text-2xl font-semibold">✓ Registration Successful!</h2>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Welcome to GatsisHub!
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Your account has been created successfully. A confirmation email has been sent to:
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 w-full mb-4">
+                  <p className="text-sm font-semibold text-blue-800">
+                    {emailAddress}
+                  </p>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Please check your email to verify your account. You can now log in to start ordering custom hangers!
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* {showTerms && <Terms onClose={() => setShowTerms(false)} />} */}
     </PageTransition>

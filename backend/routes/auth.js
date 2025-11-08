@@ -14,13 +14,14 @@ router.post("/signup", async (req, res) => {
     console.log("📥 SIGNUP REQUEST RECEIVED");
     console.log("=" .repeat(50));
     
-    const { companyName, emailAddress, companyNumber, password } = req.body;
+    const { companyName, emailAddress, companyNumber, password, addresses } = req.body;
 
     console.log("📥 Request body:", { 
       companyName, 
       emailAddress, 
       companyNumber, 
-      passwordLength: password?.length 
+      passwordLength: password?.length,
+      addressesCount: addresses?.length 
     });
 
     // 1️⃣ Validate required fields
@@ -157,7 +158,7 @@ router.post("/signup", async (req, res) => {
           emailaddress: emailAddress,
           companynumber: companyNumber || null,
           password: hashedPassword,
-          addresses: [],
+          addresses: addresses || [],
           datecreated: new Date().toISOString(),
           accountstatus: 'Active',
           profilePicture: null
@@ -173,7 +174,88 @@ router.post("/signup", async (req, res) => {
 
     console.log("✅ Customer inserted successfully:", customerData[0]?.userid);
 
-    // 5️⃣ Return success
+    // 5️⃣ Send confirmation email
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (resendApiKey) {
+        console.log("📧 Attempting to send confirmation email to:", emailAddress);
+        
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'GatsisHub <noreply@gatsishub.com>',
+            to: [emailAddress],
+            subject: 'Welcome to GatsisHub - Registration Successful!',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
+                  <p style="font-size: 18px; color: #666;">Registration Successful</p>
+                </div>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <h2 style="color: #35408E; margin-top: 0;">Hello ${companyName}!</h2>
+                  <p style="color: #333; line-height: 1.6;">
+                    Thank you for registering with GatsisHub. Your account has been successfully created!
+                  </p>
+                  <p style="color: #333; line-height: 1.6;">
+                    You can now log in to start ordering premium custom hangers for your business.
+                  </p>
+                </div>
+
+                <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <h3 style="margin-top: 0;">Account Details:</h3>
+                  <p style="margin: 5px 0;"><strong>Email:</strong> ${emailAddress}</p>
+                  <p style="margin: 5px 0;"><strong>Company:</strong> ${companyName}</p>
+                  ${companyNumber ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${companyNumber}</p>` : ''}
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL || 'https://gatsis-hub.vercel.app'}/login" 
+                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Login to Your Account
+                  </a>
+                </div>
+
+                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+                  <p>If you didn't create this account, please ignore this email or contact our support team.</p>
+                  <p style="margin-top: 20px;">
+                    Best regards,<br/>
+                    <strong>The GatsisHub Team</strong><br/>
+                    Premium Hanger Solutions
+                  </p>
+                </div>
+              </div>
+            `
+          })
+        });
+
+        let responseData;
+        try {
+          responseData = await emailResponse.json();
+        } catch (parseError) {
+          console.error("❌ Failed to parse Resend response:", parseError);
+        }
+        
+        if (emailResponse.ok) {
+          console.log("✅ Confirmation email sent successfully. Email ID:", responseData?.id);
+        } else {
+          console.error("❌ Resend API error:", responseData);
+        }
+      } else {
+        console.log("⚠️ RESEND_API_KEY not configured, skipping confirmation email");
+      }
+    } catch (emailError) {
+      console.error("❌ Email sending error:", emailError.message);
+      // Don't fail the registration if email fails
+    }
+
+    // 6️⃣ Return success
     console.log("🎉 Signup completed successfully!");
     console.log("=" .repeat(50));
     
