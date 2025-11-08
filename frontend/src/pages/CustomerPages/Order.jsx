@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { ChevronDown, MessageCircle, Eye } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { Download, CreditCard } from 'lucide-react';
@@ -6,6 +6,7 @@ import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
+import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
 
 
 const Order = () => {
@@ -49,6 +50,31 @@ const Order = () => {
         };
         return statusMap[tab] || [];
     };
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        console.log('📦 Order update:', payload);
+        
+        if (payload.eventType === 'INSERT') {
+            // New order added
+            setOrders(prev => [payload.new, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+            // Order updated
+            setOrders(prev => 
+                prev.map(order => 
+                    order.orderid === payload.new.orderid ? payload.new : order
+                )
+            );
+        } else if (payload.eventType === 'DELETE') {
+            // Order deleted
+            setOrders(prev => 
+                prev.filter(order => order.orderid !== payload.old.orderid)
+            );
+        }
+    }, []);
+
+    // Subscribe to real-time order updates
+    const { isSubscribed } = useRealtimeOrders(user?.userid, handleOrderUpdate);
 
     // Fetch orders when component mounts
     useEffect(() => {

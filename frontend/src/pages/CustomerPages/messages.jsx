@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Send, Plus, MoreVertical, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
+import { useRealtimeNotifications } from '../../hooks/useRealtimeNotifications';
 
 const MessagesPage = () => {
     const [selectedContact, setSelectedContact] = useState(null);
@@ -19,6 +21,32 @@ const MessagesPage = () => {
     // Customer data is stored as 'user' in localStorage
     const customer = JSON.parse(localStorage.getItem('user'));
     const customerid = customer?.customerid;
+
+    // Real-time message handler
+    const handleNewMessage = useCallback((newMessage) => {
+        // Fetch messages to get formatted version
+        if (selectedContact) {
+            fetchMessages(selectedContact.employeeid);
+        }
+    }, [selectedContact]);
+
+    // Real-time notification handler
+    const handleNewNotification = useCallback((newNotification) => {
+        // Refresh notifications to get formatted version
+        fetchNotifications();
+    }, []);
+
+    // Subscribe to real-time updates
+    const { isSubscribed: isMessagesSubscribed } = useRealtimeMessages(
+        customerid,
+        selectedContact?.employeeid,
+        handleNewMessage
+    );
+
+    const { isSubscribed: isNotificationsSubscribed } = useRealtimeNotifications(
+        customerid,
+        handleNewNotification
+    );
 
     useEffect(() => {
         if (customerid) {

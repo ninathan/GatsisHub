@@ -33,3 +33,5 @@ ensure_messages_table.sql
 CONVERSATION_INITIATION_FEATURE.md
 DEPLOYMENT_TROUBLESHOOTING.md
 add_sender_type_to_messages.sql
+enable_realtime.sql
+REALTIME_SETUP_GUIDE.md

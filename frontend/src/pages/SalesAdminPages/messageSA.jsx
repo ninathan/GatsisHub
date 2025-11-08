@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FaPaperPlane, FaPlus } from "react-icons/fa";
+import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 
 const Messages = () => {
     const [conversations, setConversations] = useState([]);
@@ -11,6 +12,21 @@ const Messages = () => {
     const [sendingMessage, setSendingMessage] = useState(false);
     const employee = JSON.parse(localStorage.getItem('employee'));
     const fileInputRef = React.useRef(null);
+
+    // Real-time message handler
+    const handleNewMessage = useCallback((newMessage) => {
+        // Refresh messages when new message arrives
+        if (selectedCustomer) {
+            fetchMessages(selectedCustomer.customerid);
+        }
+    }, [selectedCustomer]);
+
+    // Subscribe to real-time updates for selected conversation
+    const { isSubscribed } = useRealtimeMessages(
+        selectedCustomer?.customerid,
+        employee?.employeeid,
+        handleNewMessage
+    );
 
     // Fetch all customer conversations
     useEffect(() => {
