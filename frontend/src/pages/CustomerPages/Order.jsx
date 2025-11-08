@@ -86,16 +86,16 @@ const Order = () => {
     // Helper function to get status color
     const getStatusColor = (status) => {
         const statusColors = {
-            'For Evaluation': 'bg-yellow-400',
-            'Waiting for Payment': 'bg-orange-400',
-            'Approved': 'bg-green-500',
-            'In Production': 'bg-blue-400',
-            'Waiting for Shipment': 'bg-indigo-400',
-            'In Transit': 'bg-purple-400',
-            'Completed': 'bg-green-600',
-            'Cancelled': 'bg-red-500'
+            'For Evaluation': '#fbbf24',
+            'Waiting for Payment': '#fb923c',
+            'Approved': '#22c55e',
+            'In Production': '#60a5fa',
+            'Waiting for Shipment': '#818cf8',
+            'In Transit': '#a78bfa',
+            'Completed': '#16a34a',
+            'Cancelled': '#ef4444'
         };
-        return statusColors[status] || 'bg-gray-400';
+        return statusColors[status] || '#9ca3af';
     };
 
     // Helper function to format date
@@ -332,18 +332,18 @@ const Order = () => {
                             return (
                                 <div key={order.orderid} className="bg-white rounded-lg shadow-lg overflow-hidden">
                             {/* Order Header */}
-                            <div className="bg-gray-50 px-6 py-3 grid grid-cols-12 gap-4 items-center font-semibold border-b">
-                                <div className="col-span-3">Order details</div>
-                                <div className="col-span-3 text-center">Order Number</div>
-                                <div className="col-span-2 text-center">Status</div>
-                                <div className="col-span-3 text-center">Price</div>
-                                <div className="col-span-1"></div>
+                            <div className="bg-gray-50 px-6 py-4 flex items-center font-semibold border-b">
+                                <div className="flex-1">Order details</div>
+                                <div className="flex-1 text-center">Order Number</div>
+                                <div className="flex-1 text-center">Status</div>
+                                <div className="flex-1 text-center">Price</div>
+                                <div className="w-12"></div>
                             </div>
 
-                            <div className="p-6">
-                                <div className="grid grid-cols-12 gap-4 items-center mb-4">
+                            <div className="px-6 py-4">
+                                <div className="flex items-center">
                                     {/* Product Image & Name */}
-                                    <div className="col-span-3 flex items-center gap-4">
+                                    <div className="flex-1 flex items-center gap-4">
                                         <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden">
                                             {(() => {
                                                 try {
@@ -372,26 +372,29 @@ const Order = () => {
                                     </div>
 
                                     {/* Order Number */}
-                                    <div className="col-span-3 text-center">
+                                    <div className="flex-1 text-center">
                                         <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
                                     </div>
 
                                     {/* Status */}
-                                    <div className="col-span-2 flex justify-center">
-                                        <span className={`${statusColor} text-black px-4 py-1 rounded font-semibold text-sm`}>
+                                    <div className="flex-1 text-center">
+                                        <span 
+                                            className="text-black px-4 py-1 rounded font-semibold text-sm inline-block"
+                                            style={{ backgroundColor: statusColor }}
+                                        >
                                             {order.orderstatus}
                                         </span>
                                     </div>
 
                                     {/* Price */}
-                                    <div className="col-span-3 text-center">
+                                    <div className="flex-1 text-center">
                                         <span className="text-xl font-semibold">
                                             {order.totalprice ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '₱0.00'}
                                         </span>
                                     </div>
 
                                     {/* Expand Button */}
-                                    <div className="col-span-1 flex justify-end">
+                                    <div className="w-12 flex justify-center">
                                         <button
                                             onClick={() => toggleExpand(order.orderid)}
                                             className="p-2 hover:bg-gray-100 rounded-full transition-all"
@@ -411,7 +414,7 @@ const Order = () => {
                                         <div className="grid grid-cols-2 gap-8">
                                             {/* Left Column - Order Details */}
                                             <div>
-                                                <h3 className="text-xl font-bold mb-4">{order.companyname}</h3>
+                                                <h3 className="text-xl font-bold mb-4">{getOrderDescription(order)}</h3>
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span className="font-semibold">Order Number:</span>
