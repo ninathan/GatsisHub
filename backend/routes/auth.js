@@ -488,8 +488,11 @@ router.post("/forgot-password", async (req, res) => {
       .single();
 
     if (findError || !customer) {
+      console.error("❌ Customer lookup error:", findError);
       return res.status(404).json({ error: "No account found with this email address" });
     }
+
+    console.log("✅ Customer found:", customer.emailaddress);
 
     // Generate 6-digit verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -497,7 +500,7 @@ router.post("/forgot-password", async (req, res) => {
 
     console.log("🔐 Generated code:", verificationCode, "expires at:", expiresAt);
 
-    // Store verification code in database (you'll need to create this table)
+    // Store verification code in database
     const { error: insertError } = await supabase
       .from("password_reset_codes")
       .insert([{
@@ -509,8 +512,14 @@ router.post("/forgot-password", async (req, res) => {
 
     if (insertError) {
       console.error("❌ Error storing verification code:", insertError);
-      return res.status(500).json({ error: "Failed to generate verification code" });
+      console.error("❌ Full error details:", JSON.stringify(insertError, null, 2));
+      return res.status(500).json({ 
+        error: "Database error. Please ensure password_reset_codes table exists.",
+        details: insertError.message 
+      });
     }
+
+    console.log("✅ Verification code stored in database");
 
     // Send email using Resend API
     try {
