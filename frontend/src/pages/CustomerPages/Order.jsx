@@ -7,7 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
-import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 
 const Order = () => {
@@ -445,15 +444,12 @@ const Order = () => {
                         filteredOrders.map((order, index) => {
                             const materials = formatMaterials(order.materials);
                             const statusColor = getStatusColor(order.orderstatus);
-                            const orderAnim = useScrollAnimation({ threshold: 0.1 });
 
                             return (
                                 <div 
                                     key={order.orderid}
-                                    ref={orderAnim.ref}
-                                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${
-                                        orderAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
-                                    }`}
+                                    className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 animate-fadeIn"
+                                    style={{ animationDelay: `${index * 100}ms` }}
                                 >
                                     {/* Order Header - Desktop Only */}
                                     <div className="hidden lg:flex bg-gray-50 px-6 py-4 items-center font-semibold border-b">

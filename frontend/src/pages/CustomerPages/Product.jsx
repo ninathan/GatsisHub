@@ -9,6 +9,15 @@ import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 const ProductsPage = () => {
     const titleAnim = useScrollAnimation({ threshold: 0.3 });
+    
+    // Create animation hooks for each product (must be at top level, not in loop)
+    const product1Anim = useScrollAnimation({ threshold: 0.2 });
+    const product2Anim = useScrollAnimation({ threshold: 0.2 });
+    const product3Anim = useScrollAnimation({ threshold: 0.2 });
+    const product4Anim = useScrollAnimation({ threshold: 0.2 });
+    
+    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim];
+    
     const products = [
         {
             id: 'MB3',
@@ -62,7 +71,7 @@ const ProductsPage = () => {
                 {/* Products List */}
                 <div className="space-y-24">
                     {products.map((product, index) => {
-                        const productAnim = useScrollAnimation({ threshold: 0.2 });
+                        const productAnim = productAnims[index];
                         return (
                             <div
                                 key={product.id}
