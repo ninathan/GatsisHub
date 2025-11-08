@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown } from 'lucide-react';
 import { div } from 'framer-motion/client';
+import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 const Dashboard = () => {
 
@@ -98,12 +99,23 @@ const Dashboard = () => {
         </div>
     );
 
+    // Scroll animations
+    const titleAnim = useScrollAnimation({ threshold: 0.3 });
+    const statsAnim = useScrollAnimation({ threshold: 0.2 });
+    const quotaAnim = useScrollAnimation({ threshold: 0.2 });
+    const dailyWeeklyAnim = useScrollAnimation({ threshold: 0.2 });
+
     return (
         <div className='flex-1 flex flex-col min-h-screen bg-gray-100'>
 
             {/* Header */}
             <div className='bg-white shadow-sm border-b top-0 z-10'>
-                <div className='px-8 py-6'>
+                <div 
+                    ref={titleAnim.ref}
+                    className={`px-8 py-6 ${
+                        titleAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
+                    }`}
+                >
                     <h1 className='text-4xl font-bold text-gray-900'>Dashboard</h1>
                     {/* <p>Welcome back, {User.name}! Here's your business overview </p> */}
                     <p className='text-gray-600 mt-1'>Welcome back user! Here's your business overview</p>
@@ -113,7 +125,12 @@ const Dashboard = () => {
             {/* Dashboard content */}
             <div className='p-8'>
                 {/* Top Statistics card */}
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+                <div 
+                    ref={statsAnim.ref}
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-8 ${
+                        statsAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
+                    }`}
+                >
                     <StatCard
                         title="Total Orders"
                         value={dashboardData.totalOrders}
@@ -135,7 +152,12 @@ const Dashboard = () => {
                 </div>
 
                 {/* Main Quota Overview card */}
-                <div className='bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-8 mb-8 mt-8'>
+                <div 
+                    ref={quotaAnim.ref}
+                    className={`bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-8 mb-8 mt-8 ${
+                        quotaAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
+                    }`}
+                >
                     <h2 className='text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
 
                     <div className='grid grid-cols-1 lg:grid-col-2 gap-8'>
@@ -201,7 +223,12 @@ const Dashboard = () => {
 
                 </div>
                     {/* bottom quota cards row */}
-                    <div className='grid grid-cols-1 mt-5 md:grid-cols-2 gap-8'>
+                    <div 
+                        ref={dailyWeeklyAnim.ref}
+                        className={`grid grid-cols-1 mt-5 md:grid-cols-2 gap-8 ${
+                            dailyWeeklyAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
+                        }`}
+                    >
                         <QuotaCard 
                             title="Today's Quota"
                             subtitle={`End Quota to be reached by the end of the day: ${dashboardData.todayQuota.target}`}

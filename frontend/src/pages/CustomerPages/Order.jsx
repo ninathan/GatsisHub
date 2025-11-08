@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
+import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 
 const Order = () => {
@@ -405,19 +406,19 @@ const Order = () => {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-12">
                 {/* Title */}
-                <h1 className="text-5xl font-bold text-center mb-12">My Orders</h1>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-6 md:mb-12">My Orders</h1>
 
                 {/* Tabs */}
-                <div className="flex justify-center gap-8 mb-8">
+                <div className="flex justify-center gap-3 md:gap-6 lg:gap-8 mb-6 md:mb-8 overflow-x-auto pb-2 scrollbar-thin">
                     {tabs.map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`text-xl pb-2 transition-all ${activeTab === tab
-                                ? 'border-b border-yellow-400 font-semibold'
-                                : 'text-gray-600 hover:border-b border-gray-900 cursor-pointer'
+                            className={`text-sm md:text-lg lg:text-xl pb-2 transition-all duration-300 whitespace-nowrap ${activeTab === tab
+                                ? 'border-b-2 border-yellow-400 font-semibold scale-105'
+                                : 'text-gray-600 hover:border-b border-gray-900 cursor-pointer hover:scale-105'
                                 }`}
                         >
                             {tab}
@@ -426,29 +427,36 @@ const Order = () => {
                 </div>
 
                 {/* Orders List */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     {filteredOrders.length === 0 ? (
-                        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-                            <p className="text-2xl text-gray-600">No orders found</p>
-                            <p className="text-gray-500 mt-2">
+                        <div className="bg-white rounded-lg shadow-lg p-6 md:p-12 text-center">
+                            <p className="text-xl md:text-2xl text-gray-600">No orders found</p>
+                            <p className="text-sm md:text-base text-gray-500 mt-2">
                                 {activeTab === 'All Orders'
                                     ? 'You haven\'t placed any orders yet.'
                                     : `No orders with status "${activeTab}"`
                                 }
                             </p>
-                            <Link to="/checkout" className="inline-block mt-4 mb-4 bg-yellow-400 text-black px-6 py-2 rounded hover:bg-yellow-500 font-semibold">
+                            <Link to="/checkout" className="inline-block mt-4 mb-4 bg-yellow-400 text-black px-4 md:px-6 py-2 rounded hover:bg-yellow-500 font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm md:text-base">
                                 Place an Order
                             </Link>
                         </div>
                     ) : (
-                        filteredOrders.map(order => {
+                        filteredOrders.map((order, index) => {
                             const materials = formatMaterials(order.materials);
                             const statusColor = getStatusColor(order.orderstatus);
+                            const orderAnim = useScrollAnimation({ threshold: 0.1 });
 
                             return (
-                                <div key={order.orderid} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                                    {/* Order Header */}
-                                    <div className="bg-gray-50 px-6 py-4 flex items-center font-semibold border-b">
+                                <div 
+                                    key={order.orderid}
+                                    ref={orderAnim.ref}
+                                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${
+                                        orderAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
+                                    }`}
+                                >
+                                    {/* Order Header - Desktop Only */}
+                                    <div className="hidden lg:flex bg-gray-50 px-6 py-4 items-center font-semibold border-b">
                                         <div className="flex-1">Product</div>
                                         <div className="flex-1 text-center">Order Number</div>
                                         <div className="flex-1 text-center">Status</div>
@@ -456,8 +464,72 @@ const Order = () => {
                                         <div className="flex-1"></div>
                                     </div>
 
-                                    <div className='px-6 py-4'>
-                                        <div className="flex items-center">
+                                    <div className='px-3 md:px-6 py-4'>
+                                        {/* Mobile/Tablet Layout */}
+                                        <div className="lg:hidden space-y-4">
+                                            {/* Product Image & Name */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-16 h-16 md:w-20 md:h-20 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                                                    {(() => {
+                                                        try {
+                                                            if (order.threeddesigndata) {
+                                                                const designData = typeof order.threeddesigndata === 'string'
+                                                                    ? JSON.parse(order.threeddesigndata)
+                                                                    : order.threeddesigndata;
+
+                                                                if (designData && designData.thumbnail) {
+                                                                    return (
+                                                                        <img
+                                                                            src={designData.thumbnail}
+                                                                            alt="Design preview"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    );
+                                                                }
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Error parsing design data:', error);
+                                                        }
+                                                        return <span className="text-2xl md:text-3xl">🪝</span>;
+                                                    })()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-sm md:text-base truncate">{getOrderDescription(order)}</p>
+                                                    <p className="text-xs md:text-sm text-gray-600">ORD-{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => toggleExpand(order.orderid)}
+                                                    className="p-2 hover:bg-gray-100 rounded-full transition-all flex-shrink-0"
+                                                >
+                                                    <ChevronDown
+                                                        size={20}
+                                                        className={`transition-transform ${expandedOrder === order.orderid ? 'rotate-180' : ''}`}
+                                                    />
+                                                </button>
+                                            </div>
+
+                                            {/* Status & Price */}
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-1">Status</p>
+                                                    <span 
+                                                        className="text-black px-3 py-1 rounded font-semibold text-xs inline-block"
+                                                        style={{ backgroundColor: statusColor }}
+                                                    >
+                                                        {order.orderstatus}
+                                                    </span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-gray-500 mb-1">Total Price</p>
+                                                    <span className="text-lg md:text-xl font-semibold">
+                                                        {order.totalprice ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '₱0.00'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop Layout */}
+                                        <div className="hidden lg:flex items-center">
                                             {/* Product Image & Name */}
                                             <div className="flex-1 flex items-center gap-4">
                                                 <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
@@ -527,12 +599,12 @@ const Order = () => {
 
                                         {/* Expanded Details */}
                                         {expandedOrder === order.orderid && (
-                                            <div className="border-t pt-6 px-6 pb-6">
-                                                <div className="grid grid-cols-2 gap-8">
+                                            <div className="border-t pt-4 md:pt-6 px-3 md:px-6 pb-4 md:pb-6 animate-fadeIn">
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
                                                     {/* Left Column - Order Details */}
                                                     <div>
-                                                        <h3 className="text-xl font-bold mb-4">{order.companyname}</h3>
-                                                        <div className="space-y-2 text-sm">
+                                                        <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">{order.companyname}</h3>
+                                                        <div className="space-y-2 text-xs md:text-sm">
                                                             <div className="flex justify-between">
                                                                 <span className="font-semibold">Order Number:</span>
                                                                 <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
@@ -617,16 +689,16 @@ const Order = () => {
 
                                                     {/* Right Column - Contact & Address Information */}
                                                     <div>
-                                                        <h3 className="text-xl font-bold mb-4">Contact Information</h3>
-                                                        <div className="text-sm mb-4">
+                                                        <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">Contact Information</h3>
+                                                        <div className="text-xs md:text-sm mb-4">
                                                             <p className="font-semibold">{order.contactperson}</p>
                                                             <p>{order.contactphone}</p>
                                                             <p className="text-gray-600">{order.companyname}</p>
                                                         </div>
 
                                                         {/* Delivery Address Section */}
-                                                        <h3 className="text-xl font-bold mb-2 mt-6">Delivery Address</h3>
-                                                        <div className="text-sm mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                        <h3 className="text-lg md:text-xl font-bold mb-2 mt-4 md:mt-6">Delivery Address</h3>
+                                                        <div className="text-xs md:text-sm mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                             {order.deliveryaddress ? (
                                                                 <p className="text-gray-700">
                                                                     {typeof order.deliveryaddress === 'object'
@@ -641,9 +713,9 @@ const Order = () => {
                                                         {/* Order Instructions Section */}
                                                         {order.orderinstructions && (
                                                             <>
-                                                                <h3 className="text-xl font-bold mb-2 mt-4">Order Instructions</h3>
+                                                                <h3 className="text-lg md:text-xl font-bold mb-2 mt-4">Order Instructions</h3>
                                                                 <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
-                                                                    <p className="text-sm text-gray-700">{order.orderinstructions}</p>
+                                                                    <p className="text-xs md:text-sm text-gray-700">{order.orderinstructions}</p>
                                                                 </div>
                                                             </>
                                                         )}
@@ -651,9 +723,9 @@ const Order = () => {
                                                         {/* Delivery Notes Section */}
                                                         {order.deliverynotes && (
                                                             <>
-                                                                <h3 className="text-xl font-bold mb-2 mt-4">Delivery Notes</h3>
+                                                                <h3 className="text-lg md:text-xl font-bold mb-2 mt-4">Delivery Notes</h3>
                                                                 <div className="border rounded-lg p-3 bg-gray-50 mb-3">
-                                                                    <p className="text-sm text-gray-700">{order.deliverynotes}</p>
+                                                                    <p className="text-xs md:text-sm text-gray-700">{order.deliverynotes}</p>
                                                                 </div>
                                                             </>
                                                         )}
@@ -662,7 +734,7 @@ const Order = () => {
                                                         {order.threeddesigndata && (
                                                             <button
                                                                 onClick={() => open3DModal(order.threeddesigndata)}
-                                                                className="w-full bg-[#35408E] text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-[#2c3e50] mt-3"
+                                                                className="w-full bg-[#35408E] text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-[#2c3e50] mt-3 transition-all duration-300 hover:scale-105"
                                                             >
                                                                 <Eye size={16} />
                                                                 View 3D Design
@@ -671,7 +743,7 @@ const Order = () => {
 
                                                         {/* Design File Button */}
                                                         {order.customdesignurl && (
-                                                            <button className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold hover:bg-red-700 mt-3">
+                                                            <button className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-red-700 mt-3 transition-all duration-300 hover:scale-105">
                                                                 <FileText size={16} />
                                                                 View Design File
                                                             </button>
@@ -680,12 +752,13 @@ const Order = () => {
                                                 </div>
 
                                                 {/* Action Buttons */}
-                                                <div className="flex gap-3 mt-6 flex-wrap">
+                                                <div className="flex gap-2 md:gap-3 mt-4 md:mt-6 flex-wrap">
                                                     {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
                                                     {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                        <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                            <Download size={18} />
-                                                            Download Invoice
+                                                        <button className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold">
+                                                            <Download size={16} className="md:w-[18px] md:h-[18px]" />
+                                                            <span className="hidden sm:inline">Download Invoice</span>
+                                                            <span className="sm:hidden">Invoice</span>
                                                         </button>
                                                     )}
 
@@ -693,17 +766,18 @@ const Order = () => {
                                                     {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
                                                         <button
                                                             onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
-                                                            className="bg-indigo-700 text-white px-6 py-2 rounded hover:bg-indigo-800 transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                            className="bg-indigo-700 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-800 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold"
                                                         >
-                                                            <FileText size={18} />
-                                                            View Proof of Payment
+                                                            <FileText size={16} className="md:w-[18px] md:h-[18px]" />
+                                                            <span className="hidden sm:inline">View Proof</span>
+                                                            <span className="sm:hidden">Proof</span>
                                                         </button>
                                                     )}
 
                                                     {/* Payment - Only show when Waiting for Payment */}
                                                     {order.orderstatus === 'Waiting for Payment' && (
-                                                        <Link to="/payment" className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600 transition-colors flex items-center gap-2 text-sm font-semibold">
-                                                            <CreditCard size={18} />
+                                                        <Link to="/payment" className="bg-yellow-500 text-white px-3 md:px-6 py-2 rounded hover:bg-yellow-600 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-xs md:text-sm font-semibold">
+                                                            <CreditCard size={16} className="md:w-[18px] md:h-[18px]" />
                                                             Payment
                                                         </Link>
                                                     )}
@@ -731,7 +805,7 @@ const Order = () => {
                                                     {order.orderstatus === 'Completed' && (
                                                         <button
                                                             onClick={() => openRatingModal(order)}
-                                                            className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors text-sm font-semibold"
+                                                            className="bg-indigo-600 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-700 transition-all duration-300 hover:scale-105 text-xs md:text-sm font-semibold"
                                                         >
                                                             Rate
                                                         </button>
@@ -749,8 +823,8 @@ const Order = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && (
-                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="flex items-center justify-center py-4 relative">
                             <div className="w-12 h-12  rounded-full flex items-center justify-center">
@@ -761,12 +835,12 @@ const Order = () => {
                         </div>
 
                         {/* Modal Title */}
-                        <div className="text-center pb-6">
-                            <h2 className="text-white text-2xl font-semibold">Proof of payment</h2>
+                        <div className="text-center pb-4 md:pb-6">
+                            <h2 className="text-white text-xl md:text-2xl font-semibold">Proof of payment</h2>
                         </div>
 
                         {/* Image Container */}
-                        <div className="bg-white mx-8 rounded-lg p-4 mb-6">
+                        <div className="bg-white mx-4 md:mx-8 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
                             <img
                                 src={proofImage}
                                 alt="Proof of Payment"
@@ -775,10 +849,10 @@ const Order = () => {
                         </div>
 
                         {/* Back Button */}
-                        <div className="flex justify-center pb-8">
+                        <div className="flex justify-center pb-6 md:pb-8">
                             <button
                                 onClick={closeProofModal}
-                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-12 py-2 rounded transition-colors"
+                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 md:px-12 py-2 rounded transition-all duration-300 hover:scale-105 text-sm md:text-base"
                             >
                                 Back
                             </button>
@@ -789,13 +863,13 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex items-center justify-between">
+                        <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-white text-2xl font-semibold">3D Design Preview</h2>
-                                <p className="text-white text-sm mt-1">Interactive view of your customized hanger</p>
+                                <h2 className="text-white text-lg md:text-2xl font-semibold">3D Design Preview</h2>
+                                <p className="text-white text-xs md:text-sm mt-1">Interactive view of your customized hanger</p>
                             </div>
                             <button
                                 onClick={close3DModal}
@@ -806,8 +880,8 @@ const Order = () => {
                         </div>
 
                         {/* 3D Viewer */}
-                        <div className="bg-white p-6">
-                            <div className="w-full h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                        <div className="bg-white p-3 md:p-6">
+                            <div className="w-full h-[300px] md:h-[400px] lg:h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
                                 <Suspense fallback={
                                     <div className='w-full h-full flex items-center justify-center'>
                                         <div className='text-center'>
@@ -831,7 +905,7 @@ const Order = () => {
                             </div>
 
                             {/* Design Details */}
-                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
                                 <div className="bg-gray-50 p-3 rounded">
                                     <span className="font-semibold text-gray-700">Hanger Type:</span>
                                     <span className="ml-2">{selected3DDesign.hangerType}</span>
@@ -868,13 +942,13 @@ const Order = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
-                            <p className="text-sm text-gray-600">
+                        <div className="bg-gray-100 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <p className="text-xs md:text-sm text-gray-600 text-center sm:text-left">
                                 💡 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                             <button
                                 onClick={close3DModal}
-                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-colors"
+                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 md:px-8 py-2 rounded transition-all duration-300 hover:scale-105 text-sm md:text-base w-full sm:w-auto"
                             >
                                 Close
                             </button>
@@ -885,17 +959,17 @@ const Order = () => {
 
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-red-600 px-6 py-4">
-                            <h2 className="text-white text-2xl font-semibold">Cancel Order</h2>
+                        <div className="bg-red-600 px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-white text-xl md:text-2xl font-semibold">Cancel Order</h2>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6">
+                        <div className="p-4 md:p-6">
                             <div className="mb-4">
-                                <p className="text-gray-700 mb-2">
+                                <p className="text-gray-700 mb-2 text-sm md:text-base">
                                     Are you sure you want to cancel this order?
                                 </p>
                                 <div className="bg-gray-50 p-3 rounded border border-gray-200">
@@ -929,18 +1003,18 @@ const Order = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
                             <button
                                 onClick={closeCancelModal}
                                 disabled={isCancelling}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 md:px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
                             >
                                 Keep Order
                             </button>
                             <button
                                 onClick={handleCancelOrder}
                                 disabled={isCancelling}
-                                className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 md:px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2"
                             >
                                 {isCancelling ? (
                                     <>
@@ -958,17 +1032,17 @@ const Order = () => {
 
             {/* Rating Modal */}
             {showRatingModal && orderToRate && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4">
-                            <h2 className="text-white text-2xl font-semibold">Rate Your Order</h2>
+                        <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-white text-xl md:text-2xl font-semibold">Rate Your Order</h2>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6">
+                        <div className="p-4 md:p-6">
                             {/* Order Info */}
-                            <div className="mb-6">
+                            <div className="mb-4 md:mb-6">
                                 <div className="bg-gray-50 p-3 rounded border border-gray-200">
                                     <p className="text-sm font-semibold text-gray-800">
                                         Order: ORD-{orderToRate.orderid.slice(0, 8).toUpperCase()}
@@ -980,11 +1054,11 @@ const Order = () => {
                             </div>
 
                             {/* Star Rating */}
-                            <div className="mb-6">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            <div className="mb-4 md:mb-6">
+                                <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">
                                     How would you rate your experience?
                                 </label>
-                                <div className="flex gap-2 justify-center">
+                                <div className="flex gap-1 md:gap-2 justify-center">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
@@ -993,7 +1067,7 @@ const Order = () => {
                                             className="focus:outline-none transition-transform hover:scale-110"
                                         >
                                             <svg
-                                                className={`w-12 h-12 ${star <= rating
+                                                className={`w-10 h-10 md:w-12 md:h-12 ${star <= rating
                                                         ? 'text-yellow-400 fill-current'
                                                         : 'text-gray-300'
                                                     }`}
@@ -1042,18 +1116,18 @@ const Order = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
                             <button
                                 onClick={closeRatingModal}
                                 disabled={isSubmittingReview}
-                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 md:px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmitReview}
                                 disabled={isSubmittingReview}
-                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 md:px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2"
                             >
                                 {isSubmittingReview ? (
                                     <>
@@ -1071,25 +1145,25 @@ const Order = () => {
 
             {/* Notification Modal */}
             {showNotificationModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className={`px-6 py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                            <h2 className="text-white text-xl font-semibold">
+                        <div className={`px-4 md:px-6 py-3 md:py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                            <h2 className="text-white text-lg md:text-xl font-semibold">
                                 {notificationType === 'success' ? '✓ Success' : '✕ Error'}
                             </h2>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6">
-                            <p className="text-gray-700 text-lg">{notificationMessage}</p>
+                        <div className="p-4 md:p-6">
+                            <p className="text-gray-700 text-base md:text-lg">{notificationMessage}</p>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex justify-end">
                             <button
                                 onClick={closeNotificationModal}
-                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${notificationType === 'success'
+                                className={`px-4 md:px-6 py-2 rounded-lg font-semibold transition-colors text-sm md:text-base ${notificationType === 'success'
                                         ? 'bg-green-600 hover:bg-green-700 text-white'
                                         : 'bg-red-600 hover:bg-red-700 text-white'
                                     }`}

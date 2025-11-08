@@ -12,7 +12,6 @@ REVIEW_SYSTEM_IMPLEMENTATION.md
 add_feedback_rating.sql
 fix_feedback_orderid_type.sql
 add_order_instructions_column.sql
-backend/routes/orders.js
 frontend/src/pages/Admin/AdminOrderDetailExample.jsx
 frontend/src/pages/CustomerPages/Checkout.jsx
 frontend/src/pages/CustomerPages/Order.jsx
@@ -36,3 +35,5 @@ add_sender_type_to_messages.sql
 enable_realtime.sql
 REALTIME_SETUP_GUIDE.md
 create_default_support_employee.sql
+add_email_notifications_column.sql
+DATABASE_CHANGELOG.md

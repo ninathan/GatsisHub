@@ -5,7 +5,7 @@ const ReviewCard = ({ avatar, name, date, message, rating = 5, big = false }) =>
         // Card container with dynamic height based on 'big' prop
         // 'big' prop determines if the card is tall or short
         <div
-            className={`flex flex-col bg-white rounded-2xl shadow-lg p-6 ${
+            className={`flex flex-col bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 ${
                 big ? 'min-h-[280px]' : 'min-h-[200px]'
             }`}
         >

@@ -10,6 +10,37 @@ This file tracks all database schema changes for the GatsisHub project. Always u
 
 ---
 
+## 2024-11-09 - Add Email Notifications Column to Customers
+
+**Migration:** `add_email_notifications_column.sql`
+
+**Purpose:**
+- Allow customers to control whether they receive email notifications for order updates
+- Default is set to false (opt-in model) to respect customer preferences
+- Simplify notification settings by removing SMS and marketing email options
+
+**Changes:**
+- Added `emailnotifications` BOOLEAN DEFAULT false to `customers` table
+- Added column comment for documentation
+
+**Tables Affected:**
+- `customers`
+
+**Related Files:**
+- `frontend/src/components/AccountSettings/ProfileComponent.jsx` - Updated Settings tab notification section
+  - Removed SMS notifications option
+  - Removed marketing emails option
+  - Added toggle for email notifications with save functionality
+  - Added loading state while saving preference
+  - Shows success/error modal after updating
+
+**UI Changes:**
+- Settings > Notifications section now shows only one option: "Email notifications for order updates"
+- Checkbox is connected to database and updates in real-time
+- Default state is unchecked (false) - customers must opt-in to receive emails
+
+---
+
 ## 2024-11-08 - Add Employee Authentication System
 
 **Migration:** `add_salesadmin_auth.sql`

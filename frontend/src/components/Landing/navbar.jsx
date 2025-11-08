@@ -6,6 +6,7 @@ import { User } from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 
 
 
@@ -14,16 +15,17 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const linkClass = ({ isActive }) =>
-    `${isActive ? 'text-yellow-400' : 'text-white'} relative text-xl md:text-2xl transition-colors duration-200
+    `${isActive ? 'text-yellow-400' : 'text-white'} relative text-lg lg:text-xl xl:text-2xl transition-colors duration-200
     after:content-[''] after:block after:h-[2px] after:bg-yellow-400 after:scale-x-0 after:transition-transform after:duration-300 after:origin-left
     hover:after:scale-x-100 hover:after:bg-yellow-400`;
 
   const mobileLinkClass = ({ isActive }) =>
-    `${isActive ? 'text-yellow-400' : 'text-white'} block px-1 py-2 text-2xl transition-colors duration-200 hover:text-yellow-400`;
+    `${isActive ? 'text-yellow-400' : 'text-white'} block px-1 py-2 text-lg md:text-xl transition-colors duration-200 hover:text-yellow-400`;
 
   const homeTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -43,6 +45,13 @@ const Navbar = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target)) {
+        // Check if click is not on the hamburger button
+        const hamburgerButton = document.querySelector('[aria-label="Toggle menu"]');
+        if (hamburgerButton && !hamburgerButton.contains(e.target)) {
+          setIsMenuOpen(false);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -53,17 +62,19 @@ const Navbar = () => {
 
 
   return (
-    <nav className="bg-[#353f94] px-4 md:px-6 py-4 border-b-5 border-yellow-400 sticky top-0 z-50">
-      <div className="flex items-center justify-between">
+    <nav className="bg-[#353f94] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-yellow-400 sticky top-0 z-50">
+      <div className="flex items-center justify-between max-w-full">
         {/* logo and title */}
         <div className="flex items-center space-x-2 md:space-x-3">
-          <img src={logo} alt="Logo" className="h-10 w-10 md:h-15 md:w-15 rounded-full" />
-          <span className="text-white text-2xl md:text-4xl font-light tracking-wider">GatsisHub</span>
+          <a href="/">
+            <img src={logo} alt="Logo" className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-full flex-shrink-0" />
+          </a>
+          <span className="text-white text-lg md:text-2xl lg:text-3xl xl:text-4xl font-light tracking-wider whitespace-nowrap"><a href="/">GatsisHub</a></span>
         </div>
 
         {/* Desktop navigation links */}
         <div className="hidden md:block">
-          <div className="flex space-x-6 items-center">
+          <div className="flex space-x-3 lg:space-x-4 xl:space-x-6 items-center">
             <NavLink to="/" className={linkClass} onClick={homeTop}>Home</NavLink>
             <NavLink to="/products" className={linkClass}>Products</NavLink>
             <NavLink to="/create-design" className={linkClass}>Design</NavLink>
@@ -75,14 +86,17 @@ const Navbar = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center gap-2 text-white hover:text-yellow-400 transition-colors duration-200"
+                  className="flex items-center gap-2 lg:gap-3 px-3 py-2 rounded-lg hover:bg-[#4a5899] transition-all duration-200 group"
                 >
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                    <User className="text-[#353f94]" size={24} />
+                  <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
+                    <User className="text-[#353f94]" size={20} strokeWidth={2.5} />
                   </div>
-                  {/* <span>{user.companyname || 'User'}</span> */}
+                  <div className="hidden lg:flex flex-col items-start">
+                    <span className="text-white text-sm font-medium leading-tight">{user.companyname || 'User'}</span>
+                    <span className="text-gray-300 text-xs leading-tight">My Account</span>
+                  </div>
                   <svg
-                    className={`w-5 h-5 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -91,54 +105,78 @@ const Navbar = () => {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-[#4a5899] rounded-lg shadow-xl overflow-hidden border-2 border-[#353f94]">
-                    {/* user */}
-                    <div className="px-4 py-3 bg-[#3d4785] border-b border-[#353f94]">
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-fadeIn">
+                    {/* User Info Header */}
+                    <div className="px-4 py-4 bg-gradient-to-r from-[#353f94] to-[#4a5899] border-b border-gray-200">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                          <User className="text-gray-600" size={28} />
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                          <User className="text-[#353f94]" size={24} strokeWidth={2.5} />
                         </div>
-                        <div>
-                          <p className="text-white font-semibold text-lg">{user.companyname || 'User'}</p>
-                          <p className="text-gray-300 text-sm">{user.emailaddress}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-semibold text-base truncate">{user.companyname || 'User'}</p>
+                          <p className="text-gray-200 text-xs truncate">{user.emailaddress}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* <NavLink
-                      to="/logged"
-                      className="block px-4 py-2 text-white hover:bg-yellow-400 hover:text-[#353f94] transition"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Profile
-                    </NavLink> */}
-
-                    {/* menu Items */}
+                    {/* Menu Items */}
                     <div className='py-2'>
                       <NavLink
-                        to="/accountsetting"
-                        className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#353f94] transition-colors duration-200 border-b border-[#353f94]"
+                        to="/checkout"
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <Settings size={20} />
-                        <span className="text-lg">Settings</span>
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                          <ShoppingCart size={18} className="text-gray-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium block">Place Order</span>
+                          <span className="text-xs text-gray-500">Create a new order</span>
+                        </div>
                       </NavLink>
+
+                      <NavLink
+                        to="/accountsetting"
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                          <Settings size={18} className="text-gray-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium block">Account Settings</span>
+                          <span className="text-xs text-gray-500">Manage your profile</span>
+                        </div>
+                      </NavLink>
+                      
                       <NavLink
                         to="/messages"
-                        className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#353f94] transition-colors duration-200 border-b border-[#353f94]"
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <MessageCircle size={20} />
-                        <span className="text-lg">Messages</span>
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                          <MessageCircle size={18} className="text-gray-600 group-hover:text-white transition-colors" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium block">Messages</span>
+                          <span className="text-xs text-gray-500">Chat with support</span>
+                        </div>
                       </NavLink>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-[#353f94] transition-colors duration-200"
-                      >
-                        <LogOut size={20} />
-                        <span className="text-lg">Sign Out</span>
-                      </button>
 
+                      <div className="border-t border-gray-200 mt-2 pt-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors duration-150 group"
+                        >
+                          <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                            <LogOut size={18} className="text-red-600" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <span className="text-sm font-medium block">Sign Out</span>
+                            <span className="text-xs text-red-400">End your session</span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -151,7 +189,7 @@ const Navbar = () => {
         <div className="md:hidden">
           <button
             onClick={toggleMenu}
-            className="text-white focus:text-yellow-400 transition-colors duration-200"
+            className="text-white focus:text-yellow-400 transition-colors duration-200 p-1"
             aria-label="Toggle menu"
           >
             <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
@@ -174,10 +212,11 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       <div
-        className={`md:hidden bg-[#353f94] transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+        ref={mobileMenuRef}
+        className={`md:hidden bg-[#353f94] transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
       >
-        <div className="mt-5 border-t-2 border-white">
+        <div className="mt-3 border-t-2 border-white pt-3 pb-2">
           <NavLink to="/" className={mobileLinkClass} onClick={homeTop}>Home</NavLink>
           <NavLink to="/products" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Products</NavLink>
           <NavLink to="/create-design" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Design</NavLink>
@@ -187,18 +226,81 @@ const Navbar = () => {
             <NavLink to="/login" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Login</NavLink>
           ) : (
             <>
-              <NavLink to="/logged" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Profile</NavLink>
-              <NavLink to="/accountsetting" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Account Settings</NavLink>
-              <NavLink to="/messages" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Messages</NavLink>
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full text-left px-4 py-2 text-white hover:bg-red-500 transition"
-              >
-                Logout
-              </button>
+              {/* User Profile Section */}
+              <div className="mt-3 pt-3 border-t border-gray-400">
+                <div className="px-1 py-2 mb-2">
+                  <div className="flex items-center gap-3 bg-[#4a5899] rounded-lg p-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                      <User className="text-[#353f94]" size={24} strokeWidth={2.5} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-semibold text-base truncate">{user.companyname || 'User'}</p>
+                      <p className="text-gray-300 text-xs truncate">{user.emailaddress}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="space-y-1 px-1">
+                  <NavLink 
+                    to="/checkout" 
+                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart size={18} className="text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium block">Place Order</span>
+                      <span className="text-xs text-gray-300">Create a new order</span>
+                    </div>
+                  </NavLink>
+
+                  <NavLink 
+                    to="/accountsetting" 
+                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Settings size={18} className="text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium block">Account Settings</span>
+                      <span className="text-xs text-gray-300">Manage your profile</span>
+                    </div>
+                  </NavLink>
+
+                  <NavLink 
+                    to="/messages" 
+                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <MessageCircle size={18} className="text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium block">Messages</span>
+                      <span className="text-xs text-gray-300">Chat with support</span>
+                    </div>
+                  </NavLink>
+
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-white hover:bg-red-600 rounded-lg transition-colors duration-200 mt-2"
+                  >
+                    <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <LogOut size={18} className="text-white" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <span className="text-sm font-medium block">Sign Out</span>
+                      <span className="text-xs text-red-200">End your session</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>

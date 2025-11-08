@@ -342,22 +342,22 @@ const CreateDesign = () => {
             {isFullscreen && (
                 <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
                     {/* Header */}
-                    <div className="flex justify-between items-center p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
-                        <div className="flex items-center gap-3">
-                            <h3 className="text-white text-xl font-semibold">3D Design Studio</h3>
-                            <span className="text-yellow-400 text-sm">({selectedHanger})</span>
+                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Design Studio</h3>
+                            <span className="text-yellow-400 text-xs md:text-sm">({selectedHanger})</span>
                         </div>
                         <button
                             onClick={toggleFullscreen}
                             className="text-white hover:bg-yellow-400 hover:text-[#353f94] p-2 rounded-lg transition-colors"
                             title="Exit Fullscreen"
                         >
-                            <Minimize2 size={24} />
+                            <Minimize2 size={20} className="md:w-6 md:h-6" />
                         </button>
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex-1 flex overflow-hidden">
+                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* 3D Canvas */}
                         <div className="flex-1 relative bg-gradient-to-br from-[#4a5899] to-[#353f94]">
                             {selectedHanger && (
@@ -378,11 +378,11 @@ const CreateDesign = () => {
                         </div>
 
                         {/* Customization Sidebar */}
-                        <div className="w-80 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-4 space-y-4 border-l-2 border-yellow-400">
+                        <div className="w-full md:w-80 lg:w-96 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
                             {/* Hanger Type */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Hanger Type</h4>
-                                <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Hanger Type</h4>
+                                <div className="grid grid-cols-3 md:grid-cols-2 gap-2">
                                     {hangers.map((hanger) => (
                                         <button
                                             key={hanger.id}
@@ -400,24 +400,24 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Color */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Color</h4>
-                                <div className="space-y-3">
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
+                                <div className="space-y-2 md:space-y-3">
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="color"
                                             value={color}
                                             onChange={(e) => setColor(e.target.value)}
-                                            className="w-12 h-12 rounded cursor-pointer border-2 border-yellow-400"
+                                            className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-yellow-400"
                                         />
                                         <input
                                             type="text"
                                             value={color}
                                             onChange={(e) => setColor(e.target.value)}
-                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-6 gap-2">
+                                    <div className="grid grid-cols-6 gap-1.5 md:gap-2">
                                         {colors.map((col) => (
                                             <button
                                                 key={col}
@@ -431,14 +431,14 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Custom Text */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Custom Text</h4>
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
                                 <input
                                     type="text"
                                     value={customText}
                                     onChange={(e) => setCustomText(e.target.value)}
                                     placeholder="Enter text"
-                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                 />
                                 <div className="flex items-center gap-2 mb-2">
                                     <label className="text-white text-xs">Color:</label>
@@ -520,13 +520,13 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Logo */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Logo</h4>
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     onChange={handleLogoUpload}
-                                    className="w-full text-xs text-white file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-400 file:text-[#353f94] hover:file:bg-yellow-300 cursor-pointer"
+                                    className="w-full text-xs text-white file:mr-2 file:py-1.5 md:file:py-2 file:px-2 md:file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-400 file:text-[#353f94] hover:file:bg-yellow-300 cursor-pointer"
                                 />
                                 {logoPreview && (
                                     <div className="mt-2 space-y-2">
@@ -628,31 +628,31 @@ const CreateDesign = () => {
             {/* Hanger Selection Modal - Shows First */}
             {showHangerSelection && (
                 <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-3xl w-full p-8">
-                        <h2 className="text-3xl font-bold text-[#35408E] mb-2 text-center">Choose Your Hanger Type</h2>
-                        <p className="text-gray-600 text-center mb-8">Select a hanger model to start designing</p>
+                    <div className="bg-white rounded-lg max-w-3xl w-full p-4 md:p-6 lg:p-8">
+                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#35408E] mb-2 text-center">Choose Your Hanger Type</h2>
+                        <p className="text-sm md:text-base text-gray-600 text-center mb-6 md:mb-8">Select a hanger model to start designing</p>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
                             {hangers.map((hanger) => (
                                 <button
                                     key={hanger.id}
                                     onClick={() => handleSelectHanger(hanger.id)}
-                                    className="group relative bg-white border-2 border-gray-300 hover:border-[#35408E] rounded-xl p-6 transition-all hover:shadow-xl hover:scale-105"
+                                    className="group relative bg-white border-2 border-gray-300 hover:border-[#35408E] rounded-xl p-3 md:p-4 lg:p-6 transition-all hover:shadow-xl hover:scale-105"
                                 >
-                                    <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                                        <span className="text-4xl font-bold text-[#35408E] group-hover:scale-110 transition-transform">
+                                    <div className="aspect-square bg-gray-100 rounded-lg mb-2 md:mb-4 flex items-center justify-center">
+                                        <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#35408E] group-hover:scale-110 transition-transform">
                                             {hanger.name}
                                         </span>
                                     </div>
-                                    <h3 className="font-semibold text-lg text-center">{hanger.name}</h3>
-                                    <p className="text-sm text-gray-500 text-center mt-1">Model {hanger.id}</p>
+                                    <h3 className="font-semibold text-sm md:text-base lg:text-lg text-center">{hanger.name}</h3>
+                                    <p className="text-xs md:text-sm text-gray-500 text-center mt-1">Model {hanger.id}</p>
                                 </button>
                             ))}
                         </div>
 
                         <button
                             onClick={() => navigate(-1)}
-                            className="mt-8 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg transition-colors"
+                            className="mt-6 md:mt-8 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 md:py-3 px-4 md:px-6 rounded-lg transition-colors text-sm md:text-base"
                         >
                             Cancel
                         </button>
@@ -665,24 +665,24 @@ const CreateDesign = () => {
                 <>
                     {/* Header */}
                     <div className="bg-white shadow-sm">
-                        <div className="max-w-7xl mx-auto px-4 py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
+                        <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+                                <div className="flex items-center gap-2 md:gap-4">
                                     <button
                                         onClick={() => navigate(-1)}
-                                        className="flex items-center gap-2 text-gray-600 hover:text-[#35408E] transition-colors"
+                                        className="flex items-center gap-1 md:gap-2 text-gray-600 hover:text-[#35408E] transition-colors"
                                     >
                                         <ArrowLeft size={20} />
-                                        <span>Back</span>
+                                        <span className="text-sm md:text-base">Back</span>
                                     </button>
-                                    <h1 className="text-2xl font-bold text-[#35408E]">
+                                    <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#35408E]">
                                         Create Design - {selectedHanger}
                                     </h1>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
                                     <button
                                         onClick={() => setShowInstructionsModal(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm md:text-base"
                                     >
                                         <Info size={18} />
                                         <span className="hidden sm:inline">Instructions</span>
@@ -690,7 +690,7 @@ const CreateDesign = () => {
                                     <button
                                         onClick={handleDownloadDesign}
                                         disabled={isDownloading}
-                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base"
                                     >
                                         <Download size={18} />
                                         <span className="hidden sm:inline">
@@ -699,7 +699,7 @@ const CreateDesign = () => {
                                     </button>
                                     <button
                                         onClick={handleSaveDesign}
-                                        className="flex items-center gap-2 px-4 py-2 bg-[#35408E] hover:bg-[#2a3270] text-white rounded-lg transition-colors"
+                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-[#35408E] hover:bg-[#2a3270] text-white rounded-lg transition-colors text-sm md:text-base"
                                     >
                                         <Save size={18} />
                                         <span className="hidden sm:inline">Save Design</span>
@@ -710,11 +710,11 @@ const CreateDesign = () => {
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="max-w-7xl mx-auto px-4 py-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                     {/* Left Panel - 3D Viewer */}
                     <div className="lg:col-span-2">
-                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg shadow-lg overflow-hidden border-2 border-yellow-400" style={{ height: '600px' }}>
+                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg shadow-lg overflow-hidden border-2 border-yellow-400 h-[400px] md:h-[500px] lg:h-[600px]">
                             <div className="relative h-full">
                                 {/* 3D Canvas */}
                                 <div ref={threeCanvasRef} className="w-full h-full">
@@ -744,7 +744,7 @@ const CreateDesign = () => {
                                 </button>
 
                                 {/* Info Overlay */}
-                                <div className="absolute bottom-4 left-4 bg-[#2c3575]/90 text-white px-4 py-2 rounded-lg text-sm border border-yellow-400">
+                                <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 bg-[#2c3575]/90 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg text-xs md:text-sm border border-yellow-400">
                                     <p className="font-semibold">Click and drag to rotate • Scroll to zoom</p>
                                 </div>
                             </div>
@@ -752,16 +752,16 @@ const CreateDesign = () => {
                     </div>
 
                     {/* Right Panel - Customization Options */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 md:space-y-6">
                         {/* Hanger Type Selection */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h2 className="text-lg font-semibold mb-4">Hanger Type</h2>
-                            <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Hanger Type</h2>
+                            <div className="grid grid-cols-2 gap-2 md:gap-3">
                                 {hangers.map((hanger) => (
                                     <button
                                         key={hanger.id}
                                         onClick={() => setSelectedHanger(hanger.id)}
-                                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                                        className={`px-2 md:px-4 py-2 md:py-3 rounded-lg border-2 transition-all text-sm md:text-base ${
                                             selectedHanger === hanger.id
                                                 ? 'border-[#35408E] bg-[#35408E] text-white'
                                                 : 'border-gray-300 hover:border-[#35408E]'
@@ -774,14 +774,14 @@ const CreateDesign = () => {
                         </div>
 
                         {/* Color Selection */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h2 className="text-lg font-semibold mb-4">Color</h2>
-                            <div className="grid grid-cols-6 gap-3 mb-4">
+                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Color</h2>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 md:gap-3 mb-3 md:mb-4">
                                 {colors.map((col) => (
                                     <button
                                         key={col}
                                         onClick={() => setColor(col)}
-                                        className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 transition-all ${
                                             color === col ? 'border-gray-800 scale-110' : 'border-gray-300'
                                         }`}
                                         style={{ backgroundColor: col }}
@@ -792,31 +792,31 @@ const CreateDesign = () => {
                                 type="color"
                                 value={color}
                                 onChange={(e) => setColor(e.target.value)}
-                                className="w-full h-10 rounded-lg cursor-pointer"
+                                className="w-full h-8 md:h-10 rounded-lg cursor-pointer"
                             />
                         </div>
 
                         {/* Custom Text */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h2 className="text-lg font-semibold mb-4">Custom Text</h2>
+                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Custom Text</h2>
                             <input
                                 type="text"
                                 value={customText}
                                 onChange={(e) => setCustomText(e.target.value)}
                                 placeholder="Enter text to display"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-3"
+                                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-3 text-sm md:text-base"
                             />
                             <div className="flex items-center gap-3">
-                                <label className="text-sm font-medium">Text Color:</label>
+                                <label className="text-xs md:text-sm font-medium">Text Color:</label>
                                 <input
                                     type="color"
                                     value={textColor}
                                     onChange={(e) => setTextColor(e.target.value)}
-                                    className="w-16 h-8 rounded cursor-pointer"
+                                    className="w-12 h-6 md:w-16 md:h-8 rounded cursor-pointer"
                                 />
                             </div>
                             <div className="mt-3">
-                                <label className="text-sm font-medium block mb-2">Text Size: {textSize.toFixed(1)}</label>
+                                <label className="text-xs md:text-sm font-medium block mb-2">Text Size: {textSize.toFixed(1)}</label>
                                 <input
                                     type="range"
                                     min="0.1"
@@ -835,7 +835,7 @@ const CreateDesign = () => {
                                             type="number"
                                             value={textPosition.x}
                                             onChange={(e) => setTextPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-2 py-1"
+                                            className="w-full border rounded px-1 md:px-2 py-1"
                                             step="0.1"
                                         />
                                     </div>
@@ -845,7 +845,7 @@ const CreateDesign = () => {
                                             type="number"
                                             value={textPosition.y}
                                             onChange={(e) => setTextPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-2 py-1"
+                                            className="w-full border rounded px-1 md:px-2 py-1"
                                             step="0.1"
                                         />
                                     </div>
@@ -855,7 +855,7 @@ const CreateDesign = () => {
                                             type="number"
                                             value={textPosition.z}
                                             onChange={(e) => setTextPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-2 py-1"
+                                            className="w-full border rounded px-1 md:px-2 py-1"
                                             step="0.1"
                                         />
                                     </div>
@@ -864,19 +864,19 @@ const CreateDesign = () => {
                         </div>
 
                         {/* Logo Upload */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h2 className="text-lg font-semibold mb-4">Logo</h2>
+                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Logo</h2>
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleLogoUpload}
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#35408E] file:text-white hover:file:bg-[#2a3270] cursor-pointer"
+                                className="w-full text-xs md:text-sm text-gray-500 file:mr-3 md:file:mr-4 file:py-2 file:px-3 md:file:px-4 file:rounded-lg file:border-0 file:text-xs md:file:text-sm file:font-semibold file:bg-[#35408E] file:text-white hover:file:bg-[#2a3270] cursor-pointer"
                             />
                             {logoPreview && (
                                 <div className="mt-3">
-                                    <img src={logoPreview} alt="Logo preview" className="w-20 h-20 object-contain border rounded" />
+                                    <img src={logoPreview} alt="Logo preview" className="w-16 h-16 md:w-20 md:h-20 object-contain border rounded" />
                                     <div className="mt-3">
-                                        <label className="text-sm font-medium block mb-2">Logo Size: {logoSize.toFixed(1)}</label>
+                                        <label className="text-xs md:text-sm font-medium block mb-2">Logo Size: {logoSize.toFixed(1)}</label>
                                         <input
                                             type="range"
                                             min="0.1"
@@ -894,7 +894,7 @@ const CreateDesign = () => {
                                                 type="number"
                                                 value={logoPosition.x}
                                                 onChange={(e) => setLogoPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-2 py-1"
+                                                className="w-full border rounded px-1 md:px-2 py-1"
                                                 step="0.1"
                                             />
                                         </div>
@@ -904,7 +904,7 @@ const CreateDesign = () => {
                                                 type="number"
                                                 value={logoPosition.y}
                                                 onChange={(e) => setLogoPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-2 py-1"
+                                                className="w-full border rounded px-1 md:px-2 py-1"
                                                 step="0.1"
                                             />
                                         </div>
@@ -914,7 +914,7 @@ const CreateDesign = () => {
                                                 type="number"
                                                 value={logoPosition.z}
                                                 onChange={(e) => setLogoPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-2 py-1"
+                                                className="w-full border rounded px-1 md:px-2 py-1"
                                                 step="0.1"
                                             />
                                         </div>
@@ -924,8 +924,8 @@ const CreateDesign = () => {
                         </div>
 
                         {/* Materials */}
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h2 className="text-lg font-semibold mb-4">Materials</h2>
+                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Materials</h2>
                             <div className="space-y-3">
                                 {materials.map((material) => (
                                     <div key={material.name}>
@@ -968,8 +968,8 @@ const CreateDesign = () => {
             {showInstructionsModal && (
                 <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                        <div className="p-6">
-                            <h2 className="text-2xl font-bold mb-4">Design Instructions</h2>
+                        <div className="p-4 md:p-6">
+                            <h2 className="text-xl md:text-2xl font-bold mb-4">Design Instructions</h2>
                             <div className="space-y-4 text-gray-700">
                                 <div>
                                     <h3 className="font-semibold mb-2">🎨 Customization Options</h3>
@@ -1013,26 +1013,26 @@ const CreateDesign = () => {
             {/* Save Design Modal */}
             {saveDesignModal && (
                 <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
-                        <h2 className="text-xl font-bold mb-4">Save Design</h2>
+                    <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
+                        <h2 className="text-lg md:text-xl font-bold mb-4">Save Design</h2>
                         <input
                             type="text"
                             value={designName}
                             onChange={(e) => setDesignName(e.target.value)}
                             placeholder="Enter design name"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-4"
+                            className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-4 text-sm md:text-base"
                         />
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setSaveDesignModal(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmSaveDesign}
                                 disabled={isSaving}
-                                className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                                className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base"
                             >
                                 {isSaving ? 'Saving...' : 'Save'}
                             </button>
@@ -1046,31 +1046,31 @@ const CreateDesign = () => {
             {/* Notification Modal */}
             {notificationModal.show && (
                 <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                    <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
                         <div className="flex justify-center mb-4">
                             {notificationModal.type === 'success' && (
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span className="text-3xl">✓</span>
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <span className="text-2xl md:text-3xl">✓</span>
                                 </div>
                             )}
                             {notificationModal.type === 'error' && (
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                                    <span className="text-3xl">✕</span>
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                    <span className="text-2xl md:text-3xl">✕</span>
                                 </div>
                             )}
                         </div>
-                        <p className="text-center text-gray-700 mb-6">{notificationModal.message}</p>
+                        <p className="text-center text-gray-700 mb-6 text-sm md:text-base">{notificationModal.message}</p>
                         {notificationModal.message.includes('log in') ? (
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => navigate('/login')}
-                                    className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
+                                    className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
                                 >
                                     Login
                                 </button>
@@ -1078,7 +1078,7 @@ const CreateDesign = () => {
                         ) : (
                             <button
                                 onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                className="w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
+                                className="w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
                             >
                                 Close
                             </button>

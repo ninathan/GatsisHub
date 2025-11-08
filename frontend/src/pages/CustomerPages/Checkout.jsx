@@ -434,7 +434,7 @@ const Checkout = () => {
             setShowModal(true);
             setTimeout(() => {
                 navigate("/orders");
-            }, 500);
+            }, 2000);
         } catch (error) {
             console.error("❌ Error creating order:", error);
             showNotification(`Failed to create order: ${error.message}`);
@@ -899,17 +899,17 @@ const Checkout = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
-            <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
             {/* Company Information Section */}
-            <div className="flex flex-col items-center justify-center mt-10 mb-6">
-                <h3 className="text-black text-4xl font-medium mb-6">
+            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-4 md:mb-6">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-4 md:mb-6">
                     Start Your Order
                 </h3>
-                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-6">
-                    <h4 className="text-xl font-semibold mb-4">Company Information</h4>
+                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
+                    <h4 className="text-lg md:text-xl font-semibold mb-4">Company Information</h4>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-semibold mb-2">
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
                                 Company Name *
                             </label>
                             <input
@@ -917,12 +917,12 @@ const Checkout = () => {
                                 value={companyName}
                                 onChange={(e) => setCompanyName(e.target.value)}
                                 placeholder="Enter company name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold mb-2">
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
                                 Contact Person *
                             </label>
                             <input
@@ -930,12 +930,12 @@ const Checkout = () => {
                                 value={contactPerson}
                                 onChange={(e) => setContactPerson(e.target.value)}
                                 placeholder="Enter contact person name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold mb-2">
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
                                 Contact Phone *
                             </label>
                             <input
@@ -943,7 +943,7 @@ const Checkout = () => {
                                 value={contactPhone}
                                 onChange={(e) => setContactPhone(e.target.value)}
                                 placeholder="(+63) 9XX XXX XXXX"
-                                className="w-full border rounded px-3 py-2 bg-gray-50"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
                                 required
                             />
                         </div>
@@ -951,14 +951,14 @@ const Checkout = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center mt-10">
-                <h3 className="text-black text-4xl font-medium mb-10">
+            <div className="flex flex-col items-center justify-center mt-6 md:mt-10">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
                     Select the type of hanger you want
                 </h3>
             </div>
 
             <section>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
                     {hangers.map((hanger) => (
                         <button
                             key={hanger.id}
@@ -968,12 +968,12 @@ const Checkout = () => {
                                     : "border-gray-300"
                                 }`}
                         >
-                            <div className="bg-white p-8 flex items-center justify-center w-90 h-90">
-                                <div className="text-6xl">
+                            <div className="bg-white p-4 md:p-6 lg:p-8 flex items-center justify-center aspect-square">
+                                <div className="text-4xl md:text-5xl lg:text-6xl">
                                     <ProductCard />
                                 </div>
                             </div>
-                            <div className="bg-[#ECBA0B] py-3 font-semibold text-center">
+                            <div className="bg-[#ECBA0B] py-2 md:py-3 font-semibold text-center text-sm md:text-base">
                                 {hanger.name}
                             </div>
                         </button>
@@ -982,12 +982,12 @@ const Checkout = () => {
 
                 {/* Custom Design Upload */}
                 {selectedHanger === "own" && (
-                    <div className="mt-6 p-6 bg-white rounded-lg border-2 border-gray-300">
-                        <h4 className="font-semibold mb-3">Upload Your Custom Design</h4>
-                        <p className="text-sm text-gray-600 mb-3">
+                    <div className="mt-4 md:mt-6 p-4 md:p-6 bg-white rounded-lg border-2 border-gray-300">
+                        <h4 className="font-semibold mb-3 text-sm md:text-base">Upload Your Custom Design</h4>
+                        <p className="text-xs md:text-sm text-gray-600 mb-3">
                             Accepted formats: STL, OBJ, STEP, PDF (technical drawing)
                         </p>
-                        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-6 cursor-pointer hover:border-[#35408E] transition-colors">
+                        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-4 md:p-6 cursor-pointer hover:border-[#35408E] transition-colors">
                             <Upload size={24} />
                             <span>
                                 {customDesignFile
@@ -1067,15 +1067,15 @@ const Checkout = () => {
             </section>
 
             {/* product customization */}
-            <section className="px-4 py-8">
-                <h2 className="text-center text-black text-4xl font-medium mb-10">
+            <section className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
+                <h2 className="text-center text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
                     Product Customization
                 </h2>
                 <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+                    <div className="flex flex-col gap-4 md:gap-6">
                         {/* Three.js 3D Preview Container */}
-                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg p-8 flex flex-col items-center justify-center relative border-2 border-yellow-400" style={{ minHeight: '600px' }}>
+                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-yellow-400 min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
                             {/* Fullscreen Button */}
                             <button
                                 onClick={toggleFullscreen}
@@ -1086,13 +1086,13 @@ const Checkout = () => {
                             </button>
 
                             {/* Three.js Canvas */}
-                            <div ref={threeCanvasRef} className="w-full h-96 rounded-lg">
+                            <div ref={threeCanvasRef} className="w-full h-64 md:h-80 lg:h-96 rounded-lg">
                                 <Suspense
                                     fallback={
                                         <div className="w-full h-full flex items-center justify-center bg-[#2c3575] rounded-lg">
                                             <div className="text-center text-white">
-                                                <div className="text-6xl mb-4">⏳</div>
-                                                <p className="text-lg">Loading 3D Model...</p>
+                                                <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
+                                                <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
                                             </div>
                                         </div>
                                     }
@@ -1111,14 +1111,14 @@ const Checkout = () => {
                                 </Suspense>
                             </div>
 
-                            <p className="text-white text-xs mt-4 text-center font-semibold">
+                            <p className="text-white text-xs md:text-sm mt-3 md:mt-4 text-center font-semibold">
                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                         </div>
 
                         {/* quantity selector */}
                         <div className="flex flex-col justify-center items-center">
-                            <h3 className="font-semibold mb-3">Quantity of Hangers</h3>
+                            <h3 className="font-semibold mb-3 text-sm md:text-base">Quantity of Hangers</h3>
                             <p className="text-xs text-gray-600 mb-2">
                                 Minimum order quantity is 100 pieces
                             </p>
@@ -1127,35 +1127,35 @@ const Checkout = () => {
                                     onClick={() => handleQuantityChange(-10)}
                                     className="bg-white border rounded p-2 hover:bg-gray-100"
                                 >
-                                    <Minus size={20} />
+                                    <Minus size={18} className="md:w-5 md:h-5" />
                                 </button>
                                 <input
                                     type="number"
                                     value={quantity}
                                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                                    className="border rounded px-4 py-2 text-center w-24"
+                                    className="border rounded px-3 md:px-4 py-2 text-center w-20 md:w-24 text-sm md:text-base"
                                 />
                                 <button
                                     onClick={() => handleQuantityChange(10)}
                                     className="bg-white border rounded p-2 hover:bg-gray-100"
                                 >
-                                    <Plus size={20} />
+                                    <Plus size={18} className="md:w-5 md:h-5" />
                                 </button>
                             </div>
                         </div>
                         {/* order instructions */}
                         <div className="flex flex-col justify-center">
-                            <h3 className="font-semibold mb-3">
+                            <h3 className="font-semibold mb-3 text-sm md:text-base">
                                 Order Instruction (optional)
                             </h3>
                             <textarea
                                 value={orderInstructions}
                                 onChange={(e) => setOrderInstructions(e.target.value)}
                                 placeholder="Type your instructions here..."
-                                className="w-full border rounded px-3 py-2 h-24"
+                                className="w-full border rounded px-3 py-2 h-20 md:h-24 text-sm md:text-base"
                             ></textarea>
                             <div className="mt-4 text-center">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-xs md:text-sm text-gray-600">
                                     Note: Please download the order form and attach.{" "}
                                     <a
                                         href="/path/to/order-form.pdf"
@@ -1171,16 +1171,16 @@ const Checkout = () => {
                             <button 
                                 onClick={handleDownloadDesign}
                                 disabled={isDownloading}
-                                className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                             >
-                                <Download size={20} />
+                                <Download size={18} className="md:w-5 md:h-5" />
                                 {isDownloading ? 'Downloading...' : 'Download Preview'}
                             </button>
                             <button 
                                 onClick={handleSaveDesign}
-                                className="w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                                className="w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
                             >
-                                <Save size={20} />
+                                <Save size={18} className="md:w-5 md:h-5" />
                                 Save Design
                             </button>
                         </div>
@@ -1780,30 +1780,30 @@ const Checkout = () => {
             {isFullscreen && (
                 <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
                     {/* Header with Close Button */}
-                    <div className="flex justify-between items-center p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
-                        <div className="flex items-center gap-3">
-                            <h3 className="text-white text-xl font-semibold">3D Preview</h3>
-                            <span className="text-yellow-400 text-sm">({selectedHanger})</span>
+                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Preview</h3>
+                            <span className="text-yellow-400 text-xs md:text-sm">({selectedHanger})</span>
                         </div>
                         <button
                             onClick={toggleFullscreen}
                             className="text-white hover:bg-yellow-400 hover:text-[#353f94] p-2 rounded-lg transition-colors"
                             title="Exit Fullscreen"
                         >
-                            <X size={24} />
+                            <X size={20} className="md:w-6 md:h-6" />
                         </button>
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="flex-1 flex overflow-hidden">
+                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* 3D Canvas */}
                         <div className="flex-1 relative bg-gradient-to-br from-[#4a5899] to-[#353f94]">
                             <Suspense
                                 fallback={
                                     <div className="w-full h-full flex items-center justify-center">
                                         <div className="text-center text-white">
-                                            <div className="text-6xl mb-4">⏳</div>
-                                            <p className="text-lg">Loading 3D Model...</p>
+                                            <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
+                                            <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
                                         </div>
                                     </div>
                                 }
@@ -1823,27 +1823,27 @@ const Checkout = () => {
                         </div>
 
                         {/* Customization Sidebar */}
-                        <div className="w-80 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-4 space-y-4 border-l-2 border-yellow-400">
+                        <div className="w-full md:w-80 lg:w-96 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
                             {/* Color Picker */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Color</h4>
-                                <div className="space-y-3">
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
+                                <div className="space-y-2 md:space-y-3">
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="color"
                                             value={color}
                                             onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="w-12 h-12 rounded cursor-pointer border-2 border-yellow-400"
+                                            className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-yellow-400"
                                         />
                                         <input
                                             type="text"
                                             value={color}
                                             onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                             placeholder="#4F46E5"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-6 gap-2">
+                                    <div className="grid grid-cols-6 gap-1.5 md:gap-2">
                                         {['#FF6B6B', '#FF8E8E', '#FFA07A', '#FFB347', '#9B59B6', '#E91E63', 
                                         '#3B82F6', '#10B981', '#06B6D4', '#14B8A6', '#84CC16', '#EAB308'].map((c) => (
                                             <button
@@ -1859,14 +1859,14 @@ const Checkout = () => {
                             </div>
 
                             {/* Custom Text */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Custom Text</h4>
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
                                 <input
                                     type="text"
                                     value={customText}
                                     onChange={(e) => setCustomText(e.target.value)}
                                     placeholder="Enter text"
-                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                 />
                                 <div className="flex items-center gap-2 mb-2">
                                     <label className="text-white text-xs">Color:</label>
@@ -1954,9 +1954,9 @@ const Checkout = () => {
                             </div>
 
                             {/* Logo Upload */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-3 text-sm">Logo</h4>
-                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-yellow-400 rounded-lg p-3 cursor-pointer hover:bg-[#4a5899] transition-colors">
+                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
+                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-yellow-400 rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#4a5899] transition-colors">
                                     <ImageIcon size={16} className="text-yellow-400" />
                                     <span className="text-xs text-white">
                                         {customLogo ? customLogo.name : 'Upload Logo'}

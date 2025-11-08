@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Send, Plus, MoreVertical, Bell } from 'lucide-react';
+import { Send, Plus, MoreVertical, Bell, X, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeNotifications } from '../../hooks/useRealtimeNotifications';
@@ -15,6 +15,7 @@ const MessagesPage = () => {
     const [loading, setLoading] = useState(true);
     const [sendingMessage, setSendingMessage] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
     const fileInputRef = React.useRef(null);
     
@@ -245,14 +246,26 @@ const MessagesPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 overflow-hidden">
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden animate-fadeIn"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <div className={`
+                fixed md:relative w-80 md:w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col h-full z-50
+                transform transition-transform duration-300 ease-in-out
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
                 {/* Tabs */}
-                <div className="flex border-b">
+                <div className="flex border-b shadow-sm">
                     <button
                         onClick={() => setActiveTab('Messages')}
-                        className={`flex-1 py-3 text-sm font-semibold ${activeTab === 'Messages'
+                        className={`flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold transition-all duration-200 ${activeTab === 'Messages'
                                 ? 'bg-[#ECBA0B] text-black'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
@@ -261,14 +274,14 @@ const MessagesPage = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('Notifications')}
-                        className={`flex-1 py-3 text-sm font-semibold relative ${activeTab === 'Notifications'
+                        className={`flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold relative transition-all duration-200 ${activeTab === 'Notifications'
                                 ? 'bg-[#ECBA0B] text-black'
                                 : 'bg-[#35408E] text-white hover:bg-indigo-800'
                             }`}
                     >
                         Notifications
                         {unreadCount > 0 && (
-                            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                                 {unreadCount}
                             </span>
                         )}
@@ -276,39 +289,43 @@ const MessagesPage = () => {
                 </div>
 
                 {/* Contact List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {activeTab === 'Messages' ? (
                         // Messages List
                         <>
                             {loading ? (
-                                <div className="p-4 text-center text-gray-500">Loading...</div>
+                                <div className="p-4 text-center text-gray-500 animate-pulse">Loading...</div>
                             ) : conversations.length === 0 ? (
                                 <div className="p-4 text-center text-gray-500">No messages yet</div>
                             ) : (
-                                conversations.map((contact) => (
+                                conversations.map((contact, index) => (
                                     <button
                                         key={contact.employeeid}
                                         onClick={() => {
                                             setSelectedContact(contact);
                                             fetchMessages(contact.employeeid);
+                                            setIsSidebarOpen(false);
                                         }}
-                                        className={`w-full p-4 flex items-center gap-3 border-b hover:bg-gray-50 ${
-                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100' : ''
+                                        className={`w-full p-3 md:p-4 flex items-center gap-2 md:gap-3 border-b hover:bg-gray-50 transition-all duration-200 ${
+                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100 border-l-4 border-[#ECBA0B]' : ''
                                         }`}
+                                        style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="w-10 h-10 bg-[#35408E] text-white rounded-full flex items-center justify-center text-xl font-semibold">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center text-lg md:text-xl font-semibold shadow-md flex-shrink-0">
                                             {contact.employeename?.charAt(0) || 'A'}
                                         </div>
-                                        <div className="flex-1 text-left">
-                                            <div className="font-semibold text-sm">{contact.employeename}</div>
-                                            <div className="text-xs text-gray-500">{contact.role}</div>
+                                        <div className="flex-1 text-left min-w-0">
+                                            <div className="font-semibold text-sm md:text-base truncate">{contact.employeename}</div>
+                                            <div className="text-xs text-gray-500 truncate">{contact.role}</div>
                                         </div>
-                                        <div className="text-xs text-gray-400">
-                                            {formatTime(contact.lastMessageTime)}
+                                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                            <div className="text-xs text-gray-400">
+                                                {formatTime(contact.lastMessageTime)}
+                                            </div>
+                                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                <MoreVertical size={16} />
+                                            </button>
                                         </div>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <MoreVertical size={16} />
-                                        </button>
                                     </button>
                                 ))
                             )}
@@ -319,16 +336,17 @@ const MessagesPage = () => {
                             {notifications.length === 0 ? (
                                 <div className="p-4 text-center text-gray-500">No notifications</div>
                             ) : (
-                                notifications.map((notification) => (
+                                notifications.map((notification, index) => (
                                     <div
                                         key={notification.id}
                                         onClick={() => handleNotificationClick(notification)}
-                                        className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
+                                        className={`p-3 md:p-4 border-b hover:bg-gray-50 cursor-pointer transition-all duration-200 ${
                                             !notification.isRead ? 'bg-blue-50' : ''
                                         }`}
+                                        style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0 overflow-hidden">
+                                        <div className="flex items-start gap-2 md:gap-3">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0 overflow-hidden shadow-sm">
                                                 {notification.thumbnailType === 'logo' && notification.thumbnail ? (
                                                     // Show logo image
                                                     <img 
@@ -339,7 +357,7 @@ const MessagesPage = () => {
                                                 ) : notification.thumbnailType === 'color' && notification.thumbnail ? (
                                                     // Show colored box with hanger icon
                                                     <div 
-                                                        className="w-full h-full flex items-center justify-center text-white text-xl"
+                                                        className="w-full h-full flex items-center justify-center text-white text-lg md:text-xl"
                                                         style={{ backgroundColor: notification.thumbnail }}
                                                     >
                                                         🪝
@@ -347,22 +365,22 @@ const MessagesPage = () => {
                                                 ) : notification.hangerColor ? (
                                                     // Fallback to hanger color
                                                     <div 
-                                                        className="w-full h-full flex items-center justify-center text-white text-xl"
+                                                        className="w-full h-full flex items-center justify-center text-white text-lg md:text-xl"
                                                         style={{ backgroundColor: notification.hangerColor }}
                                                     >
                                                         🪝
                                                     </div>
                                                 ) : (
                                                     // Final fallback to notification type icon
-                                                    <div className="text-2xl">
+                                                    <div className="text-xl md:text-2xl">
                                                         {getNotificationIcon(notification.type)}
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-sm mb-1">{notification.title}</h4>
-                                                <p className="text-sm text-gray-700 mb-1">{notification.message}</p>
-                                                <p className="text-xs text-gray-500 mb-1">
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-semibold text-xs md:text-sm mb-1 truncate">{notification.title}</h4>
+                                                <p className="text-xs md:text-sm text-gray-700 mb-1 line-clamp-2">{notification.message}</p>
+                                                <p className="text-xs text-gray-500 mb-1 truncate">
                                                     Order: {notification.orderId?.substring(0, 18)}...
                                                 </p>
                                                 <p className="text-xs text-blue-600">{notification.timestamp}</p>
@@ -377,45 +395,60 @@ const MessagesPage = () => {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0">
                 {/* Chat Header */}
-                <div className="bg-[#35408E] text-white py-4 px-6 rounded-t-3xl">
-                    <h2 className="text-xl font-semibold">Messages</h2>
+                <div className="bg-gradient-to-r from-[#35408E] to-[#4a5899] text-white py-3 md:py-4 px-4 md:px-6 shadow-md">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="md:hidden text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <h2 className="text-lg md:text-xl font-semibold">Messages</h2>
+                        {selectedContact && (
+                            <div className="hidden sm:flex items-center gap-2 ml-auto">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span className="text-sm text-gray-200">Online</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Messages Container */}
                 {selectedContact ? (
                     <>
-                        <div className="flex-1 bg-white p-6 overflow-y-auto">
+                        <div className="flex-1 bg-white p-3 md:p-4 lg:p-6 overflow-y-auto">
                             {/* Contact Info Header */}
-                            <div className="flex flex-col items-center mb-8">
-                                <div className="w-16 h-16 bg-[#35408E] text-white rounded-full flex items-center justify-center text-3xl mb-2 font-semibold">
+                            <div className="flex flex-col items-center mb-6 md:mb-8 animate-fadeIn">
+                                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mb-2 font-semibold shadow-lg">
                                     {selectedContact.employeename?.charAt(0) || 'A'}
                                 </div>
-                                <h3 className="font-semibold text-lg">{selectedContact.employeename}</h3>
-                                <p className="text-sm text-gray-500">{selectedContact.role}</p>
+                                <h3 className="font-semibold text-base md:text-lg">{selectedContact.employeename}</h3>
+                                <p className="text-xs md:text-sm text-gray-500">{selectedContact.role}</p>
                             </div>
 
                             {/* Messages */}
-                            <div className="space-y-4 max-w-4xl mx-auto">
-                                {messages.map((msg) => (
+                            <div className="space-y-3 md:space-y-4 max-w-4xl mx-auto">
+                                {messages.map((msg, index) => (
                                     <div
                                         key={msg.messageid}
-                                        className={`flex gap-3 ${
+                                        className={`flex gap-2 md:gap-3 animate-slideIn ${
                                             msg.sender === 'customer' ? 'justify-end' : 'justify-start'
                                         }`}
+                                        style={{ animationDelay: `${index * 50}ms` }}
                                     >
                                         {msg.sender === 'admin' && (
-                                            <div className="w-10 h-10 bg-[#35408E] text-white rounded-full flex items-center justify-center flex-shrink-0 text-xl font-semibold">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center flex-shrink-0 text-base md:text-xl font-semibold shadow-md">
                                                 {msg.senderName?.charAt(0) || 'A'}
                                             </div>
                                         )}
 
-                                        <div className={`flex flex-col ${
+                                        <div className={`flex flex-col max-w-[85%] sm:max-w-md ${
                                             msg.sender === 'customer' ? 'items-end' : 'items-start'
                                         }`}>
                                             <div
-                                                className={`rounded-2xl px-5 py-3 max-w-md ${
+                                                className={`rounded-2xl px-3 py-2 md:px-5 md:py-3 shadow-sm hover:shadow-md transition-shadow ${
                                                     msg.sender === 'customer'
                                                         ? 'bg-[#ECBA0B] text-black'
                                                         : 'bg-[#35408E] text-white'
@@ -423,7 +456,7 @@ const MessagesPage = () => {
                                             >
                                                 {/* Show message text only if it's not just a file indicator */}
                                                 {!msg.text.startsWith('📎 ') && (
-                                                    <p className="text-sm leading-relaxed">{msg.text}</p>
+                                                    <p className="text-xs md:text-sm leading-relaxed break-words">{msg.text}</p>
                                                 )}
                                                 
                                                 {/* File attachment display */}
@@ -436,12 +469,12 @@ const MessagesPage = () => {
                                                         <a 
                                                             href={msg.file} 
                                                             download={msg.text.startsWith('📎 ') ? msg.text.replace('📎 ', '') : 'attachment'}
-                                                            className={`flex items-center gap-2 text-sm font-medium ${
+                                                            className={`flex items-center gap-2 text-xs md:text-sm font-medium ${
                                                                 msg.sender === 'customer' ? 'text-gray-800' : 'text-white'
                                                             }`}
                                                         >
-                                                            <span className="text-lg">📎</span>
-                                                            <span className="flex-1">
+                                                            <span className="text-base md:text-lg">📎</span>
+                                                            <span className="flex-1 truncate">
                                                                 {msg.text.startsWith('📎 ') ? msg.text.replace('📎 ', '') : 'Download File'}
                                                             </span>
                                                             <span className="text-xs opacity-75">↓</span>
@@ -449,7 +482,7 @@ const MessagesPage = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            <span className="text-xs text-gray-400 mt-1" title={msg.timestamp}>
+                                            <span className="text-xs text-gray-400 mt-1 px-1" title={msg.timestamp}>
                                                 {formatMessageTime(msg.timestamp)}
                                             </span>
                                         </div>
@@ -459,21 +492,21 @@ const MessagesPage = () => {
                         </div>
 
                         {/* Message Input */}
-                        <div className="bg-white border-t px-6 py-4">
+                        <div className="bg-white border-t px-3 md:px-4 lg:px-6 py-3 md:py-4 shadow-lg">
                             {selectedFile && (
-                                <div className="mb-2 max-w-4xl mx-auto px-3 py-2 bg-blue-50 rounded-lg flex items-center justify-between">
-                                    <span className="text-sm text-blue-700">
+                                <div className="mb-2 max-w-4xl mx-auto px-3 py-2 bg-blue-50 rounded-lg flex items-center justify-between animate-slideIn">
+                                    <span className="text-xs md:text-sm text-blue-700 truncate flex-1">
                                         📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                                     </span>
                                     <button
                                         onClick={handleRemoveFile}
-                                        className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                                        className="text-red-500 hover:text-red-700 text-sm font-semibold ml-2 flex-shrink-0"
                                     >
-                                        ✕
+                                        <X size={18} />
                                     </button>
                                 </div>
                             )}
-                            <div className="flex items-center gap-3 max-w-4xl mx-auto">
+                            <div className="flex items-center gap-2 md:gap-3 max-w-4xl mx-auto">
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -483,10 +516,10 @@ const MessagesPage = () => {
                                 />
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors"
+                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-all duration-200 hover:scale-110 shadow-md flex-shrink-0"
                                     title="Attach file"
                                 >
-                                    <Plus size={20} />
+                                    <Plus size={18} className="md:w-5 md:h-5" />
                                 </button>
                                 <input
                                     type="text"
@@ -494,22 +527,33 @@ const MessagesPage = () => {
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Type a message..."
-                                    className="flex-1 border border-gray-300 rounded-full px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 border border-gray-300 rounded-full px-4 md:px-5 py-2 md:py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm md:text-base transition-all"
                                     disabled={sendingMessage}
                                 />
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={sendingMessage}
-                                    className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-colors disabled:opacity-50"
+                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-md flex-shrink-0"
                                 >
-                                    <Send size={18} />
+                                    <Send size={16} className="md:w-[18px] md:h-[18px]" />
                                 </button>
                             </div>
                         </div>
                     </>
                 ) : (
                     <div className="flex-1 flex items-center justify-center bg-white">
-                        <p className="text-gray-500">No conversation selected</p>
+                        <div className="text-center animate-fadeIn">
+                            <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Send size={40} className="text-gray-400 md:w-12 md:h-12" />
+                            </div>
+                            <p className="text-gray-500 text-sm md:text-base">Select a conversation to start messaging</p>
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="md:hidden mt-4 px-4 py-2 bg-[#35408E] text-white rounded-lg hover:bg-indigo-800 transition-colors"
+                            >
+                                View Messages
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

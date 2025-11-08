@@ -34,6 +34,8 @@ const ProfileComponent = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [emailNotifications, setEmailNotifications] = useState(false);
+    const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
     // Fetch customer data when user is available
     useEffect(() => {
@@ -154,6 +156,7 @@ const ProfileComponent = () => {
                 setCompanyName(customer.companyname || '');
                 setCompanyEmail(customer.emailaddress || '');
                 setCompanyNumber(customer.companynumber || '');
+                setEmailNotifications(customer.emailnotifications || false);
 
                 // Load addresses from database
                 if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
@@ -486,6 +489,41 @@ const ProfileComponent = () => {
         }
     };
 
+    const handleToggleEmailNotifications = async (value) => {
+        setIsSavingNotifications(true);
+        try {
+            const { error } = await supabase
+                .from('customers')
+                .update({ emailnotifications: value })
+                .eq('userid', user.userid);
+
+            if (error) throw error;
+
+            setEmailNotifications(value);
+            
+            setModalConfig({
+                type: 'success',
+                message: value 
+                    ? 'Email notifications enabled! You will receive updates about your orders.' 
+                    : 'Email notifications disabled. You will not receive order update emails.',
+                onConfirm: null
+            });
+            setShowModal(true);
+            
+            console.log('✅ Email notification preference saved:', value);
+        } catch (error) {
+            console.error('❌ Error updating notification preference:', error);
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to update notification settings. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } finally {
+            setIsSavingNotifications(false);
+        }
+    };
+
     const handleDeleteAccount = () => {
         setModalConfig({
             type: 'confirm',
@@ -542,75 +580,94 @@ const ProfileComponent = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="flex gap-6">
+            <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
+                <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
                     {/* Sidebar */}
-                    <div className="w-48 flex-shrink-0">
+                    <div className="w-full lg:w-48 flex-shrink-0">
                         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`w-full text-left px-6 py-4 transition-colors ${activeTab === tab
-                                        ? 'bg-[#35408E] text-white font-semibold'
-                                        : 'text-gray-700 hover:bg-gray-100'
-                                        }`}
-                                    style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
+                            {/* Mobile: Horizontal scroll */}
+                            <div className="lg:hidden flex overflow-x-auto">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`flex-shrink-0 px-4 md:px-6 py-3 md:py-4 transition-colors whitespace-nowrap ${activeTab === tab
+                                            ? 'bg-[#35408E] text-white font-semibold'
+                                            : 'text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                        style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Desktop: Vertical */}
+                            <div className="hidden lg:block">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`w-full text-left px-6 py-4 transition-colors ${activeTab === tab
+                                            ? 'bg-[#35408E] text-white font-semibold'
+                                            : 'text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                        style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex-1">
-                        <div className="bg-white rounded-lg shadow-sm p-8">
+                    <div className="flex-1 min-w-0">
+                        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 lg:p-8">
                             {/* Profile Tab Content */}
                             {activeTab === 'Profile' && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                                     {/* Left Column - Profile Form */}
                                     <div>
                                         {/* Profile Picture */}
-                                        <div className="flex flex-col items-center mb-8">
-                                            <div className="w-24 h-24 bg-gray-400 rounded-full flex items-center justify-center mb-3">
-                                                <User size={48} className="text-white" />
+                                        <div className="flex flex-col items-center mb-6 md:mb-8">
+                                            <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-400 rounded-full flex items-center justify-center mb-3">
+                                                <User size={40} className="md:w-12 md:h-12 text-white" />
                                             </div>
-                                            <p className="text-lg font-semibold">{user.companyname}</p>
+                                            <p className="text-base md:text-lg font-semibold text-center break-words max-w-full px-2">{user.companyname}</p>
                                         </div>
 
                                         {/* Form Fields */}
-                                        <div className="space-y-4">
+                                        <div className="space-y-3 md:space-y-4">
                                             <div>
-                                                <label className="block text-sm font-semibold mb-2">Company Name</label>
+                                                <label className="block text-xs md:text-sm font-semibold mb-2">Company Name</label>
                                                 <input
                                                     type="text"
                                                     value={companyName}
                                                     onChange={(e) => setCompanyName(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold mb-2">Company Email</label>
+                                                <label className="block text-xs md:text-sm font-semibold mb-2">Company Email</label>
                                                 <input
                                                     type="email"
                                                     value={companyEmail}
                                                     onChange={(e) => setCompanyEmail(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-semibold mb-2">Contact Number</label>
+                                                <label className="block text-xs md:text-sm font-semibold mb-2">Contact Number</label>
                                                 <input
                                                     type="text"
                                                     value={companyNumber}
                                                     onChange={(e) => setCompanyNumber(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -619,14 +676,14 @@ const ProfileComponent = () => {
                                                     <>
                                                         <button
                                                             onClick={handleCancelEdit}
-                                                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded transition-colors"
+                                                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 md:px-6 rounded transition-colors text-sm md:text-base"
                                                         >
                                                             Cancel
                                                         </button>
                                                         <button
                                                             onClick={handleEditProfile}
                                                             disabled={isSavingProfile}
-                                                            className="flex-1 bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            className="flex-1 bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                                         >
                                                             {isSavingProfile ? 'Saving...' : 'Save Profile'}
                                                         </button>
@@ -634,7 +691,7 @@ const ProfileComponent = () => {
                                                 ) : (
                                                     <button
                                                         onClick={handleEditProfile}
-                                                        className="w-full bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-6 rounded transition-colors flex items-center justify-center gap-2"
+                                                        className="w-full bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
                                                     >
                                                         <Edit size={16} />
                                                         Edit Profile
@@ -646,18 +703,19 @@ const ProfileComponent = () => {
 
                                     {/* Right Column - My Address */}
                                     <div>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-xl font-bold">My Addresses</h2>
+                                        <div className="flex items-center justify-between mb-4 md:mb-6">
+                                            <h2 className="text-lg md:text-xl font-bold">My Addresses</h2>
                                             <button
                                                 onClick={handleAddAddress}
-                                                className="bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-4 rounded text-sm transition-colors flex items-center gap-2"
+                                                className="bg-[#35408E] hover:bg-[#2c3e50] text-white py-1.5 md:py-2 px-3 md:px-4 rounded text-xs md:text-sm transition-colors flex items-center gap-1 md:gap-2 whitespace-nowrap"
                                             >
-                                                <span className="text-lg">+</span>
-                                                Add Address
+                                                <span className="text-base md:text-lg">+</span>
+                                                <span className="hidden sm:inline">Add Address</span>
+                                                <span className="sm:hidden">Add</span>
                                             </button>
                                         </div>
 
-                                        <div className="space-y-4">
+                                        <div className="space-y-3 md:space-y-4">
                                             {addresses.length === 0 ? (
                                                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                                                     <p className="text-gray-500 mb-4">No address saved yet</p>
@@ -737,7 +795,7 @@ const ProfileComponent = () => {
                             {/* Designs Tab Content */}
                             {activeTab === 'Designs' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-6">My Designs</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">My Designs</h2>
                                     
                                     {loadingDesigns ? (
                                         <div className="text-center py-12">
@@ -757,7 +815,7 @@ const ProfileComponent = () => {
                                             </a>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                                             {savedDesigns.map((design) => {
                                                 const designData = JSON.parse(design.url || '{}');
                                                 const hasThumbnail = designData.thumbnail;
@@ -847,40 +905,40 @@ const ProfileComponent = () => {
                             {/* Settings Tab Content */}
                             {activeTab === 'Settings' && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
-                                    <div className="space-y-6">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Account Settings</h2>
+                                    <div className="space-y-4 md:space-y-6">
                                         {/* Password Section */}
-                                        <div className="border-b border-gray-200 pb-6">
-                                            <h3 className="text-lg font-semibold mb-4">Change Password</h3>
-                                            <div className="space-y-4">
+                                        <div className="border-b border-gray-200 pb-4 md:pb-6">
+                                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Change Password</h3>
+                                            <div className="space-y-3 md:space-y-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">Current Password</label>
+                                                    <label className="block text-xs md:text-sm font-medium mb-2">Current Password</label>
                                                     <input
                                                         type="password"
                                                         value={currentPassword}
                                                         onChange={(e) => setCurrentPassword(e.target.value)}
-                                                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                        className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                         placeholder="Enter current password"
                                                     />
                                                 </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                                                     <div>
-                                                        <label className="block text-sm font-medium mb-2">New Password</label>
+                                                        <label className="block text-xs md:text-sm font-medium mb-2">New Password</label>
                                                         <input
                                                             type="password"
                                                             value={newPassword}
                                                             onChange={(e) => setNewPassword(e.target.value)}
-                                                            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                             placeholder="Enter new password (min 6 characters)"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                                                        <label className="block text-xs md:text-sm font-medium mb-2">Confirm New Password</label>
                                                         <input
                                                             type="password"
                                                             value={confirmPassword}
                                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                                            className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                             placeholder="Confirm new password"
                                                         />
                                                     </div>
@@ -889,38 +947,44 @@ const ProfileComponent = () => {
                                             <button 
                                                 onClick={handleChangePassword}
                                                 disabled={isChangingPassword}
-                                                className="mt-4 bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="mt-4 bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                             >
                                                 {isChangingPassword ? 'Updating...' : 'Update Password'}
                                             </button>
                                         </div>
 
                                         {/* Notifications Section */}
-                                        <div className="border-b border-gray-200 pb-6">
-                                            <h3 className="text-lg font-semibold mb-4">Notifications</h3>
-                                            <div className="space-y-3">
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="rounded border-gray-300 text-indigo-600 mr-3" defaultChecked />
-                                                    <span className="text-sm">Email notifications for order updates</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="rounded border-gray-300 text-indigo-600 mr-3" defaultChecked />
-                                                    <span className="text-sm">SMS notifications for urgent updates</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="rounded border-gray-300 text-indigo-600 mr-3" />
-                                                    <span className="text-sm">Marketing emails</span>
+                                        <div className="border-b border-gray-200 pb-4 md:pb-6">
+                                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Notifications</h3>
+                                            <div className="space-y-2 md:space-y-3">
+                                                <label className="flex items-center justify-between">
+                                                    <div className="flex items-center">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="rounded border-gray-300 text-indigo-600 mr-2 md:mr-3 cursor-pointer" 
+                                                            checked={emailNotifications}
+                                                            onChange={(e) => handleToggleEmailNotifications(e.target.checked)}
+                                                            disabled={isSavingNotifications}
+                                                        />
+                                                        <div>
+                                                            <span className="text-xs md:text-sm font-medium">Email notifications for order updates</span>
+                                                            <p className="text-xs text-gray-500 mt-1">Receive email updates when your order status changes</p>
+                                                        </div>
+                                                    </div>
+                                                    {isSavingNotifications && (
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                                                    )}
                                                 </label>
                                             </div>
                                         </div>
 
                                         {/* Account Actions */}
                                         <div>
-                                            <h3 className="text-lg font-semibold mb-4">Account Actions</h3>
+                                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Account Actions</h3>
                                             <div className="space-y-3">
                                                 <button 
                                                     onClick={handleDeleteAccount}
-                                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-6 rounded transition-colors"
+                                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 md:px-6 rounded transition-colors text-sm md:text-base"
                                                 >
                                                     Delete Account
                                                 </button>
@@ -937,10 +1001,10 @@ const ProfileComponent = () => {
 
             {/* Modal Component */}
             {showModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
                         {/* Modal Icon */}
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-3 md:mb-4">
                             {modalConfig.type === 'success' && (
                                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                                     <span className="text-3xl">✓</span>
@@ -996,56 +1060,56 @@ const ProfileComponent = () => {
 
             {/* Add Address Modal */}
             {showAddAddressModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                        <h3 className="text-xl font-bold mb-4">Add New Address</h3>
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">Add New Address</h3>
                         
-                        <div className="space-y-4">
+                        <div className="space-y-3 md:space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Name / Label *</label>
+                                <label className="block text-xs md:text-sm font-semibold mb-2">Name / Label *</label>
                                 <input
                                     type="text"
                                     value={newAddress.name}
                                     onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
                                     placeholder="e.g., Home, Office, Warehouse"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Phone Number</label>
+                                <label className="block text-xs md:text-sm font-semibold mb-2">Phone Number</label>
                                 <input
                                     type="text"
                                     value={newAddress.phone}
                                     onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
                                     placeholder="Contact number for this address"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Full Address *</label>
+                                <label className="block text-xs md:text-sm font-semibold mb-2">Full Address *</label>
                                 <textarea
                                     value={newAddress.address}
                                     onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
                                     placeholder="Street, City, State, Postal Code"
                                     rows={4}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="flex gap-2 md:gap-3 mt-4 md:mt-6">
                             <button
                                 onClick={() => setShowAddAddressModal(false)}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                                className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveNewAddress}
                                 disabled={isSavingAddress}
-                                className="flex-1 px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSavingAddress ? 'Saving...' : 'Save Address'}
                             </button>

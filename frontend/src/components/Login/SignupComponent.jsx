@@ -64,12 +64,16 @@ const Signup = () => {
 
     // Build address object
     const companyAddress = {
+      id: Date.now(), // Generate unique ID
       name: 'Company Address',
-      street: street.trim(),
-      city: city.trim(),
-      province: province.trim(),
-      postalCode: postalCode.trim(),
-      country: country.trim()
+      phone: companyNumber || '', // Use company number as phone
+      address: [
+        street.trim(),
+        city.trim() && `${city.trim()}${province.trim() ? ', ' + province.trim() : ''}`,
+        postalCode.trim(),
+        country.trim()
+      ].filter(Boolean).join('\n'), // Combine into multi-line address
+      isDefault: true // First address is default
     };
 
     // Street is now required, so always include the address

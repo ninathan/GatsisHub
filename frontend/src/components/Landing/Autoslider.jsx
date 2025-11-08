@@ -5,13 +5,13 @@ import 'swiper/css/pagination';
 
 const Autoslider = ({images = []}) => {
     return (
-        <div className=''>
+        <div className='w-full max-w-full overflow-hidden'>
             <Swiper
                 modules={[Autoplay, Pagination]}
                 autoplay={{ delay: 2500, disableOnInteraction: false }}
                 pagination={{ clickable: true }}
                 loop={true}
-                className="w-150 h-150 flex-col flex rounded-xl overflow-hidden"
+                className="w-full h-[300px] md:h-[400px] lg:h-[500px] xl:h-[600px] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
                 {images.map((img, index) =>
                     <SwiperSlide key={index}>

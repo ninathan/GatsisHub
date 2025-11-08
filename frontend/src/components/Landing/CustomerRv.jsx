@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReviewCard from "./Reviewcard";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import useScrollAnimation from "../../hooks/useScrollAnimation";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -17,6 +18,11 @@ const CustomerRv = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+
+    // Scroll animations
+    const heading = useScrollAnimation({ threshold: 0.3 });
+    const reviewsColumn = useScrollAnimation({ threshold: 0.2 });
+    const formColumn = useScrollAnimation({ threshold: 0.2 });
 
     // Fetch all reviews
     useEffect(() => {
@@ -200,8 +206,15 @@ const CustomerRv = () => {
             )}
 
             {/* Customer Reviews Section */}
-            <section className="px-4 md:px-20 py-20">
-                <h2 className="text-4xl font-bold mb-12 -mt-37">Customer Reviews</h2>
+            <section className="px-4 md:px-8 lg:px-20 py-12 md:py-16 lg:py-20">
+                <h2 
+                    ref={heading.ref}
+                    className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37 ${
+                        heading.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
+                    }`}
+                >
+                    Customer Reviews
+                </h2>
                 
                 {loading ? (
                     <div className="text-center py-12">
@@ -211,22 +224,28 @@ const CustomerRv = () => {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT COLUMN: Reviews */}
-                        <div className="flex flex-col gap-8">
+                        <div 
+                            ref={reviewsColumn.ref}
+                            className={`flex flex-col gap-8 ${
+                                reviewsColumn.isVisible ? 'scroll-slide-right' : 'scroll-hidden'
+                            }`}
+                        >
                             {reviews.length > 0 ? (
-                                reviews.slice(0, 2).map((review) => (
-                                    <ReviewCard
-                                        key={review.feedbackid}
-                                        name={review.customers?.companyname || "Anonymous"}
-                                        date={review.created_at 
-                                            ? new Date(review.created_at).toLocaleDateString("en-US", {
-                                                day: "2-digit",
-                                                month: "short"
-                                            })
-                                            : "Recently"
-                                        }
-                                        message={review.message}
-                                        rating={review.rating || 5}
-                                    />
+                                reviews.slice(0, 2).map((review, index) => (
+                                    <div key={review.feedbackid}>
+                                        <ReviewCard
+                                            name={review.customers?.companyname || "Anonymous"}
+                                            date={review.created_at 
+                                                ? new Date(review.created_at).toLocaleDateString("en-US", {
+                                                    day: "2-digit",
+                                                    month: "short"
+                                                })
+                                                : "Recently"
+                                            }
+                                            message={review.message}
+                                            rating={review.rating || 5}
+                                        />
+                                    </div>
                                 ))
                             ) : (
                                 <div className="text-center py-12 bg-gray-50 rounded-2xl border">
@@ -236,21 +255,28 @@ const CustomerRv = () => {
                         </div>
                         
                         {/* RIGHT COLUMN: Third Review + Review Form */}
-                        <div className="flex flex-col gap-8">
+                        <div 
+                            ref={formColumn.ref}
+                            className={`flex flex-col gap-8 ${
+                                formColumn.isVisible ? 'scroll-slide-left' : 'scroll-hidden'
+                            }`}
+                        >
                             {reviews.length > 2 && (
-                                <ReviewCard
-                                    key={reviews[2].feedbackid}
-                                    name={reviews[2].customers?.companyname || "Anonymous"}
-                                    date={reviews[2].created_at 
-                                        ? new Date(reviews[2].created_at).toLocaleDateString("en-US", {
-                                            day: "2-digit",
-                                            month: "short"
-                                        })
-                                        : "Recently"
-                                    }
-                                    message={reviews[2].message}
-                                    rating={reviews[2].rating || 5}
-                                />
+                                <div>
+                                    <ReviewCard
+                                        key={reviews[2].feedbackid}
+                                        name={reviews[2].customers?.companyname || "Anonymous"}
+                                        date={reviews[2].created_at 
+                                            ? new Date(reviews[2].created_at).toLocaleDateString("en-US", {
+                                                day: "2-digit",
+                                                month: "short"
+                                            })
+                                            : "Recently"
+                                        }
+                                        message={reviews[2].message}
+                                        rating={reviews[2].rating || 5}
+                                    />
+                                </div>
                             )}
                             
                             {/* Review Submission Form */}
