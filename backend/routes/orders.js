@@ -93,6 +93,122 @@ router.post("/create", async (req, res) => {
     console.log('📍 Returned order data:', JSON.stringify(order[0], null, 2));
     console.log('📍 Saved delivery address:', order[0].deliveryaddress);
 
+    // 📧 Send order confirmation email to customer
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (resendApiKey) {
+        // Get customer email if userid exists
+        let customerEmail = null;
+        if (userid) {
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('emailaddress, companyname')
+            .eq('userid', userid)
+            .single();
+          
+          if (customer) {
+            customerEmail = customer.emailaddress;
+          }
+        }
+
+        // Send email if we have an email address
+        if (customerEmail) {
+          console.log('📧 Sending order confirmation email to:', customerEmail);
+          
+          const orderNumber = `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${order[0].orderid}`;
+          
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: 'GatsisHub <noreply@gatsishub.com>',
+              to: [customerEmail],
+              subject: `Order Confirmation - ${orderNumber}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #35408E; margin-bottom: 10px;">Order Received!</h1>
+                    <p style="font-size: 18px; color: #666;">Thank you for your order</p>
+                  </div>
+                  
+                  <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h2 style="color: #35408E; margin-top: 0;">Hello ${companyName}!</h2>
+                    <p style="color: #333; line-height: 1.6;">
+                      We've received your custom hanger order and our team is reviewing it now. 
+                    </p>
+                    <p style="color: #333; line-height: 1.6;">
+                      <strong>Order Number:</strong> ${orderNumber}
+                    </p>
+                  </div>
+
+                  <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">Order Details:</h3>
+                    <p style="margin: 5px 0;"><strong>Hanger Type:</strong> ${hangerType}</p>
+                    <p style="margin: 5px 0;"><strong>Quantity:</strong> ${quantity} pieces</p>
+                    <p style="margin: 5px 0;"><strong>Contact Person:</strong> ${contactPerson}</p>
+                    <p style="margin: 5px 0;"><strong>Contact Phone:</strong> ${contactPhone}</p>
+                    ${selectedColor ? `<p style="margin: 5px 0;"><strong>Color:</strong> ${selectedColor}</p>` : ''}
+                    ${customText ? `<p style="margin: 5px 0;"><strong>Custom Text:</strong> "${customText}"</p>` : ''}
+                  </div>
+
+                  <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #DAC325; margin-bottom: 20px;">
+                    <h3 style="color: #856404; margin-top: 0;">📋 What Happens Next?</h3>
+                    <ul style="color: #856404; line-height: 1.8; margin: 10px 0;">
+                      <li><strong>Order Verification:</strong> Our team will review your order specifications and requirements</li>
+                      <li><strong>Quote & Timeline:</strong> We'll contact you with pricing, production timeline, and any clarifications needed</li>
+                      <li><strong>Production:</strong> Once confirmed, we'll begin manufacturing your custom hangers</li>
+                    </ul>
+                  </div>
+
+                  <div style="background-color: #e7f3ff; padding: 15px; border-left: 4px solid #35408E; margin-bottom: 20px;">
+                    <h3 style="color: #35408E; margin-top: 0;">⏱️ Important Notes:</h3>
+                    <ul style="color: #35408E; line-height: 1.8; margin: 10px 0; font-size: 14px;">
+                      <li>Production time varies based on complexity and quantity</li>
+                      <li>Custom designs may require additional review time</li>
+                      <li>We'll keep you updated throughout the process via email and our messaging system</li>
+                    </ul>
+                  </div>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders" 
+                       style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-right: 10px;">
+                      View Order Status
+                    </a>
+                    <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/messages" 
+                       style="background-color: #35408E; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                      Contact Support
+                    </a>
+                  </div>
+
+                  <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+                    <p>If you have any questions about your order, feel free to reach out to us through our messaging system or reply to this email.</p>
+                    <p style="margin-top: 20px;">
+                      Best regards,<br/>
+                      <strong>The GatsisHub Team</strong><br/>
+                      Premium Hanger Solutions
+                    </p>
+                  </div>
+                </div>
+              `
+            })
+          });
+
+          console.log('✅ Order confirmation email sent');
+        } else {
+          console.log('⚠️ No customer email found, skipping confirmation email');
+        }
+      } else {
+        console.log('⚠️ RESEND_API_KEY not configured, skipping confirmation email');
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
     res.status(201).json({
       message: "Order created successfully!",
       order: order[0]

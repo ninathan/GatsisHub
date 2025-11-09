@@ -1281,9 +1281,9 @@ const Checkout = () => {
                                         <label className="text-xs text-gray-600">Text Size</label>
                                         <input
                                             type="range"
-                                            min="0.5"
+                                            min="0.01"
                                             max="3"
-                                            step="0.1"
+                                            step="0.01"
                                             value={textSize}
                                             onChange={(e) => setTextSize(parseFloat(e.target.value))}
                                             className="w-full"
@@ -1407,7 +1407,7 @@ const Checkout = () => {
                                                 type="range"
                                                 min="0.5"
                                                 max="3"
-                                                step="0.1"
+                                                step="0.01"
                                                 value={logoSize}
                                                 onChange={(e) =>
                                                     setLogoSize(parseFloat(e.target.value))

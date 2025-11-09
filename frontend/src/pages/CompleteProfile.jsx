@@ -46,12 +46,18 @@ function CompleteProfile() {
     setLoading(true);
 
     try {
+      // Format address to match the expected structure
       const addressObject = {
-        street: formData.street,
-        city: formData.city,
-        province: formData.province,
-        postalCode: formData.postalCode,
-        country: formData.country
+        id: Date.now(),
+        name: 'Default Address',
+        phone: formData.companyNumber || '',
+        address: [
+          formData.street.trim(),
+          `${formData.city.trim()}${formData.province.trim() ? ', ' + formData.province.trim() : ''}`,
+          formData.postalCode.trim(),
+          formData.country.trim()
+        ].filter(Boolean).join('\n'), // Combine into multi-line address
+        isDefault: true
       };
 
       const response = await fetch(`https://gatsis-hub.vercel.app/customers/${user.customerid}`, {
