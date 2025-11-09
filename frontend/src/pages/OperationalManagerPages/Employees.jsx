@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit } from "react-icons/fa";
+import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye } from "react-icons/fa";
 
 const Employees = () => {
     const [employees, setEmployees] = useState([]);
@@ -23,8 +23,23 @@ const Employees = () => {
         assigneddepartment: "",
     });
 
+    // Teams state
+    const [teams, setTeams] = useState([]);
+    const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+    const [showEditTeamModal, setShowEditTeamModal] = useState(false);
+    const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState(null);
+    const [teamFormData, setTeamFormData] = useState({
+        teamname: "",
+        description: "",
+        selectedEmployees: [],
+        quota: "",
+        assignedOrders: []
+    });
+
     useEffect(() => {
         fetchEmployees();
+        fetchTeams();
     }, []);
 
     useEffect(() => {
@@ -165,6 +180,138 @@ const Employees = () => {
     const handleCancelDelete = () => {
         setShowDeleteConfirm(false);
         setEmployeeToDelete(null);
+    };
+
+    // Team functions
+    const fetchTeams = async () => {
+        try {
+            // For now, using localStorage to persist teams data
+            // In production, this would be an API call
+            const savedTeams = localStorage.getItem('teams');
+            if (savedTeams) {
+                setTeams(JSON.parse(savedTeams));
+            }
+        } catch (error) {
+            console.error('Error fetching teams:', error);
+        }
+    };
+
+    const handleCreateTeam = () => {
+        setTeamFormData({
+            teamname: "",
+            description: "",
+            selectedEmployees: [],
+            quota: "",
+            assignedOrders: []
+        });
+        setShowCreateTeamModal(true);
+    };
+
+    const handleEditTeam = (team) => {
+        setSelectedTeam(team);
+        setTeamFormData({
+            teamname: team.teamname,
+            description: team.description || "",
+            selectedEmployees: team.members || [],
+            quota: team.quota || "",
+            assignedOrders: team.assignedOrders || []
+        });
+        setShowEditTeamModal(true);
+    };
+
+    const handleDeleteTeam = (team) => {
+        setSelectedTeam(team);
+        setShowDeleteTeamConfirm(true);
+    };
+
+    const handleSaveTeam = () => {
+        if (!teamFormData.teamname.trim()) {
+            setErrorMessage('Team name is required');
+            setShowErrorModal(true);
+            return;
+        }
+
+        const newTeam = {
+            id: selectedTeam ? selectedTeam.id : Date.now(),
+            teamname: teamFormData.teamname,
+            description: teamFormData.description,
+            members: teamFormData.selectedEmployees,
+            quota: teamFormData.quota,
+            assignedOrders: teamFormData.assignedOrders,
+            createdAt: selectedTeam ? selectedTeam.createdAt : new Date().toISOString()
+        };
+
+        let updatedTeams;
+        if (selectedTeam) {
+            // Update existing team
+            updatedTeams = teams.map(team => 
+                team.id === selectedTeam.id ? newTeam : team
+            );
+        } else {
+            // Create new team
+            updatedTeams = [...teams, newTeam];
+        }
+
+        setTeams(updatedTeams);
+        localStorage.setItem('teams', JSON.stringify(updatedTeams));
+        
+        setSuccessMessage(`Team ${selectedTeam ? 'updated' : 'created'} successfully!`);
+        setShowSuccessModal(true);
+        
+        setShowCreateTeamModal(false);
+        setShowEditTeamModal(false);
+        setSelectedTeam(null);
+        setTeamFormData({
+            teamname: "",
+            description: "",
+            selectedEmployees: [],
+            quota: "",
+            assignedOrders: []
+        });
+    };
+
+    const handleConfirmDeleteTeam = () => {
+        if (!selectedTeam) return;
+
+        const updatedTeams = teams.filter(team => team.id !== selectedTeam.id);
+        setTeams(updatedTeams);
+        localStorage.setItem('teams', JSON.stringify(updatedTeams));
+        
+        setSuccessMessage(`Team "${selectedTeam.teamname}" has been deleted successfully!`);
+        setShowSuccessModal(true);
+        
+        setShowDeleteTeamConfirm(false);
+        setSelectedTeam(null);
+    };
+
+    const handleTeamInputChange = (e) => {
+        const { name, value } = e.target;
+        setTeamFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleEmployeeSelection = (employeeId) => {
+        setTeamFormData(prev => ({
+            ...prev,
+            selectedEmployees: prev.selectedEmployees.includes(employeeId)
+                ? prev.selectedEmployees.filter(id => id !== employeeId)
+                : [...prev.selectedEmployees, employeeId]
+        }));
+    };
+
+    const handleCloseTeamModal = () => {
+        setShowCreateTeamModal(false);
+        setShowEditTeamModal(false);
+        setSelectedTeam(null);
+        setTeamFormData({
+            teamname: "",
+            description: "",
+            selectedEmployees: [],
+            quota: "",
+            assignedOrders: []
+        });
     };
 
     const renderContent = () => {
@@ -385,9 +532,220 @@ const Employees = () => {
                 );
             case "teams":
                 return (
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-xl font-bold mb-4">Teams</h2>
-                        <p className="text-gray-600">Team management feature coming soon...</p>
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Teams Management</h2>
+                                <button
+                                    onClick={handleCreateTeam}
+                                    className="bg-[#35408E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors flex items-center gap-2"
+                                >
+                                    <FaPlus /> Create Team
+                                </button>
+                            </div>
+                        </div>
+
+                        {teams.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">
+                                <FaUsers className="mx-auto text-4xl mb-4 text-gray-300" />
+                                <p className="text-lg font-medium mb-2">No teams created yet</p>
+                                <p className="text-sm">Create your first team to start organizing employees and assigning orders.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                                {teams.map((team) => (
+                                    <div key={team.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h3 className="font-semibold text-lg">{team.teamname}</h3>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => handleEditTeam(team)}
+                                                    className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Edit Team"
+                                                >
+                                                    <FaEdit />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteTeam(team)}
+                                                    className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete Team"
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {team.description && (
+                                            <p className="text-gray-600 text-sm mb-3">{team.description}</p>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <FaUsers className="text-gray-500" />
+                                                <span className="text-gray-600">
+                                                    {team.members?.length || 0} members
+                                                </span>
+                                            </div>
+
+                                            {team.quota && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaBullseye className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        Quota: {team.quota}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {team.assignedOrders && team.assignedOrders.length > 0 && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaClipboardList className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        {team.assignedOrders.length} orders assigned
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-3 pt-3 border-t">
+                                            <p className="text-xs text-gray-500">
+                                                Created: {new Date(team.createdAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Create/Edit Team Modal */}
+                        {(showCreateTeamModal || showEditTeamModal) && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold">
+                                            {showCreateTeamModal ? 'Create New Team' : 'Edit Team'}
+                                        </h3>
+                                        <button
+                                            onClick={handleCloseTeamModal}
+                                            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                                        >
+                                            &times;
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Team Name *</label>
+                                            <input
+                                                type="text"
+                                                name="teamname"
+                                                value={teamFormData.teamname}
+                                                onChange={handleTeamInputChange}
+                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                placeholder="Enter team name"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Description</label>
+                                            <textarea
+                                                name="description"
+                                                value={teamFormData.description}
+                                                onChange={handleTeamInputChange}
+                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                placeholder="Enter team description"
+                                                rows="3"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Monthly Quota</label>
+                                            <input
+                                                type="number"
+                                                name="quota"
+                                                value={teamFormData.quota}
+                                                onChange={handleTeamInputChange}
+                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                placeholder="e.g., 1000 units"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Assign Employees</label>
+                                            <div className="border rounded p-4 max-h-48 overflow-y-auto">
+                                                {employees.length === 0 ? (
+                                                    <p className="text-gray-500 text-sm">No employees available</p>
+                                                ) : (
+                                                    employees.map((emp) => (
+                                                        <label key={emp.employeeid} className="flex items-center gap-3 py-2 hover:bg-gray-50 px-2 rounded cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={teamFormData.selectedEmployees.includes(emp.employeeid)}
+                                                                onChange={() => handleEmployeeSelection(emp.employeeid)}
+                                                                className="rounded border-gray-300 text-[#35408E] focus:ring-[#35408E]"
+                                                            />
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center text-sm font-semibold">
+                                                                    {emp.employeename?.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium text-sm">{emp.employeename}</p>
+                                                                    <p className="text-xs text-gray-500">{emp.assigneddepartment}</p>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button
+                                            onClick={handleCloseTeamModal}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSaveTeam}
+                                            className="px-6 py-2 bg-[#35408E] text-white rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                        >
+                                            {showCreateTeamModal ? 'Create Team' : 'Save Changes'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Delete Team Confirmation Modal */}
+                        {showDeleteTeamConfirm && selectedTeam && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                                    <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                        <FaTrash className="text-red-600 text-xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-center mb-2">Delete Team</h3>
+                                    <p className="text-gray-600 text-center mb-6">
+                                        Are you sure you want to delete <span className="font-semibold">"{selectedTeam.teamname}"</span>? 
+                                        This will remove all team assignments but won't delete the employees.
+                                    </p>
+                                    <div className="flex gap-3 justify-end">
+                                        <button
+                                            onClick={() => setShowDeleteTeamConfirm(false)}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmDeleteTeam}
+                                            className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                        >
+                                            Delete Team
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             default:

@@ -56,6 +56,7 @@ const Checkout = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
+    const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
 
     // Form state
     const [companyName, setCompanyName] = useState("");
@@ -73,14 +74,35 @@ const Checkout = () => {
     const [selectedAddress, setSelectedAddress] = useState(0);
 
     // 3D Customization state
-    const [customText, setCustomText] = useState("");
-    const [textColor, setTextColor] = useState("#FFFFFF");
-    const [customLogo, setCustomLogo] = useState(null);
-    const [logoPreview, setLogoPreview] = useState(null);
-    const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
-    const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
-    const [textSize, setTextSize] = useState(0.5);
-    const [logoSize, setLogoSize] = useState(1);
+        const [customText, setCustomText] = useState("");
+        const [textColor, setTextColor] = useState("#FFFFFF");
+        const [customLogo, setCustomLogo] = useState(null);
+        const [logoPreview, setLogoPreview] = useState(null);
+        const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
+        const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
+        const [textSize, setTextSize] = useState(0.5);
+        const [logoSize, setLogoSize] = useState(1);
+
+        // Set default positions/sizes for MB7 and 97-11
+        useEffect(() => {
+            if (selectedHanger === "97-11") {
+                setTextPosition({ x: 0, y: -0.045, z: 0.0537 });
+                setLogoPosition({ x: 0, y: -0.04, z: 0.0561 });
+                setTextSize(0.5);
+                setLogoSize(1);
+            } else if (selectedHanger === "MB7") {
+                setTextPosition({ x: 0, y: -0.15, z: 0.06 });
+                setLogoPosition({ x: 0, y: -0.17, z: 0.0611 });
+                setTextSize(0.4);
+                setLogoSize(0.6);
+            } else {
+                // Reset to default for MB3, CQ-03, and others
+                setTextPosition({ x: 0, y: 0, z: 0 });
+                setLogoPosition({ x: 0, y: 0, z: 0 });
+                setTextSize(0.5);
+                setLogoSize(1);
+            }
+        }, [selectedHanger]);
     const [addresses, setAddresses] = useState([]);
 
     // Hanger selection state
@@ -962,7 +984,13 @@ const Checkout = () => {
                     {hangers.map((hanger) => (
                         <button
                             key={hanger.id}
-                            onClick={() => setSelectedHanger(hanger.id)}
+                            onClick={() => {
+                                setSelectedHanger(hanger.id);
+                                // Show modal for MB7 and 97-11
+                                if (hanger.id === 'MB7' || hanger.id === '97-11') {
+                                    setShowColorLimitationModal(true);
+                                }
+                            }}
                             className={`border-2 rounded-lg overflow-hidden transition-all ${selectedHanger === hanger.id
                                     ? "border-[#35408E] shadow-lg"
                                     : "border-gray-300"
@@ -2127,6 +2155,37 @@ const Checkout = () => {
                                 {isSaving ? 'Saving...' : 'Save Design'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Color Limitation Modal for MB7 and 97-11 */}
+            {showColorLimitationModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        {/* Modal Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Info className="w-8 h-8 text-blue-600" />
+                            </div>
+                        </div>
+
+                        {/* Modal Title */}
+                        <h3 className="text-xl font-bold text-center mb-4">Color Customization Notice</h3>
+
+                        {/* Modal Message */}
+                        <p className="text-center text-gray-700 mb-6">
+                            For Model <span className="font-semibold">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
+                            Color changes will only apply on the main body and clips.
+                        </p>
+
+                        {/* Modal Button */}
+                        <button
+                            onClick={() => setShowColorLimitationModal(false)}
+                            className="w-full px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors"
+                        >
+                            Got it
+                        </button>
                     </div>
                 </div>
             )}

@@ -25,46 +25,96 @@ function HangerModel({ color, hangerType }) {
     // Update color when it changes
     useEffect(() => {
         if (clonedScene) {
-            // First pass: Calculate the total geometry size to identify main vs detail parts
-            const geometrySizes = new Map();
-            let totalSize = 0;
+            // For MB7: Calculate bounds to detect top hook area
+            let topThreshold = null;
+            if (hangerType === 'MB7') {
+                const boundingBox = new THREE.Box3().setFromObject(clonedScene);
+                const modelHeight = boundingBox.max.y - boundingBox.min.y;
+                topThreshold = boundingBox.max.y - (modelHeight * 0.25); // Top 25% is hook
+            }
             
-            clonedScene.traverse((child) => {
-                if (child.isMesh && child.geometry) {
-                    child.geometry.computeBoundingBox();
-                    const bbox = child.geometry.boundingBox;
-                    const size = bbox.max.distanceTo(bbox.min);
-                    geometrySizes.set(child, size);
-                    totalSize += size;
-                }
-            });
-            
-            const averageSize = totalSize / geometrySizes.size;
-            
-            // Second pass: Only color large parts (main body), preserve small parts (details)
             clonedScene.traverse((child) => {
                 if (child.isMesh && child.material) {
+                    // Clone material only once
                     if (!child.material.cloned) {
                         child.material = child.material.clone();
                         child.material.cloned = true;
                         child.material.originalColor = child.material.color.clone();
                     }
                     
-                    const meshSize = geometrySizes.get(child) || 0;
-                    
-                    // Only color if this mesh is larger than 50% of average size
-                    // Small details (< 50% average) keep their original color completely
-                    if (meshSize > averageSize * 0.5) {
-                        // Main body parts - apply selected color
+                    // 97-11: Single mesh model - color everything
+                    if (hangerType === '97-11') {
                         child.material.color.set(color);
-                    } else {
-                        // Small details - keep 100% original color
-                        child.material.color.copy(child.material.originalColor);
+                        child.material.metalness = 0.1;
+                        child.material.roughness = 0.3;
+                        child.material.emissive = new THREE.Color(color);
+                        child.material.emissiveIntensity = 0.15;
+                    } 
+                    // MB7: Try position-based detection for hook
+                    else if (hangerType === 'MB7') {
+                        const worldPos = new THREE.Vector3();
+                        child.getWorldPosition(worldPos);
+                        const isTopPart = worldPos.y > topThreshold;
+                        
+                        if (isTopPart) {
+                            // Keep hook silver
+                            child.material.color.copy(child.material.originalColor);
+                            child.material.metalness = 0.9;
+                            child.material.roughness = 0.1;
+                            child.material.emissive = new THREE.Color(0x000000);
+                            child.material.emissiveIntensity = 0;
+                        } else {
+                            // Color the body
+                            child.material.color.set(color);
+                            child.material.metalness = 0.1;
+                            child.material.roughness = 0.3;
+                            child.material.emissive = new THREE.Color(color);
+                            child.material.emissiveIntensity = 0.15;
+                        }
                     }
+                    // MB3 and CQ-03: Material-based detection
+                    else {
+                        const originalColor = child.material.originalColor;
+                        const r = originalColor.r;
+                        const g = originalColor.g;
+                        const b = originalColor.b;
+                        const avgBrightness = (r + g + b) / 3;
+                        
+                        // Check material/object name for metal keywords
+                        const materialName = (child.material.name || child.name || '').toLowerCase();
+                        const hasMetalName = materialName.includes('metal') || 
+                                           materialName.includes('chrome') || 
+                                           materialName.includes('hook') ||
+                                           materialName.includes('steel') ||
+                                           materialName.includes('silver');
+                        
+                        // Detect metal parts: medium gray colors
+                        const isGrayish = Math.abs(r - g) < 0.15 && Math.abs(g - b) < 0.15 && Math.abs(r - b) < 0.15;
+                        const isMetalRange = avgBrightness > 0.3 && avgBrightness < 0.8;
+                        const isMetal = isGrayish && isMetalRange;
+                        
+                        if (isMetal || hasMetalName) {
+                            // Keep metal parts silver (hooks)
+                            child.material.color.copy(originalColor);
+                            child.material.metalness = 0.9;
+                            child.material.roughness = 0.1;
+                            child.material.emissive = new THREE.Color(0x000000);
+                            child.material.emissiveIntensity = 0;
+                        } else {
+                            // Apply custom color to plastic parts (body)
+                            child.material.color.set(color);
+                            child.material.metalness = 0.1;
+                            child.material.roughness = 0.3;
+                            child.material.emissive = new THREE.Color(color);
+                            child.material.emissiveIntensity = 0.15;
+                        }
+                    }
+                    
+                    child.material.needsUpdate = true;
                 }
             });
         }
-    }, [color, clonedScene]);
+    }, [color, clonedScene, hangerType]);
 
     return (
         <group ref={groupRef}>
@@ -121,8 +171,11 @@ export default function HangerScene({ color, hangerType, customText, textColor, 
             style={{ width: '100%', height: '100%', background: '#ffffff' }}
             gl={{ preserveDrawingBuffer: true }}
         >
-            <ambientLight intensity={0.7} />
-            <directionalLight position={[5, 5, 5]} intensity={1} />
+            {/* Enhanced lighting for vibrant colors */}
+            <ambientLight intensity={0.8} />
+            <directionalLight position={[5, 5, 5]} intensity={1.2} />
+            <directionalLight position={[-5, -5, -5]} intensity={0.5} />
+            <pointLight position={[0, 5, 0]} intensity={0.4} color="#ffffff" />
             
             <React.Suspense fallback={null}>
                 <HangerModel color={color} hangerType={hangerType} />
