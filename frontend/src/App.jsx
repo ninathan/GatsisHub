@@ -31,7 +31,7 @@ import OrderDetail from './pages/SalesAdminPages/OrderDetail';
 import OperationalManLayout from './layouts/OperationalManLayout';
 import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM';
 import Employees from './pages/OperationalManagerPages/Employees';
-import EmployeeDetail from './pages/OperationalManagerPages/EmployeeDetail';  
+import EmployeeDetail from './pages/OperationalManagerPages/employeeDetail';  
 import CalendarOM from './pages/OperationalManagerPages/CalendarOM';
 import MessageSA from './pages/SalesAdminPages/messageSA';
 import AppLayout from './layouts/AppLayout';
