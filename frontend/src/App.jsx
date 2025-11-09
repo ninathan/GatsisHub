@@ -31,6 +31,7 @@ import OrderDetail from './pages/SalesAdminPages/OrderDetail';
 import OperationalManLayout from './layouts/OperationalManLayout';
 import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM';
 import Employees from './pages/OperationalManagerPages/Employees';
+import EmployeeDetail from './pages/OperationalManagerPages/EmployeeDetail';  
 import CalendarOM from './pages/OperationalManagerPages/CalendarOM';
 import MessageSA from './pages/SalesAdminPages/messageSA';
 import AppLayout from './layouts/AppLayout';
@@ -38,6 +39,8 @@ import Calendar from './pages/SalesAdminPages/Calendar';
 import DashboardSA from './pages/SalesAdminPages/Dashboard';
 import ProductSA from './pages/SalesAdminPages/ProductSA';
 import ProfileSA from './pages/SalesAdminPages/profileSA';
+import ProfileOM from './pages/OperationalManagerPages/ProfileOM';
+import OrderDetailOM from './pages/OperationalManagerPages/OrderDetailOM';
 
 
 // ✅ Protect logged-in customer routes
@@ -158,7 +161,9 @@ const router = createBrowserRouter(
         <Route path="/orderpageOM" element={<ProtectedOMRoute element={<OrderPageOM />} />} />
         <Route path="/calendarOM" element={<ProtectedOMRoute element={<CalendarOM />} />} />
         <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
-        <Route path="/employeeDetail" element={<ProtectedOMRoute element={<Employees />} />} /> {/* placeholder */}
+        <Route path="/employeeDetail" element={<ProtectedOMRoute element={<EmployeeDetail />} />} />
+        <Route path="/profileOM" element={<ProtectedOMRoute element={<ProfileOM />} />} />
+        <Route path="/orderdetailOM/:orderid" element={<ProtectedOMRoute element={<OrderDetailOM />} />} />
       </Route>
 
       {/* Admin/Manager Auth */}

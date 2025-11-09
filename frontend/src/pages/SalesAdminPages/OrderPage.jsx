@@ -136,6 +136,7 @@ const OrderPage = () => {
 
                 {/* Filters */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
+                    {/* Status Filter */}
                     <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 md:pb-0">
                         <button 
                             onClick={() => setSelectedFilter('All')}
@@ -163,6 +164,7 @@ const OrderPage = () => {
                         </button>
                     </div>
 
+                    {/* Date Range Filter */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center border rounded px-3 py-2 bg-white w-full md:w-auto">
                             <Search size={18} className="text-gray-500 mr-2 flex-shrink-0" />
