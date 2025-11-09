@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import supabase from "../supabaseClient.js";
 import { v4 as uuidv4 } from "uuid";
 import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -355,18 +356,39 @@ router.post('/google', async (req, res) => {
 
     // If not found, create a Supabase Auth user and insert into customers
     if (!customer) {
-      // 1️⃣ Create Auth user
-      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      console.log("🆕 Creating new Google user:", email);
+      
+      // 1️⃣ Create Auth user using signUp (works with service key)
+      const randomPassword = crypto.randomUUID();
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
-        password: crypto.randomUUID(), // random password
+        password: randomPassword,
+        options: {
+          data: {
+            google_id: sub,
+            name: name,
+            picture: picture
+          }
+        }
       });
-      if (authError) throw authError;
+
+      if (authError) {
+        console.error("❌ Auth error:", authError);
+        throw authError;
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        throw new Error("Failed to create auth user");
+      }
+
+      console.log("✅ Auth user created:", userId);
 
       // 2️⃣ Insert into customers table using Supabase Auth UUID
       const { data: newCustomer, error: insertError } = await supabase
         .from('customers')
         .insert([{
-          userid: authUser.id,
+          userid: userId,
           google_id: sub,
           companyname: name || "Google User",
           emailaddress: email,
@@ -380,8 +402,12 @@ router.post('/google', async (req, res) => {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("❌ Insert error:", insertError);
+        throw insertError;
+      }
 
+      console.log("✅ Customer record created");
       customer = newCustomer;
     }
 
@@ -393,7 +419,9 @@ router.post('/google', async (req, res) => {
 
   } catch (error) {
     console.error("❌ Google login error:", error);
-    res.status(400).json({ error: "Google login failed" });
+    console.error("❌ Error details:", error.message);
+    console.error("❌ Error stack:", error.stack);
+    res.status(400).json({ error: error.message || "Google login failed" });
   }
 });
 
