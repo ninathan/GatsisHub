@@ -409,6 +409,77 @@ router.post('/google', async (req, res) => {
 
       console.log("✅ Customer record created");
       customer = newCustomer;
+
+      // 3️⃣ Send welcome email to new Google user
+      try {
+        const resendApiKey = process.env.RESEND_API_KEY;
+        
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'GatsisHub <noreply@gatsishub.com>',
+            to: [email],
+            subject: 'Welcome to GatsisHub - Google Sign-In Successful!',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
+                  <p style="font-size: 18px; color: #666;">You're All Set!</p>
+                </div>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <h2 style="color: #35408E; margin-top: 0;">Hello ${name}!</h2>
+                  <p style="color: #333; line-height: 1.6;">
+                    Thank you for signing up with GatsisHub using your Google account. Your account has been successfully created!
+                  </p>
+                  <p style="color: #333; line-height: 1.6;">
+                    You can now start ordering premium custom hangers for your business.
+                  </p>
+                </div>
+
+                <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <h3 style="margin-top: 0;">Account Details:</h3>
+                  <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+                  <p style="margin: 5px 0;"><strong>Sign-In Method:</strong> Google Account</p>
+                  <p style="margin: 5px 0;"><strong>Account Status:</strong> Active</p>
+                </div>
+
+                <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #DAC325; margin-bottom: 20px;">
+                  <p style="color: #856404; margin: 0; line-height: 1.6;">
+                    <strong>📍 Next Step:</strong> Complete your delivery address to start placing orders!
+                  </p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
+                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Access Your Account
+                  </a>
+                </div>
+
+                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+                  <p>You can sign in anytime using your Google account - no password needed!</p>
+                  <p>If you didn't create this account, please ignore this email or contact our support team.</p>
+                  <p style="margin-top: 20px;">
+                    Best regards,<br/>
+                    <strong>The GatsisHub Team</strong><br/>
+                    Premium Hanger Solutions
+                  </p>
+                </div>
+              </div>
+            `
+          })
+        });
+
+        console.log("✅ Welcome email sent to:", email);
+      } catch (emailError) {
+        console.error("⚠️ Failed to send welcome email:", emailError);
+        // Don't fail the signup if email fails
+      }
     }
 
     // ✅ Return customer data

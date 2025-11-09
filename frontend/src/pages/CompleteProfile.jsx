@@ -88,14 +88,14 @@ function CompleteProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl">
-        <div className="text-center mb-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Complete Your Profile</h1>
           <p className="text-gray-600">We need your delivery address to process your orders</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Street Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -133,24 +133,15 @@ function CompleteProfile() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Province <span className="text-red-500">*</span>
               </label>
-              <select
+              <input
+                type="text"
                 name="province"
                 value={formData.province}
                 onChange={handleChange}
+                placeholder="Metro Manila"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-              >
-                <option value="">Select Province</option>
-                <option value="Gauteng">Gauteng</option>
-                <option value="Western Cape">Western Cape</option>
-                <option value="Eastern Cape">Eastern Cape</option>
-                <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-                <option value="Free State">Free State</option>
-                <option value="Limpopo">Limpopo</option>
-                <option value="Mpumalanga">Mpumalanga</option>
-                <option value="Northern Cape">Northern Cape</option>
-                <option value="North West">North West</option>
-              </select>
+              />
             </div>
           </div>
 
@@ -190,14 +181,14 @@ function CompleteProfile() {
           {/* Company Number (Optional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company Registration Number (Optional)
+              Company Number (Optional)
             </label>
             <input
               type="text"
               name="companyNumber"
               value={formData.companyNumber}
               onChange={handleChange}
-              placeholder="2023/123456/07"
+              placeholder="0912345678"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -223,7 +214,7 @@ function CompleteProfile() {
           </button>
         </form>
 
-        <p className="text-xs text-gray-500 text-center mt-6">
+        <p className="text-xs text-gray-500 text-center mt-4">
           Your information is secure and will only be used for order delivery
         </p>
       </div>
