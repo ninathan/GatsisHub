@@ -819,7 +819,7 @@ const Order = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && (
-                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="flex items-center justify-center py-4 relative">
@@ -859,7 +859,7 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -955,7 +955,7 @@ const Order = () => {
 
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-red-600 px-4 md:px-6 py-3 md:py-4">

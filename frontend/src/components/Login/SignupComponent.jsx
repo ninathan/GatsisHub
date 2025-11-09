@@ -9,9 +9,13 @@ import { Eye, EyeOff, Check, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import Terms from '../TermsAndConditions'
 import PageTransition from '../Transition/PageTransition'
+import { GoogleLogin } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
+import { useAuth } from '../../context/AuthContext'
 
 const Signup = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   // form data
   const [companyName, setCompanyName] = useState('')
@@ -105,6 +109,48 @@ const Signup = () => {
       setLoading(false)
     }
   }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential
+      const decoded = jwtDecode(token)
+      console.log('✅ Google user info:', decoded)
+
+      // Send token to backend for Google signup/login
+      const res = await fetch('https://gatsis-hub.vercel.app/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Google sign-up failed')
+
+      // Save user and redirect
+      localStorage.setItem('user', JSON.stringify(data.user))
+      login(data.user)
+
+      // Check if user needs to complete profile (new Google users without addresses)
+      if (!data.user.addresses || data.user.addresses.length === 0) {
+        console.log('🔄 New Google user - redirecting to complete profile')
+        navigate('/complete-profile')
+      } else {
+        navigate('/logged')
+      }
+      
+      window.dispatchEvent(new Event('user-updated'))
+    } catch (err) {
+      console.error('❌ Google sign-up error:', err.message)
+      setError(err.message || 'Google Sign-Up was unsuccessful. Please try again.')
+    }
+  }
+
+  const handleGoogleError = () => {
+    setError('Google Sign-Up was unsuccessful. Please try again.')
+  }
+
+  const IntputField =
+    'border border-gray-300 rounded-2xl pl-12 pr-4 py-3 md:py-4 w-full text-base md:text-lg lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
 
   return (
     <PageTransition direction='left'>
@@ -314,7 +360,7 @@ const Signup = () => {
                   </span>
                 </div>
                 {modalOpen && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50 p-4">
+                  <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50 p-4">
                     <div className="bg-[#35408E] rounded-2xl p-6 md:p-8 max-w-lg w-full max-h-[90vh] shadow-xl relative overflow-hidden">
                       <button
                         className="absolute top-3 right-3 text-gray-500"
@@ -360,17 +406,22 @@ const Signup = () => {
               {/* OR divider */}
               <div className='flex items-center justify-center mt-4'>
                 <hr className='w-1/4 border-gray-300' />
-                <span className='mx-2 text-gray-600 text-sm md:text-base'>or sign up with</span>
+                <span className='mx-2 text-gray-600 text-sm md:text-base'>or</span>
                 <hr className='w-1/4 border-gray-300' />
               </div>
 
               {/* Google sign-up */}
-              <button
-                type='button'
-                className='flex items-center justify-center gap-3 border border-gray-300 rounded-2xl py-3 hover:bg-gray-100 transition-colors'>
-                <img src={googlelogo} alt='Google logo' className='w-6 h-6' />
-                <span className='text-gray-700 text-lg md:text-xl'>Sign up with Google</span>
-              </button>
+              <div className='flex justify-center mt-4'>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="outline"
+                  size="large"
+                  text="signup_with"
+                  shape="pill"
+                  width="400"
+                />
+              </div>
             </form>
           </div>
         </div>

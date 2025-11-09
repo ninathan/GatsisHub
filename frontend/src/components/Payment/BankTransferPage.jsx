@@ -62,7 +62,7 @@ const BankTransferPage = () => {
             </div>
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
+                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
                     <div className="bg-[#35408E] rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
                         <h3 className="text-xl font-semibold mb-4 text-white">Thank you for Ordering</h3>
                         <p className="mb-6 text-white">We'll update you once your order has been confirmed.</p>

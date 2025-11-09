@@ -41,6 +41,7 @@ import ProductSA from './pages/SalesAdminPages/ProductSA';
 import ProfileSA from './pages/SalesAdminPages/profileSA';
 import ProfileOM from './pages/OperationalManagerPages/ProfileOM';
 import OrderDetailOM from './pages/OperationalManagerPages/OrderDetailOM';
+import CompleteProfile from './pages/CompleteProfile';
 
 
 // ✅ Protect logged-in customer routes
@@ -144,6 +145,9 @@ const router = createBrowserRouter(
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         <Route path="/changepassword" element={<ChangePassword />} />
       </Route>
+
+      {/* Profile Completion (standalone, no layout) */}
+      <Route path="/complete-profile" element={<ProtectedRoute element={<CompleteProfile />} />} />
 
       {/*  Sales Admin layout */}
       <Route element={<SalesAdminLayout />}>

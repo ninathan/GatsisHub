@@ -1552,7 +1552,7 @@ const Checkout = () => {
 
                 {/* Modal */}
                 {showModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
                         <div className="bg-[#35408E] rounded-lg shadow-lg p-8 text-center max-w-md">
                             <img
                                 src={validationIcon}
@@ -1593,7 +1593,7 @@ const Checkout = () => {
 
                 {/* Instructions Modal */}
                 {showInstructionsModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
                         <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
@@ -2133,7 +2133,7 @@ const Checkout = () => {
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-[rgba(143,143,143,0.65)] flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
                         {/* Modal Icon */}
                         <div className="flex justify-center mb-4">

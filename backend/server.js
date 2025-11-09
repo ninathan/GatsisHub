@@ -8,6 +8,7 @@ import feedbacksRoutes from "./routes/feedbacks.js";
 import employeesRoutes from "./routes/employees.js";
 import messagesRoutes from "./routes/messages.js";
 import notificationsRoutes from "./routes/notifications.js";
+import customersRoutes from "./routes/customers.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/feedbacks", feedbacksRoutes);
 app.use("/employees", employeesRoutes);
 app.use("/messages", messagesRoutes);
 app.use("/notifications", notificationsRoutes);
+app.use("/customers", customersRoutes);
 
 // Health check
 app.get("/", (req, res) => {

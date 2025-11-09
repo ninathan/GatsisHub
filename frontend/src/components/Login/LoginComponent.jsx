@@ -67,7 +67,15 @@ const Login = () => {
       // Save user locally
       localStorage.setItem('user', JSON.stringify(data.user || decoded))
       login(data.user)
-      navigate('/logged')
+
+      // Check if user needs to complete profile (new Google users without addresses)
+      if (!data.user.addresses || data.user.addresses.length === 0) {
+        console.log('🔄 New Google user - redirecting to complete profile')
+        navigate('/complete-profile')
+      } else {
+        navigate('/logged')
+      }
+      
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
       console.error('❌ Google login error:', err.message)

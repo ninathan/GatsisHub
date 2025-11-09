@@ -10,6 +10,12 @@ const Employees = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const [formData, setFormData] = useState({
         employeename: "",
         contactdetails: "",
@@ -104,43 +110,61 @@ const Employees = () => {
             );
 
             if (response.ok) {
-                alert('Employee updated successfully!');
+                setSuccessMessage('Employee updated successfully!');
+                setShowSuccessModal(true);
                 handleCloseModal();
                 fetchEmployees(); // Refresh the list
             } else {
                 const error = await response.json();
-                alert(`Error: ${error.error || 'Failed to update employee'}`);
+                setErrorMessage(error.error || 'Failed to update employee');
+                setShowErrorModal(true);
             }
         } catch (error) {
             console.error('Error updating employee:', error);
-            alert('Failed to update employee');
+            setErrorMessage('Failed to update employee. Please try again.');
+            setShowErrorModal(true);
         }
     };
 
-    const handleDeleteEmployee = async (employeeid, employeename) => {
-        if (!window.confirm(`Are you sure you want to delete ${employeename}? This action cannot be undone.`)) {
-            return;
-        }
+    const handleDeleteClick = (employee) => {
+        setEmployeeToDelete(employee);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!employeeToDelete) return;
 
         try {
             const response = await fetch(
-                `https://gatsis-hub.vercel.app/employees/${employeeid}`,
+                `https://gatsis-hub.vercel.app/employees/${employeeToDelete.employeeid}`,
                 {
                     method: 'DELETE',
                 }
             );
 
             if (response.ok) {
-                alert('Employee deleted successfully!');
+                setSuccessMessage(`${employeeToDelete.employeename} has been deleted successfully!`);
+                setShowSuccessModal(true);
+                setShowDeleteConfirm(false);
+                setEmployeeToDelete(null);
                 fetchEmployees(); // Refresh the list
             } else {
                 const error = await response.json();
-                alert(`Error: ${error.error || 'Failed to delete employee'}`);
+                setErrorMessage(error.error || 'Failed to delete employee');
+                setShowErrorModal(true);
+                setShowDeleteConfirm(false);
             }
         } catch (error) {
             console.error('Error deleting employee:', error);
-            alert('Failed to delete employee');
+            setErrorMessage('Failed to delete employee. Please try again.');
+            setShowErrorModal(true);
+            setShowDeleteConfirm(false);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setEmployeeToDelete(null);
     };
 
     const renderContent = () => {
@@ -226,7 +250,7 @@ const Employees = () => {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleDeleteEmployee(emp.employeeid, emp.employeename);
+                                                                handleDeleteClick(emp);
                                                             }}
                                                             className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors"
                                                             title="Delete Employee"
@@ -242,7 +266,7 @@ const Employees = () => {
 
                                 {/* Modal */}
                                 {isModalOpen && selectedEmployee && (
-                                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
                                         <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-8 relative mx-4">
                                             <button
                                                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -437,6 +461,82 @@ const Employees = () => {
 
                 {/* Dynamic Content */}
                 {renderContent()}
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && employeeToDelete && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                <FaTrash className="text-red-600 text-xl" />
+                            </div>
+                            <h3 className="text-xl font-bold text-center mb-2">Delete Employee</h3>
+                            <p className="text-gray-600 text-center mb-6">
+                                Are you sure you want to delete <span className="font-semibold">{employeeToDelete.employeename}</span>? 
+                                This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={handleCancelDelete}
+                                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmDelete}
+                                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Success Modal */}
+                {showSuccessModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-center mb-2">Success!</h3>
+                            <p className="text-gray-600 text-center mb-6">{successMessage}</p>
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => setShowSuccessModal(false)}
+                                    className="px-8 py-2 bg-[#35408E] text-white rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error Modal */}
+                {showErrorModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-center mb-2">Error</h3>
+                            <p className="text-gray-600 text-center mb-6">{errorMessage}</p>
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => setShowErrorModal(false)}
+                                    className="px-8 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
