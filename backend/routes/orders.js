@@ -407,36 +407,39 @@ router.patch("/:orderid/status", async (req, res) => {
 
     console.log(`✅ Status updated successfully for order ${orderid}`);
 
-    // Create notification for customer about order status change
+    // Create notification and send email for customer about order status change
     try {
-      // Get customer ID from order
+      // Get customer data including email and preferences
       const { data: customerData, error: customerError } = await supabase
         .from("customers")
-        .select("customerid")
+        .select("customerid, companyname, emailaddress, emailnotifications")
         .eq("userid", order[0].userid)
         .single();
 
       if (!customerError && customerData) {
         const notificationTitles = {
-          'Pending': 'Order Pending',
-          'Validated': 'Order Validated',
-          'Processing': 'Order Processing',
+          'For Evaluation': 'Order Received',
+          'Waiting for Payment': 'Payment Required',
+          'Approved': 'Order Approved',
           'In Production': 'Order In Production',
-          'Shipped': 'Order Shipped',
+          'Waiting for Shipment': 'Ready for Shipment',
+          'In Transit': 'Order Shipped',
           'Completed': 'Order Completed',
           'Cancelled': 'Order Cancelled'
         };
 
         const notificationMessages = {
-          'Pending': 'Your order is pending review.',
-          'Validated': 'Your order has been validated and approved.',
-          'Processing': 'Your order is now being processed.',
-          'In Production': 'Your order is currently in production.',
-          'Shipped': 'Your order has been shipped and is on its way!',
-          'Completed': 'Your order has been completed successfully.',
+          'For Evaluation': 'Your order is being reviewed by our team.',
+          'Waiting for Payment': 'Your order has been validated. Please proceed with payment.',
+          'Approved': 'Your order has been approved and will move to production soon.',
+          'In Production': 'Your order is currently being produced.',
+          'Waiting for Shipment': 'Your order is ready and waiting for shipment.',
+          'In Transit': 'Your order has been shipped and is on its way!',
+          'Completed': 'Your order has been completed successfully. Thank you!',
           'Cancelled': 'Your order has been cancelled.'
         };
 
+        // Create in-app notification
         await supabase
           .from('notifications')
           .insert([
@@ -451,7 +454,84 @@ router.patch("/:orderid/status", async (req, res) => {
             }
           ]);
 
-        console.log(`✅ Notification created for order ${orderid} status change to ${status}`);
+        console.log(`✅ In-app notification created for order ${orderid}`);
+
+        // Send email if customer has email notifications enabled
+        if (customerData.emailnotifications) {
+          try {
+            const resendApiKey = process.env.RESEND_API_KEY;
+            
+            if (resendApiKey) {
+              console.log(`📧 Sending email notification to: ${customerData.emailaddress}`);
+
+              const orderNumber = orderid.slice(0, 8).toUpperCase();
+              const emailSubject = notificationTitles[status] || 'Order Status Update';
+              const emailMessage = notificationMessages[status] || `Your order status has been updated to ${status}.`;
+
+              const emailResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: 'GatsisHub <noreply@gatsishub.com>',
+                  to: [customerData.emailaddress],
+                  subject: `${emailSubject} - Order #${orderNumber}`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="background-color: #35408E; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="color: white; margin: 0;">GatsisHub</h1>
+                      </div>
+                      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+                        <h2 style="color: #35408E; margin-top: 0;">${emailSubject}</h2>
+                        <p style="font-size: 16px; color: #333;">Hello ${customerData.companyname},</p>
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">${emailMessage}</p>
+                        
+                        <div style="background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #35408E; border-radius: 4px;">
+                          <p style="margin: 0; color: #666; font-size: 14px;"><strong>Order Number:</strong> ORD-${orderNumber}</p>
+                          <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;"><strong>Status:</strong> ${status}</p>
+                        </div>
+
+                        <p style="font-size: 14px; color: #666; line-height: 1.6;">
+                          You can view your order details and track its progress by logging into your account.
+                        </p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                          <a href="https://gatsishub.com/orders" style="background-color: #35408E; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                            View Order
+                          </a>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+                        
+                        <p style="font-size: 12px; color: #999; text-align: center;">
+                          You're receiving this email because you have order notifications enabled.<br>
+                          You can manage your notification preferences in your account settings.
+                        </p>
+                      </div>
+                    </div>
+                  `
+                })
+              });
+
+              if (emailResponse.ok) {
+                const emailData = await emailResponse.json();
+                console.log(`✅ Email sent successfully. Email ID: ${emailData.id}`);
+              } else {
+                const errorData = await emailResponse.json();
+                console.error(`⚠️ Failed to send email:`, errorData);
+              }
+            } else {
+              console.warn('⚠️ RESEND_API_KEY not configured, skipping email');
+            }
+          } catch (emailErr) {
+            console.error('⚠️ Error sending email notification:', emailErr.message);
+            // Don't fail the request if email sending fails
+          }
+        } else {
+          console.log(`ℹ️ Email notifications disabled for customer ${customerData.customerid}`);
+        }
       }
     } catch (notifErr) {
       console.warn('⚠️ Failed to create notification:', notifErr.message);
