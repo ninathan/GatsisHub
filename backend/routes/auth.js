@@ -354,37 +354,15 @@ router.post('/google', async (req, res) => {
 
     if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-    // If not found, create a Supabase Auth user and insert into customers
+    // If not found, create customer record (no Supabase Auth needed for Google OAuth)
     if (!customer) {
       console.log("🆕 Creating new Google user:", email);
       
-      // 1️⃣ Create Auth user using signUp (works with service key)
-      const randomPassword = crypto.randomUUID();
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: randomPassword,
-        options: {
-          data: {
-            google_id: sub,
-            name: name,
-            picture: picture
-          }
-        }
-      });
+      // Generate a unique user ID for the customer
+      const userId = uuidv4();
+      console.log("✅ Generated user ID:", userId);
 
-      if (authError) {
-        console.error("❌ Auth error:", authError);
-        throw authError;
-      }
-
-      const userId = authData.user?.id;
-      if (!userId) {
-        throw new Error("Failed to create auth user");
-      }
-
-      console.log("✅ Auth user created:", userId);
-
-      // 2️⃣ Insert into customers table using Supabase Auth UUID
+      // Insert into customers table
       const { data: newCustomer, error: insertError } = await supabase
         .from('customers')
         .insert([{
