@@ -347,15 +347,15 @@ const MessagesPage = () => {
                                     >
                                         <div className="flex items-start gap-2 md:gap-3">
                                             <div className="w-10 h-10 md:w-12 md:h-12 border-2 border-gray-300 rounded flex items-center justify-center bg-white flex-shrink-0 overflow-hidden shadow-sm">
-                                                {notification.thumbnailType === 'logo' && notification.thumbnail ? (
-                                                    // Show logo image
+                                                {notification.thumbnailType === 'image' && notification.thumbnail ? (
+                                                    // Show 3D hanger preview image
                                                     <img 
                                                         src={notification.thumbnail} 
-                                                        alt="Order logo"
-                                                        className="w-full h-full object-contain p-1"
+                                                        alt="Hanger preview"
+                                                        className="w-full h-full object-cover"
                                                     />
                                                 ) : notification.thumbnailType === 'color' && notification.thumbnail ? (
-                                                    // Show colored box with hanger icon
+                                                    // Show colored box with hanger icon (fallback)
                                                     <div 
                                                         className="w-full h-full flex items-center justify-center text-white text-lg md:text-xl"
                                                         style={{ backgroundColor: notification.thumbnail }}

@@ -220,4 +220,103 @@ router.post("/change-password", async (req, res) => {
   }
 });
 
+// ✏️ Update employee details
+router.patch("/:employeeid", async (req, res) => {
+  try {
+    const { employeeid } = req.params;
+    const { employeename, email, contactdetails, shifthours, assigneddepartment, accountstatus } = req.body;
+
+    console.log(`✏️ Updating employee: ${employeeid}`);
+
+    // Build update object with only provided fields
+    const updateData = {};
+    if (employeename !== undefined) updateData.employeename = employeename;
+    if (email !== undefined) updateData.email = email.toLowerCase();
+    if (contactdetails !== undefined) updateData.contactdetails = contactdetails;
+    if (shifthours !== undefined) updateData.shifthours = shifthours;
+    if (assigneddepartment !== undefined) updateData.assigneddepartment = assigneddepartment;
+    if (accountstatus !== undefined) updateData.accountstatus = accountstatus;
+
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No fields provided for update" });
+    }
+
+    // Update employee
+    const { data: employee, error } = await supabase
+      .from("employees")
+      .update(updateData)
+      .eq("employeeid", employeeid)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`❌ Error updating employee:`, error);
+      throw error;
+    }
+
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    console.log(`✅ Employee updated successfully: ${employeeid}`);
+
+    // Return employee data (excluding password)
+    const { password: _, ...employeeData } = employee;
+
+    res.status(200).json({
+      message: "Employee updated successfully",
+      employee: employeeData
+    });
+  } catch (err) {
+    console.error("💥 Update Employee Error:", err);
+    res.status(500).json({ error: err.message || "Failed to update employee" });
+  }
+});
+
+// 🗑️ Delete employee
+router.delete("/:employeeid", async (req, res) => {
+  try {
+    const { employeeid } = req.params;
+
+    console.log(`🗑️ Deleting employee: ${employeeid}`);
+
+    // Check if employee exists
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from("employees")
+      .select("employeename, role")
+      .eq("employeeid", employeeid)
+      .single();
+
+    if (fetchError || !existingEmployee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    // Delete employee
+    const { error } = await supabase
+      .from("employees")
+      .delete()
+      .eq("employeeid", employeeid);
+
+    if (error) {
+      console.error(`❌ Error deleting employee:`, error);
+      throw error;
+    }
+
+    console.log(`✅ Employee deleted successfully: ${employeeid} (${existingEmployee.employeename})`);
+
+    res.status(200).json({
+      message: "Employee deleted successfully",
+      deletedEmployee: {
+        employeeid,
+        employeename: existingEmployee.employeename,
+        role: existingEmployee.role
+      }
+    });
+  } catch (err) {
+    console.error("💥 Delete Employee Error:", err);
+    res.status(500).json({ error: err.message || "Failed to delete employee" });
+  }
+});
+
 export default router;

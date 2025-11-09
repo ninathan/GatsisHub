@@ -129,7 +129,7 @@ const CalendarOM = () => {
     const handleDeadlineClick = (orderId) => {
         // For now, navigate to orders page
         // TODO: Create OM order detail page
-        navigate('/orderpageOM');
+        navigate(`/orderdetailOM/${orderId}`);
     };
 
     // Handle month click in year view

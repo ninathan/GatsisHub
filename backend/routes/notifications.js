@@ -44,7 +44,7 @@ router.get('/customer/:customerid', async (req, res) => {
       // Extract design data for thumbnail
       let designData = null;
       let thumbnail = null;
-      let thumbnailType = 'icon'; // 'logo', 'color', or 'icon'
+      let thumbnailType = 'icon'; // 'image', 'color', or 'icon'
       
       if (notif.orders?.threeddesigndata) {
         try {
@@ -52,12 +52,12 @@ router.get('/customer/:customerid', async (req, res) => {
             ? JSON.parse(notif.orders.threeddesigndata)
             : notif.orders.threeddesigndata;
           
-          // Priority 1: Use logo preview as thumbnail if available
-          if (designData.logoPreview) {
-            thumbnail = designData.logoPreview;
-            thumbnailType = 'logo';
+          // Priority 1: Use rendered 3D hanger thumbnail (base64 image)
+          if (designData.thumbnail) {
+            thumbnail = designData.thumbnail;
+            thumbnailType = 'image';
           }
-          // Priority 2: Use hanger color if no logo
+          // Priority 2: Use hanger color as fallback
           else if (designData.color || notif.orders?.selectedcolor) {
             thumbnail = designData.color || notif.orders?.selectedcolor;
             thumbnailType = 'color';

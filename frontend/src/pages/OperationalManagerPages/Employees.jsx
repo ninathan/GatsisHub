@@ -1,185 +1,354 @@
-import React, { useState } from "react";
-import { FaSearch, FaFilter, FaEllipsisV } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit } from "react-icons/fa";
 
 const Employees = () => {
-    const employees = [
-        { name: "Liam Parker", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Isabela Cruz", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Ethan Navarro", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Sophia Ramirez", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Noah Gucci", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Tomo Gucci", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Lucas Moreno", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Light Skin Monte", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Artorias Stiff", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-        { name: "Regine Velazquez", role: "Production", phone: "(555) 123-4567", attendance: "Present", target: 250, finished: 158, shift: "8:00 am to 5:00 pm" },
-    ];
-
+    const [employees, setEmployees] = useState([]);
+    const [filteredEmployees, setFilteredEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("all");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        employeename: "",
+        contactdetails: "",
+        shifthours: "",
+        assigneddepartment: "",
+    });
 
-    const handleOpenModal = (employee) => {
+    useEffect(() => {
+        fetchEmployees();
+    }, []);
+
+    useEffect(() => {
+        // Filter employees based on search term
+        if (searchTerm.trim() === "") {
+            setFilteredEmployees(employees);
+        } else {
+            const filtered = employees.filter(emp =>
+                emp.employeename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                emp.assigneddepartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                emp.contactdetails?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setFilteredEmployees(filtered);
+        }
+    }, [searchTerm, employees]);
+
+    const fetchEmployees = async () => {
+        try {
+            setLoading(true);
+            // Fetch only Production and Assembly employees
+            const response = await fetch(
+                'https://gatsis-hub.vercel.app/employees'
+            );
+            const data = await response.json();
+            
+            // Filter to only show Production and Assembly roles
+            const productionAndAssembly = data.employees.filter(
+                emp => emp.assigneddepartment === 'Production' || emp.assigneddepartment === 'Assembly'
+            );
+            
+            setEmployees(productionAndAssembly);
+            setFilteredEmployees(productionAndAssembly);
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenModal = (employee, editing = false) => {
         setSelectedEmployee(employee);
+        setIsEditing(editing);
+        setFormData({
+            employeename: employee.employeename,
+            contactdetails: employee.contactdetails || "",
+            shifthours: employee.shifthours || "",
+            assigneddepartment: employee.assigneddepartment || "",
+        });
         setIsModalOpen(true);
     };
 
-    const teams = [
-        {
-            name: "Team 1",
-            group: "Production team",
-            order: "ORD-20250529-8743",
-            task: "Production",
-            target: 1000,
-            finished: 632,
-            shift: "8:00am - 5:00pm",
-        },
-        {
-            name: "Team 2",
-            group: "Assembly team",
-            order: "ORD-20250529-8743",
-            task: "Assembly",
-            target: 1000,
-            finished: 632,
-            shift: "8:00am - 5:00pm",
-        },
-    ];
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedEmployee(null);
+        setIsEditing(false);
+        setFormData({
+            employeename: "",
+            contactdetails: "",
+            shifthours: "",
+            assigneddepartment: "",
+        });
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleUpdateEmployee = async () => {
+        try {
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/employees/${selectedEmployee.employeeid}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                }
+            );
+
+            if (response.ok) {
+                alert('Employee updated successfully!');
+                handleCloseModal();
+                fetchEmployees(); // Refresh the list
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.error || 'Failed to update employee'}`);
+            }
+        } catch (error) {
+            console.error('Error updating employee:', error);
+            alert('Failed to update employee');
+        }
+    };
+
+    const handleDeleteEmployee = async (employeeid, employeename) => {
+        if (!window.confirm(`Are you sure you want to delete ${employeename}? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/employees/${employeeid}`,
+                {
+                    method: 'DELETE',
+                }
+            );
+
+            if (response.ok) {
+                alert('Employee deleted successfully!');
+                fetchEmployees(); // Refresh the list
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.error || 'Failed to delete employee'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting employee:', error);
+            alert('Failed to delete employee');
+        }
+    };
 
     const renderContent = () => {
         switch (activeTab) {
             case "all":
                 return (
                     <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-[#35408E] text-white">
-                                <tr>
-                                    <th className="p-3">
-                                        <input type="checkbox" />
-                                    </th>
-                                    <th className="p-3">Employee</th>
-                                    <th className="p-3">Contact details</th>
-                                    <th className="p-3">Attendance</th>
-                                    <th className="p-3">Target quota</th>
-                                    <th className="p-3">Finished quota</th>
-                                    <th className="p-3">Shift hours</th>
-                                    <th className="p-3"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {employees.map((emp, i) => (
-                                    <tr
-                                        key={i}
-                                        className="border-b hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => handleOpenModal(emp)}
-                                    >
-                                        <td className="p-3">
-                                            <input type="checkbox" />
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full bg-gray-400"></div>
+                        {loading ? (
+                            <div className="p-8 text-center text-gray-500">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35408E] mx-auto mb-4"></div>
+                                Loading employees...
+                            </div>
+                        ) : filteredEmployees.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">
+                                No employees found {searchTerm && `matching "${searchTerm}"`}
+                            </div>
+                        ) : (
+                            <>
+                                <table className="w-full text-left">
+                                    <thead className="bg-[#35408E] text-white">
+                                        <tr>
+                                            <th className="p-3">Employee</th>
+                                            <th className="p-3">Department</th>
+                                            <th className="p-3">Contact details</th>
+                                            <th className="p-3">Status</th>
+                                            <th className="p-3">Shift hours</th>
+                                            <th className="p-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredEmployees.map((emp) => (
+                                            <tr
+                                                key={emp.employeeid}
+                                                className="border-b hover:bg-gray-50"
+                                            >
+                                                <td className="p-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center font-semibold">
+                                                            {emp.employeename?.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold">{emp.employeename}</p>
+                                                            <p className="text-xs text-gray-500">{emp.email}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                        emp.assigneddepartment === 'Production' 
+                                                            ? 'bg-blue-100 text-blue-700' 
+                                                            : 'bg-purple-100 text-purple-700'
+                                                    }`}>
+                                                        {emp.assigneddepartment}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3">{emp.contactdetails || 'N/A'}</td>
+                                                <td className="p-3">
+                                                    <span className={`px-3 py-1 rounded-full text-sm ${
+                                                        emp.ispresent 
+                                                            ? 'bg-green-100 text-green-700' 
+                                                            : 'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                        {emp.ispresent ? 'Present' : 'Absent'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3">{emp.shifthours || 'N/A'}</td>
+                                                <td className="p-3">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenModal(emp, false)}
+                                                            className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition-colors"
+                                                            title="View Details"
+                                                        >
+                                                            <FaEllipsisV />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleOpenModal(emp, true)}
+                                                            className="text-green-600 hover:text-green-800 p-2 hover:bg-green-50 rounded transition-colors"
+                                                            title="Edit Employee"
+                                                        >
+                                                            <FaEdit />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteEmployee(emp.employeeid, emp.employeename);
+                                                            }}
+                                                            className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded transition-colors"
+                                                            title="Delete Employee"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                {/* Modal */}
+                                {isModalOpen && selectedEmployee && (
+                                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                        <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-8 relative mx-4">
+                                            <button
+                                                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                                                onClick={handleCloseModal}
+                                            >
+                                                &times;
+                                            </button>
+                                            <div className="flex gap-4 items-center mb-6">
+                                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center text-2xl font-bold">
+                                                    {selectedEmployee.employeename?.charAt(0).toUpperCase()}
+                                                </div>
                                                 <div>
-                                                    <p className="font-semibold">{emp.name}</p>
-                                                    <p className="text-sm text-gray-500">{emp.role}</p>
+                                                    <h2 className="text-2xl font-bold mb-1">{selectedEmployee.employeename}</h2>
+                                                    <p className="text-gray-600">{selectedEmployee.assigneddepartment}</p>
+                                                    <p className="text-sm text-gray-500">{selectedEmployee.email}</p>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="p-3">{emp.phone}</td>
-                                        <td className="p-3">
-                                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                                                {emp.attendance}
-                                            </span>
-                                        </td>
-                                        <td className="p-3">{emp.target}</td>
-                                        <td className="p-3">{emp.finished}</td>
-                                        <td className="p-3">{emp.shift}</td>
-                                        <td className="p-3">
-                                            <button
-                                                onClick={e => {
-                                                    e.stopPropagation();
-                                                    handleOpenModal(emp);
-                                                }}
-                                            >
-                                                <FaEllipsisV />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
 
-                        {/* Modal */}
-                        {isModalOpen && selectedEmployee && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
-                                <div className="bg-white rounded-lg shadow-lg w-[500px] p-8 relative">
-                                    <button
-                                        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
-                                        onClick={() => setIsModalOpen(false)}
-                                    >
-                                        &times;
-                                    </button>
-                                    <div className="flex gap-4 items-center mb-4">
-                                        <div className="w-16 h-16 rounded-full bg-gray-300"></div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold mb-1">{selectedEmployee.name}</h2>
-                                            <p className="text-gray-600">{selectedEmployee.role}</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Employee Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="employeename"
+                                                        className={`w-full border rounded px-4 py-2 ${isEditing ? 'bg-white' : 'bg-gray-100'}`}
+                                                        value={formData.employeename}
+                                                        onChange={handleInputChange}
+                                                        readOnly={!isEditing}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Department</label>
+                                                    <select
+                                                        name="assigneddepartment"
+                                                        className={`w-full border rounded px-4 py-2 ${isEditing ? 'bg-white' : 'bg-gray-100'}`}
+                                                        value={formData.assigneddepartment}
+                                                        onChange={handleInputChange}
+                                                        disabled={!isEditing}
+                                                    >
+                                                        <option value="Production">Production</option>
+                                                        <option value="Assembly">Assembly</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Contact Details</label>
+                                                    <input
+                                                        type="text"
+                                                        name="contactdetails"
+                                                        className={`w-full border rounded px-4 py-2 ${isEditing ? 'bg-white' : 'bg-gray-100'}`}
+                                                        value={formData.contactdetails}
+                                                        onChange={handleInputChange}
+                                                        readOnly={!isEditing}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Shift Hours</label>
+                                                    <input
+                                                        type="text"
+                                                        name="shifthours"
+                                                        className={`w-full border rounded px-4 py-2 ${isEditing ? 'bg-white' : 'bg-gray-100'}`}
+                                                        value={formData.shifthours}
+                                                        onChange={handleInputChange}
+                                                        readOnly={!isEditing}
+                                                        placeholder="e.g., 8:00 AM - 5:00 PM"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Account Status</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border rounded px-4 py-2 bg-gray-100"
+                                                        value={selectedEmployee.accountstatus}
+                                                        readOnly
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Presence Status</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border rounded px-4 py-2 bg-gray-100"
+                                                        value={selectedEmployee.ispresent ? 'Present' : 'Absent'}
+                                                        readOnly
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-end gap-3">
+                                                <button
+                                                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded text-lg font-semibold hover:bg-gray-400 transition-colors"
+                                                    onClick={handleCloseModal}
+                                                >
+                                                    Close
+                                                </button>
+                                                {isEditing && (
+                                                    <button
+                                                        className="bg-[#35408E] text-white px-6 py-2 rounded text-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                                        onClick={handleUpdateEmployee}
+                                                    >
+                                                        Save Changes
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 mb-1">Contact Details</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded px-3 py-2"
-                                            value={selectedEmployee.phone}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 mb-1">Shift Hours</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded px-3 py-2"
-                                            value={selectedEmployee.shift}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 mb-1">Department</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded px-3 py-2"
-                                            value={selectedEmployee.role}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 mb-1">Target Quota</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded px-3 py-2"
-                                            value={selectedEmployee.target}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="mb-6">
-                                        <label className="block text-gray-700 mb-1">Finished Quota</label>
-                                        <input
-                                            type="text"
-                                            className="w-full border rounded px-3 py-2"
-                                            value={selectedEmployee.finished}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button
-                                            className="bg-[#35408E] text-white px-8 py-2 rounded text-lg font-semibold"
-                                            onClick={() => setIsModalOpen(false)}
-                                        >
-                                            Update
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                                )}
+                            </>
                         )}
                     </div>
                 );
@@ -187,110 +356,14 @@ const Employees = () => {
                 return (
                     <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-xl font-bold mb-4">Edit Employees</h2>
-                        <p className="text-gray-600">Here you can manage and edit employees.</p>
+                        <p className="text-gray-600">Switch to the "All" tab to view, edit, or delete employees.</p>
                     </div>
                 );
             case "teams":
                 return (
                     <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-xl font-bold mb-4">Teams</h2>
-                        <table className="w-full text-left">
-                            <thead className="bg-[#35408E] text-white">
-                                <tr>
-                                    <th className="p-3">Team Name</th>
-                                    <th className="p-3">Group</th>
-                                    <th className="p-3">Order</th>
-                                    <th className="p-3">Task</th>
-                                    <th className="p-3">Target</th>
-                                    <th className="p-3">Finished</th>
-                                    <th className="p-3">Shift</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {teams.map((team, idx) => (
-                                    <tr
-                                        key={idx}
-                                        className="border-b hover:bg-gray-50 cursor-pointer"
-                                        onClick={() => {
-                                            setSelectedEmployee(team);
-                                            setIsModalOpen(true);
-                                        }}
-                                    >
-                                        <td className="p-3 font-semibold">{team.name}</td>
-                                        <td className="p-3">{team.group}</td>
-                                        <td className="p-3">{team.order}</td>
-                                        <td className="p-3">{team.task}</td>
-                                        <td className="p-3">{team.target}</td>
-                                        <td className="p-3">{team.finished}</td>
-                                        <td className="p-3">{team.shift}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        {/* Modal */}
-                        {isModalOpen && selectedEmployee && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-[rgba(143,143,143,0.65)] z-50">
-                                <div className="bg-white rounded-lg shadow-lg w-[700px] p-8 relative">
-                                    <button
-                                        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
-                                        onClick={() => setIsModalOpen(false)}
-                                    >
-                                        &times;
-                                    </button>
-                                    <div className="border-b pb-4 mb-4">
-                                        <h2 className="text-3xl font-bold mb-2">{selectedEmployee.name}</h2>
-                                        <p className="text-lg text-gray-600">{selectedEmployee.group}</p>
-                                    </div>
-                                    <div className="flex gap-8 mb-6">
-                                        {/* Dummy avatars for team members */}
-                                        {[...Array(3)].map((_, i) => (
-                                            <div key={i} className="flex flex-col items-center">
-                                                <div className="w-16 h-16 rounded-full bg-gray-300 mb-2"></div>
-                                                <p className="font-semibold text-gray-700 text-sm">Member {i + 1}</p>
-                                                <p className="text-xs text-gray-500">{selectedEmployee.task}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-6 mb-6">
-                                        <div>
-                                            <label className="block text-gray-700 mb-1">Assign Order</label>
-                                            <select className="w-full border rounded px-3 py-2">
-                                                <option>{selectedEmployee.order}</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 mb-1">Department</label>
-                                            <select className="w-full border rounded px-3 py-2">
-                                                <option>{selectedEmployee.task}</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 mb-1">Target Quota</label>
-                                            <input
-                                                type="text"
-                                                className="w-full border rounded px-3 py-2"
-                                                value={selectedEmployee.target.toLocaleString()}
-                                                readOnly
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-gray-700 mb-1">Finished Quota</label>
-                                            <input
-                                                type="number"
-                                                className="w-full border rounded px-3 py-2"
-                                                value={selectedEmployee.finished}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button className="bg-[#35408E] text-white px-8 py-2 rounded text-lg font-semibold">
-                                            Assign
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <p className="text-gray-600">Team management feature coming soon...</p>
                     </div>
                 );
             default:
@@ -305,58 +378,65 @@ const Employees = () => {
                 <h1 className="text-3xl font-bold mb-6">Employees</h1>
 
                 {/* Controls */}
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                     <div className="flex gap-2">
                         <button
-                            className={`px-4 py-1 rounded cursor-pointer ${activeTab === "all" ? "bg-yellow-400" : "bg-gray-200"}`}
+                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${
+                                activeTab === "all" 
+                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    : "bg-gray-200 hover:bg-gray-300"
+                            }`}
                             onClick={() => setActiveTab("all")}
                         >
-                            All
+                            All Employees
                         </button>
                         <button
-                            className={`px-4 py-1 rounded cursor-pointer ${activeTab === "edit" ? "bg-yellow-400" : "bg-gray-200"}`}
-                            onClick={() => setActiveTab("edit")}
-                        >
-                            Edit
-                        </button>
-                        <button
-                            className={`px-4 py-1 rounded cursor-pointer ${activeTab === "teams" ? "bg-yellow-400" : "bg-gray-200"}`}
+                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${
+                                activeTab === "teams" 
+                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    : "bg-gray-200 hover:bg-gray-300"
+                            }`}
                             onClick={() => setActiveTab("teams")}
                         >
                             Teams
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center border rounded px-2">
-                            <FaSearch className="text-gray-400" />
+                        <div className="flex items-center border rounded px-3 py-2 bg-white shadow-sm">
+                            <FaSearch className="text-gray-400 mr-2" />
                             <input
                                 type="text"
-                                placeholder="Search"
-                                className="px-2 py-1 outline-none"
+                                placeholder="Search employees..."
+                                className="outline-none w-64"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <button className="flex items-center gap-1 bg-gray-200 px-3 py-1 rounded">
-                            <FaFilter /> Filter
-                        </button>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Total Employees</h3>
+                        <p className="text-3xl font-bold text-[#35408E]">{employees.length}</p>
+                    </div>
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Present Today</h3>
+                        <p className="text-3xl font-bold text-green-600">
+                            {employees.filter(e => e.ispresent).length}
+                        </p>
+                    </div>
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Absent Today</h3>
+                        <p className="text-3xl font-bold text-red-600">
+                            {employees.filter(e => !e.ispresent).length}
+                        </p>
                     </div>
                 </div>
 
                 {/* Dynamic Content */}
                 {renderContent()}
-
-                {/* Pagination */}
-                {activeTab === "all" && (
-                    <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
-                        <span>Showing 1–20 of 15</span>
-                        <div className="flex gap-1">
-                            <button className="px-2 py-1 bg-gray-200 rounded">1</button>
-                            <button className="px-2 py-1 hover:bg-gray-200 rounded">2</button>
-                            <button className="px-2 py-1 hover:bg-gray-200 rounded">3</button>
-                            <button className="px-2 py-1 hover:bg-gray-200 rounded">...</button>
-                            <button className="px-2 py-1 hover:bg-gray-200 rounded">15</button>
-                        </div>
-                    </div>
-                )}
             </main>
         </div>
     );
