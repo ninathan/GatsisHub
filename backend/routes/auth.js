@@ -354,15 +354,47 @@ router.post('/google', async (req, res) => {
 
     if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-    // If not found, create customer record (no Supabase Auth needed for Google OAuth)
+    // If not found, create customer record with Supabase Auth user
     if (!customer) {
       console.log("🆕 Creating new Google user:", email);
       
-      // Generate a unique user ID for the customer
-      const userId = uuidv4();
-      console.log("✅ Generated user ID:", userId);
+      let userId = null;
+      
+      // 1️⃣ Check if auth user already exists by email
+      const { data: existingAuthUsers } = await supabase.auth.admin.listUsers();
+      const existingAuthUser = existingAuthUsers?.users?.find(u => u.email === email);
+      
+      if (existingAuthUser) {
+        console.log("✅ Found existing auth user:", existingAuthUser.id);
+        userId = existingAuthUser.id;
+      } else {
+        // Create new auth user
+        const randomPassword = crypto.randomUUID();
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: email,
+          password: randomPassword,
+          email_confirm: true, // Auto-confirm email
+          user_metadata: {
+            google_id: sub,
+            name: name,
+            picture: picture
+          }
+        });
 
-      // Insert into customers table
+        if (authError) {
+          console.error("❌ Auth creation error:", authError);
+          throw authError;
+        }
+
+        userId = authData.user?.id;
+        console.log("✅ Created new auth user:", userId);
+      }
+
+      if (!userId) {
+        throw new Error("Failed to get user ID");
+      }
+
+      // 2️⃣ Insert into customers table
       const { data: newCustomer, error: insertError } = await supabase
         .from('customers')
         .insert([{
