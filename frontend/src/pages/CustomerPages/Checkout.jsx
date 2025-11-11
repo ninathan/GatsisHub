@@ -62,7 +62,7 @@ const Checkout = () => {
     const [companyName, setCompanyName] = useState("");
     const [contactPerson, setContactPerson] = useState("");
     const [contactPhone, setContactPhone] = useState("");
-    const [selectedHanger, setSelectedHanger] = useState("MB7");
+    const [selectedHanger, setSelectedHanger] = useState("MB3");
     const [selectedMaterials, setSelectedMaterials] = useState({});
     const [customDesignFile, setCustomDesignFile] = useState(null);
 

@@ -26,9 +26,11 @@ const Employees = () => {
     // Teams state
     const [teams, setTeams] = useState([]);
     const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-    const [showEditTeamModal, setShowEditTeamModal] = useState(false);
+    const [showTeamModal, setShowTeamModal] = useState(false);
     const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState(null);
+    const [isEditingTeam, setIsEditingTeam] = useState(false);
+    const [availableOrders, setAvailableOrders] = useState([]);
     const [teamFormData, setTeamFormData] = useState({
         teamname: "",
         description: "",
@@ -40,6 +42,7 @@ const Employees = () => {
     useEffect(() => {
         fetchEmployees();
         fetchTeams();
+        fetchAvailableOrders();
     }, []);
 
     useEffect(() => {
@@ -214,6 +217,31 @@ const Employees = () => {
         }
     };
 
+    const fetchAvailableOrders = async () => {
+        try {
+            console.log('📋 Fetching available orders for team assignment');
+
+            const response = await fetch('https://gatsis-hub.vercel.app/orders/all');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Filter orders that are in production or later stages (not completed or cancelled)
+            const assignableOrders = data.orders.filter(order =>
+                ['In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
+            );
+
+            setAvailableOrders(assignableOrders);
+            console.log(`✅ Fetched ${assignableOrders.length} assignable orders`);
+        } catch (error) {
+            console.error('❌ Error fetching available orders:', error);
+            setErrorMessage('Failed to load available orders. Please try again.');
+            setShowErrorModal(true);
+        }
+    };
+
     const handleCreateTeam = () => {
         setTeamFormData({
             teamname: "",
@@ -225,7 +253,7 @@ const Employees = () => {
         setShowCreateTeamModal(true);
     };
 
-    const handleEditTeam = (team) => {
+    const handleViewTeam = (team) => {
         setSelectedTeam(team);
         setTeamFormData({
             teamname: team.teamname,
@@ -234,7 +262,12 @@ const Employees = () => {
             quota: team.quota || "",
             assignedOrders: team.assignedOrders || []
         });
-        setShowEditTeamModal(true);
+        setIsEditingTeam(false);
+        setShowTeamModal(true);
+    };
+
+    const handleEditTeam = () => {
+        setIsEditingTeam(true);
     };
 
     const handleDeleteTeam = (team) => {
@@ -319,16 +352,7 @@ const Employees = () => {
             setSuccessMessage(`Team ${selectedTeam ? 'updated' : 'created'} successfully!`);
             setShowSuccessModal(true);
 
-            setShowCreateTeamModal(false);
-            setShowEditTeamModal(false);
-            setSelectedTeam(null);
-            setTeamFormData({
-                teamname: "",
-                description: "",
-                selectedEmployees: [],
-                quota: "",
-                assignedOrders: []
-            });
+            handleCloseTeamModal();
 
             console.log(`✅ Team ${selectedTeam ? 'updated' : 'created'} successfully: ${transformedTeam.teamname}`);
 
@@ -393,10 +417,20 @@ const Employees = () => {
         }));
     };
 
+    const handleOrderSelection = (orderId) => {
+        setTeamFormData(prev => ({
+            ...prev,
+            assignedOrders: prev.assignedOrders.includes(orderId)
+                ? prev.assignedOrders.filter(id => id !== orderId)
+                : [...prev.assignedOrders, orderId]
+        }));
+    };
+
     const handleCloseTeamModal = () => {
         setShowCreateTeamModal(false);
-        setShowEditTeamModal(false);
+        setShowTeamModal(false);
         setSelectedTeam(null);
+        setIsEditingTeam(false);
         setTeamFormData({
             teamname: "",
             description: "",
@@ -646,25 +680,23 @@ const Employees = () => {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
                                 {teams.map((team) => (
-                                    <div key={team.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div 
+                                        key={team.id} 
+                                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => handleViewTeam(team)}
+                                    >
                                         <div className="flex justify-between items-start mb-3">
                                             <h3 className="font-semibold text-lg">{team.teamname}</h3>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => handleEditTeam(team)}
-                                                    className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-50 rounded transition-colors"
-                                                    title="Edit Team"
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteTeam(team)}
-                                                    className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
-                                                    title="Delete Team"
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteTeam(team);
+                                                }}
+                                                className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
+                                                title="Delete Team"
+                                            >
+                                                <FaTrash />
+                                            </button>
                                         </div>
 
                                         {team.description && (
@@ -692,7 +724,7 @@ const Employees = () => {
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <FaClipboardList className="text-gray-500" />
                                                     <span className="text-gray-600">
-                                                        {team.assignedOrders.length} orders assigned
+                                                        {team.assignedOrders.length} order{team.assignedOrders.length !== 1 ? 's' : ''} assigned
                                                     </span>
                                                 </div>
                                             )}
@@ -708,14 +740,12 @@ const Employees = () => {
                             </div>
                         )}
 
-                        {/* Create/Edit Team Modal */}
-                        {(showCreateTeamModal || showEditTeamModal) && (
+                        {/* Create Team Modal */}
+                        {showCreateTeamModal && (
                             <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
-                                <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
                                     <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-xl font-bold">
-                                            {showCreateTeamModal ? 'Create New Team' : 'Edit Team'}
-                                        </h3>
+                                        <h3 className="text-xl font-bold">Create New Team</h3>
                                         <button
                                             onClick={handleCloseTeamModal}
                                             className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -789,6 +819,42 @@ const Employees = () => {
                                                 )}
                                             </div>
                                         </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Assign Orders</label>
+                                            <div className="border rounded p-4 max-h-48 overflow-y-auto">
+                                                {availableOrders.length === 0 ? (
+                                                    <p className="text-gray-500 text-sm">No orders available for assignment</p>
+                                                ) : (
+                                                    availableOrders.map((order) => (
+                                                        <label key={order.orderid} className="flex items-center gap-3 py-2 hover:bg-gray-50 px-2 rounded cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={teamFormData.assignedOrders.includes(order.orderid)}
+                                                                onChange={() => handleOrderSelection(order.orderid)}
+                                                                className="rounded border-gray-300 text-[#35408E] focus:ring-[#35408E]"
+                                                            />
+                                                            <div className="flex items-center gap-2 flex-1">
+                                                                <div className="flex-1">
+                                                                    <p className="font-medium text-sm">
+                                                                        Order #{order.orderid.slice(0, 8).toUpperCase()}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500">
+                                                                        {order.companyname} • {order.hangertype} • {order.quantity} units
+                                                                    </p>
+                                                                    <p className="text-xs text-blue-600">
+                                                                        Status: {order.orderstatus}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Only orders in production or later stages can be assigned to teams
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <div className="flex justify-end gap-3 mt-6">
@@ -802,8 +868,258 @@ const Employees = () => {
                                             onClick={handleSaveTeam}
                                             className="px-6 py-2 bg-[#35408E] text-white rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
                                         >
-                                            {showCreateTeamModal ? 'Create Team' : 'Save Changes'}
+                                            Create Team
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Team View/Edit Modal */}
+                        {showTeamModal && selectedTeam && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold">
+                                            {isEditingTeam ? 'Edit Team' : selectedTeam.teamname}
+                                        </h3>
+                                        <div className="flex items-center gap-3">
+                                            {!isEditingTeam && (
+                                                <button
+                                                    onClick={handleEditTeam}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    <FaEdit /> Edit Team
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleCloseTeamModal}
+                                                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                                            >
+                                                &times;
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {isEditingTeam ? (
+                                        // Edit Mode
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Team Name *</label>
+                                                <input
+                                                    type="text"
+                                                    name="teamname"
+                                                    value={teamFormData.teamname}
+                                                    onChange={handleTeamInputChange}
+                                                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    placeholder="Enter team name"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Description</label>
+                                                <textarea
+                                                    name="description"
+                                                    value={teamFormData.description}
+                                                    onChange={handleTeamInputChange}
+                                                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    placeholder="Enter team description"
+                                                    rows="3"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Monthly Quota</label>
+                                                <input
+                                                    type="number"
+                                                    name="quota"
+                                                    value={teamFormData.quota}
+                                                    onChange={handleTeamInputChange}
+                                                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                    placeholder="e.g., 1000 units"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign Employees</label>
+                                                <div className="border rounded p-4 max-h-48 overflow-y-auto">
+                                                    {employees.length === 0 ? (
+                                                        <p className="text-gray-500 text-sm">No employees available</p>
+                                                    ) : (
+                                                        employees.map((emp) => (
+                                                            <label key={emp.employeeid} className="flex items-center gap-3 py-2 hover:bg-gray-50 px-2 rounded cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={teamFormData.selectedEmployees.includes(emp.employeeid)}
+                                                                    onChange={() => handleEmployeeSelection(emp.employeeid)}
+                                                                    className="rounded border-gray-300 text-[#35408E] focus:ring-[#35408E]"
+                                                                />
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center text-sm font-semibold">
+                                                                        {emp.employeename?.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-medium text-sm">{emp.employeename}</p>
+                                                                        <p className="text-xs text-gray-500">{emp.assigneddepartment}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign Orders</label>
+                                                <div className="border rounded p-4 max-h-48 overflow-y-auto">
+                                                    {availableOrders.length === 0 ? (
+                                                        <p className="text-gray-500 text-sm">No orders available for assignment</p>
+                                                    ) : (
+                                                        availableOrders.map((order) => (
+                                                            <label key={order.orderid} className="flex items-center gap-3 py-2 hover:bg-gray-50 px-2 rounded cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={teamFormData.assignedOrders.includes(order.orderid)}
+                                                                    onChange={() => handleOrderSelection(order.orderid)}
+                                                                    className="rounded border-gray-300 text-[#35408E] focus:ring-[#35408E]"
+                                                                />
+                                                                <div className="flex items-center gap-2 flex-1">
+                                                                    <div className="flex-1">
+                                                                        <p className="font-medium text-sm">
+                                                                            Order #{order.orderid.slice(0, 8).toUpperCase()}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {order.companyname} • {order.hangertype} • {order.quantity} units
+                                                                        </p>
+                                                                        <p className="text-xs text-blue-600">
+                                                                            Status: {order.orderstatus}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </label>
+                                                        ))
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Only orders in production or later stages can be assigned to teams
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // View Mode
+                                        <div className="space-y-6">
+                                            {selectedTeam.description && (
+                                                <div>
+                                                    <h4 className="text-lg font-semibold mb-2">Description</h4>
+                                                    <p className="text-gray-600">{selectedTeam.description}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="bg-gray-50 rounded-lg p-4">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <FaUsers className="text-gray-500" />
+                                                        <span className="font-semibold">Team Members</span>
+                                                    </div>
+                                                    <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.members?.length || 0}</p>
+                                                </div>
+
+                                                {selectedTeam.quota && (
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <FaBullseye className="text-gray-500" />
+                                                            <span className="font-semibold">Monthly Quota</span>
+                                                        </div>
+                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota}</p>
+                                                    </div>
+                                                )}
+
+                                                <div className="bg-gray-50 rounded-lg p-4">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <FaClipboardList className="text-gray-500" />
+                                                        <span className="font-semibold">Assigned Orders</span>
+                                                    </div>
+                                                    <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.assignedOrders?.length || 0}</p>
+                                                </div>
+                                            </div>
+
+                                            {selectedTeam.members && selectedTeam.members.length > 0 && (
+                                                <div>
+                                                    <h4 className="text-lg font-semibold mb-3">Team Members</h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {selectedTeam.members.map(memberId => {
+                                                            const member = employees.find(emp => emp.employeeid === memberId);
+                                                            return member ? (
+                                                                <div key={memberId} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center font-semibold">
+                                                                        {member.employeename?.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-medium">{member.employeename}</p>
+                                                                        <p className="text-sm text-gray-500">{member.assigneddepartment}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ) : null;
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {selectedTeam.assignedOrders && selectedTeam.assignedOrders.length > 0 && (
+                                                <div>
+                                                    <h4 className="text-lg font-semibold mb-3">Assigned Orders</h4>
+                                                    <div className="space-y-2">
+                                                        {selectedTeam.assignedOrders.map(orderId => {
+                                                            const order = availableOrders.find(o => o.orderid === orderId);
+                                                            return order ? (
+                                                                <div key={orderId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                                    <div>
+                                                                        <p className="font-medium">Order #{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            {order.companyname} • {order.hangertype} • {order.quantity} units
+                                                                        </p>
+                                                                    </div>
+                                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                        order.orderstatus === 'In Production' ? 'bg-blue-100 text-blue-700' :
+                                                                        order.orderstatus === 'Completed' ? 'bg-green-100 text-green-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {order.orderstatus}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div key={orderId} className="p-3 bg-gray-50 rounded-lg">
+                                                                    <p className="text-sm text-gray-500">Order #{orderId.slice(0, 8).toUpperCase()} (details not available)</p>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="pt-4 border-t">
+                                                <p className="text-sm text-gray-500">
+                                                    Created: {new Date(selectedTeam.createdAt).toLocaleDateString()} at {new Date(selectedTeam.createdAt).toLocaleTimeString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button
+                                            onClick={handleCloseTeamModal}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                        >
+                                            {isEditingTeam ? 'Cancel' : 'Close'}
+                                        </button>
+                                        {isEditingTeam && (
+                                            <button
+                                                onClick={handleSaveTeam}
+                                                className="px-6 py-2 bg-[#35408E] text-white rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                            >
+                                                Save Changes
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

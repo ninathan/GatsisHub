@@ -7,7 +7,7 @@ const Calendar = () => {
     
     // State management for current date, events, and view mode
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [viewMode, setViewMode] = useState('month'); // 'week', 'month', 'year'
+    const [viewMode, setViewMode] = useState('day'); // 'day', 'month', 'year'
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -64,6 +64,8 @@ const Calendar = () => {
     const previousPeriod = () => {
         if (viewMode === 'year') {
             setCurrentDate(new Date(currentDate.getFullYear() - 1, 0, 1));
+        } else if (viewMode === 'day') {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1));
         } else {
             setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
         }
@@ -72,6 +74,8 @@ const Calendar = () => {
     const nextPeriod = () => {
         if (viewMode === 'year') {
             setCurrentDate(new Date(currentDate.getFullYear() + 1, 0, 1));
+        } else if (viewMode === 'day') {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1));
         } else {
             setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
         }
@@ -263,6 +267,57 @@ const Calendar = () => {
         );
     };
 
+    // Render Day View
+    const renderDayView = () => {
+        const dayEvents = getEventsForDate(
+            currentDate.getDate(), 
+            currentDate.getMonth(), 
+            currentDate.getFullYear()
+        );
+
+        return (
+            <div className="flex-1 overflow-auto p-6">
+                <div className="max-w-4xl mx-auto">
+                    <h2 className="text-2xl font-bold mb-6 text-[#35408E]">
+                        Orders Due on {monthNames[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
+                    </h2>
+                    
+                    {dayEvents.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="text-gray-400 text-lg">No orders due on this day</div>
+                            <div className="text-gray-500 mt-2">Orders with deadlines will appear here</div>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {dayEvents.map((event, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={() => handleDeadlineClick(event.orderId)}
+                                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer hover:border-[#35408E]"
+                                >
+                                    <div className="flex items-start justify-between mb-2">
+                                        <h3 className="font-semibold text-lg text-[#35408E] truncate">
+                                            {event.companyName}
+                                        </h3>
+                                        <span className="bg-[#35408E] text-white text-xs px-2 py-1 rounded-full ml-2">
+                                            {event.orderStatus}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                        Order ID: {event.orderId}
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-2">
+                                        Deadline: {monthNames[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="flex-1 flex h-screen bg-gray-100">
             {/* Main Calendar Content Area */}
@@ -279,14 +334,14 @@ const Calendar = () => {
                             <span className="text-gray-600">Calendar view:</span>
                             {/* View mode toggle buttons */}
                             <button 
-                                onClick={() => setViewMode('week')}
+                                onClick={() => setViewMode('day')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
-                                    viewMode === 'week' 
+                                    viewMode === 'day' 
                                         ? 'bg-[#35408E] text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
-                                Week
+                                Day
                             </button>
                             <button 
                                 onClick={() => setViewMode('month')}
@@ -316,33 +371,37 @@ const Calendar = () => {
                         <button
                             onClick={previousPeriod}
                             className="p-2 hover:bg-gray-100 rounded"
-                            aria-label={viewMode === 'year' ? 'Previous year' : 'Previous month'}
+                            aria-label={
+                                viewMode === 'year' ? 'Previous year' : 
+                                viewMode === 'day' ? 'Previous day' : 'Previous month'
+                            }
                         >
                             <ChevronLeft size={20} />
                         </button>
                         <span className="mx-4 font-semibold min-w-[140px] text-center">
                             {viewMode === 'year' 
                                 ? currentDate.getFullYear()
+                                : viewMode === 'day'
+                                ? `${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`
                                 : `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`
                             }
                         </span>
                         <button
                             onClick={nextPeriod}
                             className="p-2 hover:bg-gray-100 rounded"
-                            aria-label={viewMode === 'year' ? 'Next year' : 'Next month'}
+                            aria-label={
+                                viewMode === 'year' ? 'Next year' : 
+                                viewMode === 'day' ? 'Next day' : 'Next month'
+                            }
                         >
                             <ChevronRight size={20} />
                         </button>
                     </div>
 
                     {/* Calendar Content Based on View Mode */}
+                    {viewMode === 'day' && renderDayView()}
                     {viewMode === 'month' && renderMonthView()}
                     {viewMode === 'year' && renderYearView()}
-                    {viewMode === 'week' && (
-                        <div className="flex-1 flex items-center justify-center text-gray-500">
-                            <p>Week view coming soon...</p>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
