@@ -185,14 +185,32 @@ const Employees = () => {
     // Team functions
     const fetchTeams = async () => {
         try {
-            // For now, using localStorage to persist teams data
-            // In production, this would be an API call
-            const savedTeams = localStorage.getItem('teams');
-            if (savedTeams) {
-                setTeams(JSON.parse(savedTeams));
+            console.log('📋 Fetching teams from API');
+            const response = await fetch('https://gatsis-hub.vercel.app/teams');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const data = await response.json();
+
+            // Transform API data to match frontend structure
+            const transformedTeams = data.teams.map(team => ({
+                id: team.teamid,
+                teamname: team.teamname,
+                description: team.description,
+                members: team.members || [],
+                quota: team.quota,
+                assignedOrders: team.assignedorders || [],
+                createdAt: team.createdat
+            }));
+
+            setTeams(transformedTeams);
+            console.log(`✅ Fetched ${transformedTeams.length} teams`);
         } catch (error) {
-            console.error('Error fetching teams:', error);
+            console.error('❌ Error fetching teams:', error);
+            setErrorMessage('Failed to load teams. Please try again.');
+            setShowErrorModal(true);
         }
     };
 
@@ -224,64 +242,138 @@ const Employees = () => {
         setShowDeleteTeamConfirm(true);
     };
 
-    const handleSaveTeam = () => {
+    const handleSaveTeam = async () => {
         if (!teamFormData.teamname.trim()) {
             setErrorMessage('Team name is required');
             setShowErrorModal(true);
             return;
         }
 
-        const newTeam = {
-            id: selectedTeam ? selectedTeam.id : Date.now(),
-            teamname: teamFormData.teamname,
-            description: teamFormData.description,
-            members: teamFormData.selectedEmployees,
-            quota: teamFormData.quota,
-            assignedOrders: teamFormData.assignedOrders,
-            createdAt: selectedTeam ? selectedTeam.createdAt : new Date().toISOString()
-        };
+        try {
+            console.log(`${selectedTeam ? '✏️ Updating' : '➕ Creating'} team: ${teamFormData.teamname}`);
 
-        let updatedTeams;
-        if (selectedTeam) {
-            // Update existing team
-            updatedTeams = teams.map(team => 
-                team.id === selectedTeam.id ? newTeam : team
-            );
-        } else {
-            // Create new team
-            updatedTeams = [...teams, newTeam];
+            // Prepare data for API
+            const teamData = {
+                teamname: teamFormData.teamname,
+                description: teamFormData.description,
+                members: teamFormData.selectedEmployees,
+                quota: teamFormData.quota,
+                assignedOrders: teamFormData.assignedOrders
+            };
+
+            let response;
+            let result;
+
+            if (selectedTeam) {
+                // Update existing team
+                response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(teamData)
+                });
+            } else {
+                // Create new team
+                response = await fetch('https://gatsis-hub.vercel.app/teams/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(teamData)
+                });
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            result = await response.json();
+
+            // Transform API response to match frontend structure
+            const transformedTeam = {
+                id: result.team.teamid,
+                teamname: result.team.teamname,
+                description: result.team.description,
+                members: result.team.members || [],
+                quota: result.team.quota,
+                assignedOrders: result.team.assignedorders || [],
+                createdAt: result.team.createdat
+            };
+
+            // Update local state
+            let updatedTeams;
+            if (selectedTeam) {
+                // Update existing team
+                updatedTeams = teams.map(team =>
+                    team.id === selectedTeam.id ? transformedTeam : team
+                );
+            } else {
+                // Add new team
+                updatedTeams = [...teams, transformedTeam];
+            }
+
+            setTeams(updatedTeams);
+
+            setSuccessMessage(`Team ${selectedTeam ? 'updated' : 'created'} successfully!`);
+            setShowSuccessModal(true);
+
+            setShowCreateTeamModal(false);
+            setShowEditTeamModal(false);
+            setSelectedTeam(null);
+            setTeamFormData({
+                teamname: "",
+                description: "",
+                selectedEmployees: [],
+                quota: "",
+                assignedOrders: []
+            });
+
+            console.log(`✅ Team ${selectedTeam ? 'updated' : 'created'} successfully: ${transformedTeam.teamname}`);
+
+        } catch (error) {
+            console.error('❌ Error saving team:', error);
+            setErrorMessage(error.message || 'Failed to save team. Please try again.');
+            setShowErrorModal(true);
         }
-
-        setTeams(updatedTeams);
-        localStorage.setItem('teams', JSON.stringify(updatedTeams));
-        
-        setSuccessMessage(`Team ${selectedTeam ? 'updated' : 'created'} successfully!`);
-        setShowSuccessModal(true);
-        
-        setShowCreateTeamModal(false);
-        setShowEditTeamModal(false);
-        setSelectedTeam(null);
-        setTeamFormData({
-            teamname: "",
-            description: "",
-            selectedEmployees: [],
-            quota: "",
-            assignedOrders: []
-        });
     };
 
-    const handleConfirmDeleteTeam = () => {
+    const handleConfirmDeleteTeam = async () => {
         if (!selectedTeam) return;
 
-        const updatedTeams = teams.filter(team => team.id !== selectedTeam.id);
-        setTeams(updatedTeams);
-        localStorage.setItem('teams', JSON.stringify(updatedTeams));
-        
-        setSuccessMessage(`Team "${selectedTeam.teamname}" has been deleted successfully!`);
-        setShowSuccessModal(true);
-        
-        setShowDeleteTeamConfirm(false);
-        setSelectedTeam(null);
+        try {
+            console.log(`🗑️ Deleting team: ${selectedTeam.teamname} (ID: ${selectedTeam.id})`);
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            // Update local state
+            const updatedTeams = teams.filter(team => team.id !== selectedTeam.id);
+            setTeams(updatedTeams);
+
+            setSuccessMessage(`Team "${selectedTeam.teamname}" has been deleted successfully!`);
+            setShowSuccessModal(true);
+
+            setShowDeleteTeamConfirm(false);
+            setSelectedTeam(null);
+
+            console.log(`✅ Team deleted successfully: ${selectedTeam.teamname}`);
+
+        } catch (error) {
+            console.error('❌ Error deleting team:', error);
+            setErrorMessage(error.message || 'Failed to delete team. Please try again.');
+            setShowErrorModal(true);
+            setShowDeleteTeamConfirm(false);
+        }
     };
 
     const handleTeamInputChange = (e) => {

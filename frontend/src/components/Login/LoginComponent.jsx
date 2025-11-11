@@ -52,7 +52,6 @@ const Login = () => {
     try {
       const token = credentialResponse.credential
       const decoded = jwtDecode(token)
-      console.log('✅ Google user info:', decoded)
 
       // Optional: send token to your backend for verification
       const res = await fetch('https://gatsis-hub.vercel.app/auth/google', {
