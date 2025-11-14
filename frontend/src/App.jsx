@@ -43,6 +43,12 @@ import ProfileOM from './pages/OperationalManagerPages/ProfileOM';
 import OrderDetailOM from './pages/OperationalManagerPages/OrderDetailOM';
 import CompleteProfile from './pages/CompleteProfile';
 
+import SystemAdminLayout from './layouts/SystemAdminLayout';
+import AuthSystemA from './pages/SystemAdminPages/AuthSystemA';
+import SystemEmployee from './pages/SystemAdminPages/SystemEmployee';
+import SystemAccounts from './pages/SystemAdminPages/SystemAccounts';
+import SystemProfile from './pages/SystemAdminPages/SystemProfile';
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -170,9 +176,17 @@ const router = createBrowserRouter(
         <Route path="/orderdetailOM/:orderid" element={<ProtectedOMRoute element={<OrderDetailOM />} />} />
       </Route>
 
+      {/* System Admin layout */}
+      <Route element={<SystemAdminLayout />}>
+        <Route path="/systememployees" element={<SystemEmployee />} />
+        <Route path="/systemaccounts" element={<SystemAccounts />} />
+        <Route path="/systemprofile" element={<SystemProfile />} />
+      </Route>
+
       {/* Admin/Manager Auth */}
       <Route path="/authOM" element={<AuthOM />} />
       <Route path="/authSaleAdmin" element={<AuthSA />} />
+      <Route path="/authSystemA" element={<AuthSystemA />} />
     </Route>
   )
 );
