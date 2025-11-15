@@ -45,7 +45,7 @@ const SystemProfile = () => {
 
     // load employee data from localstorage on component mount
     useEffect(() => {
-        const storedEmployee = localStorage.getItem('employee')
+        const storedEmployee = localStorage.getItem('systemAdmin')
         if (storedEmployee) {
             const employeeData = JSON.parse(storedEmployee)
             setEmployee(employeeData)
@@ -53,11 +53,11 @@ const SystemProfile = () => {
                 employeename: employeeData.employeename || '',
                 email: employeeData.email || '',
                 contactDetails: employeeData.contactdetails || '',
-                assigneddepartment: employeeData.assigneddepartment || 'N/A',
+                assigneddepartment: employeeData.assigneddepartment || 'System Administration',
                 shifthours: employeeData.shifthours || '',
             })
         } else {
-            navigate('/authOM')
+            navigate('/authsystema')
         }
         setLoading(false)
 
@@ -88,7 +88,7 @@ const SystemProfile = () => {
 
             // Update localStorage
             const updatedEmployee = { ...employees, ...profileData}
-            localStorage.setItem('employee', JSON.stringify
+            localStorage.setItem('systemAdmin', JSON.stringify
                 (updatedEmployee))
                 setEmployee(updatedEmployee)
         }
@@ -117,7 +117,7 @@ const SystemProfile = () => {
         setIsSaving(true)
 
         try {
-            const response = await fetch('http://gatsis.hub:5000/api/employees/change-password', {
+            const response = await fetch('https://gatsis-hub.vercel.app/api/employees/change-password', {
                 method: 'POST',
                 header: {
                     'Content-Type': 'application/json',
@@ -152,9 +152,9 @@ const SystemProfile = () => {
 
     // logout function
     const  handleLogout = () => {
-        localStorage.removeItem('employee')
+        localStorage.removeItem('systemAdmin')
         localStorage.removeItem('customer')
-        navigate('/authOM')
+        navigate('/authsystema')
     }
 
     if (loading) {
@@ -205,7 +205,7 @@ const SystemProfile = () => {
                                 </span>
                             </div>
                             <h3 className='text-lg md:text-xl font-bold text-gray-900 text-center'>{profileData.employeename}</h3>
-                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.role || 'Operational Manager'}</p>
+                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.role || 'System Admin'}</p>
                         </div>
 
                         {/* Profile Form Fields */}

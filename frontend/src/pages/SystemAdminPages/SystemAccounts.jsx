@@ -17,6 +17,8 @@ const SystemAccounts = () => {
         companyname: '',
         emailaddress: '',
         companynumber: '',
+        gender: '',
+        dateofbirth: '',
         password: '',
         addresses: [],
         accountstatus: 'Active',
@@ -64,6 +66,8 @@ const SystemAccounts = () => {
             companyname: customer.companyname,
             emailaddress: customer.emailaddress,
             companynumber: customer.companynumber || '',
+            gender: customer.gender || '',
+            dateofbirth: customer.dateofbirth || '',
             password: '', // Leave empty, will only update if filled
             addresses: customer.addresses || [],
             accountstatus: customer.accountstatus,
@@ -199,14 +203,6 @@ const SystemAccounts = () => {
 
                 {/* Controls */}
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-                    <div className="flex gap-2">
-                        <button
-                            className="px-6 py-2 bg-gray-200 hover:bg-gray-300 font-semibold rounded cursor-pointer transition-colors"
-                            onClick={fetchCustomers}
-                        >
-                            🔄 Refresh
-                        </button>
-                    </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center border rounded px-3 py-2 bg-white shadow-sm">
                             <FaSearch className="text-gray-400 mr-2" />
@@ -367,6 +363,18 @@ const SystemAccounts = () => {
                                         <p className="font-semibold text-gray-900">{selectedCustomer.companynumber}</p>
                                     </div>
                                 )}
+                                {selectedCustomer.gender && (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Gender</p>
+                                        <p className="font-semibold text-gray-900">{selectedCustomer.gender}</p>
+                                    </div>
+                                )}
+                                {selectedCustomer.dateofbirth && (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
+                                        <p className="font-semibold text-gray-900">{formatDate(selectedCustomer.dateofbirth)}</p>
+                                    </div>
+                                )}
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <p className="text-sm text-gray-600 mb-1">Account Status</p>
                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -500,6 +508,37 @@ const SystemAccounts = () => {
                                         onChange={handleInputChange}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                         placeholder="Phone number"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Gender
+                                    </label>
+                                    <select
+                                        name="gender"
+                                        value={formData.gender}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    >
+                                        <option value="">Select gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Prefer not to say">Prefer not to say</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Date of Birth
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="dateofbirth"
+                                        value={formData.dateofbirth}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                     />
                                 </div>
 

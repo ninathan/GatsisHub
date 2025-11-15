@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("customers")
-      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture")
+      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture, gender, dateofbirth")
       .order('datecreated', { ascending: false });
 
     // Apply filters if provided
@@ -49,7 +49,7 @@ router.get("/:customerid", async (req, res) => {
 
     const { data: customer, error } = await supabase
       .from("customers")
-      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture")
+      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture, gender, dateofbirth")
       .eq("customerid", customerid)
       .single();
 
@@ -69,7 +69,7 @@ router.get("/:customerid", async (req, res) => {
 router.patch("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
-    const { addresses, companynumber, companyname, emailaddress, emailnotifications, accountstatus, password } = req.body;
+    const { addresses, companynumber, companyname, emailaddress, emailnotifications, accountstatus, password, gender, dateofbirth } = req.body;
 
     console.log("📝 Updating customer:", customerid);
     console.log("📥 Update data:", req.body);
@@ -82,6 +82,8 @@ router.patch("/:customerid", async (req, res) => {
     if (emailaddress !== undefined) updateData.emailaddress = emailaddress;
     if (emailnotifications !== undefined) updateData.emailnotifications = emailnotifications;
     if (accountstatus !== undefined) updateData.accountstatus = accountstatus;
+    if (gender !== undefined) updateData.gender = gender;
+    if (dateofbirth !== undefined) updateData.dateofbirth = dateofbirth;
 
     // Hash password if provided
     if (password !== undefined && password !== '') {

@@ -15,18 +15,21 @@ router.post("/signup", async (req, res) => {
     console.log("📥 SIGNUP REQUEST RECEIVED");
     console.log("=" .repeat(50));
     
-    const { companyName, emailAddress, companyNumber, password, addresses } = req.body;
+    const { firstName, lastName, emailAddress, companyNumber, gender, dateOfBirth, password, addresses } = req.body;
 
     console.log("📥 Request body:", { 
-      companyName, 
+      firstName,
+      lastName, 
       emailAddress, 
       companyNumber, 
+      gender,
+      dateOfBirth,
       passwordLength: password?.length,
       addressesCount: addresses?.length 
     });
 
     // 1️⃣ Validate required fields
-    if (!companyName || !emailAddress || !password) {
+    if (!firstName || !lastName || !emailAddress || !password || !gender || !dateOfBirth) {
       console.log("❌ Missing required fields");
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -147,7 +150,7 @@ router.post("/signup", async (req, res) => {
     }
 
     // 4️⃣ Insert into your 'customers' table
-    console.log("📝 Attempting to insert customer:", { userId, emailAddress, companyName });
+    console.log("📝 Attempting to insert customer:", { userId, emailAddress, firstName, lastName });
     
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
@@ -155,14 +158,16 @@ router.post("/signup", async (req, res) => {
         { 
           userid: userId,
           google_id: null,
-          companyname: companyName,
+          companyname: `${firstName} ${lastName}`,
           emailaddress: emailAddress,
           companynumber: companyNumber || null,
           password: hashedPassword,
           addresses: addresses || [],
           datecreated: new Date().toISOString(),
           accountstatus: 'Active',
-          profilePicture: null
+          profilePicture: null,
+          gender: gender,
+          dateofbirth: dateOfBirth
         }
       ])
       .select();
@@ -200,7 +205,7 @@ router.post("/signup", async (req, res) => {
                 </div>
                 
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h2 style="color: #35408E; margin-top: 0;">Hello ${companyName}!</h2>
+                  <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
                   <p style="color: #333; line-height: 1.6;">
                     Thank you for registering with GatsisHub. Your account has been successfully created!
                   </p>
@@ -212,7 +217,7 @@ router.post("/signup", async (req, res) => {
                 <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                   <h3 style="margin-top: 0;">Account Details:</h3>
                   <p style="margin: 5px 0;"><strong>Email:</strong> ${emailAddress}</p>
-                  <p style="margin: 5px 0;"><strong>Company:</strong> ${companyName}</p>
+                  <p style="margin: 5px 0;"><strong>Name:</strong> ${firstName} ${lastName}</p>
                   ${companyNumber ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${companyNumber}</p>` : ''}
                 </div>
 

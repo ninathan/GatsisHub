@@ -1,6 +1,10 @@
 // server.js
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import fs from "fs";
 import authRoutes from "./routes/auth.js";
 import ordersRoutes from "./routes/orders.js";
 import designsRoutes from "./routes/designs.js";
@@ -10,8 +14,20 @@ import messagesRoutes from "./routes/messages.js";
 import notificationsRoutes from "./routes/notifications.js";
 import customersRoutes from "./routes/customers.js";
 import teamsRoutes from "./routes/teams.js";
+import paymentsRoutes from "./routes/payments.js";
 
 const app = express();
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads', 'payments');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Created uploads/payments directory');
+}
 
 // Middleware
 app.use(express.json({ limit: '50mb' })); // Increase limit for thumbnail images
@@ -31,6 +47,9 @@ app.use(
   })
 );
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Routes
 app.use("/auth", authRoutes);
 app.use("/orders", ordersRoutes);
@@ -41,6 +60,7 @@ app.use("/messages", messagesRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/customers", customersRoutes);
 app.use("/teams", teamsRoutes);
+app.use("/api/payments", paymentsRoutes);
 
 // Health check
 app.get("/", (req, res) => {

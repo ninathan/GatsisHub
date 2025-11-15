@@ -272,12 +272,6 @@ const SystemEmployee = () => {
                         >
                             + Add Employee
                         </button>
-                        <button
-                            className="px-6 py-2 bg-gray-200 hover:bg-gray-300 font-semibold rounded cursor-pointer transition-colors"
-                            onClick={fetchEmployees}
-                        >
-                            🔄 Refresh
-                        </button>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center border rounded px-3 py-2 bg-white shadow-sm">
