@@ -1,208 +1,210 @@
-import React from 'react'
-import { FaSearch } from 'react-icons/fa';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { FaSearch, FaTimes, FaEye, FaEdit } from 'react-icons/fa';
 
 const SystemAccounts = () => {
-    const [activeTab, setActiveTab] = React.useState("all");
-    const [showModal, setShowModal] = React.useState(false);
-    const [showEmployeeModal, setShowEmployeeModal] = React.useState(false);
-    const [showAccountStatus, setShowAccountStatus] = React.useState(false);
-    const [selectedEmployee, setSelectedEmployee] = React.useState(null);
-    const [formData, setFormData] = React.useState({
-        name: '',
-        role: 'Sale Admin',
-        access: {
-            dashboard: false,
-            employees: false,
-            orders: false,
-            calendar: false,
-            messages: false,
-            products: false
-        },
-        username: '',
-        password: ''
+    const [customers, setCustomers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    
+    // Modal states
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    
+    // Form states for Edit
+    const [formData, setFormData] = useState({
+        companyname: '',
+        emailaddress: '',
+        companynumber: '',
+        password: '',
+        addresses: [],
+        accountstatus: 'Active',
+        emailnotifications: true
     });
-    // const [searchTerm, setSearchTerm] = React.useState("");
 
-    const employees = [
-        { 
-            name: "Jane Dela Cruz", 
-            role: "Sales Administrator", 
-            phone: "(555) 123-4567", 
-            attendance: "Present", 
-            target: 250, 
-            finished: 158, 
-            shift: "8:00 am to 5:00 pm",
-            username: "JaneDC13",
-            password: "N4qlvB7x$Gp2",
-            access: {
-                dashboard: true,
-                employees: false,
-                orders: true,
-                calendar: true,
-                messages: true,
-                products: true
-            }
-        },
-        { 
-            name: "Liam Parker", 
-            role: "Production", 
-            phone: "(555) 123-4567", 
-            attendance: "Present", 
-            target: 250, 
-            finished: 158, 
-            shift: "8:00 am to 5:00 pm",
-            username: "LiamP89",
-            password: "Pass123!",
-            access: {
-                dashboard: true,
-                employees: false,
-                orders: false,
-                calendar: false,
-                messages: false,
-                products: false
-            }
-        },
-        { 
-            name: "Isabela Cruz", 
-            role: "Production", 
-            phone: "(555) 123-4567", 
-            attendance: "Present", 
-            target: 250, 
-            finished: 158, 
-            shift: "8:00 am to 5:00 pm",
-            username: "IsaCruz",
-            password: "Pass456!",
-            access: {
-                dashboard: true,
-                employees: false,
-                orders: false,
-                calendar: false,
-                messages: false,
-                products: false
-            }
-        },
-        { 
-            name: "Ethan Navarro", 
-            role: "Production", 
-            phone: "(555) 123-4567", 
-            attendance: "Present", 
-            target: 250, 
-            finished: 158, 
-            shift: "8:00 am to 5:00 pm",
-            username: "EthanNav",
-            password: "Pass789!",
-            access: {
-                dashboard: true,
-                employees: false,
-                orders: false,
-                calendar: false,
-                messages: false,
-                products: false
-            }
-        },
-        
-    ];
+    const [formError, setFormError] = useState('');
+    const [formSuccess, setFormSuccess] = useState('');
 
-    const handleAccessChange = (field) => {
+    // Fetch customers on component mount
+    useEffect(() => {
+        fetchCustomers();
+    }, []);
+
+    const fetchCustomers = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/customers');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch customers');
+            }
+
+            setCustomers(data.customers || []);
+        } catch (err) {
+            console.error('❌ Error fetching customers:', err);
+            setError(err.message || 'Failed to load customers');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle View Customer
+    const handleViewCustomer = (customer) => {
+        setSelectedCustomer(customer);
+        setShowViewModal(true);
+    };
+
+    // Handle Edit Customer
+    const handleEditCustomer = (customer) => {
+        setSelectedCustomer(customer);
         setFormData({
-            ...formData,
-            access: {
-                ...formData.access,
-                [field]: !formData.access[field]
-            }
+            companyname: customer.companyname,
+            emailaddress: customer.emailaddress,
+            companynumber: customer.companynumber || '',
+            password: '', // Leave empty, will only update if filled
+            addresses: customer.addresses || [],
+            accountstatus: customer.accountstatus,
+            emailnotifications: customer.emailnotifications !== undefined ? customer.emailnotifications : true
         });
+        setShowEditModal(true);
     };
 
-    const handleSubmit = (e) => {
+    // Handle form input changes
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    // Handle Edit Customer Submit
+    const handleEditCustomerSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Add logic to save account
-        setShowModal(false);
-        // Reset form
-        setFormData({
-            name: '',
-            role: 'Sale Admin',
-            access: {
-                dashboard: false,
-                employees: false,
-                orders: false,
-                calendar: false,
-                messages: false,
-                products: false
-            },
-            username: '',
-            password: ''
-        });
-    };
+        setFormError('');
+        setFormSuccess('');
 
-    const handleEmployeeClick = (employee) => {
-        setSelectedEmployee({...employee});
-        setShowEmployeeModal(true);
-    };
+        // Validate required fields
+        if (!formData.companyname || !formData.emailaddress) {
+            setFormError('Please fill in all required fields');
+            return;
+        }
 
-    const handleEmployeeAccessChange = (field) => {
-        setSelectedEmployee({
-            ...selectedEmployee,
-            access: {
-                ...selectedEmployee.access,
-                [field]: !selectedEmployee.access[field]
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.emailaddress)) {
+            setFormError('Please enter a valid email address');
+            return;
+        }
+
+        // If password is provided, validate it
+        if (formData.password && formData.password.length < 6) {
+            setFormError('Password must be at least 6 characters long');
+            return;
+        }
+
+        try {
+            // Prepare update data (only include password if it's provided)
+            const updateData = { ...formData };
+            if (!updateData.password) {
+                delete updateData.password;
             }
-        });
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/customers/${selectedCustomer.customerid}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update customer');
+            }
+
+            setFormSuccess('Customer updated successfully!');
+            setTimeout(() => {
+                setShowEditModal(false);
+                fetchCustomers(); // Refresh the list
+            }, 1500);
+
+        } catch (err) {
+            console.error('❌ Error updating customer:', err);
+            setFormError(err.message || 'Failed to update customer');
+        }
     };
 
-    const handleResetPassword = () => {
-        // Generate random password or prompt for new password
-        const newPassword = Math.random().toString(36).slice(-10);
-        setSelectedEmployee({
-            ...selectedEmployee,
-            password: newPassword
-        });
-        alert('Password has been reset!');
+    // Handle Delete Customer
+    const handleDeleteCustomer = async (customerid) => {
+        if (!window.confirm('Are you sure you want to delete this customer account? This will also delete all their orders and designs.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/customers/${customerid}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to delete customer');
+            }
+
+            alert('Customer deleted successfully');
+            fetchCustomers(); // Refresh the list
+            setShowViewModal(false);
+            setShowEditModal(false);
+
+        } catch (err) {
+            console.error('❌ Error deleting customer:', err);
+            alert(err.message || 'Failed to delete customer');
+        }
     };
 
-    const handleUpdateEmployee = (e) => {
-        e.preventDefault();
-        console.log('Updated employee:', selectedEmployee);
-        // Add logic to update employee
-        setShowEmployeeModal(false);
+    // Filter customers based on search term
+    const filteredCustomers = customers.filter(customer =>
+        customer.companyname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.emailaddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customer.companynumber && customer.companynumber.includes(searchTerm))
+    );
+
+    // Format date helper
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     };
 
     return (
         <div className="flex w-full bg-gray-100">
             {/* Main Content */}
             <main className="flex-1 p-6">
-                <h1 className="text-3xl font-bold mb-6">Accounts</h1>
+                <h1 className="text-3xl font-bold mb-6">Customer Accounts</h1>
+
+                {/* Error Message */}
+                {error && (
+                    <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        {error}
+                    </div>
+                )}
 
                 {/* Controls */}
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                     <div className="flex gap-2">
                         <button
-                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${activeTab === "all"
-                                    ? "bg-[#ECBA0B] text-black font-semibold"
-                                    : "bg-gray-200 hover:bg-gray-300"
-                                }`}
-                            onClick=""
+                            className="px-6 py-2 bg-gray-200 hover:bg-gray-300 font-semibold rounded cursor-pointer transition-colors"
+                            onClick={fetchCustomers}
                         >
-                            All Employees
-                        </button>
-                        <button
-                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${activeTab === "teams"
-                                    ? "bg-[#ECBA0B] text-black font-semibold"
-                                    : "bg-gray-200 hover:bg-gray-300"
-                                }`}
-                            onClick=""
-                        >
-                            Edit
-                        </button>
-                        <button
-                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${activeTab === "teams"
-                                    ? "bg-[#ECBA0B] text-black font-semibold"
-                                    : "bg-gray-200 hover:bg-gray-300"
-                                }`}
-                            onClick={() => setShowModal(true)}
-                        >
-                            Add Account
+                            🔄 Refresh
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
@@ -210,10 +212,10 @@ const SystemAccounts = () => {
                             <FaSearch className="text-gray-400 mr-2" />
                             <input
                                 type="text"
-                                placeholder="Search employees..."
+                                placeholder="Search customers..."
                                 className="outline-none w-64"
-                                // value={searchTerm}
-                                // onChange={(e) => setSearchTerm(e.target.value)}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                     </div>
@@ -222,552 +224,350 @@ const SystemAccounts = () => {
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow p-4">
-                        <h3 className="text-gray-600 text-sm font-medium mb-1">Total Employees</h3>
-                        <p className="text-3xl font-bold text-[#35408E]">{employees.length}</p>
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Total Customers</h3>
+                        <p className="text-3xl font-bold text-[#35408E]">{customers.length}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
-                        <h3 className="text-gray-600 text-sm font-medium mb-1">Present Today</h3>
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Active Accounts</h3>
                         <p className="text-3xl font-bold text-green-600">
-                            {employees.filter(emp => emp.attendance === "Present").length}
+                            {customers.filter(c => c.accountstatus === 'Active').length}
                         </p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
-                        <h3 className="text-gray-600 text-sm font-medium mb-1">Absent Today</h3>
-                        <p className="text-3xl font-bold text-red-600">
-                            {employees.filter(emp => emp.attendance === "Absent").length}
+                        <h3 className="text-gray-600 text-sm font-medium mb-1">Google Sign-Ins</h3>
+                        <p className="text-3xl font-bold text-blue-600">
+                            {customers.filter(c => c.google_id !== null).length}
                         </p>
                     </div>
                 </div>
 
-                {/* Employees Table */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-[#35408E] text-white">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Role</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Phone</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Attendance</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Target</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Finished</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Shift</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {employees.map((employee, index) => (
-                                    <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center">
-                                                <div className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                                                    {employee.name.split(' ').map(n => n[0]).join('')}
-                                                </div>
-                                                <span className="font-medium text-gray-900">{employee.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700">{employee.role}</td>
-                                        <td className="px-6 py-4 text-gray-700">{employee.phone}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                employee.attendance === "Present" 
-                                                    ? "bg-green-100 text-green-800" 
-                                                    : "bg-red-100 text-red-800"
-                                            }`}>
-                                                {employee.attendance}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700">{employee.target}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-900">{employee.finished}</span>
-                                                <div className="w-20 bg-gray-200 rounded-full h-2">
-                                                    <div 
-                                                        className="bg-[#35408E] h-2 rounded-full transition-all"
-                                                        style={{ width: `${(employee.finished / employee.target) * 100}%` }}
-                                                    ></div>
-                                                </div>
-                                                <span className="text-xs text-gray-500">
-                                                    {Math.round((employee.finished / employee.target) * 100)}%
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700 text-sm">{employee.shift}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button 
-                                                    onClick={() => handleEmployeeClick(employee)}
-                                                    className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
-                                                >
-                                                    View
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleEmployeeClick(employee)}
-                                                    className="px-3 py-1 bg-[#ECBA0B] text-black rounded text-sm hover:bg-yellow-500 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                            </div>
-                                        </td>
+                {/* Customers Table */}
+                {loading ? (
+                    <div className="bg-white rounded-lg shadow p-8 text-center">
+                        <p className="text-gray-600">Loading customers...</p>
+                    </div>
+                ) : filteredCustomers.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow p-8 text-center">
+                        <p className="text-gray-600">No customers found</p>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-[#35408E] text-white">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Company Name</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Phone</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Sign-In Method</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Date Created</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Employee View/Edit Modal */}
-                {showEmployeeModal && selectedEmployee && (
-                    <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 relative">
-                            {/* Modal Header */}
-                            <div className="bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
-                                <h2 className="text-xl font-semibold">Employee account</h2>
-                                <button 
-                                    onClick={() => setShowEmployeeModal(false)}
-                                    className="text-white hover:text-gray-200 transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            {/* Modal Body */}
-                            <form onSubmit={handleUpdateEmployee} className="p-6">
-                                <div className="flex gap-4 mb-6">
-                                    {/* Profile Picture Placeholder */}
-                                    <div className="w-16 h-16 bg-gray-400 rounded flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        {/* Name Display */}
-                                        <div className="mb-2">
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Name:
-                                            </label>
-                                            <p className="text-base font-semibold text-gray-900">{selectedEmployee.name}</p>
-                                        </div>
-
-                                        {/* Role Display */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Role:
-                                            </label>
-                                            <p className="text-base font-semibold text-gray-900">{selectedEmployee.role}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Access Checkboxes */}
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Access:
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.dashboard}
-                                                onChange={() => handleEmployeeAccessChange('dashboard')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Dashboard</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.employees}
-                                                onChange={() => handleEmployeeAccessChange('employees')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Employees tab</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.orders}
-                                                onChange={() => handleEmployeeAccessChange('orders')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Orders tab</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.calendar}
-                                                onChange={() => handleEmployeeAccessChange('calendar')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Calendar</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.messages}
-                                                onChange={() => handleEmployeeAccessChange('messages')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Messages</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEmployee.access.products}
-                                                onChange={() => handleEmployeeAccessChange('products')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Products</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Login Credentials Section */}
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Login credentials</h3>
-                                    
-                                    {/* Username */}
-                                    <div className="mb-3">
-                                        <label className="block text-sm text-gray-700 mb-1">
-                                            Username
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedEmployee.username}
-                                            onChange={(e) => setSelectedEmployee({...selectedEmployee, username: e.target.value})}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Password */}
-                                    <div className="mb-3">
-                                        <label className="block text-sm text-gray-700 mb-1">
-                                            Password
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={selectedEmployee.password}
-                                            readOnly
-                                            className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50"
-                                        />
-                                    </div>
-
-                                    {/* Reset Password Button */}
-                                    <button
-                                        type="button"
-                                        onClick={handleResetPassword}
-                                        className="w-full bg-[#ECBA0B] text-black py-2 px-4 rounded hover:bg-yellow-500 transition-colors font-semibold"
-                                    >
-                                        Reset
-                                    </button>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAccountStatus(true)}
-                                        className="flex-1 bg-[#35408E] text-white py-2 px-4 rounded hover:bg-[#2c3575] transition-colors font-semibold"
-                                    >
-                                        Account status
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-1 bg-[#35408E] text-white py-2 px-4 rounded hover:bg-[#2c3575] transition-colors font-semibold"
-                                    >
-                                        Update
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* Account Status Modal */}
-                {showAccountStatus && selectedEmployee && (
-                    <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4 relative">
-                            {/* Modal Content */}
-                            <div className="p-8">
-                                {/* Employee Info */}
-                                <div className="flex items-start gap-4 mb-8">
-                                    {/* Profile Picture */}
-                                    <div className="w-20 h-20 bg-gray-400 rounded flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-
-                                    <div className="flex-1">
-                                        {/* Name */}
-                                        <div className="mb-3">
-                                            <span className="text-sm font-medium text-gray-700">Name: </span>
-                                            <span className="text-lg font-semibold text-gray-900">{selectedEmployee.name}</span>
-                                        </div>
-
-                                        {/* Role */}
-                                        <div className="mb-3">
-                                            <span className="text-sm font-medium text-gray-700">Role: </span>
-                                            <span className="text-lg font-semibold text-gray-900">{selectedEmployee.role}</span>
-                                        </div>
-
-                                        {/* Access Permissions */}
-                                        <div>
-                                            <span className="text-sm font-medium text-gray-700">Access: </span>
-                                            <div className="inline-flex flex-wrap gap-2 mt-1">
-                                                {selectedEmployee.access.dashboard && (
-                                                    <span className="inline-flex items-center">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Dashboard</span>
-                                                    </span>
-                                                )}
-                                                {selectedEmployee.access.employees && (
-                                                    <span className="inline-flex items-center ml-3">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Employees tab</span>
-                                                    </span>
-                                                )}
-                                                {selectedEmployee.access.orders && (
-                                                    <span className="inline-flex items-center ml-3">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Orders tab</span>
-                                                    </span>
-                                                )}
-                                                {selectedEmployee.access.calendar && (
-                                                    <span className="inline-flex items-center ml-3">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Calendar</span>
-                                                    </span>
-                                                )}
-                                                {selectedEmployee.access.messages && (
-                                                    <span className="inline-flex items-center ml-3">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Messages</span>
-                                                    </span>
-                                                )}
-                                                {selectedEmployee.access.products && (
-                                                    <span className="inline-flex items-center ml-3">
-                                                        <input type="checkbox" checked readOnly className="mr-1" />
-                                                        <span className="text-sm">Products</span>
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Action Cards */}
-                                <div className="grid grid-cols-2 gap-6 mb-6">
-                                    {/* Suspend Card */}
-                                    <div className="bg-[#35408E] rounded-lg p-6 text-center cursor-pointer hover:bg-[#2c3575] transition-colors">
-                                        <div className="flex justify-center mb-3">
-                                            <svg className="w-16 h-16 text-[#ECBA0B]" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                                                <circle cx="12" cy="12" r="3"/>
-                                                <path d="M16 12h2c0-3.31-2.69-6-6-6v2c2.21 0 4 1.79 4 4z"/>
-                                            </svg>
-                                        </div>
-                                        <h3 className="text-white text-xl font-bold mb-2">Suspend</h3>
-                                        <p className="text-white text-sm">How many days?</p>
-                                    </div>
-
-                                    {/* Terminate Card */}
-                                    <div className="bg-[#35408E] rounded-lg p-6 text-center cursor-pointer hover:bg-[#2c3575] transition-colors">
-                                        <div className="flex justify-center mb-3">
-                                            <svg className="w-16 h-16 text-[#ECBA0B]" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-                                            </svg>
-                                        </div>
-                                        <h3 className="text-white text-xl font-bold mb-2">Terminate</h3>
-                                        <p className="text-white text-sm">vanish from reality</p>
-                                    </div>
-                                </div>
-
-                                {/* Back Button */}
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => setShowAccountStatus(false)}
-                                        className="bg-[#35408E] text-white py-2 px-8 rounded hover:bg-[#2c3575] transition-colors font-semibold text-lg"
-                                    >
-                                        Back
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Add Account Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 relative">
-                            {/* Modal Header */}
-                            <div className="bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
-                                <h2 className="text-xl font-semibold">Add Account</h2>
-                                <button 
-                                    onClick={() => setShowModal(false)}
-                                    className="text-white hover:text-gray-200 transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            {/* Modal Body */}
-                            <form onSubmit={handleSubmit} className="p-6">
-                                <div className="flex gap-4 mb-6">
-                                    {/* Profile Picture Placeholder */}
-                                    <div className="w-16 h-16 bg-gray-300 rounded flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-10 h-10 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-
-                                    <div className="flex-1 space-y-3">
-                                        {/* Name Input */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Name:
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                                placeholder="ex. Juan Dela Cruz"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Role Dropdown */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Role:
-                                            </label>
-                                            <select
-                                                value={formData.role}
-                                                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                            >
-                                                <option value="Sale Admin">Sale Admin</option>
-                                                <option value="Operational Manager">Operational Manager</option>
-                                                <option value="Production/Assembly">Production/Assembly</option>
-                                                <option value="System Admin">System Admin</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Access Checkboxes */}
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Access:
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.dashboard}
-                                                onChange={() => handleAccessChange('dashboard')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Dashboard</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.employees}
-                                                onChange={() => handleAccessChange('employees')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Employees tab</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.orders}
-                                                onChange={() => handleAccessChange('orders')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Orders tab</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.calendar}
-                                                onChange={() => handleAccessChange('calendar')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Calendar</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.messages}
-                                                onChange={() => handleAccessChange('messages')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Messages</span>
-                                        </label>
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.access.products}
-                                                onChange={() => handleAccessChange('products')}
-                                                className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E]"
-                                            />
-                                            <span className="text-sm">Products</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Login Credentials Section */}
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Login credentials</h3>
-                                    
-                                    {/* Username */}
-                                    <div className="mb-3">
-                                        <label className="block text-sm text-gray-700 mb-1">
-                                            Username
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.username}
-                                            onChange={(e) => setFormData({...formData, username: e.target.value})}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Password */}
-                                    <div>
-                                        <label className="block text-sm text-gray-700 mb-1">
-                                            Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    className="w-full bg-[#35408E] text-white py-2 px-4 rounded hover:bg-[#2c3575] transition-colors font-semibold"
-                                >
-                                    Add
-                                </button>
-                            </form>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {filteredCustomers.map((customer) => (
+                                        <tr key={customer.customerid} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center">
+                                                    <div className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                                                        {customer.companyname.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <span className="font-medium text-gray-900">{customer.companyname}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-700">{customer.emailaddress}</td>
+                                            <td className="px-6 py-4 text-gray-700">{customer.companynumber || 'N/A'}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                    customer.google_id 
+                                                        ? "bg-blue-100 text-blue-800" 
+                                                        : "bg-gray-100 text-gray-800"
+                                                }`}>
+                                                    {customer.google_id ? "Google" : "Email"}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                    customer.accountstatus === "Active" 
+                                                        ? "bg-green-100 text-green-800" 
+                                                        : customer.accountstatus === "Suspended"
+                                                        ? "bg-yellow-100 text-yellow-800"
+                                                        : "bg-red-100 text-red-800"
+                                                }`}>
+                                                    {customer.accountstatus || 'Active'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-700 text-sm">{formatDate(customer.datecreated)}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        onClick={() => handleViewCustomer(customer)}
+                                                        className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <FaEye /> View
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleEditCustomer(customer)}
+                                                        className="px-3 py-1 bg-[#ECBA0B] text-black rounded text-sm hover:bg-yellow-500 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <FaEdit /> Edit
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 )}
 
             </main>
+
+            {/* View Customer Modal */}
+            {showViewModal && selectedCustomer && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                            <h2 className="text-white text-2xl font-semibold">Customer Details</h2>
+                            <button
+                                onClick={() => setShowViewModal(false)}
+                                className="text-white hover:text-gray-200 text-2xl"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="flex items-center mb-6">
+                                <div className="w-20 h-20 bg-[#35408E] rounded-full flex items-center justify-center text-white font-bold text-2xl mr-4">
+                                    {selectedCustomer.companyname.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-gray-900">{selectedCustomer.companyname}</h3>
+                                    <p className="text-gray-600">{selectedCustomer.google_id ? 'Google Sign-In' : 'Email Sign-In'}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-1">Email</p>
+                                    <p className="font-semibold text-gray-900">{selectedCustomer.emailaddress}</p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-1">Customer ID</p>
+                                    <p className="font-semibold text-gray-900">#{selectedCustomer.customerid}</p>
+                                </div>
+                                {selectedCustomer.companynumber && (
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-sm text-gray-600 mb-1">Phone Number</p>
+                                        <p className="font-semibold text-gray-900">{selectedCustomer.companynumber}</p>
+                                    </div>
+                                )}
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-1">Account Status</p>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        selectedCustomer.accountstatus === "Active" 
+                                            ? "bg-green-100 text-green-800" 
+                                            : selectedCustomer.accountstatus === "Suspended"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-red-100 text-red-800"
+                                    }`}>
+                                        {selectedCustomer.accountstatus || 'Active'}
+                                    </span>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-1">Date Created</p>
+                                    <p className="font-semibold text-gray-900">{formatDate(selectedCustomer.datecreated)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="text-sm text-gray-600 mb-1">Email Notifications</p>
+                                    <p className="font-semibold text-gray-900">{selectedCustomer.emailnotifications ? 'Enabled' : 'Disabled'}</p>
+                                </div>
+                                {selectedCustomer.addresses && selectedCustomer.addresses.length > 0 && (
+                                    <div className="bg-gray-50 p-4 rounded-lg col-span-2">
+                                        <p className="text-sm text-gray-600 mb-2">Saved Addresses</p>
+                                        <div className="space-y-2">
+                                            {selectedCustomer.addresses.map((address, index) => (
+                                                <p key={index} className="font-semibold text-gray-900 text-sm">
+                                                    {index + 1}. {typeof address === 'string' ? address : JSON.stringify(address)}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-between">
+                            <button
+                                onClick={() => handleDeleteCustomer(selectedCustomer.customerid)}
+                                className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                            >
+                                Delete Account
+                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setShowViewModal(false);
+                                        handleEditCustomer(selectedCustomer);
+                                    }}
+                                    className="bg-[#ECBA0B] hover:bg-yellow-500 text-black font-semibold px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={() => setShowViewModal(false)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Customer Modal */}
+            {showEditModal && selectedCustomer && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                            <h2 className="text-white text-2xl font-semibold">Edit Customer</h2>
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="text-white hover:text-gray-200 text-2xl"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <form onSubmit={handleEditCustomerSubmit} className="p-6">
+                            {formError && (
+                                <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                                    {formError}
+                                </div>
+                            )}
+                            {formSuccess && (
+                                <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                                    {formSuccess}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Company Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="companyname"
+                                        value={formData.companyname}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="emailaddress"
+                                        value={formData.emailaddress}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Phone Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="companynumber"
+                                        value={formData.companynumber}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        placeholder="Phone number"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        New Password (leave empty to keep current)
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        placeholder="Enter new password (min 6 characters)"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Account Status <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        name="accountstatus"
+                                        value={formData.accountstatus}
+                                        onChange={handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        required
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Suspended">Suspended</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex items-center">
+                                    <label className="flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="emailnotifications"
+                                            checked={formData.emailnotifications}
+                                            onChange={handleInputChange}
+                                            className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E] mr-2"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Email Notifications</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="flex justify-end gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    Update Customer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

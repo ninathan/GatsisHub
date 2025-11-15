@@ -38,3 +38,4 @@ create_default_support_employee.sql
 add_email_notifications_column.sql
 DATABASE_CHANGELOG.md
 create_teams_table.sql
+create_system_admin.sql

@@ -224,7 +224,7 @@ router.post("/change-password", async (req, res) => {
 router.patch("/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
-    const { employeename, email, contactdetails, shifthours, assigneddepartment, accountstatus } = req.body;
+    const { employeename, email, password, contactdetails, shifthours, assigneddepartment, accountstatus, role } = req.body;
 
     console.log(`✏️ Updating employee: ${employeeid}`);
 
@@ -236,6 +236,15 @@ router.patch("/:employeeid", async (req, res) => {
     if (shifthours !== undefined) updateData.shifthours = shifthours;
     if (assigneddepartment !== undefined) updateData.assigneddepartment = assigneddepartment;
     if (accountstatus !== undefined) updateData.accountstatus = accountstatus;
+    if (role !== undefined) updateData.role = role;
+    
+    // Hash password if provided
+    if (password !== undefined && password !== '') {
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters long" });
+      }
+      updateData.password = await bcrypt.hash(password, 10);
+    }
 
     // Check if there's anything to update
     if (Object.keys(updateData).length === 0) {
@@ -316,6 +325,89 @@ router.delete("/:employeeid", async (req, res) => {
   } catch (err) {
     console.error("💥 Delete Employee Error:", err);
     res.status(500).json({ error: err.message || "Failed to delete employee" });
+  }
+});
+
+// ➕ Create new employee
+router.post("/create", async (req, res) => {
+  try {
+    const { 
+      employeename, 
+      email, 
+      password, 
+      assigneddepartment, 
+      role, 
+      accountstatus, 
+      contactdetails, 
+      shifthours 
+    } = req.body;
+
+    console.log(`➕ Creating new employee: ${email}`);
+
+    // Validate required fields
+    if (!employeename || !email || !password || !assigneddepartment || !role) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+
+    // Check if email already exists
+    const { data: existingEmployee, error: checkError } = await supabase
+      .from("employees")
+      .select("email")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+
+    if (existingEmployee) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create employee
+    const { data: newEmployee, error: createError } = await supabase
+      .from("employees")
+      .insert([{
+        employeename,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        assigneddepartment,
+        role,
+        accountstatus: accountstatus || 'Active',
+        contactdetails: contactdetails || null,
+        shifthours: shifthours || null,
+        ispresent: false
+      }])
+      .select()
+      .single();
+
+    if (createError) {
+      console.error(`❌ Error creating employee:`, createError);
+      throw createError;
+    }
+
+    console.log(`✅ Employee created successfully: ${newEmployee.employeeid} (${newEmployee.employeename})`);
+
+    // Return employee data (excluding password)
+    const { password: _, ...employeeData } = newEmployee;
+
+    res.status(201).json({
+      message: "Employee created successfully",
+      employee: employeeData
+    });
+  } catch (err) {
+    console.error("💥 Create Employee Error:", err);
+    res.status(500).json({ error: err.message || "Failed to create employee" });
   }
 });
 
