@@ -180,6 +180,46 @@ router.get("/", async (req, res) => {
   }
 });
 
+// 🔍 GET /payments/order/:orderid - Get payment by order ID
+router.get("/order/:orderid", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+
+    console.log("🔍 Fetching payment for order:", orderid);
+
+    const { data: payment, error } = await supabase
+      .from("payments")
+      .select(`
+        *,
+        customers:customerid (
+          customerid,
+          companyname,
+          emailaddress
+        )
+      `)
+      .eq("orderid", orderid)
+      .order('datesubmitted', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No payment found for this order
+        return res.status(404).json({ error: "No payment found for this order" });
+      }
+      console.error("❌ Error fetching payment:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    console.log("✅ Payment fetched successfully");
+    res.status(200).json(payment);
+
+  } catch (err) {
+    console.error("💥 Error:", err);
+    res.status(500).json({ error: "Failed to fetch payment" });
+  }
+});
+
 // 🔍 GET /payments/:paymentid - Get single payment
 router.get("/:paymentid", async (req, res) => {
   try {

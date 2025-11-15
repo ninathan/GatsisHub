@@ -23,6 +23,9 @@ const Order = () => {
     const [showProofModal, setShowProofModal] = useState(false);
     const [proofImage, setProofImage] = useState(null);
 
+    // Track payment info for each order
+    const [orderPayments, setOrderPayments] = useState({});
+
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [orderToCancel, setOrderToCancel] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
@@ -98,6 +101,12 @@ const Order = () => {
                 console.log('📍 First order delivery address:', data.orders[0]?.deliveryaddress);
                 console.log('🎨 First order 3D design data:', data.orders[0]?.threeddesigndata);
                 setOrders(data.orders || []);
+                
+                // Fetch payment info for each order
+                if (data.orders && data.orders.length > 0) {
+                    fetchPaymentInfo(data.orders);
+                }
+                
                 setError(null);
             } catch (err) {
                 console.error('Error fetching orders:', err);
@@ -109,6 +118,30 @@ const Order = () => {
 
         fetchOrders();
     }, [user]);
+
+    // Fetch payment information for orders
+    const fetchPaymentInfo = async (orders) => {
+        const paymentPromises = orders.map(async (order) => {
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${order.orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    return { orderid: order.orderid, payment };
+                }
+            } catch (error) {
+                console.log(`No payment found for order ${order.orderid}`);
+            }
+            return { orderid: order.orderid, payment: null };
+        });
+
+        const results = await Promise.all(paymentPromises);
+        const paymentsMap = {};
+        results.forEach(({ orderid, payment }) => {
+            paymentsMap[orderid] = payment;
+        });
+        setOrderPayments(paymentsMap);
+        console.log('💳 Payment info loaded:', paymentsMap);
+    };
 
     // Helper function to get status color
     const getStatusColor = (status) => {
@@ -758,10 +791,10 @@ const Order = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* View Proof of Payment - Only show in Processing phase */}
-                                                    {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                    {/* View Proof of Payment - Show if payment exists for this order */}
+                                                    {orderPayments[order.orderid] && (
                                                         <button
-                                                            onClick={() => openProofModal('https://images.unsplash.com/photo-1554224311-beee460c201f?w=400')}
+                                                            onClick={() => openProofModal(orderPayments[order.orderid].proofofpayment)}
                                                             className="bg-indigo-700 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-800 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold"
                                                         >
                                                             <FileText size={16} className="md:w-[18px] md:h-[18px]" />
@@ -770,9 +803,13 @@ const Order = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* Payment - Only show when Waiting for Payment */}
-                                                    {order.orderstatus === 'Waiting for Payment' && (
-                                                        <Link to="/payment" className="bg-yellow-500 text-white px-3 md:px-6 py-2 rounded hover:bg-yellow-600 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-xs md:text-sm font-semibold">
+                                                    {/* Payment - Only show when Waiting for Payment AND no payment submitted yet */}
+                                                    {order.orderstatus === 'Waiting for Payment' && !orderPayments[order.orderid] && (
+                                                        <Link 
+                                                            to="/payment" 
+                                                            state={{ orderDetails: order }}
+                                                            className="bg-yellow-500 text-white px-3 md:px-6 py-2 rounded hover:bg-yellow-600 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-xs md:text-sm font-semibold"
+                                                        >
                                                             <CreditCard size={16} className="md:w-[18px] md:h-[18px]" />
                                                             Payment
                                                         </Link>
@@ -832,16 +869,32 @@ const Order = () => {
 
                         {/* Modal Title */}
                         <div className="text-center pb-4 md:pb-6">
-                            <h2 className="text-white text-xl md:text-2xl font-semibold">Proof of payment</h2>
+                            <h2 className="text-white text-xl md:text-2xl font-semibold">Proof of Payment</h2>
                         </div>
 
-                        {/* Image Container */}
+                        {/* Content Container */}
                         <div className="bg-white mx-4 md:mx-8 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
-                            <img
-                                src={proofImage}
-                                alt="Proof of Payment"
-                                className="w-full h-auto rounded"
-                            />
+                            {proofImage && proofImage.toLowerCase().endsWith('.pdf') ? (
+                                <div className="flex flex-col items-center gap-4">
+                                    <FileText size={48} className="text-indigo-600" />
+                                    <p className="text-gray-700 font-semibold">PDF Payment Proof</p>
+                                    <a 
+                                        href={proofImage} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded transition-colors font-semibold flex items-center gap-2"
+                                    >
+                                        <Eye size={18} />
+                                        Open PDF
+                                    </a>
+                                </div>
+                            ) : (
+                                <img
+                                    src={proofImage}
+                                    alt="Proof of Payment"
+                                    className="w-full h-auto rounded"
+                                />
+                            )}
                         </div>
 
                         {/* Back Button */}

@@ -41,6 +41,10 @@ const OrderDetail = () => {
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
 
+    // Payment proof states
+    const [paymentInfo, setPaymentInfo] = useState(null);
+    const [showProofModal, setShowProofModal] = useState(false);
+
     // Fetch order details
     useEffect(() => {
         const fetchOrder = async () => {
@@ -74,6 +78,26 @@ const OrderDetail = () => {
         };
 
         fetchOrder();
+    }, [orderid]);
+
+    // Fetch payment info for this order
+    useEffect(() => {
+        const fetchPaymentInfo = async () => {
+            if (!orderid) return;
+
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    setPaymentInfo(payment);
+                    console.log('💳 Payment info loaded:', payment);
+                }
+            } catch (error) {
+                console.log('No payment found for this order');
+            }
+        };
+
+        fetchPaymentInfo();
     }, [orderid]);
 
     // Helper functions
@@ -331,8 +355,12 @@ const OrderDetail = () => {
     };
 
     const handleViewProof = () => {
-        console.log("Viewing proof of payment");
-        showNotificationMessage('Proof of payment viewer coming soon', 'success');
+        if (!paymentInfo || !paymentInfo.proofofpayment) {
+            showNotificationMessage('No payment proof available for this order', 'error');
+            return;
+        }
+        console.log("Viewing proof of payment:", paymentInfo.proofofpayment);
+        setShowProofModal(true);
     };
 
     if (loading) {
@@ -632,10 +660,15 @@ const OrderDetail = () => {
                             </button>
                             <button
                                 onClick={handleViewProof}
-                                className="bg-indigo-700 hover:bg-indigo-800 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                disabled={!paymentInfo}
+                                className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm ${
+                                    paymentInfo 
+                                        ? 'bg-indigo-700 hover:bg-indigo-800 text-white' 
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
                             >
                                 <Eye size={18} />
-                                View Proof
+                                View Proof {paymentInfo ? '' : '(Not Available)'}
                             </button>
                             <button
                                 onClick={handleExportXLS}
@@ -668,6 +701,75 @@ const OrderDetail = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Proof of Payment Modal */}
+            {showProofModal && paymentInfo && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-2xl font-semibold">Proof of Payment</h2>
+                                <p className="text-indigo-200 text-sm mt-1">
+                                    Payment Method: {paymentInfo.paymentmethod} | Status: {paymentInfo.paymentstatus}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowProofModal(false)}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Proof Content */}
+                        <div className="bg-white p-6">
+                            {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
+                                <div className="flex flex-col items-center gap-4 py-8">
+                                    <FileText size={64} className="text-indigo-600" />
+                                    <p className="text-gray-700 font-semibold text-lg">PDF Payment Proof</p>
+                                    <a 
+                                        href={paymentInfo.proofofpayment} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                                    >
+                                        <Eye size={20} />
+                                        Open PDF
+                                    </a>
+                                </div>
+                            ) : (
+                                <div className="w-full bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                                    <img
+                                        src={paymentInfo.proofofpayment}
+                                        alt="Proof of Payment"
+                                        className="w-full h-auto"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Payment Details */}
+                        {paymentInfo.datesubmitted && (
+                            <div className="bg-gray-50 px-6 py-4 border-t">
+                                <p className="text-sm text-gray-600">
+                                    Submitted: {formatDate(paymentInfo.datesubmitted)}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="bg-gray-100 px-6 py-4 flex justify-end">
+                            <button
+                                onClick={() => setShowProofModal(false)}
+                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (

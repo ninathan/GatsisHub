@@ -92,6 +92,10 @@ const PaymentPage = () => {
             setTimeout(() => {
                 setShowUploadModal(false);
                 setShowModal(true);
+                // Navigate back to orders page after 2 seconds
+                setTimeout(() => {
+                    navigate('/orders');
+                }, 2000);
             }, 1500);
         } catch (error) {
             console.error('Payment submission error:', error);
@@ -327,7 +331,7 @@ const PaymentPage = () => {
                         <button
                             onClick={() => {
                                 setShowModal(false);
-                                navigate('/order'); // redirect to orders page
+                                navigate('/orders'); // redirect to orders page
                             }}
                             className="bg-[#FFD41C] text-black px-6 py-2 rounded font-semibold transition-all duration-300 hover:scale-105 hover:bg-[#e6c41a]"
                         >
