@@ -77,7 +77,7 @@ const PaymentPage = () => {
                 formData.append('customerid', user.customerid);
             }
 
-            const response = await fetch('https://gatsis-hub.vercel.app/api/payments/submit', {
+            const response = await fetch('https://gatsis-hub.vercel.app/payments/submit', {
                 method: 'POST',
                 body: formData
             });
@@ -95,7 +95,11 @@ const PaymentPage = () => {
             }, 1500);
         } catch (error) {
             console.error('Payment submission error:', error);
-            setUploadError(error.message || 'Failed to submit payment. Please try again.');
+            if (error.message === 'Failed to fetch') {
+                setUploadError('Cannot connect to server. Please check your internet connection or try again later.');
+            } else {
+                setUploadError(error.message || 'Failed to submit payment. Please try again.');
+            }
         } finally {
             setUploading(false);
         }

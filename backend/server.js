@@ -60,7 +60,7 @@ app.use("/messages", messagesRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/customers", customersRoutes);
 app.use("/teams", teamsRoutes);
-app.use("/api/payments", paymentsRoutes);
+app.use("/payments", paymentsRoutes);
 
 // Health check
 app.get("/", (req, res) => {
