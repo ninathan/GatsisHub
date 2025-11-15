@@ -39,3 +39,4 @@ add_email_notifications_column.sql
 DATABASE_CHANGELOG.md
 create_teams_table.sql
 create_system_admin.sql
+create_payment_storage_bucket.sql

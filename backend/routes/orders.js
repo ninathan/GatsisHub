@@ -226,13 +226,23 @@ router.get("/user/:userid", async (req, res) => {
 
     console.log('🔍 Fetching orders for user:', userid);
 
+    // Validate userid format (should be UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userid)) {
+      console.error('❌ Invalid userid format:', userid);
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
     const { data: orders, error } = await supabase
       .from("orders")
       .select("*")
       .eq("userid", userid)
       .order("datecreated", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase error:', error);
+      throw error;
+    }
 
     console.log('✅ Found', orders?.length || 0, 'orders');
     if (orders && orders.length > 0) {
@@ -249,8 +259,12 @@ router.get("/user/:userid", async (req, res) => {
       orders: orders || []
     });
   } catch (err) {
-    console.error("Get Orders Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("💥 Get Orders Error:", err);
+    console.error("💥 Error details:", JSON.stringify(err, null, 2));
+    res.status(500).json({ 
+      error: err.message || 'Failed to fetch orders',
+      details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
+    });
   }
 });
 
