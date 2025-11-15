@@ -2,25 +2,11 @@ import express from "express";
 import supabase from "../supabaseClient.js";
 import multer from "multer";
 import path from "path";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 const router = express.Router();
 
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Configure multer for file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/payments/') // Make sure this directory exists
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'payment-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for memory storage (Vercel compatible)
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -45,7 +31,7 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
   try {
     console.log("💳 Payment submission received");
     console.log("📥 Request body:", req.body);
-    console.log("📎 File:", req.file);
+    console.log("📎 File:", req.file ? 'File received' : 'No file');
 
     const { paymentMethod, orderid, customerid, amountPaid, transactionReference, notes } = req.body;
 
@@ -58,15 +44,40 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       return res.status(400).json({ error: "Payment method is required" });
     }
 
-    // Store the file path (relative to uploads directory)
-    const filePath = `uploads/payments/${req.file.filename}`;
+    // Upload file to Supabase Storage
+    const fileExt = path.extname(req.file.originalname);
+    const fileName = `payment-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+    const filePath = `payments/${fileName}`;
+
+    console.log("📤 Uploading file to Supabase Storage:", filePath);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('payment-proofs')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error("❌ Upload error:", uploadError);
+      return res.status(500).json({ error: "Failed to upload file: " + uploadError.message });
+    }
+
+    console.log("✅ File uploaded successfully:", uploadData);
+
+    // Get public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('payment-proofs')
+      .getPublicUrl(filePath);
+
+    console.log("🔗 Public URL:", publicUrl);
 
     // Insert payment record into database
     const paymentData = {
-      orderid: orderid || null, // UUID - no need to parse as int
+      orderid: orderid || null,
       customerid: customerid ? parseInt(customerid) : null,
       paymentmethod: paymentMethod,
-      proofofpayment: filePath,
+      proofofpayment: publicUrl,
       paymentstatus: 'Pending Verification',
       amountpaid: amountPaid ? parseFloat(amountPaid) : null,
       transactionreference: transactionReference || null,
