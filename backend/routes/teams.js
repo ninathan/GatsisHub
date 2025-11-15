@@ -60,7 +60,7 @@ router.get("/:teamid", async (req, res) => {
 // �➕ Create new team
 router.post("/create", async (req, res) => {
   try {
-    const { teamname, description, members, quota, assignedOrders } = req.body;
+    const { teamname, description, members, quota, dailyquota, assignedOrders } = req.body;
 
     console.log(`➕ Creating new team: ${teamname}`);
 
@@ -95,6 +95,7 @@ router.post("/create", async (req, res) => {
       description: description ? description.trim() : null,
       members: members || [],
       quota: quota || null,
+      dailyquota: dailyquota || null,
       assignedorders: assignedOrders || [],
       createdat: new Date().toISOString()
     };
@@ -126,7 +127,7 @@ router.post("/create", async (req, res) => {
 router.patch("/:teamid", async (req, res) => {
   try {
     const { teamid } = req.params;
-    const { teamname, description, members, quota, assignedOrders } = req.body;
+    const { teamname, description, members, quota, dailyquota, assignedOrders } = req.body;
 
     console.log(`✏️ Updating team: ${teamid}`);
 
@@ -181,6 +182,10 @@ router.patch("/:teamid", async (req, res) => {
 
     if (quota !== undefined) {
       updateData.quota = quota;
+    }
+
+    if (dailyquota !== undefined) {
+      updateData.dailyquota = dailyquota;
     }
 
     if (assignedOrders !== undefined) {

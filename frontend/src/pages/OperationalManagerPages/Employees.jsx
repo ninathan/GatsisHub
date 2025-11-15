@@ -36,6 +36,7 @@ const Employees = () => {
         description: "",
         selectedEmployees: [],
         quota: "",
+        dailyquota: "",
         assignedOrders: []
     });
 
@@ -48,11 +49,10 @@ const Employees = () => {
     const [isEditingQuota, setIsEditingQuota] = useState(false);
     const [quotaFormData, setQuotaFormData] = useState({
         quotaname: "",
-        targetquota: "",
-        finishedquota: 0,
-        teamid: "",
+        teamids: [],
         assignedOrders: [],
         materialcount: {},
+        finishedquota: 0,
         startdate: "",
         enddate: "",
         status: "Active"
@@ -268,6 +268,7 @@ const Employees = () => {
             description: "",
             selectedEmployees: [],
             quota: "",
+            dailyquota: "",
             assignedOrders: []
         });
         setShowCreateTeamModal(true);
@@ -280,6 +281,7 @@ const Employees = () => {
             description: team.description || "",
             selectedEmployees: team.members || [],
             quota: team.quota || "",
+            dailyquota: team.dailyquota || "",
             assignedOrders: team.assignedOrders || []
         });
         setIsEditingTeam(false);
@@ -311,6 +313,7 @@ const Employees = () => {
                 description: teamFormData.description,
                 members: teamFormData.selectedEmployees,
                 quota: teamFormData.quota,
+                dailyquota: teamFormData.dailyquota,
                 assignedOrders: teamFormData.assignedOrders
             };
 
@@ -474,11 +477,10 @@ const Employees = () => {
         setIsEditingQuota(true);
         setQuotaFormData({
             quotaname: "",
-            targetquota: "",
-            finishedquota: 0,
-            teamid: "",
+            teamids: [],
             assignedOrders: [],
             materialcount: {},
+            finishedquota: 0,
             startdate: "",
             enddate: "",
             status: "Active"
@@ -491,11 +493,10 @@ const Employees = () => {
         setIsEditingQuota(false);
         setQuotaFormData({
             quotaname: quota.quotaname,
-            targetquota: quota.targetquota,
-            finishedquota: quota.finishedquota || 0,
-            teamid: quota.teamid || "",
+            teamids: quota.teamids || [],
             assignedOrders: quota.assignedorders || [],
             materialcount: quota.materialcount || {},
+            finishedquota: quota.finishedquota || 0,
             startdate: quota.startdate || "",
             enddate: quota.enddate || "",
             status: quota.status || "Active"
@@ -526,13 +527,19 @@ const Employees = () => {
 
     const handleSaveQuota = async () => {
         try {
+            // Validate form
+            if (!quotaFormData.quotaname || quotaFormData.assignedOrders.length === 0) {
+                setErrorMessage('Quota name and at least one assigned order are required');
+                setShowErrorModal(true);
+                return;
+            }
+
             const quotaData = {
                 quotaname: quotaFormData.quotaname,
-                targetquota: parseInt(quotaFormData.targetquota),
-                finishedquota: parseInt(quotaFormData.finishedquota) || 0,
-                teamid: quotaFormData.teamid ? parseInt(quotaFormData.teamid) : null,
+                teamids: quotaFormData.teamids.map(id => parseInt(id)),
                 assignedorders: quotaFormData.assignedOrders,
                 materialcount: quotaFormData.materialcount,
+                finishedquota: parseInt(quotaFormData.finishedquota) || 0,
                 startdate: quotaFormData.startdate || null,
                 enddate: quotaFormData.enddate || null,
                 status: quotaFormData.status
@@ -624,6 +631,15 @@ const Employees = () => {
             assignedOrders: prev.assignedOrders.includes(orderId)
                 ? prev.assignedOrders.filter(id => id !== orderId)
                 : [...prev.assignedOrders, orderId]
+        }));
+    };
+
+    const handleQuotaTeamSelection = (teamId) => {
+        setQuotaFormData(prev => ({
+            ...prev,
+            teamids: prev.teamids.includes(teamId)
+                ? prev.teamids.filter(id => id !== teamId)
+                : [...prev.teamids, teamId]
         }));
     };
 
@@ -1019,6 +1035,18 @@ const Employees = () => {
                                         </div>
 
                                         <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Daily Quota</label>
+                                            <input
+                                                type="number"
+                                                name="dailyquota"
+                                                value={teamFormData.dailyquota}
+                                                onChange={handleTeamInputChange}
+                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                placeholder="e.g., 50 units per day"
+                                            />
+                                        </div>
+
+                                        <div>
                                             <label className="block text-gray-700 font-semibold mb-2">Assign Employees</label>
                                             <div className="border rounded p-4 max-h-48 overflow-y-auto">
                                                 {employees.length === 0 ? (
@@ -1265,6 +1293,16 @@ const Employees = () => {
                                                                 </span>
                                                             </div>
                                                         )}
+                                                    </div>
+                                                )}
+
+                                                {selectedTeam.dailyquota && (
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <FaChartLine className="text-gray-500" />
+                                                            <span className="font-semibold">Daily Quota</span>
+                                                        </div>
+                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.dailyquota || 'Not Set'}</p>
                                                     </div>
                                                 )}
 
@@ -1536,19 +1574,15 @@ const Employees = () => {
                                                 />
                                             </div>
 
-                                            <div>
-                                                <label className="block text-gray-700 font-semibold mb-2">Target Quota *</label>
-                                                <input
-                                                    type="number"
-                                                    name="targetquota"
-                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
-                                                    value={quotaFormData.targetquota}
-                                                    onChange={handleQuotaInputChange}
-                                                    readOnly={!isEditingQuota}
-                                                    placeholder="e.g., 1000"
-                                                    min="0"
-                                                />
-                                            </div>
+                                            {/* Target Quota - Auto-calculated from orders */}
+                                            {!isEditingQuota && selectedQuota && (
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Target Quota</label>
+                                                    <div className="w-full border rounded px-4 py-2 bg-gray-100 text-gray-700">
+                                                        {selectedQuota.targetquota || 0} units (from {quotaFormData.assignedOrders.length} orders)
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <div>
                                                 <label className="block text-gray-700 font-semibold mb-2">Finished Quota</label>
@@ -1563,22 +1597,44 @@ const Employees = () => {
                                                 />
                                             </div>
 
+                                            {/* Assign Teams - Multi-select */}
                                             <div>
-                                                <label className="block text-gray-700 font-semibold mb-2">Assign to Team</label>
-                                                <select
-                                                    name="teamid"
-                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
-                                                    value={quotaFormData.teamid}
-                                                    onChange={handleQuotaInputChange}
-                                                    disabled={!isEditingQuota}
-                                                >
-                                                    <option value="">No Team</option>
-                                                    {teams.map(team => (
-                                                        <option key={team.id} value={team.id}>
-                                                            {team.teamname}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign to Teams</label>
+                                                {isEditingQuota ? (
+                                                    <div className="border rounded px-4 py-2 bg-white max-h-40 overflow-y-auto">
+                                                        {teams.map(team => (
+                                                            <label key={team.teamid} className="flex items-center py-1 hover:bg-gray-50 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={quotaFormData.teamids.includes(team.teamid)}
+                                                                    onChange={() => handleQuotaTeamSelection(team.teamid)}
+                                                                    className="mr-2"
+                                                                />
+                                                                <span>{team.teamname}</span>
+                                                            </label>
+                                                        ))}
+                                                        {teams.length === 0 && (
+                                                            <div className="text-gray-500 text-sm">No teams available</div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full border rounded px-4 py-2 bg-gray-100">
+                                                        {quotaFormData.teamids.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {quotaFormData.teamids.map(teamId => {
+                                                                    const team = teams.find(t => t.teamid === teamId);
+                                                                    return team ? (
+                                                                        <span key={teamId} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">
+                                                                            {team.teamname}
+                                                                        </span>
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-500">No teams assigned</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div>

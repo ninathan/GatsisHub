@@ -12,14 +12,7 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("quotas")
-      .select(`
-        *,
-        teams:teamid (
-          teamid,
-          teamname,
-          members
-        )
-      `)
+      .select("*")
       .order('createdat', { ascending: false });
 
     // Apply filters
@@ -27,7 +20,7 @@ router.get("/", async (req, res) => {
       query = query.eq('status', status);
     }
     if (teamid) {
-      query = query.eq('teamid', teamid);
+      query = query.contains('teamids', [parseInt(teamid)]);
     }
 
     const { data: quotas, error } = await query;
@@ -37,8 +30,21 @@ router.get("/", async (req, res) => {
       throw error;
     }
 
-    console.log(`✅ Fetched ${quotas.length} quotas`);
-    res.status(200).json({ quotas });
+    // Fetch team details for each quota
+    const quotasWithTeams = await Promise.all(quotas.map(async (quota) => {
+      if (quota.teamids && quota.teamids.length > 0) {
+        const { data: teams } = await supabase
+          .from("teams")
+          .select("teamid, teamname, members")
+          .in("teamid", quota.teamids);
+        
+        return { ...quota, teams: teams || [] };
+      }
+      return { ...quota, teams: [] };
+    }));
+
+    console.log(`✅ Fetched ${quotasWithTeams.length} quotas`);
+    res.status(200).json({ quotas: quotasWithTeams });
 
   } catch (err) {
     console.error("💥 Error:", err);
@@ -55,20 +61,24 @@ router.get("/:quotaid", async (req, res) => {
 
     const { data: quota, error } = await supabase
       .from("quotas")
-      .select(`
-        *,
-        teams:teamid (
-          teamid,
-          teamname,
-          members,
-          description
-        )
-      `)
+      .select("*")
       .eq("quotaid", quotaid)
       .single();
 
     if (error || !quota) {
       return res.status(404).json({ error: "Quota not found" });
+    }
+
+    // Fetch team details if teamids exist
+    if (quota.teamids && quota.teamids.length > 0) {
+      const { data: teams } = await supabase
+        .from("teams")
+        .select("teamid, teamname, members, description")
+        .in("teamid", quota.teamids);
+      
+      quota.teams = teams || [];
+    } else {
+      quota.teams = [];
     }
 
     console.log("✅ Quota fetched successfully");
@@ -85,8 +95,7 @@ router.post("/create", async (req, res) => {
   try {
     const {
       quotaname,
-      targetquota,
-      teamid,
+      teamids,
       assignedorders,
       materialcount,
       startdate,
@@ -96,15 +105,33 @@ router.post("/create", async (req, res) => {
     console.log("➕ Creating quota:", quotaname);
 
     // Validation
-    if (!quotaname || !targetquota) {
-      return res.status(400).json({ error: "Quota name and target quota are required" });
+    if (!quotaname) {
+      return res.status(400).json({ error: "Quota name is required" });
     }
+
+    if (!assignedorders || assignedorders.length === 0) {
+      return res.status(400).json({ error: "At least one order must be assigned to calculate target quota" });
+    }
+
+    // Fetch orders to calculate target quota from quantities
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("orderid, quantity")
+      .in("orderid", assignedorders);
+
+    if (ordersError) {
+      console.error("❌ Error fetching orders:", ordersError);
+      return res.status(400).json({ error: "Failed to fetch order details" });
+    }
+
+    // Calculate target quota as sum of order quantities
+    const targetquota = orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
 
     const quotaData = {
       quotaname,
-      targetquota: parseInt(targetquota),
+      targetquota,
       finishedquota: 0,
-      teamid: teamid ? parseInt(teamid) : null,
+      teamids: teamids || [],
       assignedorders: assignedorders || [],
       materialcount: materialcount || {},
       startdate: startdate || null,
@@ -125,15 +152,15 @@ router.post("/create", async (req, res) => {
       return res.status(400).json({ error: insertError.message });
     }
 
-    // If team is assigned, update team's linkedquotaid
-    if (teamid) {
+    // If teams are assigned, update each team's linkedquotaid
+    if (teamids && teamids.length > 0) {
       const { error: teamError } = await supabase
         .from("teams")
         .update({ linkedquotaid: quota.quotaid, quota: targetquota })
-        .eq("teamid", teamid);
+        .in("teamid", teamids);
 
       if (teamError) {
-        console.error("⚠️ Warning: Could not update team:", teamError);
+        console.error("⚠️ Warning: Could not update teams:", teamError);
       }
     }
 
@@ -152,9 +179,8 @@ router.patch("/:quotaid", async (req, res) => {
     const { quotaid } = req.params;
     const {
       quotaname,
-      targetquota,
       finishedquota,
-      teamid,
+      teamids,
       assignedorders,
       materialcount,
       startdate,
@@ -164,19 +190,41 @@ router.patch("/:quotaid", async (req, res) => {
 
     console.log("🔄 Updating quota:", quotaid);
 
+    // Get existing quota to check previous team assignments
+    const { data: existingQuota, error: fetchError } = await supabase
+      .from("quotas")
+      .select("*")
+      .eq("quotaid", quotaid)
+      .single();
+
+    if (fetchError || !existingQuota) {
+      return res.status(404).json({ error: "Quota not found" });
+    }
+
     const updateData = {
       updatedat: new Date().toISOString()
     };
 
     if (quotaname !== undefined) updateData.quotaname = quotaname;
-    if (targetquota !== undefined) updateData.targetquota = parseInt(targetquota);
     if (finishedquota !== undefined) updateData.finishedquota = parseInt(finishedquota);
-    if (teamid !== undefined) updateData.teamid = teamid ? parseInt(teamid) : null;
+    if (teamids !== undefined) updateData.teamids = teamids;
     if (assignedorders !== undefined) updateData.assignedorders = assignedorders;
     if (materialcount !== undefined) updateData.materialcount = materialcount;
     if (startdate !== undefined) updateData.startdate = startdate;
     if (enddate !== undefined) updateData.enddate = enddate;
     if (status !== undefined) updateData.status = status;
+
+    // Recalculate target quota if assigned orders changed
+    if (assignedorders !== undefined && assignedorders.length > 0) {
+      const { data: orders, error: ordersError } = await supabase
+        .from("orders")
+        .select("orderid, quantity")
+        .in("orderid", assignedorders);
+
+      if (!ordersError && orders) {
+        updateData.targetquota = orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      }
+    }
 
     const { data: quota, error: updateError } = await supabase
       .from("quotas")
@@ -190,20 +238,38 @@ router.patch("/:quotaid", async (req, res) => {
       return res.status(400).json({ error: updateError.message });
     }
 
-    // If team is assigned or changed, update team's linkedquotaid
-    if (teamid !== undefined) {
-      if (teamid) {
-        const { error: teamError } = await supabase
+    // Handle team linkage updates
+    if (teamids !== undefined) {
+      // Unlink old teams that are no longer assigned
+      const oldTeamIds = existingQuota.teamids || [];
+      const newTeamIds = teamids || [];
+      const removedTeamIds = oldTeamIds.filter(id => !newTeamIds.includes(id));
+      const addedTeamIds = newTeamIds.filter(id => !oldTeamIds.includes(id));
+
+      if (removedTeamIds.length > 0) {
+        await supabase
+          .from("teams")
+          .update({ linkedquotaid: null })
+          .in("teamid", removedTeamIds)
+          .eq("linkedquotaid", quotaid);
+      }
+
+      if (addedTeamIds.length > 0) {
+        await supabase
           .from("teams")
           .update({ 
             linkedquotaid: quota.quotaid,
-            quota: updateData.targetquota || quota.targetquota
+            quota: quota.targetquota
           })
-          .eq("teamid", teamid);
+          .in("teamid", addedTeamIds);
+      }
 
-        if (teamError) {
-          console.error("⚠️ Warning: Could not update team:", teamError);
-        }
+      // Update quota value for all linked teams if target changed
+      if (updateData.targetquota && newTeamIds.length > 0) {
+        await supabase
+          .from("teams")
+          .update({ quota: updateData.targetquota })
+          .in("teamid", newTeamIds);
       }
     }
 
