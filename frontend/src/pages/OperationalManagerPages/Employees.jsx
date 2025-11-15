@@ -21,6 +21,7 @@ const Employees = () => {
         contactdetails: "",
         shifthours: "",
         assigneddepartment: "",
+        ispresent: false,
     });
 
     // Teams state
@@ -51,7 +52,6 @@ const Employees = () => {
         quotaname: "",
         teamids: [],
         assignedOrders: [],
-        materialcount: {},
         finishedquota: 0,
         startdate: "",
         enddate: "",
@@ -110,6 +110,7 @@ const Employees = () => {
             contactdetails: employee.contactdetails || "",
             shifthours: employee.shifthours || "",
             assigneddepartment: employee.assigneddepartment || "",
+            ispresent: employee.ispresent || false,
         });
         setIsModalOpen(true);
     };
@@ -123,6 +124,7 @@ const Employees = () => {
             contactdetails: "",
             shifthours: "",
             assigneddepartment: "",
+            ispresent: false,
         });
     };
 
@@ -479,7 +481,6 @@ const Employees = () => {
             quotaname: "",
             teamids: [],
             assignedOrders: [],
-            materialcount: {},
             finishedquota: 0,
             startdate: "",
             enddate: "",
@@ -495,7 +496,6 @@ const Employees = () => {
             quotaname: quota.quotaname,
             teamids: quota.teamids || [],
             assignedOrders: quota.assignedorders || [],
-            materialcount: quota.materialcount || {},
             finishedquota: quota.finishedquota || 0,
             startdate: quota.startdate || "",
             enddate: quota.enddate || "",
@@ -538,7 +538,6 @@ const Employees = () => {
                 quotaname: quotaFormData.quotaname,
                 teamids: quotaFormData.teamids.map(id => parseInt(id)),
                 assignedorders: quotaFormData.assignedOrders,
-                materialcount: quotaFormData.materialcount,
                 finishedquota: parseInt(quotaFormData.finishedquota) || 0,
                 startdate: quotaFormData.startdate || null,
                 enddate: quotaFormData.enddate || null,
@@ -643,30 +642,6 @@ const Employees = () => {
         }));
     };
 
-    const calculateMaterialCount = (orders) => {
-        const materialCount = {};
-        
-        orders.forEach(order => {
-            const selectedOrder = availableOrders.find(o => o.orderid === order);
-            if (selectedOrder && selectedOrder.materials) {
-                Object.entries(selectedOrder.materials).forEach(([material, percentage]) => {
-                    const quantity = Math.round((percentage / 100) * selectedOrder.quantity);
-                    materialCount[material] = (materialCount[material] || 0) + quantity;
-                });
-            }
-        });
-        
-        return materialCount;
-    };
-
-    const handleCalculateMaterials = () => {
-        const materials = calculateMaterialCount(quotaFormData.assignedOrders);
-        setQuotaFormData(prev => ({
-            ...prev,
-            materialcount: materials
-        }));
-    };
-
     // ============= END QUOTA FUNCTIONS =============
 
     const handleCloseTeamModal = () => {
@@ -738,13 +713,35 @@ const Employees = () => {
                                                 </td>
                                                 <td className="p-3">{emp.contactdetails || 'N/A'}</td>
                                                 <td className="p-3">
-                                                    <span className={`px-3 py-1 rounded-full text-sm ${
-                                                        emp.ispresent 
-                                                            ? 'bg-green-100 text-green-700' 
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                const response = await fetch(`https://gatsis-hub.vercel.app/employees/${emp.employeeid}`, {
+                                                                    method: 'PATCH',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ ispresent: !emp.ispresent })
+                                                                });
+                                                                if (response.ok) {
+                                                                    await fetchEmployees();
+                                                                    setSuccessMessage(`${emp.employeename} marked as ${!emp.ispresent ? 'Present' : 'Absent'}`);
+                                                                    setShowSuccessModal(true);
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error updating presence:', error);
+                                                                setErrorMessage('Failed to update presence status');
+                                                                setShowErrorModal(true);
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1 rounded-full text-sm cursor-pointer transition-all hover:shadow-md ${
+                                                            emp.ispresent 
+                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                        title={`Click to mark as ${emp.ispresent ? 'Absent' : 'Present'}`}
+                                                    >
                                                         {emp.ispresent ? 'Present' : 'Absent'}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                                 <td className="p-3">{emp.shifthours || 'N/A'}</td>
                                                 <td className="p-3">
@@ -860,12 +857,24 @@ const Employees = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-gray-700 font-semibold mb-2">Presence Status</label>
-                                                    <input
-                                                        type="text"
-                                                        className="w-full border rounded px-4 py-2 bg-gray-100"
-                                                        value={selectedEmployee.ispresent ? 'Present' : 'Absent'}
-                                                        readOnly
-                                                    />
+                                                    {isEditing ? (
+                                                        <select
+                                                            name="ispresent"
+                                                            value={formData.ispresent}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, ispresent: e.target.value === 'true' }))}
+                                                            className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                        >
+                                                            <option value="true">Present</option>
+                                                            <option value="false">Absent</option>
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            className="w-full border rounded px-4 py-2 bg-gray-100"
+                                                            value={selectedEmployee.ispresent ? 'Present' : 'Absent'}
+                                                            readOnly
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -1680,18 +1689,7 @@ const Employees = () => {
                                         {/* Assign Orders Section */}
                                         {isEditingQuota && (
                                             <div className="mb-6">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="block text-gray-700 font-semibold">Assign Orders</label>
-                                                    {quotaFormData.assignedOrders.length > 0 && (
-                                                        <button
-                                                            onClick={handleCalculateMaterials}
-                                                            className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                                                        >
-                                                            <FaChartLine className="inline mr-1" />
-                                                            Calculate Materials
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign Orders</label>
                                                 <div className="border rounded p-4 max-h-60 overflow-y-auto bg-gray-50">
                                                     {availableOrders.length === 0 ? (
                                                         <p className="text-gray-500 text-sm">No orders available</p>
@@ -1719,18 +1717,62 @@ const Employees = () => {
                                             </div>
                                         )}
 
-                                        {/* Material Count Display */}
-                                        {Object.keys(quotaFormData.materialcount).length > 0 && (
+                                        {/* Assigned Orders Details (View Mode) */}
+                                        {!isEditingQuota && quotaFormData.assignedOrders.length > 0 && (
                                             <div className="mb-6">
-                                                <label className="block text-gray-700 font-semibold mb-2">Material Requirements</label>
-                                                <div className="border rounded p-4 bg-blue-50">
-                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                                        {Object.entries(quotaFormData.materialcount).map(([material, count]) => (
-                                                            <div key={material} className="bg-white p-3 rounded shadow-sm">
-                                                                <div className="text-sm text-gray-600">{material}</div>
-                                                                <div className="text-lg font-bold text-[#35408E]">{count}</div>
-                                                            </div>
-                                                        ))}
+                                                <label className="block text-gray-700 font-semibold mb-2">Assigned Orders ({quotaFormData.assignedOrders.length})</label>
+                                                <div className="border rounded p-4 max-h-80 overflow-y-auto bg-gray-50">
+                                                    <div className="space-y-3">
+                                                        {quotaFormData.assignedOrders.map(orderId => {
+                                                            const order = availableOrders.find(o => o.orderid === orderId);
+                                                            if (!order) return null;
+                                                            return (
+                                                                <div key={orderId} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                                                    <div className="flex items-start justify-between mb-2">
+                                                                        <div>
+                                                                            <h4 className="font-semibold text-lg text-[#35408E]">{order.companyname}</h4>
+                                                                            <p className="text-sm text-gray-600">Order ID: {order.orderid.slice(0, 8)}...</p>
+                                                                        </div>
+                                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                            order.orderstatus === 'Completed' ? 'bg-green-100 text-green-700' :
+                                                                            order.orderstatus === 'In Production' ? 'bg-blue-100 text-blue-700' :
+                                                                            order.orderstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                                            'bg-gray-100 text-gray-700'
+                                                                        }`}>
+                                                                            {order.orderstatus}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                                                        <div>
+                                                                            <span className="text-gray-600">Type:</span>
+                                                                            <span className="ml-2 font-medium">{order.hangertype}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-gray-600">Quantity:</span>
+                                                                            <span className="ml-2 font-medium">{order.quantity}</span>
+                                                                        </div>
+                                                                        {order.deadline && (
+                                                                            <div>
+                                                                                <span className="text-gray-600">Deadline:</span>
+                                                                                <span className="ml-2 font-medium">{new Date(order.deadline).toLocaleDateString()}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {order.materials && Object.keys(order.materials).length > 0 && (
+                                                                            <div className="col-span-2">
+                                                                                <span className="text-gray-600">Materials:</span>
+                                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                                    {Object.entries(order.materials).map(([mat, percent]) => (
+                                                                                        <span key={mat} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">
+                                                                                            {mat}: {percent}%
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                             </div>

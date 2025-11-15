@@ -97,7 +97,6 @@ router.post("/create", async (req, res) => {
       quotaname,
       teamids,
       assignedorders,
-      materialcount,
       startdate,
       enddate
     } = req.body;
@@ -133,7 +132,6 @@ router.post("/create", async (req, res) => {
       finishedquota: 0,
       teamids: teamids || [],
       assignedorders: assignedorders || [],
-      materialcount: materialcount || {},
       startdate: startdate || null,
       enddate: enddate || null,
       status: 'Active',
@@ -182,7 +180,6 @@ router.patch("/:quotaid", async (req, res) => {
       finishedquota,
       teamids,
       assignedorders,
-      materialcount,
       startdate,
       enddate,
       status
@@ -209,7 +206,6 @@ router.patch("/:quotaid", async (req, res) => {
     if (finishedquota !== undefined) updateData.finishedquota = parseInt(finishedquota);
     if (teamids !== undefined) updateData.teamids = teamids;
     if (assignedorders !== undefined) updateData.assignedorders = assignedorders;
-    if (materialcount !== undefined) updateData.materialcount = materialcount;
     if (startdate !== undefined) updateData.startdate = startdate;
     if (enddate !== undefined) updateData.enddate = enddate;
     if (status !== undefined) updateData.status = status;
