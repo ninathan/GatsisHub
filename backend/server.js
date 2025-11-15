@@ -33,33 +33,14 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(express.json({ limit: '50mb' })); // Increase limit for thumbnail images
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// CORS configuration - more permissive for development/debugging
+// CORS configuration - simplified for Vercel compatibility
 app.use(
   cors({
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, postman)
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://gatsis-hub-client.vercel.app",
-        "https://gatsishub.com",
-        "http://gatsishub.com",
-        "https://www.gatsishub.com",
-        "http://www.gatsishub.com"
-      ];
-      
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        console.warn('⚠️ CORS blocked origin:', origin);
-        callback(null, true); // Allow anyway for debugging
-      }
-    },
+    origin: true, // Allow all origins temporarily to fix the issue
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range']
   })
 );
 
