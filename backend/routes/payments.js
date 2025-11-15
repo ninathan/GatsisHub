@@ -299,18 +299,29 @@ router.patch("/:paymentid/verify", async (req, res) => {
       return res.status(400).json({ error: updateError.message });
     }
 
-    // Update order status if payment is verified
-    if (status === 'Verified' && payment.orderid) {
-      const { error: orderError } = await supabase
-        .from("orders")
-        .update({ 
-          orderstatus: 'In Production',
-          updatedat: new Date().toISOString()
-        })
-        .eq("orderid", payment.orderid);
+    // Update order status based on payment status
+    if (payment.orderid) {
+      let newOrderStatus;
+      if (status === 'Verified') {
+        newOrderStatus = 'In Production';
+      } else if (status === 'Rejected') {
+        newOrderStatus = 'Waiting for Payment';
+      }
 
-      if (orderError) {
-        console.error("⚠️ Warning: Could not update order status:", orderError);
+      if (newOrderStatus) {
+        const { error: orderError } = await supabase
+          .from("orders")
+          .update({ 
+            orderstatus: newOrderStatus,
+            updatedat: new Date().toISOString()
+          })
+          .eq("orderid", payment.orderid);
+
+        if (orderError) {
+          console.error("⚠️ Warning: Could not update order status:", orderError);
+        } else {
+          console.log(`✅ Order status updated to '${newOrderStatus}'`);
+        }
       }
     }
 
@@ -320,6 +331,61 @@ router.patch("/:paymentid/verify", async (req, res) => {
   } catch (err) {
     console.error("💥 Error:", err);
     res.status(500).json({ error: "Failed to verify payment" });
+  }
+});
+
+// ❌ DELETE /payments/:paymentid - Delete/reject payment (admin)
+router.delete("/:paymentid", async (req, res) => {
+  try {
+    const { paymentid } = req.params;
+
+    console.log("❌ Deleting payment:", paymentid);
+
+    // First get the payment to retrieve the orderid
+    const { data: payment, error: fetchError } = await supabase
+      .from("payments")
+      .select("orderid")
+      .eq("paymentid", paymentid)
+      .single();
+
+    if (fetchError || !payment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    // Delete the payment record
+    const { error: deleteError } = await supabase
+      .from("payments")
+      .delete()
+      .eq("paymentid", paymentid);
+
+    if (deleteError) {
+      console.error("❌ Error deleting payment:", deleteError);
+      return res.status(400).json({ error: deleteError.message });
+    }
+
+    // Update order status back to "Waiting for Payment"
+    if (payment.orderid) {
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({ 
+          orderstatus: 'Waiting for Payment',
+          updatedat: new Date().toISOString()
+        })
+        .eq("orderid", payment.orderid);
+
+      if (orderError) {
+        console.error("⚠️ Warning: Could not update order status:", orderError);
+      } else {
+        console.log("✅ Order status reset to 'Waiting for Payment'");
+      }
+    }
+
+    console.log("✅ Payment deleted successfully");
+    res.status(200).json({ message: "Payment rejected. Customer can resubmit." });
+
+  } catch (err) {
+    console.error("💥 Error:", err);
+    res.status(500).json({ error: "Failed to delete payment" });
   }
 });
 

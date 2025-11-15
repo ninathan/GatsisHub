@@ -363,6 +363,90 @@ const OrderDetail = () => {
         setShowProofModal(true);
     };
 
+    const handleRejectPayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to reject', 'error');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'Are you sure you want to reject this payment? The customer will need to submit a new proof of payment.'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reject payment');
+            }
+
+            showNotificationMessage('Payment rejected. Customer can now resubmit proof of payment.', 'success');
+            setShowProofModal(false);
+            setPaymentInfo(null);
+            
+            // Refresh order data
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+            console.error('Error rejecting payment:', err);
+            showNotificationMessage('Failed to reject payment', 'error');
+        }
+    };
+
+    const handleApprovePayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to approve', 'error');
+            return;
+        }
+
+        try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}/verify`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Verified',
+                    verifiedby: employee?.employeeid
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to approve payment');
+            }
+
+            showNotificationMessage('Payment approved successfully', 'success');
+            setShowProofModal(false);
+            
+            // Refresh payment and order data
+            const paymentResponse = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+            if (paymentResponse.ok) {
+                const payment = await paymentResponse.json();
+                setPaymentInfo(payment);
+            }
+            
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+            console.error('Error approving payment:', err);
+            showNotificationMessage('Failed to approve payment', 'error');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex w-full bg-gray-50">
@@ -705,9 +789,9 @@ const OrderDetail = () => {
             {/* Proof of Payment Modal */}
             {showProofModal && paymentInfo && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
-                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
                             <div>
                                 <h2 className="text-white text-2xl font-semibold">Proof of Payment</h2>
                                 <p className="text-indigo-200 text-sm mt-1">
@@ -722,8 +806,8 @@ const OrderDetail = () => {
                             </button>
                         </div>
 
-                        {/* Proof Content */}
-                        <div className="bg-white p-6">
+                        {/* Proof Content - Scrollable */}
+                        <div className="bg-white p-6 overflow-auto flex-1">
                             {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
                                 <div className="flex flex-col items-center gap-4 py-8">
                                     <FileText size={64} className="text-indigo-600" />
@@ -743,7 +827,7 @@ const OrderDetail = () => {
                                     <img
                                         src={paymentInfo.proofofpayment}
                                         alt="Proof of Payment"
-                                        className="w-full h-auto"
+                                        className="w-full h-auto max-h-[60vh] object-contain"
                                     />
                                 </div>
                             )}
@@ -751,15 +835,43 @@ const OrderDetail = () => {
 
                         {/* Payment Details */}
                         {paymentInfo.datesubmitted && (
-                            <div className="bg-gray-50 px-6 py-4 border-t">
+                            <div className="bg-gray-50 px-6 py-4 border-t flex-shrink-0">
                                 <p className="text-sm text-gray-600">
                                     Submitted: {formatDate(paymentInfo.datesubmitted)}
                                 </p>
+                                {paymentInfo.paymentstatus && (
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Status: <span className={`font-semibold ${
+                                            paymentInfo.paymentstatus === 'Verified' ? 'text-green-600' :
+                                            paymentInfo.paymentstatus === 'Rejected' ? 'text-red-600' :
+                                            'text-yellow-600'
+                                        }`}>{paymentInfo.paymentstatus}</span>
+                                    </p>
+                                )}
                             </div>
                         )}
 
-                        {/* Footer */}
-                        <div className="bg-gray-100 px-6 py-4 flex justify-end">
+                        {/* Footer - Action Buttons */}
+                        <div className="bg-gray-100 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
+                            <div className="flex gap-3">
+                                {paymentInfo.paymentstatus !== 'Verified' && (
+                                    <button
+                                        onClick={handleApprovePayment}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                    >
+                                        <Check size={18} />
+                                        Approve Payment
+                                    </button>
+                                )}
+                                {paymentInfo.paymentstatus !== 'Rejected' && (
+                                    <button
+                                        onClick={handleRejectPayment}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                    >
+                                        ✕ Reject Payment
+                                    </button>
+                                )}
+                            </div>
                             <button
                                 onClick={() => setShowProofModal(false)}
                                 className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"

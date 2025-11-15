@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye } from "react-icons/fa";
+import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye, FaTrophy, FaChartLine } from "react-icons/fa";
 
 const Employees = () => {
     const [employees, setEmployees] = useState([]);
@@ -39,10 +39,30 @@ const Employees = () => {
         assignedOrders: []
     });
 
+    // Quotas state
+    const [quotas, setQuotas] = useState([]);
+    const [showCreateQuotaModal, setShowCreateQuotaModal] = useState(false);
+    const [showQuotaModal, setShowQuotaModal] = useState(false);
+    const [showDeleteQuotaConfirm, setShowDeleteQuotaConfirm] = useState(false);
+    const [selectedQuota, setSelectedQuota] = useState(null);
+    const [isEditingQuota, setIsEditingQuota] = useState(false);
+    const [quotaFormData, setQuotaFormData] = useState({
+        quotaname: "",
+        targetquota: "",
+        finishedquota: 0,
+        teamid: "",
+        assignedOrders: [],
+        materialcount: {},
+        startdate: "",
+        enddate: "",
+        status: "Active"
+    });
+
     useEffect(() => {
         fetchEmployees();
         fetchTeams();
         fetchAvailableOrders();
+        fetchQuotas();
     }, []);
 
     useEffect(() => {
@@ -425,6 +445,213 @@ const Employees = () => {
                 : [...prev.assignedOrders, orderId]
         }));
     };
+
+    // ============= QUOTA FUNCTIONS =============
+    
+    const fetchQuotas = async () => {
+        try {
+            console.log('📊 Fetching quotas from API');
+            const response = await fetch('https://gatsis-hub.vercel.app/quotas');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📊 Raw quotas data:', data);
+
+            setQuotas(data.quotas || []);
+            console.log(`✅ Fetched ${data.quotas?.length || 0} quotas`);
+        } catch (error) {
+            console.error('❌ Error fetching quotas:', error);
+            setErrorMessage('Failed to load quotas. Please try again.');
+            setShowErrorModal(true);
+        }
+    };
+
+    const handleCreateQuota = () => {
+        setSelectedQuota(null);
+        setIsEditingQuota(true);
+        setQuotaFormData({
+            quotaname: "",
+            targetquota: "",
+            finishedquota: 0,
+            teamid: "",
+            assignedOrders: [],
+            materialcount: {},
+            startdate: "",
+            enddate: "",
+            status: "Active"
+        });
+        setShowCreateQuotaModal(true);
+    };
+
+    const handleViewQuota = (quota) => {
+        setSelectedQuota(quota);
+        setIsEditingQuota(false);
+        setQuotaFormData({
+            quotaname: quota.quotaname,
+            targetquota: quota.targetquota,
+            finishedquota: quota.finishedquota || 0,
+            teamid: quota.teamid || "",
+            assignedOrders: quota.assignedorders || [],
+            materialcount: quota.materialcount || {},
+            startdate: quota.startdate || "",
+            enddate: quota.enddate || "",
+            status: quota.status || "Active"
+        });
+        setShowQuotaModal(true);
+    };
+
+    const handleEditQuota = () => {
+        setIsEditingQuota(true);
+    };
+
+    const handleDeleteQuota = (quota) => {
+        setSelectedQuota(quota);
+        setShowDeleteQuotaConfirm(true);
+    };
+
+    const handleCancelDeleteQuota = () => {
+        setShowDeleteQuotaConfirm(false);
+        setSelectedQuota(null);
+    };
+
+    const handleCloseQuotaModal = () => {
+        setShowQuotaModal(false);
+        setShowCreateQuotaModal(false);
+        setSelectedQuota(null);
+        setIsEditingQuota(false);
+    };
+
+    const handleSaveQuota = async () => {
+        try {
+            const quotaData = {
+                quotaname: quotaFormData.quotaname,
+                targetquota: parseInt(quotaFormData.targetquota),
+                finishedquota: parseInt(quotaFormData.finishedquota) || 0,
+                teamid: quotaFormData.teamid ? parseInt(quotaFormData.teamid) : null,
+                assignedorders: quotaFormData.assignedOrders,
+                materialcount: quotaFormData.materialcount,
+                startdate: quotaFormData.startdate || null,
+                enddate: quotaFormData.enddate || null,
+                status: quotaFormData.status
+            };
+
+            let response;
+            
+            if (selectedQuota) {
+                // Update existing quota
+                response = await fetch(`https://gatsis-hub.vercel.app/quotas/${selectedQuota.quotaid}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(quotaData)
+                });
+            } else {
+                // Create new quota
+                response = await fetch('https://gatsis-hub.vercel.app/quotas/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(quotaData)
+                });
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save quota');
+            }
+
+            const savedQuota = await response.json();
+
+            // Refresh quotas and teams
+            await fetchQuotas();
+            await fetchTeams();
+
+            setSuccessMessage(`Quota "${quotaFormData.quotaname}" has been ${selectedQuota ? 'updated' : 'created'} successfully!`);
+            setShowSuccessModal(true);
+
+            handleCloseQuotaModal();
+
+        } catch (error) {
+            console.error('❌ Error saving quota:', error);
+            setErrorMessage(error.message || 'Failed to save quota. Please try again.');
+            setShowErrorModal(true);
+        }
+    };
+
+    const handleConfirmDeleteQuota = async () => {
+        if (!selectedQuota) return;
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/quotas/${selectedQuota.quotaid}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete quota');
+            }
+
+            // Refresh quotas and teams
+            await fetchQuotas();
+            await fetchTeams();
+
+            setSuccessMessage(`Quota "${selectedQuota.quotaname}" has been deleted successfully!`);
+            setShowSuccessModal(true);
+
+            setShowDeleteQuotaConfirm(false);
+            setSelectedQuota(null);
+
+        } catch (error) {
+            console.error('❌ Error deleting quota:', error);
+            setErrorMessage(error.message || 'Failed to delete quota. Please try again.');
+            setShowErrorModal(true);
+            setShowDeleteQuotaConfirm(false);
+        }
+    };
+
+    const handleQuotaInputChange = (e) => {
+        const { name, value } = e.target;
+        setQuotaFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleQuotaOrderSelection = (orderId) => {
+        setQuotaFormData(prev => ({
+            ...prev,
+            assignedOrders: prev.assignedOrders.includes(orderId)
+                ? prev.assignedOrders.filter(id => id !== orderId)
+                : [...prev.assignedOrders, orderId]
+        }));
+    };
+
+    const calculateMaterialCount = (orders) => {
+        const materialCount = {};
+        
+        orders.forEach(order => {
+            const selectedOrder = availableOrders.find(o => o.orderid === order);
+            if (selectedOrder && selectedOrder.materials) {
+                Object.entries(selectedOrder.materials).forEach(([material, percentage]) => {
+                    const quantity = Math.round((percentage / 100) * selectedOrder.quantity);
+                    materialCount[material] = (materialCount[material] || 0) + quantity;
+                });
+            }
+        });
+        
+        return materialCount;
+    };
+
+    const handleCalculateMaterials = () => {
+        const materials = calculateMaterialCount(quotaFormData.assignedOrders);
+        setQuotaFormData(prev => ({
+            ...prev,
+            materialcount: materials
+        }));
+    };
+
+    // ============= END QUOTA FUNCTIONS =============
 
     const handleCloseTeamModal = () => {
         setShowCreateTeamModal(false);
@@ -1030,7 +1257,14 @@ const Employees = () => {
                                                             <FaBullseye className="text-gray-500" />
                                                             <span className="font-semibold">Monthly Quota</span>
                                                         </div>
-                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota}</p>
+                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota || 'Not Set'}</p>
+                                                        {selectedTeam.linkedquotaid && (
+                                                            <div className="mt-2">
+                                                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                                    Linked to Quota
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
 
@@ -1156,6 +1390,385 @@ const Employees = () => {
                         )}
                     </div>
                 );
+            case "quotas":
+                return (
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Quotas Management</h2>
+                                <button
+                                    onClick={handleCreateQuota}
+                                    className="bg-[#35408E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors flex items-center gap-2"
+                                >
+                                    <FaPlus /> Create Quota
+                                </button>
+                            </div>
+                        </div>
+
+                        {quotas.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">
+                                <FaTrophy className="mx-auto text-4xl mb-4 text-gray-300" />
+                                <p className="text-lg font-medium mb-2">No quotas created yet</p>
+                                <p className="text-sm">Create your first quota to track production targets and progress.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                                {quotas.map((quota) => (
+                                    <div 
+                                        key={quota.quotaid} 
+                                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => handleViewQuota(quota)}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h3 className="font-semibold text-lg">{quota.quotaname}</h3>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteQuota(quota);
+                                                }}
+                                                className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
+                                                title="Delete Quota"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {/* Progress Bar */}
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-600">Progress</span>
+                                                    <span className="font-semibold">
+                                                        {quota.finishedquota || 0} / {quota.targetquota}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-green-600 h-2 rounded-full transition-all"
+                                                        style={{ 
+                                                            width: `${Math.min(((quota.finishedquota || 0) / quota.targetquota) * 100, 100)}%` 
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {Math.round(((quota.finishedquota || 0) / quota.targetquota) * 100)}% Complete
+                                                </div>
+                                            </div>
+
+                                            {/* Team Assignment */}
+                                            {quota.teams && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaUsers className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        Team: {quota.teams.teamname}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Assigned Orders */}
+                                            {quota.assignedorders && quota.assignedorders.length > 0 && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaClipboardList className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        {quota.assignedorders.length} order{quota.assignedorders.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Status Badge */}
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                    quota.status === 'Active' 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : quota.status === 'Completed'
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {quota.status}
+                                                </span>
+                                            </div>
+
+                                            {/* Date Range */}
+                                            {(quota.startdate || quota.enddate) && (
+                                                <div className="text-xs text-gray-500 pt-2 border-t">
+                                                    {quota.startdate && (
+                                                        <div>Start: {new Date(quota.startdate).toLocaleDateString()}</div>
+                                                    )}
+                                                    {quota.enddate && (
+                                                        <div>End: {new Date(quota.enddate).toLocaleDateString()}</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Create/Edit Quota Modal */}
+                        {(showCreateQuotaModal || showQuotaModal) && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 p-4">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+                                    <div className="sticky top-0 bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center z-10">
+                                        <h2 className="text-2xl font-bold">
+                                            {selectedQuota ? (isEditingQuota ? 'Edit Quota' : 'Quota Details') : 'Create New Quota'}
+                                        </h2>
+                                        <button
+                                            onClick={handleCloseQuotaModal}
+                                            className="text-white hover:text-gray-200 text-2xl font-bold"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Quota Name *</label>
+                                                <input
+                                                    type="text"
+                                                    name="quotaname"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.quotaname}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                    placeholder="e.g., Monthly Production Target"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Target Quota *</label>
+                                                <input
+                                                    type="number"
+                                                    name="targetquota"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.targetquota}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                    placeholder="e.g., 1000"
+                                                    min="0"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Finished Quota</label>
+                                                <input
+                                                    type="number"
+                                                    name="finishedquota"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.finishedquota}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                    min="0"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign to Team</label>
+                                                <select
+                                                    name="teamid"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.teamid}
+                                                    onChange={handleQuotaInputChange}
+                                                    disabled={!isEditingQuota}
+                                                >
+                                                    <option value="">No Team</option>
+                                                    {teams.map(team => (
+                                                        <option key={team.id} value={team.id}>
+                                                            {team.teamname}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Start Date</label>
+                                                <input
+                                                    type="date"
+                                                    name="startdate"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.startdate}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">End Date</label>
+                                                <input
+                                                    type="date"
+                                                    name="enddate"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.enddate}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Status</label>
+                                                <select
+                                                    name="status"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.status}
+                                                    onChange={handleQuotaInputChange}
+                                                    disabled={!isEditingQuota}
+                                                >
+                                                    <option value="Active">Active</option>
+                                                    <option value="Completed">Completed</option>
+                                                    <option value="Cancelled">Cancelled</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Assign Orders Section */}
+                                        {isEditingQuota && (
+                                            <div className="mb-6">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <label className="block text-gray-700 font-semibold">Assign Orders</label>
+                                                    {quotaFormData.assignedOrders.length > 0 && (
+                                                        <button
+                                                            onClick={handleCalculateMaterials}
+                                                            className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                                                        >
+                                                            <FaChartLine className="inline mr-1" />
+                                                            Calculate Materials
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="border rounded p-4 max-h-60 overflow-y-auto bg-gray-50">
+                                                    {availableOrders.length === 0 ? (
+                                                        <p className="text-gray-500 text-sm">No orders available</p>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            {availableOrders.map(order => (
+                                                                <label key={order.orderid} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={quotaFormData.assignedOrders.includes(order.orderid)}
+                                                                        onChange={() => handleQuotaOrderSelection(order.orderid)}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <span className="font-medium">{order.companyname}</span>
+                                                                        <span className="text-sm text-gray-500 ml-2">
+                                                                            ({order.hangertype} - Qty: {order.quantity})
+                                                                        </span>
+                                                                    </div>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Material Count Display */}
+                                        {Object.keys(quotaFormData.materialcount).length > 0 && (
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 font-semibold mb-2">Material Requirements</label>
+                                                <div className="border rounded p-4 bg-blue-50">
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                        {Object.entries(quotaFormData.materialcount).map(([material, count]) => (
+                                                            <div key={material} className="bg-white p-3 rounded shadow-sm">
+                                                                <div className="text-sm text-gray-600">{material}</div>
+                                                                <div className="text-lg font-bold text-[#35408E]">{count}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Progress Stats (View Mode) */}
+                                        {!isEditingQuota && quotaFormData.targetquota && (
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 font-semibold mb-2">Progress</label>
+                                                <div className="border rounded p-4 bg-gradient-to-r from-green-50 to-blue-50">
+                                                    <div className="flex justify-between mb-2">
+                                                        <span className="font-semibold">
+                                                            {quotaFormData.finishedquota} / {quotaFormData.targetquota}
+                                                        </span>
+                                                        <span className="font-semibold text-green-600">
+                                                            {Math.round((quotaFormData.finishedquota / quotaFormData.targetquota) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-4">
+                                                        <div 
+                                                            className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all"
+                                                            style={{ 
+                                                                width: `${Math.min((quotaFormData.finishedquota / quotaFormData.targetquota) * 100, 100)}%` 
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="mt-2 text-sm text-gray-600">
+                                                        Remaining: {quotaFormData.targetquota - quotaFormData.finishedquota}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-3 justify-end pt-4 border-t">
+                                            {!isEditingQuota && selectedQuota && (
+                                                <button
+                                                    onClick={handleEditQuota}
+                                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    <FaEdit /> Edit
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleCloseQuotaModal}
+                                                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                                            >
+                                                {isEditingQuota ? 'Cancel' : 'Close'}
+                                            </button>
+                                            {isEditingQuota && (
+                                                <button
+                                                    onClick={handleSaveQuota}
+                                                    className="bg-[#35408E] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                                >
+                                                    {selectedQuota ? 'Save Changes' : 'Create Quota'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteQuotaConfirm && selectedQuota && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                                    <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                        <FaTrash className="text-red-600 text-xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-center mb-2">Delete Quota</h3>
+                                    <p className="text-gray-600 text-center mb-6">
+                                        Are you sure you want to delete <span className="font-semibold">"{selectedQuota.quotaname}"</span>? 
+                                        This will unlink it from the assigned team but won't delete the team or orders.
+                                    </p>
+                                    <div className="flex gap-3 justify-end">
+                                        <button
+                                            onClick={handleCancelDeleteQuota}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmDeleteQuota}
+                                            className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                        >
+                                            Delete Quota
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -1189,6 +1802,16 @@ const Employees = () => {
                             onClick={() => setActiveTab("teams")}
                         >
                             Teams
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${
+                                activeTab === "quotas" 
+                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    : "bg-gray-200 hover:bg-gray-300"
+                            }`}
+                            onClick={() => setActiveTab("quotas")}
+                        >
+                            Quotas
                         </button>
                     </div>
                     <div className="flex items-center gap-2">

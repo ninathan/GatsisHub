@@ -791,8 +791,8 @@ const Order = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* View Proof of Payment - Show if payment exists for this order */}
-                                                    {orderPayments[order.orderid] && (
+                                                    {/* View Proof of Payment - Show if payment exists and not rejected */}
+                                                    {orderPayments[order.orderid] && orderPayments[order.orderid].paymentstatus !== 'Rejected' && (
                                                         <button
                                                             onClick={() => openProofModal(orderPayments[order.orderid].proofofpayment)}
                                                             className="bg-indigo-700 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-800 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold"
@@ -803,15 +803,25 @@ const Order = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* Payment - Only show when Waiting for Payment AND no payment submitted yet */}
-                                                    {order.orderstatus === 'Waiting for Payment' && !orderPayments[order.orderid] && (
+                                                    {/* Payment Rejected Notice */}
+                                                    {orderPayments[order.orderid]?.paymentstatus === 'Rejected' && (
+                                                        <div className="bg-red-50 border border-red-300 rounded px-3 py-2 flex items-center gap-2">
+                                                            <span className="text-red-600 text-xs md:text-sm font-semibold">
+                                                                ⚠️ Payment Rejected - Please Resubmit
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Payment - Show when Waiting for Payment AND (no payment OR payment rejected) */}
+                                                    {order.orderstatus === 'Waiting for Payment' && 
+                                                     (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
                                                         <Link 
                                                             to="/payment" 
                                                             state={{ orderDetails: order }}
                                                             className="bg-yellow-500 text-white px-3 md:px-6 py-2 rounded hover:bg-yellow-600 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-xs md:text-sm font-semibold"
                                                         >
                                                             <CreditCard size={16} className="md:w-[18px] md:h-[18px]" />
-                                                            Payment
+                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit Payment' : 'Payment'}
                                                         </Link>
                                                     )}
 
@@ -857,7 +867,7 @@ const Order = () => {
             {/* Proof of Payment Modal */}
             {showProofModal && (
                 <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden animate-scaleIn">
+                    <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
                         {/* Modal Header */}
                         <div className="flex items-center justify-center py-4 relative">
                             <div className="w-12 h-12  rounded-full flex items-center justify-center">
@@ -872,10 +882,10 @@ const Order = () => {
                             <h2 className="text-white text-xl md:text-2xl font-semibold">Proof of Payment</h2>
                         </div>
 
-                        {/* Content Container */}
-                        <div className="bg-white mx-4 md:mx-8 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                        {/* Content Container - Scrollable */}
+                        <div className="bg-white mx-4 md:mx-8 rounded-lg p-3 md:p-4 mb-4 md:mb-6 overflow-auto max-h-[60vh]">
                             {proofImage && proofImage.toLowerCase().endsWith('.pdf') ? (
-                                <div className="flex flex-col items-center gap-4">
+                                <div className="flex flex-col items-center gap-4 py-4">
                                     <FileText size={48} className="text-indigo-600" />
                                     <p className="text-gray-700 font-semibold">PDF Payment Proof</p>
                                     <a 
@@ -892,7 +902,7 @@ const Order = () => {
                                 <img
                                     src={proofImage}
                                     alt="Proof of Payment"
-                                    className="w-full h-auto rounded"
+                                    className="w-full h-auto rounded max-h-[55vh] object-contain"
                                 />
                             )}
                         </div>
