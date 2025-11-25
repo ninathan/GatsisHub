@@ -8,7 +8,7 @@ const Stepper = ({ currentStep, totalSteps, goToStep }) => {
     ];
 
     return (
-        <div className="mb-8 md:mb-12">
+        <div className="py-2">
             <div className="flex items-center justify-center">
                 {steps.map((step, index) => (
                     <React.Fragment key={step.number}>

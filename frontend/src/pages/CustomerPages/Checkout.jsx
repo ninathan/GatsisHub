@@ -1000,9 +1000,14 @@ const Checkout = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
+            {/* Sticky Stepper */}
+            <div className="sticky top-0 z-50 bg-gray-50 shadow-lg border-b-2 border-gray-300">
+                <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                    <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
+                </div>
+            </div>
+
             <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
-                
-                <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
 
                 {currentStep === 1 && (
                     <>
