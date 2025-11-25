@@ -167,7 +167,7 @@ const profileSA = () => {
     if (loading) {
         return (
             <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-                <p className="text-xl text-gray-600">Loading...</p>
+                <LoadingSpinner size="lg" text="Loading..." />
             </div>
         );
     }

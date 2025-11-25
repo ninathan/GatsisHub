@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Search, Filter } from "lucide-react";
 import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const OrderPage = () => {
     const [orders, setOrders] = useState([]);
@@ -104,8 +105,7 @@ const OrderPage = () => {
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading orders...</p>
+                            <LoadingSpinner size="lg" text="Loading orders..." />
                         </div>
                     </div>
                 </main>

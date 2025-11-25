@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { a } from 'framer-motion/client';
 import { supabase } from '../../../supabaseClient';
+import LoadingSpinner from '../LoadingSpinner';
 
 
 const ProfileComponent = () => {
@@ -810,8 +811,7 @@ const ProfileComponent = () => {
                                     
                                     {loadingDesigns ? (
                                         <div className="text-center py-12">
-                                            <div className="text-4xl mb-4">⏳</div>
-                                            <p className="text-gray-600">Loading your designs...</p>
+                                            <LoadingSpinner size="lg" text="Loading your designs..." />
                                         </div>
                                     ) : savedDesigns.length === 0 ? (
                                         <div className="text-center py-12">

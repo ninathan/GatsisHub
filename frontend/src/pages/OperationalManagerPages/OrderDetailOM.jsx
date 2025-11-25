@@ -17,6 +17,7 @@ import {
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const OrderDetailOM = () => {
     const { orderid } = useParams();
@@ -340,8 +341,7 @@ const OrderDetailOM = () => {
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading order...</p>
+                            <LoadingSpinner size="lg" text="Loading order..." />  
                         </div>
                     </div>
                 </main>

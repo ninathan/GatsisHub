@@ -147,9 +147,14 @@ const AuthSA = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className='bg-[#35408E] text-white w-full py-2 md:py-3 lg:py-4 text-base md:text-xl lg:text-2xl xl:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='bg-[#35408E] text-white w-full py-2 md:py-3 lg:py-4 text-base md:text-xl lg:text-2xl xl:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3'
                         >
-                            {loading ? 'Signing In...' : 'Sign In'}
+                            {loading ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-2 border-white border-t-transparent"></div>
+                                    Signing In...
+                                </>
+                            ) : 'Sign In'}
                         </button>
                     </form>
                 </div>

@@ -23,7 +23,11 @@ const LoggedLayout = () => {
   }, []);
 
   if (isAuth === null) {
-    return <div className="text-center mt-20 text-white">Loading...</div>;
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <LoadingSpinner size="lg" text="Loading..." />
+        </div>
+    );
   }
 
   if (!isAuth) {

@@ -17,6 +17,7 @@ import {
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 
 const OrderDetail = () => {
@@ -452,10 +453,7 @@ const OrderDetail = () => {
             <div className="flex w-full bg-gray-50">
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading order...</p>
-                        </div>
+                        <LoadingSpinner size="xl" text="Loading order..." />
                     </div>
                 </main>
             </div>
@@ -906,10 +904,7 @@ const OrderDetail = () => {
                             <div className="w-full h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
                                 <Suspense fallback={
                                     <div className='w-full h-full flex items-center justify-center'>
-                                        <div className='text-center'>
-                                            <div className='text-6xl mb-4'>⏳</div>
-                                            <p className='text-lg text-gray-600'>Loading 3D Design...</p>
-                                        </div>
+                                        <LoadingSpinner size="lg" text="Loading 3D Design..." />
                                     </div>
                                 }>
                                     <HangerScene

@@ -39,6 +39,9 @@ import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
 import { useAuth } from '../../context/AuthContext'
+import Stepper from '../../components/Checkout/CheckoutSteps/Stepper'
+import StepNavigation from '../../components/Checkout/CheckoutSteps/StepNavigation'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 
 const Checkout = () => {
@@ -57,6 +60,10 @@ const Checkout = () => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
     const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
+
+    // Multi-step wizard
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = 3;
 
     // Form state
     const [companyName, setCompanyName] = useState("");
@@ -111,7 +118,6 @@ const Checkout = () => {
         { id: "MB7", name: "MB7" },
         { id: "CQ-03", name: "CQ-03" },
         { id: "97-11", name: "97-11" },
-        { id: "own", name: "Own design" },
     ];
 
     // Predefined colors for quick selection
@@ -219,6 +225,22 @@ const Checkout = () => {
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                showNotification('Please upload a PNG, JPG, or JPEG image file');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            // Validate file size (5MB = 5 * 1024 * 1024 bytes)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                showNotification('Logo file size must be less than 5MB');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
             setCustomLogo(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -919,181 +941,71 @@ const Checkout = () => {
         },
     ];
 
+    // Navigation
+    const nextStep = () => {
+        if (validateCurrentStep()) {
+            setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const prevStep = () => {
+        setCurrentStep(prev => Math.max(prev - 1, 1));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const goToStep = (step) => {
+        if (step < currentStep) {
+            setCurrentStep(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const validateCurrentStep = () => {
+        if (currentStep === 1) {
+            if (!selectedHanger) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please select a hanger type' });
+                return false;
+            }
+            if (selectedHanger === "own" && !customDesignFile) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please upload your custom design file' });
+                return false;
+            }
+            if (quantity < 100) {
+                setNotificationModal({ show: true, type: 'error', message: 'Minimum order quantity is 100 pieces' });
+                return false;
+            }
+        } else if (currentStep === 2) {
+            if (Object.keys(selectedMaterials).length === 0) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please select at least one material' });
+                return false;
+            }
+            const totalPercentage = Object.values(selectedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+            if (Math.abs(totalPercentage - 100) > 0.01) {
+                setNotificationModal({ show: true, type: 'error', message: `Material percentages must total 100%. Current total: ${totalPercentage.toFixed(1)}%` });
+                return false;
+            }
+        } else if (currentStep === 3) {
+            if (!companyName.trim() || !contactPerson.trim() || !contactPhone.trim()) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please fill in all company information' });
+                return false;
+            }
+            if (!addresses || addresses.length === 0) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please add a delivery address' });
+                return false;
+            }
+        }
+        return true;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
-            {/* Company Information Section */}
-            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-4 md:mb-6">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-4 md:mb-6">
-                    Start Your Order
-                </h3>
-                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
-                    <h4 className="text-lg md:text-xl font-semibold mb-4">Company Information</h4>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Company Name *
-                            </label>
-                            <input
-                                type="text"
-                                value={companyName}
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="Enter company name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Person *
-                            </label>
-                            <input
-                                type="text"
-                                value={contactPerson}
-                                onChange={(e) => setContactPerson(e.target.value)}
-                                placeholder="Enter contact person name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Phone *
-                            </label>
-                            <input
-                                type="tel"
-                                value={contactPhone}
-                                onChange={(e) => setContactPhone(e.target.value)}
-                                placeholder="(+63) 9XX XXX XXXX"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
+                
+                <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
 
-            <div className="flex flex-col items-center justify-center mt-6 md:mt-10">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
-                    Select the type of hanger you want
-                </h3>
-            </div>
-
-            <section>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-                    {hangers.map((hanger) => (
-                        <button
-                            key={hanger.id}
-                            onClick={() => {
-                                setSelectedHanger(hanger.id);
-                                // Show modal for MB7 and 97-11
-                                if (hanger.id === 'MB7' || hanger.id === '97-11') {
-                                    setShowColorLimitationModal(true);
-                                }
-                            }}
-                            className={`border-2 rounded-lg overflow-hidden transition-all ${selectedHanger === hanger.id
-                                    ? "border-[#35408E] shadow-lg"
-                                    : "border-gray-300"
-                                }`}
-                        >
-                            <div className="bg-white p-4 md:p-6 lg:p-8 flex items-center justify-center aspect-square">
-                                <div className="text-4xl md:text-5xl lg:text-6xl">
-                                    <ProductCard />
-                                </div>
-                            </div>
-                            <div className="bg-[#ECBA0B] py-2 md:py-3 font-semibold text-center text-sm md:text-base">
-                                {hanger.name}
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                {/* Custom Design Upload */}
-                {selectedHanger === "own" && (
-                    <div className="mt-4 md:mt-6 p-4 md:p-6 bg-white rounded-lg border-2 border-gray-300">
-                        <h4 className="font-semibold mb-3 text-sm md:text-base">Upload Your Custom Design</h4>
-                        <p className="text-xs md:text-sm text-gray-600 mb-3">
-                            Accepted formats: STL, OBJ, STEP, PDF (technical drawing)
-                        </p>
-                        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-4 md:p-6 cursor-pointer hover:border-[#35408E] transition-colors">
-                            <Upload size={24} />
-                            <span>
-                                {customDesignFile
-                                    ? customDesignFile.name
-                                    : "Click to upload design file"}
-                            </span>
-                            <input
-                                type="file"
-                                accept=".stl,.obj,.step,.pdf"
-                                onChange={handleCustomDesignUpload}
-                                className="hidden"
-                            />
-                        </label>
-                    </div>
-                )}
-            </section>
-
-            <div className="flex flex-col items-center justify-center mt-10">
-                <h3 className="text-black text-4xl font-medium mb-10">
-                    Select the material you want
-                </h3>
-                <p className="text-black text-2xl font-normal">
-                    you can select multiple materials and combined by percentage
-                </p>
-            </div>
-
-            <section>
-                {/* materials selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                    {materials.map((materials) => (
-                        <button
-                            key={materials.name}
-                            onClick={() => toggleMaterial(materials.name)}
-                            className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[materials.name]
-                                    ? "border-yellow-500 bg-yellow-50"
-                                    : "border-gray-300"
-                                }`}
-                        >
-                            <h3 className="text-xl font-semibold mb-2">{materials.name}</h3>
-                            <ul className="list-disc list-inside">
-                                {materials.features.map((feature, i) => (
-                                    <li key={i} className="text-black text-base font-normal">
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                        </button>
-                    ))}
-                    {/* materials percentage */}
-                    <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
-                        <h3 className="font-semibold mb-3">Materials selected</h3>
-                        <p className="text-xs text-gray-600 mb-3">
-                            Note: You may adjust percentages to achieve 100% mixture
-                        </p>
-                        <div className="space-y-2">
-                            {Object.entries(selectedMaterials).map(([name, percentage]) => (
-                                <div key={name} className="flex items-center justify-between">
-                                    <span className="text-sm">{name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            value={percentage}
-                                            onChange={(e) =>
-                                                updateMaterialPercentage(name, e.target.value)
-                                            }
-                                            className="w-16 px-2 py-1 border rounded text-sm"
-                                            min="0"
-                                            max="100"
-                                        />
-                                        <span className="text-sm">%</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
+                {currentStep === 1 && (
+                    <>
             {/* product customization */}
             <section className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
                 <h2 className="text-center text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
@@ -1118,10 +1030,7 @@ const Checkout = () => {
                                 <Suspense
                                     fallback={
                                         <div className="w-full h-full flex items-center justify-center bg-[#2c3575] rounded-lg">
-                                            <div className="text-center text-white">
-                                                <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
-                                                <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
-                                            </div>
+                                            <LoadingSpinner size="lg" text="Loading 3D Model..." color="white" />
                                         </div>
                                     }
                                 >
@@ -1142,6 +1051,62 @@ const Checkout = () => {
                             <p className="text-white text-xs md:text-sm mt-3 md:mt-4 text-center font-semibold">
                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
+                        </div>
+
+                        {/* Hanger Selection - Compact Version */}
+                        <div className="bg-white rounded-lg border-2 border-gray-300 p-3">
+                            <h3 className="font-semibold mb-3 text-sm">Type of Hanger</h3>
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                {hangers.map((hanger) => (
+                                    <button
+                                        key={hanger.id}
+                                        onClick={() => {
+                                            setSelectedHanger(hanger.id);
+                                            if (hanger.id === 'MB7' || hanger.id === '97-11') {
+                                                setShowColorLimitationModal(true);
+                                            }
+                                        }}
+                                        className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 ${
+                                            selectedHanger === hanger.id
+                                                ? "border-[#35408E] shadow-md"
+                                                : "border-gray-300 hover:border-gray-400"
+                                        }`}
+                                    >
+                                        <div className="bg-white p-2 flex items-center justify-center aspect-square">
+                                            <div className="text-2xl">
+                                                <ProductCard />
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#ECBA0B] py-1 font-semibold text-center text-xs">
+                                            {hanger.name}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* Custom Design Upload */}
+                            {selectedHanger === "own" && (
+                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <h4 className="font-semibold mb-2 text-xs">Upload Your Custom Design</h4>
+                                    <p className="text-xs text-gray-600 mb-2">
+                                        Accepted formats: STL, OBJ, STEP, PDF
+                                    </p>
+                                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-3 cursor-pointer hover:border-[#35408E] transition-colors">
+                                        <Upload size={16} />
+                                        <span className="text-xs">
+                                            {customDesignFile
+                                                ? customDesignFile.name
+                                                : "Click to upload"}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept=".stl,.obj,.step,.pdf"
+                                            onChange={handleCustomDesignUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            )}
                         </div>
 
                         {/* quantity selector */}
@@ -1182,17 +1147,6 @@ const Checkout = () => {
                                 placeholder="Type your instructions here..."
                                 className="w-full border rounded px-3 py-2 h-20 md:h-24 text-sm md:text-base"
                             ></textarea>
-                            <div className="mt-4 text-center">
-                                <p className="text-xs md:text-sm text-gray-600">
-                                    Note: Please download the order form and attach.{" "}
-                                    <a
-                                        href="/path/to/order-form.pdf"
-                                        className="text-blue-500 underline"
-                                    >
-                                        Download Order Form
-                                    </a>
-                                </p>
-                            </div>
                         </div>
                         {/* action buttons */}
                         <div className="space-y-2 mt-4">
@@ -1201,8 +1155,17 @@ const Checkout = () => {
                                 disabled={isDownloading}
                                 className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                             >
-                                <Download size={18} className="md:w-5 md:h-5" />
-                                {isDownloading ? 'Downloading...' : 'Download Preview'}
+                                {isDownloading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent"></div>
+                                        Downloading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={18} className="md:w-5 md:h-5" />
+                                        Download Preview
+                                    </>
+                                )}
                             </button>
                             <button 
                                 onClick={handleSaveDesign}
@@ -1398,11 +1361,11 @@ const Checkout = () => {
                                     <span className="text-sm">
                                         {customLogo
                                             ? customLogo.name
-                                            : "Upload Logo (PNG, JPG, SVG)"}
+                                            : "Upload Logo (PNG, JPG, JPEG - Max 5MB)"}
                                     </span>
                                     <input
                                         type="file"
-                                        accept="image/png,image/jpeg,image/svg+xml"
+                                        accept="image/png,image/jpg,image/jpeg"
                                         onChange={handleLogoUpload}
                                         className="hidden"
                                     />
@@ -1500,6 +1463,143 @@ const Checkout = () => {
                 </div>
             </section>
 
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={false}
+            />
+            </>
+            )}
+
+            {/* STEP 2: Material Selection */}
+            {currentStep === 2 && (
+                <>
+            <div className="flex flex-col items-center justify-center mt-10">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
+                    Select the material you want
+                </h3>
+                <p className="text-black text-lg md:text-xl lg:text-2xl font-normal">
+                    you can select multiple materials and combined by percentage
+                </p>
+            </div>
+
+            <section>
+                {/* materials selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                    {materials.map((material) => (
+                        <button
+                            key={material.name}
+                            onClick={() => toggleMaterial(material.name)}
+                            className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[material.name]
+                                    ? "border-yellow-500 bg-yellow-50"
+                                    : "border-gray-300"
+                                }`}
+                        >
+                            <h3 className="text-xl font-semibold mb-2">{material.name}</h3>
+                            <ul className="list-disc list-inside">
+                                {material.features.map((feature, i) => (
+                                    <li key={i} className="text-black text-base font-normal">
+                                        {feature}
+                                    </li>
+                                ))}
+                            </ul>
+                        </button>
+                    ))}
+                    {/* materials percentage */}
+                    <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
+                        <h3 className="font-semibold mb-3">Materials selected</h3>
+                        <p className="text-xs text-gray-600 mb-3">
+                            Note: You may adjust percentages to achieve 100% mixture
+                        </p>
+                        <div className="space-y-2">
+                            {Object.entries(selectedMaterials).map(([name, percentage]) => (
+                                <div key={name} className="flex items-center justify-between">
+                                    <span className="text-sm">{name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={percentage}
+                                            onChange={(e) =>
+                                                updateMaterialPercentage(name, e.target.value)
+                                            }
+                                            className="w-16 px-2 py-1 border rounded text-sm"
+                                            min="0"
+                                            max="100"
+                                        />
+                                        <span className="text-sm">%</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={false}
+            />
+            </>
+            )}
+
+            {/* STEP 3: Review & Submit */}
+            {currentStep === 3 && (
+                <>
+            {/* Company Information */}
+            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-8">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6">
+                    Company Information
+                </h3>
+                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Company Name *
+                            </label>
+                            <input
+                                type="text"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder="Enter company name"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Contact Person *
+                            </label>
+                            <input
+                                type="text"
+                                value={contactPerson}
+                                onChange={(e) => setContactPerson(e.target.value)}
+                                placeholder="Enter contact person name"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Contact Phone *
+                            </label>
+                            <input
+                                type="tel"
+                                value={contactPhone}
+                                onChange={(e) => setContactPhone(e.target.value)}
+                                placeholder="(+63) 9XX XXX XXXX"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Order summary and address */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-5 ml-5 mr-5">
                 {/* Order summary */}
@@ -1578,6 +1678,55 @@ const Checkout = () => {
                     </div>
                 </div>
 
+                {/* Address Selection */}
+                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
+                    <h2 className="text-xl font-semibold mb-6">My Address</h2>
+
+                    <div className="space-y-4">
+                        {addresses.length > 0 ? (
+                            addresses.map((addr, idx) => (
+                                <label
+                                    key={idx}
+                                    className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="address"
+                                        checked={selectedAddress === idx}
+                                        onChange={() => setSelectedAddress(idx)}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-semibold">{addr.name}</span>
+                                            {addr.isDefault && (
+                                                <span className="bg-indigo-700 text-white text-xs px-2 py-0.5 rounded">
+                                                    Default
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-600">{addr.phone}</p>
+                                        <p className="text-sm text-gray-600">{addr.address}</p>
+                                    </div>
+                                </label>
+                            ))
+                        ) : (
+                            <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="mb-2 text-yellow-800 font-semibold">
+                                    ⚠️ No delivery address found
+                                </p>
+                                <p className="text-sm text-yellow-700">
+                                    Please update your company address in Account Settings
+                                </p>
+                                <p className="text-xs text-yellow-600 mt-2">
+                                    Orders without a proper address may experience delivery delays
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
                 {/* Modal */}
                 {showModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
@@ -1619,10 +1768,20 @@ const Checkout = () => {
                     </div>
                 )}
 
-                {/* Instructions Modal */}
-                {showInstructionsModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
-                        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={true}
+            />
+            </>
+            )}
+
+            {/* Instructions Modal */}
+            {showInstructionsModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <Info className="text-[#35408E]" size={24} />
@@ -1756,54 +1915,6 @@ const Checkout = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
-                    <h2 className="text-xl font-semibold mb-6">My Address</h2>
-
-                    <div className="space-y-4">
-                        {addresses.length > 0 ? (
-                            addresses.map((addr, idx) => (
-                                <label
-                                    key={idx}
-                                    className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
-                                >
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        checked={selectedAddress === idx}
-                                        onChange={() => setSelectedAddress(idx)}
-                                        className="mt-1"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold">{addr.name}</span>
-                                            {addr.isDefault && (
-                                                <span className="bg-indigo-700 text-white text-xs px-2 py-0.5 rounded">
-                                                    Default
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-600">{addr.phone}</p>
-                                        <p className="text-sm text-gray-600">{addr.address}</p>
-                                    </div>
-                                </label>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="mb-2 text-yellow-800 font-semibold">
-                                    ⚠️ No delivery address found
-                                </p>
-                                <p className="text-sm text-yellow-700">
-                                    Please update your company address in Account Settings
-                                </p>
-                                <p className="text-xs text-yellow-600 mt-2">
-                                    Orders without a proper address may experience delivery delays
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
             {/* Fullscreen 3D Viewer Modal */}
             {isFullscreen && (
                 <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
@@ -1829,10 +1940,7 @@ const Checkout = () => {
                             <Suspense
                                 fallback={
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <div className="text-center text-white">
-                                            <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
-                                            <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
-                                        </div>
+                                        <LoadingSpinner size="xl" text="Loading 3D Model..." color="white" />
                                     </div>
                                 }
                             >

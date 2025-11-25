@@ -860,7 +860,7 @@ const Employees = () => {
                                                     {isEditing ? (
                                                         <select
                                                             name="ispresent"
-                                                            value={formData.ispresent}
+                                                            value={formData.ispresent ? 'true' : 'false'}
                                                             onChange={(e) => setFormData(prev => ({ ...prev, ispresent: e.target.value === 'true' }))}
                                                             className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                         >

@@ -190,7 +190,9 @@ const Messages = () => {
                     </div>
                     <ul className="flex-1 overflow-y-auto">
                         {loading ? (
-                            <li className="p-4 text-center text-gray-500">Loading...</li>
+                            <li className="p-4 text-center text-gray-500">
+                                <LoadingSpinner size="sm" text="" />
+                            </li>
                         ) : conversations.length === 0 ? (
                             <li className="p-4 text-center text-gray-500">No conversations yet</li>
                         ) : (

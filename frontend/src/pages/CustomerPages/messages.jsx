@@ -294,7 +294,9 @@ const MessagesPage = () => {
                         // Messages List
                         <>
                             {loading ? (
-                                <div className="p-4 text-center text-gray-500 animate-pulse">Loading...</div>
+                                <div className="p-4 text-center text-gray-500">
+                                    <LoadingSpinner size="sm" text="" />
+                                </div>
                             ) : conversations.length === 0 ? (
                                 <div className="p-4 text-center text-gray-500">No messages yet</div>
                             ) : (

@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 
 const Order = () => {
@@ -418,8 +419,7 @@ const Order = () => {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                    <p className="mt-4 text-xl text-gray-600">Loading orders...</p>
+                    <LoadingSpinner size="lg" text="Loading orders..." />
                 </div>
             </div>
         );

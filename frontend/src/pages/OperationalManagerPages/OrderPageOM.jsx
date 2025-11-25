@@ -4,6 +4,7 @@ import { Search, Filter, SearchCode } from "lucide-react";
 import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
 import { useParams } from 'react-router-dom';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const OrderPageOM = () => {
     const [orders, setOrders] = useState([])
@@ -103,8 +104,7 @@ const OrderPageOM = () => {
             <div className='flex w-full bg-gray-100'>
                 <main className='flex-1 p-6 flex items-center justify-center min-h-screen'>
                     <div className='text-center'>
-                        <div className='animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto'></div>
-                        <p className='mt-4 text-xl text-gray-600'>Loading orders...</p>
+                        <LoadingSpinner size="lg" text="Loading orders..." />
                     </div>
                 </main>
             </div>
