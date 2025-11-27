@@ -30,7 +30,7 @@ router.post("/create", async (req, res) => {
       orderInstructions,
       deliveryAddress, // Add delivery address field
       threeDDesignData // Complete 3D design JSON string
-    } = req.body;);
+    } = req.body;
 
     // Validate required fields
     if (!companyName || !contactPerson || !contactPhone || !hangerType || !quantity) {
@@ -68,16 +68,16 @@ router.post("/create", async (req, res) => {
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
       orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()
-    };);
+    };
 
     const { data: order, error: insertError } = await supabase
       .from("orders")
       .insert([insertData])
       .select();
 
-    if (insertError) {);
+    if (insertError) {
       return res.status(400).json({ error: insertError.message });
-    });
+    }
 
     // 📧 Send order confirmation email to customer
     try {
@@ -226,13 +226,13 @@ router.get("/user/:userid", async (req, res) => {
       throw error;
     }
 
-    if (orders && orders.length > 0) {);
+    if (orders && orders.length > 0) {
     }
 
     res.status(200).json({
       orders: orders || []
     });
-  } catch (err) {);
+  } catch (err) {
     res.status(500).json({ 
       error: err.message || 'Failed to fetch orders',
       details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
@@ -417,7 +417,7 @@ router.patch("/:orderid/deadline", async (req, res) => {
     if (isNaN(deadlineDate.getTime())) {
 
       return res.status(400).json({ error: "Invalid deadline date format" });
-    }}`);
+    }
 
     const { data: order, error } = await supabase
       .from("orders")

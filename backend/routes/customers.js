@@ -163,7 +163,7 @@ router.delete("/:customerid", async (req, res) => {
 
         // Continue anyway since customer is deleted from database
       }
-    }`);
+    }
 
     res.status(200).json({
       message: "Customer deleted successfully",

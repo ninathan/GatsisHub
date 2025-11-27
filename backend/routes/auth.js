@@ -10,7 +10,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // 📝 Signup route
 router.post("/signup", async (req, res) => {
-  try {););
+  try {
     
     const { firstName, lastName, emailAddress, companyNumber, gender, dateOfBirth, password, addresses } = req.body;
 
@@ -147,7 +147,7 @@ router.post("/signup", async (req, res) => {
       ])
       .select();
 
-    if (dbError) {);
+    if (dbError) {
       return res.status(400).json({ error: dbError.message });
     }
 
@@ -237,7 +237,7 @@ router.post("/signup", async (req, res) => {
       message: "Signup successful!",
       customer: customerData[0]
     });
-  } catch (err) {);););
+  } catch (err) {
     
     res.status(500).json({ 
       error: "Server error: " + err.message,
@@ -651,7 +651,7 @@ router.post("/forgot-password", async (req, res) => {
         used: false
       }]);
 
-    if (insertError) {);
+    if (insertError) {
       return res.status(500).json({ 
         error: "Database error. Please ensure password_reset_codes table exists.",
         details: insertError.message 
@@ -701,7 +701,7 @@ router.post("/forgot-password", async (req, res) => {
         throw new Error("Invalid response from email service");
       }
       
-      if (!emailResponse.ok) {);
+      if (!emailResponse.ok) {
         throw new Error(`Resend API error: ${responseData.message || responseData.error || 'Unknown error'}`);
       }
 

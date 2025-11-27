@@ -89,7 +89,7 @@ router.post("/login", async (req, res) => {
     if (updateError) {
 
       // Don't fail login if presence update fails, just log it
-    }- Presence set to true`);
+    }
 
     // Return employee data (excluding password, with updated ispresent)
     const { password: _, ...employeeData } = employee;
@@ -292,7 +292,7 @@ router.delete("/:employeeid", async (req, res) => {
     if (error) {
 
       throw error;
-    }`);
+    }
 
     res.status(200).json({
       message: "Employee deleted successfully",
@@ -372,7 +372,7 @@ router.post("/create", async (req, res) => {
     if (createError) {
 
       throw createError;
-    }`);
+    }
 
     // Return employee data (excluding password)
     const { password: _, ...employeeData } = newEmployee;

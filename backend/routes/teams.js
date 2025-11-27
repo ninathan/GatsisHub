@@ -238,7 +238,7 @@ router.delete("/:teamid", async (req, res) => {
     if (error) {
 
       throw error;
-    }`);
+    }
 
     res.status(200).json({
       message: "Team deleted successfully",
