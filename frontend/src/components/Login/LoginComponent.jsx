@@ -41,7 +41,7 @@ const Login = () => {
       navigate('/logged')
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-      console.error('❌ Login error:', err.message)
+
       setError(err.message)
     } finally {
       setLoading(false)
@@ -69,7 +69,7 @@ const Login = () => {
 
       // Check if user needs to complete profile (new Google users without addresses)
       if (!data.user.addresses || data.user.addresses.length === 0) {
-        console.log('🔄 New Google user - redirecting to complete profile')
+
         navigate('/complete-profile')
       } else {
         navigate('/logged')
@@ -77,7 +77,7 @@ const Login = () => {
       
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-      console.error('❌ Google login error:', err.message)
+
       setError(err.message)
     }
   }

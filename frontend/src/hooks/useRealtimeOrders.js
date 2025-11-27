@@ -23,21 +23,20 @@ export const useRealtimeOrders = (userid, onOrderUpdate) => {
           filter: `userid=eq.${userid}`,
         },
         (payload) => {
-          console.log('📦 Order update received:', payload);
-          
+
           if (onOrderUpdate) {
             onOrderUpdate(payload);
           }
         }
       )
       .subscribe((status) => {
-        console.log('Order subscription status:', status);
+
         setIsSubscribed(status === 'SUBSCRIBED');
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('Unsubscribing from orders');
+
       supabase.removeChannel(subscription);
       setIsSubscribed(false);
     };

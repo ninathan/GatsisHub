@@ -164,7 +164,7 @@ const CreateDesign = () => {
                     thumbnailBase64 = canvas.toDataURL('image/png');
                 }
             } catch (thumbError) {
-                console.warn('⚠️ Could not capture thumbnail:', thumbError);
+
             }
 
             const designData = {
@@ -201,8 +201,6 @@ const CreateDesign = () => {
                 designData: JSON.stringify(designData)
             };
 
-            console.log('💾 Saving design...');
-
             const response = await fetch('https://gatsis-hub.vercel.app/designs/save', {
                 method: 'POST',
                 headers: {
@@ -217,8 +215,7 @@ const CreateDesign = () => {
             }
 
             const result = await response.json();
-            console.log('✅ Design saved:', result.design);
-            
+
             setSaveDesignModal(false);
             setDesignName('');
             setNotificationModal({ 
@@ -227,7 +224,7 @@ const CreateDesign = () => {
                 message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.` 
             });
         } catch (error) {
-            console.error('❌ Error saving design:', error);
+
             setNotificationModal({ 
                 show: true, 
                 type: 'error', 
@@ -304,7 +301,7 @@ const CreateDesign = () => {
             }, 'image/png');
 
         } catch (error) {
-            console.error('❌ Error downloading design:', error);
+
             setNotificationModal({ 
                 show: true, 
                 type: 'error', 

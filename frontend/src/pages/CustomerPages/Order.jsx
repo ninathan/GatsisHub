@@ -57,8 +57,7 @@ const Order = () => {
 
     // Real-time order update handler
     const handleOrderUpdate = useCallback((payload) => {
-        console.log('📦 Order update:', payload);
-        
+
         if (payload.eventType === 'INSERT') {
             // New order added
             setOrders(prev => [payload.new, ...prev]);
@@ -98,9 +97,9 @@ const Order = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched orders:', data.orders);
-                console.log('📍 First order delivery address:', data.orders[0]?.deliveryaddress);
-                console.log('🎨 First order 3D design data:', data.orders[0]?.threeddesigndata);
+
+
+
                 setOrders(data.orders || []);
                 
                 // Fetch payment info for each order
@@ -110,7 +109,7 @@ const Order = () => {
                 
                 setError(null);
             } catch (err) {
-                console.error('Error fetching orders:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -130,7 +129,7 @@ const Order = () => {
                     return { orderid: order.orderid, payment };
                 }
             } catch (error) {
-                console.log(`No payment found for order ${order.orderid}`);
+
             }
             return { orderid: order.orderid, payment: null };
         });
@@ -141,7 +140,7 @@ const Order = () => {
             paymentsMap[orderid] = payment;
         });
         setOrderPayments(paymentsMap);
-        console.log('💳 Payment info loaded:', paymentsMap);
+
     };
 
     // Helper function to get status color
@@ -213,7 +212,7 @@ const Order = () => {
             setSelected3DDesign(design);
             setShow3DModal(true);
         } catch (error) {
-            console.error('Error parsing 3D design data:', error);
+
         }
     };
 
@@ -245,7 +244,7 @@ const Order = () => {
 
             // If no online Sales Admin found, fetch any active Sales Admin (online or offline)
             if (salesAdmins.length === 0) {
-                console.log('No online Sales Admin found, fetching any available Sales Admin...');
+
                 employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&limit=1');
                 
                 if (!employeesResponse.ok) {
@@ -268,13 +267,6 @@ const Order = () => {
 
             // Create an initial message to start the conversation
             const initialMessage = `Hi, I have a question about my order ${order.orderid.slice(0, 8).toUpperCase()}`;
-
-            console.log('Sending contact support message to available Sales Admin:', {
-                customerid: customer.customerid,
-                employeeid: supportAgent.employeeid,
-                employeename: supportAgent.employeename,
-                message: initialMessage
-            });
 
             // Send message to the available Sales Admin
             const response = await fetch('https://gatsis-hub.vercel.app/messages/send', {
@@ -302,11 +294,11 @@ const Order = () => {
             } else {
                 const responseData = await response.json();
                 const errorMsg = responseData.error || 'Failed to start conversation';
-                console.error('Error response:', errorMsg);
+
                 showNotification(`Failed to start conversation: ${errorMsg}`, 'error');
             }
         } catch (error) {
-            console.error('Error starting conversation:', error);
+
             showNotification('Failed to contact support. Please try again.', 'error');
         }
     };
@@ -374,7 +366,7 @@ const Order = () => {
             closeRatingModal();
             showNotification('Thank you for your review! Your feedback has been submitted successfully.');
         } catch (err) {
-            console.error('Error submitting review:', err);
+
             showNotification(err.message || 'Failed to submit review. Please try again.', 'error');
         } finally {
             setIsSubmittingReview(false);
@@ -408,7 +400,7 @@ const Order = () => {
             // Show success notification
             showNotification('Order cancelled successfully');
         } catch (err) {
-            console.error('Error cancelling order:', err);
+
             showNotification('Failed to cancel order. Please try again or contact support.', 'error');
         } finally {
             setIsCancelling(false);
@@ -517,7 +509,7 @@ const Order = () => {
                                                                 }
                                                             }
                                                         } catch (error) {
-                                                            console.error('Error parsing design data:', error);
+
                                                         }
                                                         return <span className="text-2xl md:text-3xl">🪝</span>;
                                                     })()}
@@ -580,7 +572,7 @@ const Order = () => {
                                                                 }
                                                             }
                                                         } catch (error) {
-                                                            console.error('Error parsing design data:', error);
+
                                                         }
                                                         return <span className="text-3xl">🪝</span>;
                                                     })()}
@@ -763,7 +755,7 @@ const Order = () => {
                                                         {order.threeddesigndata && (
                                                             <button
                                                                 onClick={() => open3DModal(order.threeddesigndata)}
-                                                                className="w-full bg-[#35408E] text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-[#2c3e50] mt-3 transition-all duration-300 hover:scale-105"
+                                                                className="w-full bg-[#007BFF] text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-[#0056b3] mt-3 transition-all duration-300 hover:scale-105"
                                                             >
                                                                 <Eye size={16} />
                                                                 View 3D Design
@@ -828,7 +820,7 @@ const Order = () => {
                                                     {/* Contact Support - Always visible */}
                                                     <button 
                                                         onClick={() => handleContactSupport(order)}
-                                                        className="bg-[#35408E] text-white px-6 py-2 rounded hover:bg-[#2c3e50] transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                        className="bg-[#007BFF] text-white px-6 py-2 rounded hover:bg-[#0056b3] transition-colors flex items-center gap-2 text-sm font-semibold"
                                                     >
                                                         <MessageCircle size={18} />
                                                         Contact Support
@@ -867,7 +859,7 @@ const Order = () => {
             {/* Proof of Payment Modal */}
             {showProofModal && (
                 <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#35408E] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
+                    <div className="bg-[#007BFF] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
                         {/* Modal Header */}
                         <div className="flex items-center justify-center py-4 relative">
                             <div className="w-12 h-12  rounded-full flex items-center justify-center">
@@ -925,7 +917,7 @@ const Order = () => {
                 <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+                        <div className="bg-[#007BFF] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                             <div>
                                 <h2 className="text-white text-lg md:text-2xl font-semibold">3D Design Preview</h2>
                                 <p className="text-white text-xs md:text-sm mt-1">Interactive view of your customized hanger</p>
@@ -1094,7 +1086,7 @@ const Order = () => {
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4">
+                        <div className="bg-[#007BFF] px-4 md:px-6 py-3 md:py-4">
                             <h2 className="text-white text-xl md:text-2xl font-semibold">Rate Your Order</h2>
                         </div>
 

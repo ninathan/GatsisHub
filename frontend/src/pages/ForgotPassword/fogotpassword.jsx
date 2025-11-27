@@ -52,8 +52,8 @@ const fogotpassword = () => {
             showNotificationModal('Verification code sent to your email!');
             setShowCodeModal(true);
         } catch (err) {
-            console.error('Error:', err);
-            console.error('Full error details:', err.message);
+
+
             showNotificationModal(err.message || 'Failed to send verification code', 'error');
         } finally {
             setIsLoading(false);
@@ -90,7 +90,7 @@ const fogotpassword = () => {
             // Navigate to change password page with email
             navigate('/changepassword', { state: { email: email, verified: true } });
         } catch (err) {
-            console.error('Error:', err);
+
             showNotificationModal(err.message || 'Invalid verification code', 'error');
         } finally {
             setIsLoading(false);

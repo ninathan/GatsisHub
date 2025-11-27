@@ -33,8 +33,6 @@ const AuthSystemA = () => {
                 throw new Error(data.error || 'Login failed');
             }
 
-            console.log('✅ Login successful:', data.employee);
-
             // Verify this is a System Admin account
             if (data.employee.role !== 'System Admin') {
                 throw new Error('Access denied. This login is for System Admin only. Please use the appropriate login page.');
@@ -51,7 +49,7 @@ const AuthSystemA = () => {
             navigate('/systememployees');
 
         } catch (err) {
-            console.error('❌ Login error:', err);
+
             setError(err.message || 'Invalid email or password');
         } finally {
             setLoading(false);

@@ -18,7 +18,7 @@ const ProfileComponent = () => {
     const [activeTab, setActiveTab] = useState('Profile');
     
     // Debug: Log active tab changes
-    console.log('Current active tab:', activeTab);
+
     const [companyName, setCompanyName] = useState('');
     const [companyEmail, setCompanyEmail] = useState('');
     const [companyNumber, setCompanyNumber] = useState('');
@@ -36,13 +36,13 @@ const ProfileComponent = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
-    const [emailNotifications, setEmailNotifications] = useState(false);
+    const [emailNotifications, setEmailNotifications] = useState(true);
     const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
     // Handle default tab from navigation state
     useEffect(() => {
         if (location.state?.defaultTab) {
-            console.log('Setting tab from navigation:', location.state.defaultTab);
+
             setActiveTab(location.state.defaultTab);
             // Clear the state to avoid re-setting tab on refresh
             navigate(location.pathname, { replace: true, state: {} });
@@ -74,9 +74,9 @@ const ProfileComponent = () => {
             }
             const data = await response.json();
             setSavedDesigns(data);
-            console.log('✅ Loaded designs:', data);
+
         } catch (error) {
-            console.error('❌ Error fetching designs:', error);
+
         } finally {
             setLoadingDesigns(false);
         }
@@ -104,7 +104,7 @@ const ProfileComponent = () => {
                     setShowModal(true);
                     fetchSavedDesigns(); // Refresh the list
                 } catch (error) {
-                    console.error('❌ Error deleting design:', error);
+
                     setModalConfig({
                         type: 'error',
                         message: 'Failed to delete design. Please try again.',
@@ -121,8 +121,7 @@ const ProfileComponent = () => {
         // Navigate to checkout page with design data pre-loaded
         try {
             const designData = JSON.parse(design.url || '{}');
-            console.log('🔄 Loading design into checkout:', designData);
-            
+
             // Navigate to checkout with state
             navigate('/checkout', { 
                 state: { 
@@ -131,7 +130,7 @@ const ProfileComponent = () => {
                 } 
             });
         } catch (error) {
-            console.error('❌ Error loading design:', error);
+
             setModalConfig({
                 type: 'error',
                 message: 'Failed to load design. Please try again.',
@@ -158,7 +157,7 @@ const ProfileComponent = () => {
                 .single();
 
             if (error) {
-                console.error('Error fetching customer data:', error);
+
                 // Don't show error modal, just use default values from AuthContext
                 return;
             }
@@ -168,19 +167,19 @@ const ProfileComponent = () => {
                 setCompanyName(customer.companyname || '');
                 setCompanyEmail(customer.emailaddress || '');
                 setCompanyNumber(customer.companynumber || '');
-                setEmailNotifications(customer.emailnotifications || false);
+                setEmailNotifications(customer.emailnotifications !== undefined ? customer.emailnotifications : true);
 
                 // Load addresses from database
                 if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
                     setAddresses(customer.addresses);
-                    console.log('✅ Loaded addresses from database:', customer.addresses);
+
                 } else {
                     // No addresses yet - user can add them in the Addresses section
-                    console.log('⚠️ No addresses found, user can add new addresses');
+
                 }
             }
         } catch (error) {
-            console.error('Error fetching customer data:', error);
+
             // Don't show modal on initial load failure
         }
     };
@@ -234,7 +233,7 @@ const ProfileComponent = () => {
             // Refresh user data in AuthContext if needed
             fetchCustomerData();
         } catch (error) {
-            console.error('Error saving profile:', error);
+
             setModalConfig({
                 type: 'error',
                 message: 'Failed to update profile. Please try again.',
@@ -307,10 +306,9 @@ const ProfileComponent = () => {
                 onConfirm: null
             });
             setShowModal(true);
-            
-            console.log('✅ Address saved to database');
+
         } catch (error) {
-            console.error('Error adding address:', error);
+
             setModalConfig({
                 type: 'error',
                 message: 'Failed to add address. Please try again.',
@@ -345,10 +343,9 @@ const ProfileComponent = () => {
                         onConfirm: null
                     });
                     setShowModal(true);
-                    
-                    console.log('✅ Address deleted from database');
+
                 } catch (error) {
-                    console.error('Error deleting address:', error);
+
                     setModalConfig({
                         type: 'error',
                         message: 'Failed to delete address. Please try again.',
@@ -398,10 +395,9 @@ const ProfileComponent = () => {
                 onConfirm: null
             });
             setShowModal(true);
-            
-            console.log('✅ Default address updated in database');
+
         } catch (error) {
-            console.error('Error setting default address:', error);
+
             setModalConfig({
                 type: 'error',
                 message: 'Failed to update default address.',
@@ -475,8 +471,6 @@ const ProfileComponent = () => {
                 throw new Error(data.error || 'Failed to change password');
             }
 
-            console.log('✅ Password changed successfully via backend');
-
             // Clear password fields
             setCurrentPassword('');
             setNewPassword('');
@@ -489,7 +483,7 @@ const ProfileComponent = () => {
             });
             setShowModal(true);
         } catch (error) {
-            console.error('❌ Error changing password:', error);
+
             setModalConfig({
                 type: 'error',
                 message: error.message || 'Failed to update password. Please try again.',
@@ -521,10 +515,9 @@ const ProfileComponent = () => {
                 onConfirm: null
             });
             setShowModal(true);
-            
-            console.log('✅ Email notification preference saved:', value);
+
         } catch (error) {
-            console.error('❌ Error updating notification preference:', error);
+
             setModalConfig({
                 type: 'error',
                 message: 'Failed to update notification settings. Please try again.',
@@ -559,8 +552,6 @@ const ProfileComponent = () => {
                         throw new Error(data.error || 'Failed to delete account');
                     }
 
-                    console.log('✅ Account deleted successfully');
-
                     // Show success message
                     setModalConfig({
                         type: 'success',
@@ -577,7 +568,7 @@ const ProfileComponent = () => {
                     }, 2000);
 
                 } catch (error) {
-                    console.error('❌ Error deleting account:', error);
+
                     setModalConfig({
                         type: 'error',
                         message: error.message || 'Failed to delete account. Please try again.',

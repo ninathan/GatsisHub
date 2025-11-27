@@ -23,8 +23,7 @@ export const useRealtimeMessages = (customerid, employeeid, onNewMessage) => {
           filter: `customerid=eq.${customerid}`,
         },
         (payload) => {
-          console.log('📨 New message received:', payload.new);
-          
+
           // Only process messages for this conversation
           if (payload.new.employeeid === employeeid) {
             if (onNewMessage) {
@@ -34,13 +33,13 @@ export const useRealtimeMessages = (customerid, employeeid, onNewMessage) => {
         }
       )
       .subscribe((status) => {
-        console.log('Message subscription status:', status);
+
         setIsSubscribed(status === 'SUBSCRIBED');
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('Unsubscribing from messages');
+
       supabase.removeChannel(subscription);
       setIsSubscribed(false);
     };

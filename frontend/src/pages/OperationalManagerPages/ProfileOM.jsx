@@ -81,7 +81,7 @@ const ProfileOM = () => {
     const handleEditProfile = () => {
         if (isEditing) {
             // Save profile changes logic dito
-            console.log('saving profile changes: ', profileData)
+
             setSuccess('Profile update successfully!')
             setTimeout(() => setSuccess(''), 3000)
 

@@ -47,7 +47,7 @@ const SystemEmployee = () => {
 
             setEmployees(data.employees || []);
         } catch (err) {
-            console.error('❌ Error fetching employees:', err);
+
             setError(err.message || 'Failed to load employees');
         } finally {
             setLoading(false);
@@ -150,7 +150,7 @@ const SystemEmployee = () => {
             }, 1500);
 
         } catch (err) {
-            console.error('❌ Error creating employee:', err);
+
             setFormError(err.message || 'Failed to create employee');
         }
     };
@@ -209,7 +209,7 @@ const SystemEmployee = () => {
             }, 1500);
 
         } catch (err) {
-            console.error('❌ Error updating employee:', err);
+
             setFormError(err.message || 'Failed to update employee');
         }
     };
@@ -237,7 +237,7 @@ const SystemEmployee = () => {
             setShowEditModal(false);
 
         } catch (err) {
-            console.error('❌ Error deleting employee:', err);
+
             alert(err.message || 'Failed to delete employee');
         }
     };

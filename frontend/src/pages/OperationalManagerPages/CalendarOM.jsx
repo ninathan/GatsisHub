@@ -49,7 +49,7 @@ const CalendarOM = () => {
             setEvents(deadlineEvents);
             setError('');
         } catch (err) {
-            console.error('Error fetching orders:', err);
+
             setError('Failed to load calendar events');
         } finally {
             setLoading(false);
@@ -67,7 +67,7 @@ const CalendarOM = () => {
 
             setQuotas(data.quotas || []);
         } catch (err) {
-            console.error('Error fetching quotas:', err);
+
         }
     };
 

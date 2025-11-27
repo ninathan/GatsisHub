@@ -64,14 +64,14 @@ const OrderDetail = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched order:', data.order);
+
                 setOrder(data.order);
                 setOrderStatus(data.order.orderstatus);
                 setValidatedPrice(data.order.totalprice || '');
                 setDeadline(data.order.deadline || '');
                 setError(null);
             } catch (err) {
-                console.error('Error fetching order:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -91,10 +91,10 @@ const OrderDetail = () => {
                 if (response.ok) {
                     const payment = await response.json();
                     setPaymentInfo(payment);
-                    console.log('💳 Payment info loaded:', payment);
+
                 }
             } catch (error) {
-                console.log('No payment found for this order');
+
             }
         };
 
@@ -136,7 +136,7 @@ const OrderDetail = () => {
 
             showNotificationMessage('Order status updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating status:', err);
+
             showNotificationMessage(err.message || 'Failed to update order status', 'error');
             setOrderStatus(order.orderstatus); // Revert on error
         } finally {
@@ -169,7 +169,7 @@ const OrderDetail = () => {
             setIsEditingPrice(false);
             showNotificationMessage('Price updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating price:', err);
+
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
@@ -203,12 +203,11 @@ const OrderDetail = () => {
                 throw new Error(data.error || 'Failed to update deadline');
             }
 
-            console.log('✅ Deadline updated:', data.order);
             setOrder(data.order);
             setIsEditingDeadline(false);
             showNotificationMessage('Deadline updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating deadline:', err);
+
             showNotificationMessage(err.message || 'Failed to update deadline', 'error');
         } finally {
             setIsSavingDeadline(false);
@@ -232,7 +231,7 @@ const OrderDetail = () => {
             setSelected3DDesign(design);
             setShow3DModal(true);
         } catch (error) {
-            console.error('Error parsing 3D design data:', error);
+
         }
     };
 
@@ -258,7 +257,7 @@ const OrderDetail = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Order approved successfully', 'success');
         } catch (err) {
-            console.error('Error approving order:', err);
+
             showNotificationMessage('Failed to approve order', 'error');
         }
     };
@@ -280,7 +279,7 @@ const OrderDetail = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Payment confirmed and order approved', 'success');
         } catch (err) {
-            console.error('Error confirming payment:', err);
+
             showNotificationMessage('Failed to confirm payment', 'error');
         }
     };
@@ -340,18 +339,18 @@ const OrderDetail = () => {
                 showNotificationMessage('Failed to start conversation. Please try again.', 'error');
             }
         } catch (error) {
-            console.error('Error starting conversation:', error);
+
             showNotificationMessage('Failed to contact customer. Please try again.', 'error');
         }
     };
 
     const handleExportXLS = () => {
-        console.log("Exporting to XLS");
+
         showNotificationMessage('XLS export feature coming soon', 'success');
     };
 
     const handleExportPDF = () => {
-        console.log("Exporting to PDF");
+
         showNotificationMessage('PDF export feature coming soon', 'success');
     };
 
@@ -360,7 +359,7 @@ const OrderDetail = () => {
             showNotificationMessage('No payment proof available for this order', 'error');
             return;
         }
-        console.log("Viewing proof of payment:", paymentInfo.proofofpayment);
+
         setShowProofModal(true);
     };
 
@@ -397,7 +396,7 @@ const OrderDetail = () => {
                 setOrderStatus(data.order.orderstatus);
             }
         } catch (err) {
-            console.error('Error rejecting payment:', err);
+
             showNotificationMessage('Failed to reject payment', 'error');
         }
     };
@@ -443,7 +442,7 @@ const OrderDetail = () => {
                 setOrderStatus(data.order.orderstatus);
             }
         } catch (err) {
-            console.error('Error approving payment:', err);
+
             showNotificationMessage('Failed to approve payment', 'error');
         }
     };
@@ -499,7 +498,7 @@ const OrderDetail = () => {
                 {/* Order Details Card */}
                 <div className="bg-white shadow-lg rounded-lg border border-gray-200">
                     {/* Header */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#35408E] text-white rounded-t-lg">
+                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#007BFF] text-white rounded-t-lg">
                         <h2 className="font-semibold text-lg">Order Details</h2>
                         <div className="relative">
                             <select
@@ -701,7 +700,7 @@ const OrderDetail = () => {
                                             );
                                         }
                                     } catch (error) {
-                                        console.error('Error parsing design data:', error);
+
                                     }
                                     return <p className="text-gray-500 text-center py-8">No thumbnail available</p>;
                                 })()}

@@ -80,7 +80,7 @@ const changepassword = () => {
 
             setShowmodal(true);
         } catch (err) {
-            console.error('Error:', err);
+
             showNotificationModal(err.message || 'Failed to reset password', 'error');
         } finally {
             setIsLoading(false);

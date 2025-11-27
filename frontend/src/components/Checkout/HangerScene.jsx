@@ -14,11 +14,11 @@ function HangerModel({ color, hangerType }) {
 
     // Debug: Log model info
     useEffect(() => {
-        console.log('✅ Model loaded:', hangerType);
+
         if (clonedScene) {
             const box = new THREE.Box3().setFromObject(clonedScene);
             const size = box.getSize(new THREE.Vector3());
-            console.log('Model size:', size);
+
         }
     }, [clonedScene, hangerType]);
 

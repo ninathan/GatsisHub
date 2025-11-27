@@ -86,7 +86,7 @@ function CompleteProfile() {
       // Navigate to logged page
       navigate('/logged');
     } catch (err) {
-      console.error('❌ Profile update error:', err);
+
       setError('Failed to save profile. Please try again.');
     } finally {
       setLoading(false);

@@ -34,8 +34,6 @@ const AuthSA = () => {
                 throw new Error(data.error || 'Login failed');
             }
 
-            console.log('✅ Login successful:', data.employee);
-
             // Verify this is a Sales Admin account
             if (data.employee.role !== 'Sales Admin' || data.employee.assigneddepartment !== 'Admin') {
                 throw new Error('Access denied. This login is for Sales Admin only. Please use the appropriate login page.');
@@ -52,7 +50,7 @@ const AuthSA = () => {
             navigate('/orderpage');
 
         } catch (err) {
-            console.error('❌ Login error:', err);
+
             setError(err.message || 'Invalid email or password');
         } finally {
             setLoading(false);

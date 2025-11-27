@@ -27,12 +27,12 @@ const OrderPageOM = () => {
                 }
 
                 const data = await response.json()
-                console.log('fetched orders: ', data.orders)
+
                 setOrders(data.orders || [])
                 setFilteredOrders(data.orders || [])
                 setError(null)
             }catch (err) {
-                console.error('Error fetching orders: ', err)
+
                 setError(err.message)
             }finally {
                 setLoading(false)

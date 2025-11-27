@@ -8,8 +8,6 @@ router.get("/", async (req, res) => {
   try {
     const { status, teamid } = req.query;
 
-    console.log("📋 Fetching quotas");
-
     let query = supabase
       .from("quotas")
       .select("*")
@@ -26,7 +24,7 @@ router.get("/", async (req, res) => {
     const { data: quotas, error } = await query;
 
     if (error) {
-      console.error("❌ Error fetching quotas:", error);
+
       throw error;
     }
 
@@ -43,11 +41,10 @@ router.get("/", async (req, res) => {
       return { ...quota, teams: [] };
     }));
 
-    console.log(`✅ Fetched ${quotasWithTeams.length} quotas`);
     res.status(200).json({ quotas: quotasWithTeams });
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to fetch quotas" });
   }
 });
@@ -56,8 +53,6 @@ router.get("/", async (req, res) => {
 router.get("/:quotaid", async (req, res) => {
   try {
     const { quotaid } = req.params;
-
-    console.log("🔍 Fetching quota:", quotaid);
 
     const { data: quota, error } = await supabase
       .from("quotas")
@@ -81,11 +76,10 @@ router.get("/:quotaid", async (req, res) => {
       quota.teams = [];
     }
 
-    console.log("✅ Quota fetched successfully");
     res.status(200).json(quota);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to fetch quota" });
   }
 });
@@ -100,8 +94,6 @@ router.post("/create", async (req, res) => {
       startdate,
       enddate
     } = req.body;
-
-    console.log("➕ Creating quota:", quotaname);
 
     // Validation
     if (!quotaname) {
@@ -119,7 +111,7 @@ router.post("/create", async (req, res) => {
       .in("orderid", assignedorders);
 
     if (ordersError) {
-      console.error("❌ Error fetching orders:", ordersError);
+
       return res.status(400).json({ error: "Failed to fetch order details" });
     }
 
@@ -146,7 +138,7 @@ router.post("/create", async (req, res) => {
       .single();
 
     if (insertError) {
-      console.error("❌ Error creating quota:", insertError);
+
       return res.status(400).json({ error: insertError.message });
     }
 
@@ -158,15 +150,14 @@ router.post("/create", async (req, res) => {
         .in("teamid", teamids);
 
       if (teamError) {
-        console.error("⚠️ Warning: Could not update teams:", teamError);
+
       }
     }
 
-    console.log("✅ Quota created successfully:", quota.quotaid);
     res.status(201).json(quota);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to create quota" });
   }
 });
@@ -184,8 +175,6 @@ router.patch("/:quotaid", async (req, res) => {
       enddate,
       status
     } = req.body;
-
-    console.log("🔄 Updating quota:", quotaid);
 
     // Get existing quota to check previous team assignments
     const { data: existingQuota, error: fetchError } = await supabase
@@ -230,7 +219,7 @@ router.patch("/:quotaid", async (req, res) => {
       .single();
 
     if (updateError) {
-      console.error("❌ Error updating quota:", updateError);
+
       return res.status(400).json({ error: updateError.message });
     }
 
@@ -269,11 +258,10 @@ router.patch("/:quotaid", async (req, res) => {
       }
     }
 
-    console.log("✅ Quota updated successfully");
     res.status(200).json(quota);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to update quota" });
   }
 });
@@ -283,8 +271,6 @@ router.delete("/:quotaid", async (req, res) => {
   try {
     const { quotaid } = req.params;
 
-    console.log("❌ Deleting quota:", quotaid);
-
     // First, unlink from any teams
     const { error: teamError } = await supabase
       .from("teams")
@@ -292,7 +278,7 @@ router.delete("/:quotaid", async (req, res) => {
       .eq("linkedquotaid", quotaid);
 
     if (teamError) {
-      console.error("⚠️ Warning: Could not unlink teams:", teamError);
+
     }
 
     // Delete the quota
@@ -302,15 +288,14 @@ router.delete("/:quotaid", async (req, res) => {
       .eq("quotaid", quotaid);
 
     if (deleteError) {
-      console.error("❌ Error deleting quota:", deleteError);
+
       return res.status(400).json({ error: deleteError.message });
     }
 
-    console.log("✅ Quota deleted successfully");
     res.status(200).json({ message: "Quota deleted successfully" });
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to delete quota" });
   }
 });
@@ -342,7 +327,7 @@ router.get("/:quotaid/progress", async (req, res) => {
     res.status(200).json(progress);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to get quota progress" });
   }
 });

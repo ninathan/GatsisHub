@@ -6,7 +6,6 @@ const router = express.Router();
 // � Get all teams
 router.get("/", async (req, res) => {
   try {
-    console.log('📋 Fetching all teams');
 
     const { data: teams, error } = await supabase
       .from("teams")
@@ -14,15 +13,13 @@ router.get("/", async (req, res) => {
       .order('createdat', { ascending: false });
 
     if (error) {
-      console.error('❌ Error fetching teams:', error);
+
       throw error;
     }
 
-    console.log(`✅ Fetched ${teams.length} teams`);
-
     res.status(200).json({ teams });
   } catch (err) {
-    console.error("💥 Get Teams Error:", err);
+
     res.status(500).json({ error: "Failed to fetch teams" });
   }
 });
@@ -32,8 +29,6 @@ router.get("/:teamid", async (req, res) => {
   try {
     const { teamid } = req.params;
 
-    console.log(`📋 Fetching team: ${teamid}`);
-
     const { data: team, error } = await supabase
       .from("teams")
       .select("*")
@@ -41,18 +36,16 @@ router.get("/:teamid", async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`❌ Error fetching team ${teamid}:`, error);
+
       if (error.code === 'PGRST116') {
         return res.status(404).json({ error: "Team not found" });
       }
       throw error;
     }
 
-    console.log(`✅ Team fetched successfully: ${teamid}`);
-
     res.status(200).json({ team });
   } catch (err) {
-    console.error("💥 Get Team Error:", err);
+
     res.status(500).json({ error: "Failed to fetch team" });
   }
 });
@@ -61,8 +54,6 @@ router.get("/:teamid", async (req, res) => {
 router.post("/create", async (req, res) => {
   try {
     const { teamname, description, members, quota, dailyquota, assignedOrders } = req.body;
-
-    console.log(`➕ Creating new team: ${teamname}`);
 
     // Validate required fields
     if (!teamname || !teamname.trim()) {
@@ -107,18 +98,16 @@ router.post("/create", async (req, res) => {
       .single();
 
     if (error) {
-      console.error('❌ Error creating team:', error);
+
       throw error;
     }
-
-    console.log(`✅ Team created successfully: ${team.teamid} - ${team.teamname}`);
 
     res.status(201).json({
       message: "Team created successfully",
       team
     });
   } catch (err) {
-    console.error("💥 Create Team Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to create team" });
   }
 });
@@ -128,8 +117,6 @@ router.patch("/:teamid", async (req, res) => {
   try {
     const { teamid } = req.params;
     const { teamname, description, members, quota, dailyquota, assignedOrders } = req.body;
-
-    console.log(`✏️ Updating team: ${teamid}`);
 
     // Check if team exists
     const { data: existingTeam, error: fetchError } = await supabase
@@ -209,18 +196,16 @@ router.patch("/:teamid", async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`❌ Error updating team ${teamid}:`, error);
+
       throw error;
     }
-
-    console.log(`✅ Team updated successfully: ${teamid}`);
 
     res.status(200).json({
       message: "Team updated successfully",
       team
     });
   } catch (err) {
-    console.error("💥 Update Team Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to update team" });
   }
 });
@@ -229,8 +214,6 @@ router.patch("/:teamid", async (req, res) => {
 router.delete("/:teamid", async (req, res) => {
   try {
     const { teamid } = req.params;
-
-    console.log(`🗑️ Deleting team: ${teamid}`);
 
     // Check if team exists
     const { data: existingTeam, error: fetchError } = await supabase
@@ -253,11 +236,9 @@ router.delete("/:teamid", async (req, res) => {
       .eq("teamid", teamid);
 
     if (error) {
-      console.error(`❌ Error deleting team ${teamid}:`, error);
-      throw error;
-    }
 
-    console.log(`✅ Team deleted successfully: ${teamid} (${existingTeam.teamname})`);
+      throw error;
+    }`);
 
     res.status(200).json({
       message: "Team deleted successfully",
@@ -267,7 +248,7 @@ router.delete("/:teamid", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("💥 Delete Team Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to delete team" });
   }
 });
@@ -277,23 +258,19 @@ router.get("/employee/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
 
-    console.log(`👥 Fetching teams for employee: ${employeeid}`);
-
     const { data: teams, error } = await supabase
       .from("teams")
       .select("*")
       .contains("members", [parseInt(employeeid)]);
 
     if (error) {
-      console.error(`❌ Error fetching teams for employee ${employeeid}:`, error);
+
       throw error;
     }
 
-    console.log(`✅ Found ${teams.length} teams for employee ${employeeid}`);
-
     res.status(200).json({ teams });
   } catch (err) {
-    console.error("💥 Get Employee Teams Error:", err);
+
     res.status(500).json({ error: "Failed to fetch employee teams" });
   }
 });
@@ -302,8 +279,6 @@ router.get("/employee/:employeeid", async (req, res) => {
 router.get("/:teamid/stats", async (req, res) => {
   try {
     const { teamid } = req.params;
-
-    console.log(`📊 Fetching stats for team: ${teamid}`);
 
     // Get team details
     const { data: team, error: teamError } = await supabase
@@ -327,7 +302,7 @@ router.get("/:teamid/stats", async (req, res) => {
       .in("employeeid", memberIds);
 
     if (membersError) {
-      console.error('❌ Error fetching team members:', membersError);
+
       throw membersError;
     }
 
@@ -347,15 +322,13 @@ router.get("/:teamid/stats", async (req, res) => {
       stats.departmentBreakdown[dept] = (stats.departmentBreakdown[dept] || 0) + 1;
     });
 
-    console.log(`✅ Team stats calculated for team ${teamid}`);
-
     res.status(200).json({
       team,
       members,
       stats
     });
   } catch (err) {
-    console.error("💥 Get Team Stats Error:", err);
+
     res.status(500).json({ error: "Failed to fetch team statistics" });
   }
 });

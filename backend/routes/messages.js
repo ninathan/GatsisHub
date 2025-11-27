@@ -54,7 +54,7 @@ router.get('/conversations/customer/:customerid', async (req, res) => {
 
     res.json({ conversations: uniqueConversations });
   } catch (err) {
-    console.error('❌ Get customer conversations error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -106,7 +106,7 @@ router.get('/conversations/admin', async (req, res) => {
 
     res.json({ conversations: uniqueConversations });
   } catch (err) {
-    console.error('❌ Get admin conversations error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -167,7 +167,7 @@ router.get('/conversation/:customerid/:employeeid', async (req, res) => {
 
     res.json({ messages: formattedMessages });
   } catch (err) {
-    console.error('❌ Get conversation error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -176,8 +176,6 @@ router.get('/conversation/:customerid/:employeeid', async (req, res) => {
 router.post('/send', async (req, res) => {
   try {
     const { customerid, employeeid, message, file, fileName, senderType } = req.body;
-
-    console.log('📨 Sending message:', { customerid, employeeid, senderType, hasFile: !!file });
 
     if (!customerid || !message) {
       return res.status(400).json({ error: 'Customer ID and message are required' });
@@ -195,7 +193,7 @@ router.post('/send', async (req, res) => {
         const base64Data = file.includes(',') ? file.split(',')[1] : file;
         fileBuffer = Buffer.from(base64Data, 'base64');
       } catch (fileError) {
-        console.error('❌ File conversion error:', fileError.message);
+
         // Continue without file if conversion fails
         fileBuffer = null;
       }
@@ -224,8 +222,7 @@ router.post('/send', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('❌ Database error:', error);
-      
+
       // Check if it's a foreign key constraint error
       if (error.code === '23503') {
         if (error.message.includes('employeeid')) {
@@ -242,14 +239,12 @@ router.post('/send', async (req, res) => {
       throw error;
     }
 
-    console.log('✅ Message sent successfully');
-
     res.status(201).json({ 
       message: 'Message sent successfully',
       data 
     });
   } catch (err) {
-    console.error('❌ Send message error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -268,7 +263,7 @@ router.delete('/:messageid', async (req, res) => {
 
     res.json({ message: 'Message deleted successfully' });
   } catch (err) {
-    console.error('❌ Delete message error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });

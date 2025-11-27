@@ -30,11 +30,7 @@ router.post("/create", async (req, res) => {
       orderInstructions,
       deliveryAddress, // Add delivery address field
       threeDDesignData // Complete 3D design JSON string
-    } = req.body;
-
-    console.log('📦 Received order data');
-    console.log('📍 Delivery Address from request:', deliveryAddress);
-    console.log('📍 Full request body:', JSON.stringify(req.body, null, 2));
+    } = req.body;);
 
     // Validate required fields
     if (!companyName || !contactPerson || !contactPhone || !hangerType || !quantity) {
@@ -72,26 +68,16 @@ router.post("/create", async (req, res) => {
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
       orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()
-    };
-
-    console.log('💾 About to insert into database:');
-    console.log('📍 deliveryaddress value:', insertData.deliveryaddress);
-    console.log('📦 Full insert data:', JSON.stringify(insertData, null, 2));
+    };);
 
     const { data: order, error: insertError } = await supabase
       .from("orders")
       .insert([insertData])
       .select();
 
-    if (insertError) {
-      console.error("❌ DB Insert Error:", insertError);
-      console.error("❌ Error details:", JSON.stringify(insertError, null, 2));
+    if (insertError) {);
       return res.status(400).json({ error: insertError.message });
-    }
-
-    console.log('✅ Order created successfully');
-    console.log('📍 Returned order data:', JSON.stringify(order[0], null, 2));
-    console.log('📍 Saved delivery address:', order[0].deliveryaddress);
+    });
 
     // 📧 Send order confirmation email to customer
     try {
@@ -114,8 +100,7 @@ router.post("/create", async (req, res) => {
 
         // Send email if we have an email address
         if (customerEmail) {
-          console.log('📧 Sending order confirmation email to:', customerEmail);
-          
+
           const orderNumber = `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${order[0].orderid}`;
           
           await fetch('https://api.resend.com/emails', {
@@ -197,15 +182,14 @@ router.post("/create", async (req, res) => {
             })
           });
 
-          console.log('✅ Order confirmation email sent');
         } else {
-          console.log('⚠️ No customer email found, skipping confirmation email');
+
         }
       } else {
-        console.log('⚠️ RESEND_API_KEY not configured, skipping confirmation email');
+
       }
     } catch (emailError) {
-      console.error('❌ Error sending confirmation email:', emailError);
+
       // Don't fail the order creation if email fails
     }
 
@@ -214,7 +198,7 @@ router.post("/create", async (req, res) => {
       order: order[0]
     });
   } catch (err) {
-    console.error("Create Order Error:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -224,12 +208,10 @@ router.get("/user/:userid", async (req, res) => {
   try {
     const { userid } = req.params;
 
-    console.log('🔍 Fetching orders for user:', userid);
-
     // Validate userid format (should be UUID)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(userid)) {
-      console.error('❌ Invalid userid format:', userid);
+
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
@@ -240,27 +222,17 @@ router.get("/user/:userid", async (req, res) => {
       .order("datecreated", { ascending: false });
 
     if (error) {
-      console.error('❌ Supabase error:', error);
+
       throw error;
     }
 
-    console.log('✅ Found', orders?.length || 0, 'orders');
-    if (orders && orders.length > 0) {
-      console.log('📍 First order deliveryaddress:', orders[0].deliveryaddress);
-      console.log('📦 First order sample:', JSON.stringify({
-        orderid: orders[0].orderid,
-        companyname: orders[0].companyname,
-        deliveryaddress: orders[0].deliveryaddress,
-        datecreated: orders[0].datecreated
-      }, null, 2));
+    if (orders && orders.length > 0) {);
     }
 
     res.status(200).json({
       orders: orders || []
     });
-  } catch (err) {
-    console.error("💥 Get Orders Error:", err);
-    console.error("💥 Error details:", JSON.stringify(err, null, 2));
+  } catch (err) {);
     res.status(500).json({ 
       error: err.message || 'Failed to fetch orders',
       details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
@@ -282,7 +254,7 @@ router.get("/all", async (req, res) => {
       orders: orders || []
     });
   } catch (err) {
-    console.error("Get All Orders Error:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -302,7 +274,7 @@ router.get("/:orderid", async (req, res) => {
 
     res.status(200).json({ order });
   } catch (err) {
-    console.error("Get Order Error:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -326,7 +298,7 @@ router.put("/:orderid/status", async (req, res) => {
       order: order[0]
     });
   } catch (err) {
-    console.error("Update Order Error:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -337,8 +309,6 @@ router.delete("/:orderid", async (req, res) => {
     const { orderid } = req.params;
     const { reason } = req.body;
 
-    console.log(`🗑️ Cancelling order: ${orderid}`);
-    console.log(`📝 Cancellation reason: ${reason || 'No reason provided'}`);
 
     // Verify order exists
     const { data: existingOrder, error: fetchError } = await supabase
@@ -370,15 +340,13 @@ router.delete("/:orderid", async (req, res) => {
       throw deleteError;
     }
 
-    console.log(`✅ Order ${orderid} cancelled successfully`);
-
     res.status(200).json({ 
       message: "Order cancelled successfully",
       orderid: orderid,
       reason: reason || 'No reason provided'
     });
   } catch (err) {
-    console.error("Delete Order Error:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -389,24 +357,20 @@ router.patch("/:orderid/price", async (req, res) => {
     const { orderid } = req.params;
     const { price } = req.body;
 
-    console.log(`💰 Updating price for order ${orderid}: ${price}`);
-    console.log(`📊 Request body:`, req.body);
-    console.log(`📊 Price type:`, typeof price);
+
 
     // Validate price
     if (price === undefined || price === null || isNaN(price)) {
-      console.error(`❌ Invalid price value: ${price}`);
+
       return res.status(400).json({ error: "Invalid price value" });
     }
 
     // Convert to number and ensure it's valid
     const priceValue = parseFloat(price);
     if (isNaN(priceValue)) {
-      console.error(`❌ Price is not a valid number: ${price}`);
+
       return res.status(400).json({ error: "Price must be a valid number" });
     }
-
-    console.log(`💵 Converted price value: ${priceValue}`);
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -415,24 +379,22 @@ router.patch("/:orderid/price", async (req, res) => {
       .select();
 
     if (error) {
-      console.error(`❌ Supabase error:`, error);
+
       throw error;
     }
 
     if (!order || order.length === 0) {
-      console.error(`❌ Order not found: ${orderid}`);
+
       return res.status(404).json({ error: "Order not found" });
     }
-
-    console.log(`✅ Price updated successfully for order ${orderid}`);
 
     res.status(200).json({
       message: "Order price updated",
       order: order[0]
     });
   } catch (err) {
-    console.error("💥 Update Price Error:", err);
-    console.error("💥 Error details:", err.message, err.stack);
+
+
     res.status(500).json({ error: err.message || "Failed to update price" });
   }
 });
@@ -443,23 +405,19 @@ router.patch("/:orderid/deadline", async (req, res) => {
     const { orderid } = req.params;
     const { deadline } = req.body;
 
-    console.log(`📅 Updating deadline for order ${orderid}: ${deadline}`);
-    console.log(`📊 Request body:`, req.body);
 
     // Validate deadline (should be a valid date string)
     if (!deadline) {
-      console.error(`❌ Deadline is required`);
+
       return res.status(400).json({ error: "Deadline is required" });
     }
 
     // Check if deadline is a valid date
     const deadlineDate = new Date(deadline);
     if (isNaN(deadlineDate.getTime())) {
-      console.error(`❌ Invalid deadline date: ${deadline}`);
-      return res.status(400).json({ error: "Invalid deadline date format" });
-    }
 
-    console.log(`📆 Parsed deadline date: ${deadlineDate.toISOString()}`);
+      return res.status(400).json({ error: "Invalid deadline date format" });
+    }}`);
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -468,24 +426,22 @@ router.patch("/:orderid/deadline", async (req, res) => {
       .select();
 
     if (error) {
-      console.error(`❌ Supabase error:`, error);
+
       throw error;
     }
 
     if (!order || order.length === 0) {
-      console.error(`❌ Order not found: ${orderid}`);
+
       return res.status(404).json({ error: "Order not found" });
     }
-
-    console.log(`✅ Deadline updated successfully for order ${orderid}`);
 
     res.status(200).json({
       message: "Order deadline updated",
       order: order[0]
     });
   } catch (err) {
-    console.error("💥 Update Deadline Error:", err);
-    console.error("💥 Error details:", err.message, err.stack);
+
+
     res.status(500).json({ error: err.message || "Failed to update deadline" });
   }
 });
@@ -496,8 +452,6 @@ router.patch("/:orderid/status", async (req, res) => {
     const { orderid } = req.params;
     const { status } = req.body;
 
-    console.log(`🔄 Updating status for order ${orderid}: ${status}`);
-    console.log(`📊 Request body:`, req.body);
 
     // Validate status
     const validStatuses = [
@@ -512,7 +466,7 @@ router.patch("/:orderid/status", async (req, res) => {
     ];
 
     if (!status || !validStatuses.includes(status)) {
-      console.error(`❌ Invalid order status: ${status}`);
+
       return res.status(400).json({ 
         error: "Invalid order status",
         validStatuses: validStatuses 
@@ -526,16 +480,14 @@ router.patch("/:orderid/status", async (req, res) => {
       .select();
 
     if (error) {
-      console.error(`❌ Supabase error:`, error);
+
       throw error;
     }
 
     if (!order || order.length === 0) {
-      console.error(`❌ Order not found: ${orderid}`);
+
       return res.status(404).json({ error: "Order not found" });
     }
-
-    console.log(`✅ Status updated successfully for order ${orderid}`);
 
     // Create notification and send email for customer about order status change
     try {
@@ -584,15 +536,12 @@ router.patch("/:orderid/status", async (req, res) => {
             }
           ]);
 
-        console.log(`✅ In-app notification created for order ${orderid}`);
-
         // Send email if customer has email notifications enabled
         if (customerData.emailnotifications) {
           try {
             const resendApiKey = process.env.RESEND_API_KEY;
             
             if (resendApiKey) {
-              console.log(`📧 Sending email notification to: ${customerData.emailaddress}`);
 
               const orderNumber = orderid.slice(0, 8).toUpperCase();
               const emailSubject = notificationTitles[status] || 'Order Status Update';
@@ -647,24 +596,24 @@ router.patch("/:orderid/status", async (req, res) => {
 
               if (emailResponse.ok) {
                 const emailData = await emailResponse.json();
-                console.log(`✅ Email sent successfully. Email ID: ${emailData.id}`);
+
               } else {
                 const errorData = await emailResponse.json();
-                console.error(`⚠️ Failed to send email:`, errorData);
+
               }
             } else {
-              console.warn('⚠️ RESEND_API_KEY not configured, skipping email');
+
             }
           } catch (emailErr) {
-            console.error('⚠️ Error sending email notification:', emailErr.message);
+
             // Don't fail the request if email sending fails
           }
         } else {
-          console.log(`ℹ️ Email notifications disabled for customer ${customerData.customerid}`);
+
         }
       }
     } catch (notifErr) {
-      console.warn('⚠️ Failed to create notification:', notifErr.message);
+
       // Don't fail the request if notification creation fails
     }
 
@@ -673,8 +622,8 @@ router.patch("/:orderid/status", async (req, res) => {
       order: order[0]
     });
   } catch (err) {
-    console.error("💥 Update Status Error:", err);
-    console.error("💥 Error details:", err.message, err.stack);
+
+
     res.status(500).json({ error: err.message || "Failed to update status" });
   }
 });

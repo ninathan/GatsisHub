@@ -46,7 +46,7 @@ const SystemAccounts = () => {
 
             setCustomers(data.customers || []);
         } catch (err) {
-            console.error('❌ Error fetching customers:', err);
+
             setError(err.message || 'Failed to load customers');
         } finally {
             setLoading(false);
@@ -138,7 +138,7 @@ const SystemAccounts = () => {
             }, 1500);
 
         } catch (err) {
-            console.error('❌ Error updating customer:', err);
+
             setFormError(err.message || 'Failed to update customer');
         }
     };
@@ -166,7 +166,7 @@ const SystemAccounts = () => {
             setShowEditModal(false);
 
         } catch (err) {
-            console.error('❌ Error deleting customer:', err);
+
             alert(err.message || 'Failed to delete customer');
         }
     };

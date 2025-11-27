@@ -9,8 +9,6 @@ router.get("/", async (req, res) => {
   try {
     const { status, limit } = req.query;
 
-    console.log("📋 Fetching all customers...");
-
     let query = supabase
       .from("customers")
       .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture, gender, dateofbirth")
@@ -27,15 +25,13 @@ router.get("/", async (req, res) => {
     const { data: customers, error } = await query;
 
     if (error) {
-      console.error('❌ Error fetching customers:', error);
+
       throw error;
     }
 
-    console.log(`✅ Fetched ${customers.length} customers`);
-
     res.status(200).json({ customers });
   } catch (err) {
-    console.error("💥 Get Customers Error:", err);
+
     res.status(500).json({ error: "Failed to fetch customers" });
   }
 });
@@ -44,8 +40,6 @@ router.get("/", async (req, res) => {
 router.get("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
-
-    console.log("🔍 Fetching customer:", customerid);
 
     const { data: customer, error } = await supabase
       .from("customers")
@@ -57,10 +51,9 @@ router.get("/:customerid", async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    console.log("✅ Customer fetched successfully");
     res.status(200).json(customer);
   } catch (err) {
-    console.error("💥 Get Customer Error:", err);
+
     res.status(500).json({ error: "Failed to fetch customer" });
   }
 });
@@ -71,8 +64,6 @@ router.patch("/:customerid", async (req, res) => {
     const { customerid } = req.params;
     const { addresses, companynumber, companyname, emailaddress, emailnotifications, accountstatus, password, gender, dateofbirth } = req.body;
 
-    console.log("📝 Updating customer:", customerid);
-    console.log("📥 Update data:", req.body);
 
     // Build update object with only provided fields
     const updateData = {};
@@ -102,17 +93,15 @@ router.patch("/:customerid", async (req, res) => {
       .single();
 
     if (error) {
-      console.error("❌ Error updating customer:", error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log("✅ Customer updated successfully");
-    
     // Remove password from response
     const { password: _, ...customerData } = data;
     res.status(200).json(customerData);
   } catch (err) {
-    console.error("❌ Server error:", err);
+
     res.status(500).json({ error: "Failed to update customer profile" });
   }
 });
@@ -121,8 +110,6 @@ router.patch("/:customerid", async (req, res) => {
 router.delete("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
-
-    console.log("🗑️ Deleting customer:", customerid);
 
     // Check if customer exists
     const { data: existingCustomer, error: fetchError } = await supabase
@@ -142,7 +129,7 @@ router.delete("/:customerid", async (req, res) => {
       .eq("customerid", customerid);
 
     if (ordersError) {
-      console.warn("⚠️ Error deleting customer orders:", ordersError);
+
       // Continue anyway
     }
 
@@ -153,7 +140,7 @@ router.delete("/:customerid", async (req, res) => {
       .eq("userid", existingCustomer.userid);
 
     if (designsError) {
-      console.warn("⚠️ Error deleting customer designs:", designsError);
+
       // Continue anyway
     }
 
@@ -164,7 +151,7 @@ router.delete("/:customerid", async (req, res) => {
       .eq("customerid", customerid);
 
     if (error) {
-      console.error("❌ Error deleting customer:", error);
+
       throw error;
     }
 
@@ -173,12 +160,10 @@ router.delete("/:customerid", async (req, res) => {
       try {
         await supabase.auth.admin.deleteUser(existingCustomer.userid);
       } catch (authError) {
-        console.warn("⚠️ Could not delete auth user:", authError);
+
         // Continue anyway since customer is deleted from database
       }
-    }
-
-    console.log(`✅ Customer deleted successfully: ${customerid} (${existingCustomer.companyname})`);
+    }`);
 
     res.status(200).json({
       message: "Customer deleted successfully",
@@ -188,7 +173,7 @@ router.delete("/:customerid", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("💥 Delete Customer Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to delete customer" });
   }
 });

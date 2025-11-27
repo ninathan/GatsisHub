@@ -68,7 +68,7 @@ const MessagesPage = () => {
     const handleSendMessage = () => {
         if (message.trim()) {
             // Handle send message logic here
-            console.log('Sending message:', message);
+
             setMessage('');
         }
     };

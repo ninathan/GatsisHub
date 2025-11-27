@@ -96,7 +96,7 @@ const Employees = () => {
             setEmployees(productionAndAssembly);
             setFilteredEmployees(productionAndAssembly);
         } catch (error) {
-            console.error('Error fetching employees:', error);
+
         } finally {
             setLoading(false);
         }
@@ -160,7 +160,7 @@ const Employees = () => {
                 setShowErrorModal(true);
             }
         } catch (error) {
-            console.error('Error updating employee:', error);
+
             setErrorMessage('Failed to update employee. Please try again.');
             setShowErrorModal(true);
         }
@@ -195,7 +195,7 @@ const Employees = () => {
                 setShowDeleteConfirm(false);
             }
         } catch (error) {
-            console.error('Error deleting employee:', error);
+
             setErrorMessage('Failed to delete employee. Please try again.');
             setShowErrorModal(true);
             setShowDeleteConfirm(false);
@@ -210,7 +210,7 @@ const Employees = () => {
     // Team functions
     const fetchTeams = async () => {
         try {
-            console.log('📋 Fetching teams from API');
+
             const response = await fetch('https://gatsis-hub.vercel.app/teams');
 
             if (!response.ok) {
@@ -231,9 +231,9 @@ const Employees = () => {
             }));
 
             setTeams(transformedTeams);
-            console.log(`✅ Fetched ${transformedTeams.length} teams`);
+
         } catch (error) {
-            console.error('❌ Error fetching teams:', error);
+
             setErrorMessage('Failed to load teams. Please try again.');
             setShowErrorModal(true);
         }
@@ -241,7 +241,6 @@ const Employees = () => {
 
     const fetchAvailableOrders = async () => {
         try {
-            console.log('📋 Fetching available orders for team assignment');
 
             const response = await fetch('https://gatsis-hub.vercel.app/orders/all');
             if (!response.ok) {
@@ -256,9 +255,9 @@ const Employees = () => {
             );
 
             setAvailableOrders(assignableOrders);
-            console.log(`✅ Fetched ${assignableOrders.length} assignable orders`);
+
         } catch (error) {
-            console.error('❌ Error fetching available orders:', error);
+
             setErrorMessage('Failed to load available orders. Please try again.');
             setShowErrorModal(true);
         }
@@ -307,7 +306,6 @@ const Employees = () => {
         }
 
         try {
-            console.log(`${selectedTeam ? '✏️ Updating' : '➕ Creating'} team: ${teamFormData.teamname}`);
 
             // Prepare data for API
             const teamData = {
@@ -379,10 +377,8 @@ const Employees = () => {
 
             handleCloseTeamModal();
 
-            console.log(`✅ Team ${selectedTeam ? 'updated' : 'created'} successfully: ${transformedTeam.teamname}`);
-
         } catch (error) {
-            console.error('❌ Error saving team:', error);
+
             setErrorMessage(error.message || 'Failed to save team. Please try again.');
             setShowErrorModal(true);
         }
@@ -392,7 +388,6 @@ const Employees = () => {
         if (!selectedTeam) return;
 
         try {
-            console.log(`🗑️ Deleting team: ${selectedTeam.teamname} (ID: ${selectedTeam.id})`);
 
             const response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
                 method: 'DELETE'
@@ -415,10 +410,8 @@ const Employees = () => {
             setShowDeleteTeamConfirm(false);
             setSelectedTeam(null);
 
-            console.log(`✅ Team deleted successfully: ${selectedTeam.teamname}`);
-
         } catch (error) {
-            console.error('❌ Error deleting team:', error);
+
             setErrorMessage(error.message || 'Failed to delete team. Please try again.');
             setShowErrorModal(true);
             setShowDeleteTeamConfirm(false);
@@ -455,7 +448,7 @@ const Employees = () => {
     
     const fetchQuotas = async () => {
         try {
-            console.log('📊 Fetching quotas from API');
+
             const response = await fetch('https://gatsis-hub.vercel.app/quotas');
             
             if (!response.ok) {
@@ -463,12 +456,11 @@ const Employees = () => {
             }
 
             const data = await response.json();
-            console.log('📊 Raw quotas data:', data);
 
             setQuotas(data.quotas || []);
-            console.log(`✅ Fetched ${data.quotas?.length || 0} quotas`);
+
         } catch (error) {
-            console.error('❌ Error fetching quotas:', error);
+
             setErrorMessage('Failed to load quotas. Please try again.');
             setShowErrorModal(true);
         }
@@ -579,7 +571,7 @@ const Employees = () => {
             handleCloseQuotaModal();
 
         } catch (error) {
-            console.error('❌ Error saving quota:', error);
+
             setErrorMessage(error.message || 'Failed to save quota. Please try again.');
             setShowErrorModal(true);
         }
@@ -609,7 +601,7 @@ const Employees = () => {
             setSelectedQuota(null);
 
         } catch (error) {
-            console.error('❌ Error deleting quota:', error);
+
             setErrorMessage(error.message || 'Failed to delete quota. Please try again.');
             setShowErrorModal(true);
             setShowDeleteQuotaConfirm(false);
@@ -728,7 +720,7 @@ const Employees = () => {
                                                                     setShowSuccessModal(true);
                                                                 }
                                                             } catch (error) {
-                                                                console.error('Error updating presence:', error);
+
                                                                 setErrorMessage('Failed to update presence status');
                                                                 setShowErrorModal(true);
                                                             }

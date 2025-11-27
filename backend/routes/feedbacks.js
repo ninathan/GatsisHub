@@ -23,13 +23,13 @@ router.get("/", async (req, res) => {
       .order("feedbackid", { ascending: false });
 
     if (error) {
-      console.error("Error fetching feedbacks:", error);
+
       return res.status(500).json({ error: "Failed to fetch feedbacks" });
     }
 
     res.status(200).json({ feedbacks: data });
   } catch (error) {
-    console.error("Error in GET /feedbacks:", error);
+
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -84,9 +84,7 @@ router.post("/", async (req, res) => {
       ])
       .select();
 
-    if (error) {
-      console.error("Error creating feedback:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+    if (error) {);
       return res.status(500).json({ 
         error: "Failed to create feedback",
         details: error.message 
@@ -98,7 +96,7 @@ router.post("/", async (req, res) => {
       feedback: data[0]
     });
   } catch (error) {
-    console.error("Error in POST /feedbacks:", error);
+
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -123,13 +121,13 @@ router.get("/customer/:customerid", async (req, res) => {
       .order("feedbackid", { ascending: false });
 
     if (error) {
-      console.error("Error fetching customer feedbacks:", error);
+
       return res.status(500).json({ error: "Failed to fetch customer feedbacks" });
     }
 
     res.status(200).json({ feedbacks: data });
   } catch (error) {
-    console.error("Error in GET /feedbacks/customer:", error);
+
     res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -33,15 +33,13 @@ router.get("/", async (req, res) => {
     const { data: employees, error } = await query;
 
     if (error) {
-      console.error('❌ Error fetching employees:', error);
+
       throw error;
     }
 
-    console.log(`✅ Fetched ${employees.length} employees${role ? ` with role: ${role}` : ''}${status ? ` with status: ${status}` : ''}${ispresent !== undefined ? ` ispresent: ${ispresent}` : ''}`);
-
     res.status(200).json({ employees });
   } catch (err) {
-    console.error("💥 Get Employees Error:", err);
+
     res.status(500).json({ error: "Failed to fetch employees" });
   }
 });
@@ -50,8 +48,6 @@ router.get("/", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    console.log(`🔐 Employee login attempt: ${email}`);
 
     // Validate input
     if (!email || !password) {
@@ -66,13 +62,13 @@ router.post("/login", async (req, res) => {
       .single();
 
     if (error || !employee) {
-      console.error(`❌ Employee not found: ${email}`);
+
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     // Check account status
     if (employee.accountstatus !== 'Active') {
-      console.error(`❌ Account inactive: ${email}`);
+
       return res.status(403).json({ error: "Account is inactive. Please contact administrator." });
     }
 
@@ -80,7 +76,7 @@ router.post("/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, employee.password);
     
     if (!isPasswordValid) {
-      console.error(`❌ Invalid password for: ${email}`);
+
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
@@ -91,11 +87,9 @@ router.post("/login", async (req, res) => {
       .eq("employeeid", employee.employeeid);
 
     if (updateError) {
-      console.error(`⚠️ Failed to update presence for ${email}:`, updateError);
-      // Don't fail login if presence update fails, just log it
-    }
 
-    console.log(`✅ Employee logged in successfully: ${email} (${employee.role}) - Presence set to true`);
+      // Don't fail login if presence update fails, just log it
+    }- Presence set to true`);
 
     // Return employee data (excluding password, with updated ispresent)
     const { password: _, ...employeeData } = employee;
@@ -107,7 +101,7 @@ router.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("💥 Employee Login Error:", err);
+
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });
@@ -116,8 +110,6 @@ router.post("/login", async (req, res) => {
 router.post("/logout", async (req, res) => {
   try {
     const { employeeid } = req.body;
-
-    console.log(`🚪 Employee logout attempt: ${employeeid}`);
 
     // Validate input
     if (!employeeid) {
@@ -131,11 +123,9 @@ router.post("/logout", async (req, res) => {
       .eq("employeeid", employeeid);
 
     if (error) {
-      console.error(`❌ Failed to update presence for employee ${employeeid}:`, error);
+
       return res.status(500).json({ error: "Failed to update presence status" });
     }
-
-    console.log(`✅ Employee logged out successfully: ${employeeid} - Presence set to false`);
 
     res.status(200).json({ 
       message: "Logout successful",
@@ -143,7 +133,7 @@ router.post("/logout", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("💥 Employee Logout Error:", err);
+
     res.status(500).json({ error: "Logout failed. Please try again." });
   }
 });
@@ -165,7 +155,7 @@ router.get("/profile/:employeeid", async (req, res) => {
 
     res.status(200).json({ employee });
   } catch (err) {
-    console.error("💥 Get Profile Error:", err);
+
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
@@ -211,11 +201,9 @@ router.post("/change-password", async (req, res) => {
       throw updateError;
     }
 
-    console.log(`✅ Password changed for employee ID: ${employeeid}`);
-
     res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
-    console.error("💥 Change Password Error:", err);
+
     res.status(500).json({ error: "Failed to change password" });
   }
 });
@@ -225,8 +213,6 @@ router.patch("/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
     const { employeename, email, password, contactdetails, shifthours, assigneddepartment, accountstatus, role } = req.body;
-
-    console.log(`✏️ Updating employee: ${employeeid}`);
 
     // Build update object with only provided fields
     const updateData = {};
@@ -260,15 +246,13 @@ router.patch("/:employeeid", async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`❌ Error updating employee:`, error);
+
       throw error;
     }
 
     if (!employee) {
       return res.status(404).json({ error: "Employee not found" });
     }
-
-    console.log(`✅ Employee updated successfully: ${employeeid}`);
 
     // Return employee data (excluding password)
     const { password: _, ...employeeData } = employee;
@@ -278,7 +262,7 @@ router.patch("/:employeeid", async (req, res) => {
       employee: employeeData
     });
   } catch (err) {
-    console.error("💥 Update Employee Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to update employee" });
   }
 });
@@ -287,8 +271,6 @@ router.patch("/:employeeid", async (req, res) => {
 router.delete("/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
-
-    console.log(`🗑️ Deleting employee: ${employeeid}`);
 
     // Check if employee exists
     const { data: existingEmployee, error: fetchError } = await supabase
@@ -308,11 +290,9 @@ router.delete("/:employeeid", async (req, res) => {
       .eq("employeeid", employeeid);
 
     if (error) {
-      console.error(`❌ Error deleting employee:`, error);
-      throw error;
-    }
 
-    console.log(`✅ Employee deleted successfully: ${employeeid} (${existingEmployee.employeename})`);
+      throw error;
+    }`);
 
     res.status(200).json({
       message: "Employee deleted successfully",
@@ -323,7 +303,7 @@ router.delete("/:employeeid", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("💥 Delete Employee Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to delete employee" });
   }
 });
@@ -341,8 +321,6 @@ router.post("/create", async (req, res) => {
       contactdetails, 
       shifthours 
     } = req.body;
-
-    console.log(`➕ Creating new employee: ${email}`);
 
     // Validate required fields
     if (!employeename || !email || !password || !assigneddepartment || !role) {
@@ -392,11 +370,9 @@ router.post("/create", async (req, res) => {
       .single();
 
     if (createError) {
-      console.error(`❌ Error creating employee:`, createError);
-      throw createError;
-    }
 
-    console.log(`✅ Employee created successfully: ${newEmployee.employeeid} (${newEmployee.employeename})`);
+      throw createError;
+    }`);
 
     // Return employee data (excluding password)
     const { password: _, ...employeeData } = newEmployee;
@@ -406,7 +382,7 @@ router.post("/create", async (req, res) => {
       employee: employeeData
     });
   } catch (err) {
-    console.error("💥 Create Employee Error:", err);
+
     res.status(500).json({ error: err.message || "Failed to create employee" });
   }
 });

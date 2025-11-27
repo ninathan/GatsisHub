@@ -47,7 +47,7 @@ const Messages = () => {
                 fetchMessages(data.conversations[0].customerid);
             }
         } catch (error) {
-            console.error('Error fetching conversations:', error);
+
         } finally {
             setLoading(false);
         }
@@ -61,7 +61,7 @@ const Messages = () => {
             const data = await response.json();
             setMessages(data.messages || []);
         } catch (error) {
-            console.error('Error fetching messages:', error);
+
         }
     };
 
@@ -140,7 +140,7 @@ const Messages = () => {
                 fetchMessages(selectedCustomer.customerid);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+
         } finally {
             setSendingMessage(false);
         }

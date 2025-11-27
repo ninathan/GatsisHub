@@ -25,12 +25,12 @@ const OrderPage = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched orders:', data.orders);
+
                 setOrders(data.orders || []);
                 setFilteredOrders(data.orders || []);
                 setError(null);
             } catch (err) {
-                console.error('Error fetching orders:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -182,7 +182,7 @@ const OrderPage = () => {
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-x-auto">
                     <table className="w-full text-sm min-w-[800px]">
-                        <thead className="bg-[#35408E] text-white">
+                        <thead className="bg-[#007BFF] text-white">
                             <tr>
                                 <th className="px-2 md:px-4 py-3 text-left">
                                     <input 

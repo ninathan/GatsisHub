@@ -61,19 +61,18 @@ const ProtectedAdminRoute = ({ element, allowedDepartments = ['Admin'] }) => {
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Additional role check for Sales Admin
   if (employee.role !== 'Sales Admin') {
-    console.log(`❌ Access denied. Role: ${employee.role}, Required: Sales Admin`);
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
@@ -85,19 +84,18 @@ const ProtectedOMRoute = ({ element, allowedDepartments = ['Operational Manager'
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authOM" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authOM" replace />;
   }
   
   // Additional role check for Operational Manager
   if (employee.role !== 'Operational Manager') {
-    console.log(`❌ Access denied. Role: ${employee.role}, Required: Operational Manager`);
+
     return <Navigate to="/authOM" replace />;
   }
   
@@ -109,13 +107,12 @@ const ProtectedProductionRoute = ({ element, allowedDepartments = ['Production',
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
@@ -192,8 +189,7 @@ const router = createBrowserRouter(
 );
 
 const App = () => {
-  return<RouterProvider router={router} />;
-  
+  return <RouterProvider router={router} />;
 };
 
 export default App;

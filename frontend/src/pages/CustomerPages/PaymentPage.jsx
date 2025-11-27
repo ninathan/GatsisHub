@@ -98,7 +98,7 @@ const PaymentPage = () => {
                 }, 2000);
             }, 1500);
         } catch (error) {
-            console.error('Payment submission error:', error);
+
             if (error.message === 'Failed to fetch') {
                 setUploadError('Cannot connect to server. Please check your internet connection or try again later.');
             } else {
@@ -233,7 +233,7 @@ const PaymentPage = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Upload Receipt/Proof of Payment <span className="text-red-500">*</span>
                         </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#35408E] transition-colors">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#007BFF] transition-colors">
                             <input
                                 type="file"
                                 accept="image/*,.pdf"
@@ -300,7 +300,7 @@ const PaymentPage = () => {
                         <button
                             onClick={handleSubmitPayment}
                             disabled={!selectedFile || uploading || uploadSuccess}
-                            className="px-6 py-2 bg-[#35408E] text-white rounded-lg hover:bg-[#2d3575] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-6 py-2 bg-[#DC3545] text-white rounded-lg hover:bg-[#c82333] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {uploading ? (
                                 <>
@@ -323,7 +323,7 @@ const PaymentPage = () => {
         {/* Success Modal */}
         {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50 animate-fadeIn">
-                    <div className="bg-[#35408E] rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-scaleIn">
+                    <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-scaleIn">
                         <div className="mb-4">
                             <FaCheckCircle className="text-6xl text-green-400 mx-auto" />
                         </div>

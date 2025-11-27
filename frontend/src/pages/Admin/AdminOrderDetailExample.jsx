@@ -36,7 +36,7 @@ const AdminOrderDetailExample = () => {
                 const data = await response.json();
                 setOrder(data.order);
             } catch (error) {
-                console.error('Error fetching order:', error);
+
             } finally {
                 setLoading(false);
             }
@@ -182,7 +182,7 @@ const AdminOrderDetailExample = () => {
                                         showNotification('Status updated successfully!');
                                     }
                                 } catch (error) {
-                                    console.error('Error updating status:', error);
+
                                     showNotification('Failed to update status', 'error');
                                 }
                             }}

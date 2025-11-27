@@ -120,7 +120,6 @@ const Signup = () => {
     try {
       const token = credentialResponse.credential
       const decoded = jwtDecode(token)
-      console.log('✅ Google user info:', decoded)
 
       // Send token to backend for Google signup/login
       const res = await fetch('https://gatsis-hub.vercel.app/auth/google', {
@@ -138,7 +137,7 @@ const Signup = () => {
 
       // Check if user needs to complete profile (new Google users without addresses)
       if (!data.user.addresses || data.user.addresses.length === 0) {
-        console.log('🔄 New Google user - redirecting to complete profile')
+
         navigate('/complete-profile')
       } else {
         navigate('/logged')
@@ -146,7 +145,7 @@ const Signup = () => {
       
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-      console.error('❌ Google sign-up error:', err.message)
+
       setError(err.message || 'Google Sign-Up was unsuccessful. Please try again.')
     }
   }

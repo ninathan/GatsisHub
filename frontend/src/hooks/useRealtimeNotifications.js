@@ -23,21 +23,20 @@ export const useRealtimeNotifications = (customerid, onNewNotification) => {
           filter: `customerid=eq.${customerid}`,
         },
         (payload) => {
-          console.log('🔔 New notification received:', payload.new);
-          
+
           if (onNewNotification) {
             onNewNotification(payload.new);
           }
         }
       )
       .subscribe((status) => {
-        console.log('Notification subscription status:', status);
+
         setIsSubscribed(status === 'SUBSCRIBED');
       });
 
     // Cleanup subscription on unmount
     return () => {
-      console.log('Unsubscribing from notifications');
+
       supabase.removeChannel(subscription);
       setIsSubscribed(false);
     };

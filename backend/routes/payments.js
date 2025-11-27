@@ -29,9 +29,8 @@ const upload = multer({
 // 📤 POST /payments/submit - Submit payment proof
 router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
   try {
-    console.log("💳 Payment submission received");
-    console.log("📥 Request body:", req.body);
-    console.log("📎 File:", req.file ? 'File received' : 'No file');
+
+
 
     const { paymentMethod, orderid, customerid, amountPaid, transactionReference, notes } = req.body;
 
@@ -49,8 +48,6 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
     const fileName = `payment-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
     const filePath = `payments/${fileName}`;
 
-    console.log("📤 Uploading file to Supabase Storage:", filePath);
-
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('payment-proofs')
       .upload(filePath, req.file.buffer, {
@@ -59,18 +56,14 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       });
 
     if (uploadError) {
-      console.error("❌ Upload error:", uploadError);
+
       return res.status(500).json({ error: "Failed to upload file: " + uploadError.message });
     }
-
-    console.log("✅ File uploaded successfully:", uploadData);
 
     // Get public URL for the uploaded file
     const { data: { publicUrl } } = supabase.storage
       .from('payment-proofs')
       .getPublicUrl(filePath);
-
-    console.log("🔗 Public URL:", publicUrl);
 
     // Insert payment record into database
     const paymentData = {
@@ -85,8 +78,6 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       datesubmitted: new Date().toISOString()
     };
 
-    console.log("💾 Inserting payment data:", paymentData);
-
     const { data: payment, error: insertError } = await supabase
       .from("payments")
       .insert([paymentData])
@@ -94,11 +85,9 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       .single();
 
     if (insertError) {
-      console.error("❌ Error inserting payment:", insertError);
+
       return res.status(400).json({ error: insertError.message });
     }
-
-    console.log("✅ Payment record created:", payment.paymentid);
 
     // Update order status if orderid is provided
     if (orderid) {
@@ -111,9 +100,9 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
         .eq("orderid", orderid);
 
       if (updateError) {
-        console.error("⚠️ Warning: Could not update order status:", updateError);
+
       } else {
-        console.log("✅ Order status updated to 'Payment Submitted'");
+
       }
     }
 
@@ -123,7 +112,7 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
     });
 
   } catch (err) {
-    console.error("💥 Payment submission error:", err);
+
     res.status(500).json({ error: err.message || "Failed to submit payment proof" });
   }
 });
@@ -132,8 +121,6 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const { status, orderid, customerid } = req.query;
-
-    console.log("📋 Fetching payments with filters:", { status, orderid, customerid });
 
     let query = supabase
       .from("payments")
@@ -167,15 +154,14 @@ router.get("/", async (req, res) => {
     const { data: payments, error } = await query;
 
     if (error) {
-      console.error("❌ Error fetching payments:", error);
+
       throw error;
     }
 
-    console.log(`✅ Fetched ${payments.length} payments`);
     res.status(200).json({ payments });
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to fetch payments" });
   }
 });
@@ -184,8 +170,6 @@ router.get("/", async (req, res) => {
 router.get("/order/:orderid", async (req, res) => {
   try {
     const { orderid } = req.params;
-
-    console.log("🔍 Fetching payment for order:", orderid);
 
     const { data: payment, error } = await supabase
       .from("payments")
@@ -207,15 +191,14 @@ router.get("/order/:orderid", async (req, res) => {
         // No payment found for this order
         return res.status(404).json({ error: "No payment found for this order" });
       }
-      console.error("❌ Error fetching payment:", error);
+
       return res.status(400).json({ error: error.message });
     }
 
-    console.log("✅ Payment fetched successfully");
     res.status(200).json(payment);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to fetch payment" });
   }
 });
@@ -224,8 +207,6 @@ router.get("/order/:orderid", async (req, res) => {
 router.get("/:paymentid", async (req, res) => {
   try {
     const { paymentid } = req.params;
-
-    console.log("🔍 Fetching payment:", paymentid);
 
     const { data: payment, error } = await supabase
       .from("payments")
@@ -252,11 +233,10 @@ router.get("/:paymentid", async (req, res) => {
       return res.status(404).json({ error: "Payment not found" });
     }
 
-    console.log("✅ Payment fetched successfully");
     res.status(200).json(payment);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to fetch payment" });
   }
 });
@@ -266,8 +246,6 @@ router.patch("/:paymentid/verify", async (req, res) => {
   try {
     const { paymentid } = req.params;
     const { status, verifiedby, notes } = req.body;
-
-    console.log("✅ Verifying payment:", paymentid);
 
     if (!status || !['Verified', 'Rejected'].includes(status)) {
       return res.status(400).json({ error: "Invalid status. Must be 'Verified' or 'Rejected'" });
@@ -295,7 +273,7 @@ router.patch("/:paymentid/verify", async (req, res) => {
       .single();
 
     if (updateError) {
-      console.error("❌ Error updating payment:", updateError);
+
       return res.status(400).json({ error: updateError.message });
     }
 
@@ -318,18 +296,17 @@ router.patch("/:paymentid/verify", async (req, res) => {
           .eq("orderid", payment.orderid);
 
         if (orderError) {
-          console.error("⚠️ Warning: Could not update order status:", orderError);
+
         } else {
-          console.log(`✅ Order status updated to '${newOrderStatus}'`);
+
         }
       }
     }
 
-    console.log("✅ Payment verified successfully");
     res.status(200).json(payment);
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to verify payment" });
   }
 });
@@ -338,8 +315,6 @@ router.patch("/:paymentid/verify", async (req, res) => {
 router.delete("/:paymentid", async (req, res) => {
   try {
     const { paymentid } = req.params;
-
-    console.log("❌ Deleting payment:", paymentid);
 
     // First get the payment to retrieve the orderid
     const { data: payment, error: fetchError } = await supabase
@@ -359,7 +334,7 @@ router.delete("/:paymentid", async (req, res) => {
       .eq("paymentid", paymentid);
 
     if (deleteError) {
-      console.error("❌ Error deleting payment:", deleteError);
+
       return res.status(400).json({ error: deleteError.message });
     }
 
@@ -374,17 +349,16 @@ router.delete("/:paymentid", async (req, res) => {
         .eq("orderid", payment.orderid);
 
       if (orderError) {
-        console.error("⚠️ Warning: Could not update order status:", orderError);
+
       } else {
-        console.log("✅ Order status reset to 'Waiting for Payment'");
+
       }
     }
 
-    console.log("✅ Payment deleted successfully");
     res.status(200).json({ message: "Payment rejected. Customer can resubmit." });
 
   } catch (err) {
-    console.error("💥 Error:", err);
+
     res.status(500).json({ error: "Failed to delete payment" });
   }
 });

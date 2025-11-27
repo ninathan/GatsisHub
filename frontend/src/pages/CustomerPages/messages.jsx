@@ -73,7 +73,7 @@ const MessagesPage = () => {
                 fetchMessages(firstConvo.employeeid);
             }
         } catch (error) {
-            console.error('Error fetching conversations:', error);
+
         } finally {
             setLoading(false);
         }
@@ -87,7 +87,7 @@ const MessagesPage = () => {
             const data = await response.json();
             setMessages(data.messages || []);
         } catch (error) {
-            console.error('Error fetching messages:', error);
+
         }
     };
 
@@ -100,7 +100,7 @@ const MessagesPage = () => {
             setNotifications(data.notifications || []);
             setUnreadCount(data.unreadCount || 0);
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+
         }
     };
 
@@ -174,7 +174,7 @@ const MessagesPage = () => {
                 fetchMessages(selectedContact.employeeid);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+
         } finally {
             setSendingMessage(false);
         }
@@ -197,7 +197,7 @@ const MessagesPage = () => {
             
             navigate(`/orders/`);
         } catch (error) {
-            console.error('Error marking notification as read:', error);
+
         }
     };
 
@@ -309,11 +309,11 @@ const MessagesPage = () => {
                                             setIsSidebarOpen(false);
                                         }}
                                         className={`w-full p-3 md:p-4 flex items-center gap-2 md:gap-3 border-b hover:bg-gray-50 transition-all duration-200 ${
-                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100 border-l-4 border-[#ECBA0B]' : ''
+                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100 border-l-4 border-[#DC3545]' : ''
                                         }`}
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center text-lg md:text-xl font-semibold shadow-md flex-shrink-0">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center text-lg md:text-xl font-semibold shadow-md flex-shrink-0">
                                             {contact.employeename?.charAt(0) || 'A'}
                                         </div>
                                         <div className="flex-1 text-left min-w-0">
@@ -399,7 +399,7 @@ const MessagesPage = () => {
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Chat Header */}
-                <div className="bg-gradient-to-r from-[#35408E] to-[#4a5899] text-white py-3 md:py-4 px-4 md:px-6 shadow-md">
+                <div className="bg-gradient-to-r from-[#007BFF] to-[#0056b3] text-white py-3 md:py-4 px-4 md:px-6 shadow-md">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -423,7 +423,7 @@ const MessagesPage = () => {
                         <div className="flex-1 bg-white p-3 md:p-4 lg:p-6 overflow-y-auto">
                             {/* Contact Info Header */}
                             <div className="flex flex-col items-center mb-6 md:mb-8 animate-fadeIn">
-                                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mb-2 font-semibold shadow-lg">
+                                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mb-2 font-semibold shadow-lg">
                                     {selectedContact.employeename?.charAt(0) || 'A'}
                                 </div>
                                 <h3 className="font-semibold text-base md:text-lg">{selectedContact.employeename}</h3>
@@ -441,7 +441,7 @@ const MessagesPage = () => {
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
                                         {msg.sender === 'admin' && (
-                                            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white rounded-full flex items-center justify-center flex-shrink-0 text-base md:text-xl font-semibold shadow-md">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center flex-shrink-0 text-base md:text-xl font-semibold shadow-md">
                                                 {msg.senderName?.charAt(0) || 'A'}
                                             </div>
                                         )}
@@ -452,8 +452,8 @@ const MessagesPage = () => {
                                             <div
                                                 className={`rounded-2xl px-3 py-2 md:px-5 md:py-3 shadow-sm hover:shadow-md transition-shadow ${
                                                     msg.sender === 'customer'
-                                                        ? 'bg-[#ECBA0B] text-black'
-                                                        : 'bg-[#35408E] text-white'
+                                                        ? 'bg-[#F5F5F5] text-[#333333] border border-gray-300'
+                                                        : 'bg-[#007BFF] text-white'
                                                 }`}
                                             >
                                                 {/* Show message text only if it's not just a file indicator */}
@@ -535,7 +535,7 @@ const MessagesPage = () => {
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={sendingMessage}
-                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-md flex-shrink-0"
+                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#007BFF] rounded-full flex items-center justify-center text-white hover:bg-[#0056b3] transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-md flex-shrink-0"
                                 >
                                     <Send size={16} className="md:w-[18px] md:h-[18px]" />
                                 </button>

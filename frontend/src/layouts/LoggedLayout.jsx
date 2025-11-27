@@ -14,7 +14,7 @@ const LoggedLayout = () => {
         // you can also verify if user has a valid token property
         setIsAuth(!!user);
       } catch (err) {
-        console.error("Error parsing stored user:", err);
+
         setIsAuth(false);
       }
     } else {

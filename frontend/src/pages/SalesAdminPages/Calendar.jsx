@@ -46,7 +46,7 @@ const Calendar = () => {
             setEvents(deadlineEvents);
             setError('');
         } catch (err) {
-            console.error('Error fetching orders:', err);
+
             setError('Failed to load calendar events');
         } finally {
             setLoading(false);

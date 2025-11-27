@@ -32,9 +32,9 @@ const SidebarOM = () => {
             employeeid: employee.employeeid
           })
         });
-        console.log('Employee presence set to false');
+
       } catch (error) {
-        console.error('Failed to update presence status:', error);
+
         // Continue with logout even if presence update fails
       }
     }
