@@ -118,12 +118,12 @@ const Dashboard = () => {
 
             // Calculate today's quota progress
             const todayTarget = todayQuota?.adjusted_daily_target || todayQuota?.targetquota || 0;
-            const todayFinished = todayQuota?.finishedquota || 0;
+            const todayFinished = todayQuota?.daily_production || 0;
             const todayPercentage = todayTarget > 0 ? Math.round((todayFinished / todayTarget) * 100) : 0;
 
             // Calculate weekly quota progress
             const weeklyTarget = weeklyQuota?.adjusted_weekly_target || weeklyQuota?.targetquota || 0;
-            const weeklyFinished = weeklyQuota?.finishedquota || 0;
+            const weeklyFinished = weeklyQuota?.weekly_production || 0;
             const weeklyPercentage = weeklyTarget > 0 ? Math.round((weeklyFinished / weeklyTarget) * 100) : 0;
 
             const newData = {
