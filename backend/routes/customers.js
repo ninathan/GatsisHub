@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("customers")
-      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture, gender, dateofbirth")
+      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, two_factor_enabled, google_id, profilePicture, gender, dateofbirth")
       .order('datecreated', { ascending: false });
 
     // Apply filters if provided
@@ -43,7 +43,7 @@ router.get("/:customerid", async (req, res) => {
 
     const { data: customer, error } = await supabase
       .from("customers")
-      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, google_id, profilePicture, gender, dateofbirth")
+      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, two_factor_enabled, google_id, profilePicture, gender, dateofbirth")
       .eq("customerid", customerid)
       .single();
 
@@ -62,7 +62,7 @@ router.get("/:customerid", async (req, res) => {
 router.patch("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
-    const { addresses, companynumber, companyname, emailaddress, emailnotifications, accountstatus, password, gender, dateofbirth } = req.body;
+    const { addresses, companynumber, companyname, emailaddress, emailnotifications, two_factor_enabled, accountstatus, password, gender, dateofbirth } = req.body;
 
 
     // Build update object with only provided fields
@@ -72,6 +72,7 @@ router.patch("/:customerid", async (req, res) => {
     if (companyname !== undefined) updateData.companyname = companyname;
     if (emailaddress !== undefined) updateData.emailaddress = emailaddress;
     if (emailnotifications !== undefined) updateData.emailnotifications = emailnotifications;
+    if (two_factor_enabled !== undefined) updateData.two_factor_enabled = two_factor_enabled;
     if (accountstatus !== undefined) updateData.accountstatus = accountstatus;
     if (gender !== undefined) updateData.gender = gender;
     if (dateofbirth !== undefined) updateData.dateofbirth = dateofbirth;

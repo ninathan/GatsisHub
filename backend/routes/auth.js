@@ -272,7 +272,26 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Password is correct - now send 2FA code
+    // Check if 2FA is enabled for this user
+    const twoFactorEnabled = user.two_factor_enabled !== undefined ? user.two_factor_enabled : true;
+
+    // If 2FA is disabled, log in directly
+    if (!twoFactorEnabled) {
+      return res.status(200).json({
+        message: "Login successful!",
+        requiresVerification: false,
+        user: {
+          userid: user.userid,
+          customerid: user.customerid,
+          companyname: user.companyname,
+          emailaddress: user.emailaddress,
+          companynumber: user.companynumber,
+          addresses: user.addresses || []
+        }
+      });
+    }
+
+    // Password is correct and 2FA is enabled - now send 2FA code
     // Generate 6-digit verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
