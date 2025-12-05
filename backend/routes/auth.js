@@ -246,7 +246,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// 📝 Login route
+// 📝 Login route - Step 1: Validate credentials and send 2FA code
 router.post("/login", async (req, res) => {
   try {
     const { emailAddress, password } = req.body;
@@ -271,7 +271,152 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
-    // Successful login
+
+    // Password is correct - now send 2FA code
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    // Get client info for security tracking
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+
+    // Store verification code in database
+    const { error: insertError } = await supabase
+      .from("login_verification_codes")
+      .insert([{
+        email: emailAddress,
+        code: verificationCode,
+        expires_at: expiresAt.toISOString(),
+        used: false,
+        ip_address: ipAddress,
+        user_agent: userAgent
+      }]);
+
+    if (insertError) {
+      return res.status(500).json({ 
+        error: "Failed to generate verification code",
+        details: insertError.message 
+      });
+    }
+
+    // Send 2FA code via email
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (!resendApiKey) {
+        return res.status(500).json({ error: "Email service not configured" });
+      }
+
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'GatsisHub <noreply@gatsishub.com>',
+          to: [emailAddress],
+          subject: 'Your Login Verification Code',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #35408E;">Login Verification</h2>
+              <p>Hello ${user.companyname || 'there'},</p>
+              <p>Someone is trying to log in to your GatsisHub account. If this is you, please use the verification code below:</p>
+              <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                ${verificationCode}
+              </div>
+              <p>This code will expire in 15 minutes.</p>
+              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0;">
+                <strong>Security Notice:</strong>
+                <p style="margin: 5px 0;">IP Address: ${ipAddress}</p>
+                <p style="margin: 5px 0;">Time: ${new Date().toLocaleString()}</p>
+              </div>
+              <p>If you didn't attempt to log in, please secure your account immediately by changing your password.</p>
+              <p>Best regards,<br/>GatsisHub Security Team</p>
+            </div>
+          `
+        })
+      });
+
+      let responseData;
+      try {
+        responseData = await emailResponse.json();
+      } catch (parseError) {
+        throw new Error("Invalid response from email service");
+      }
+      
+      if (!emailResponse.ok) {
+        throw new Error(`Failed to send verification email: ${responseData.message || responseData.error || 'Unknown error'}`);
+      }
+
+      // Return success - client should now prompt for verification code
+      return res.status(200).json({ 
+        message: "Verification code sent to your email",
+        requiresVerification: true,
+        email: emailAddress
+      });
+
+    } catch (emailError) {
+      return res.status(500).json({ 
+        error: "Failed to send verification email",
+        details: emailError.message 
+      });
+    }
+
+  } catch (err) {
+    res.status(500).json({ error: "Server error during login" });
+  }
+});
+
+// 📝 Login route - Step 2: Verify 2FA code and complete login
+router.post("/verify-login-code", async (req, res) => {
+  try {
+    const { emailAddress, code } = req.body;
+
+    if (!emailAddress || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    // Find valid code
+    const { data: verificationRecord, error: findError } = await supabase
+      .from("login_verification_codes")
+      .select("*")
+      .eq("email", emailAddress)
+      .eq("code", code)
+      .eq("used", false)
+      .single();
+
+    if (findError || !verificationRecord) {
+      return res.status(400).json({ error: "Invalid or expired verification code" });
+    }
+
+    // Check if code is expired
+    const now = new Date();
+    const expiresAt = new Date(verificationRecord.expires_at);
+    
+    if (now > expiresAt) {
+      return res.status(400).json({ error: "Verification code has expired" });
+    }
+
+    // Mark code as used
+    await supabase
+      .from("login_verification_codes")
+      .update({ used: true })
+      .eq("id", verificationRecord.id);
+
+    // Get user data
+    const { data: user, error: userError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("emailaddress", emailAddress)
+      .maybeSingle();
+
+    if (userError || !user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Successful login - return user data
     res.status(200).json({
       message: "Login successful!",
       user: {
