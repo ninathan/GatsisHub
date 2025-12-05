@@ -50,6 +50,11 @@ import SystemEmployee from './pages/SystemAdminPages/SystemEmployee';
 import SystemAccounts from './pages/SystemAdminPages/SystemAccounts';
 import SystemProfile from './pages/SystemAdminPages/SystemProfile';
 
+import AuthPA from './pages/ProductionAsemblyPage/AuthPA';
+import ProductionLayout from './layouts/ProductionLayout';
+import AssignOrder from './pages/ProductionAsemblyPage/AssignOrder';
+import ViewOrder from './pages/ProductionAsemblyPage/ViewOrder';
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -182,10 +187,17 @@ const router = createBrowserRouter(
         <Route path="/systemprofile" element={<SystemProfile />} />
       </Route>
 
+      {/* Production Assembly layout */}
+      <Route element={<ProductionLayout />}>
+        <Route path="/assignorder" element={<AssignOrder />} />
+        <Route path="/vieworder" element={<ViewOrder />} />
+      </Route>
+
       {/* Admin/Manager Auth */}
       <Route path="/authOM" element={<AuthOM />} />
       <Route path="/authSaleAdmin" element={<AuthSA />} />
       <Route path="/authSystemA" element={<AuthSystemA />} />
+      <Route path="/authPA" element={<AuthPA />} />
     </Route>
   )
 );

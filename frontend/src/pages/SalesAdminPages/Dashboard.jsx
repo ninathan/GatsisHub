@@ -252,7 +252,7 @@ const Dashboard = () => {
 
     // Stat card component for reusable metric displays
     const StatCard = ({ title, value, subtitle, trend }) => (
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-blue-600">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-[#35408E]">
             <div className="text-lg md:text-2xl text-gray-600 font-medium mb-2">{title}</div>
             <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
             {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
