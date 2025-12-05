@@ -9,12 +9,14 @@ const CalendarOM = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState('day'); // 'day', 'month', 'year'
     const [events, setEvents] = useState([]);
+    const [quotas, setQuotas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Fetch orders with deadlines from backend
+    // Fetch orders with deadlines and quotas from backend
     useEffect(() => {
         fetchOrdersWithDeadlines();
+        fetchQuotas();
     }, []);
 
     const fetchOrdersWithDeadlines = async () => {
@@ -33,6 +35,7 @@ const CalendarOM = () => {
                 .map(order => {
                     const deadlineDate = new Date(order.deadline);
                     return {
+                        type: 'deadline',
                         date: deadlineDate.getDate(),
                         month: deadlineDate.getMonth(),
                         year: deadlineDate.getFullYear(),
@@ -46,10 +49,25 @@ const CalendarOM = () => {
             setEvents(deadlineEvents);
             setError('');
         } catch (err) {
-            console.error('Error fetching orders:', err);
+
             setError('Failed to load calendar events');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchQuotas = async () => {
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/quotas');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch quotas');
+            }
+
+            setQuotas(data.quotas || []);
+        } catch (err) {
+
         }
     };
 
@@ -129,6 +147,29 @@ const CalendarOM = () => {
         );
     };
 
+    // Get quotas active on a specific date
+    const getQuotasForDate = (date, month, year) => {
+        const checkDate = new Date(year, month, date);
+        return quotas.filter(quota => {
+            if (!quota.startdate && !quota.enddate) return false;
+            const start = quota.startdate ? new Date(quota.startdate) : new Date(0);
+            const end = quota.enddate ? new Date(quota.enddate) : new Date(9999, 11, 31);
+            return checkDate >= start && checkDate <= end;
+        });
+    };
+
+    // Get quotas active during a month
+    const getQuotasForMonth = (month, year) => {
+        return quotas.filter(quota => {
+            if (!quota.startdate && !quota.enddate) return false;
+            const start = quota.startdate ? new Date(quota.startdate) : new Date(0);
+            const end = quota.enddate ? new Date(quota.enddate) : new Date(9999, 11, 31);
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+            return (start <= monthEnd && end >= monthStart);
+        });
+    };
+
     // Handle deadline click to navigate to order detail (OM doesn't have order detail page yet)
     const handleDeadlineClick = (orderId) => {
         // For now, navigate to orders page
@@ -165,6 +206,12 @@ const CalendarOM = () => {
                             currentDate.getFullYear()
                         ) : [];
 
+                        const dayQuotas = day.isCurrentMonth ? getQuotasForDate(
+                            day.date,
+                            currentDate.getMonth(),
+                            currentDate.getFullYear()
+                        ) : [];
+
                         return (
                             <div
                                 key={index}
@@ -176,10 +223,22 @@ const CalendarOM = () => {
                                     <div className="font-semibold text-lg mb-1">{day.date}</div>
                                 )}
 
+                                {/* Quota Display */}
+                                {dayQuotas.map((quota, idx) => (
+                                    <div
+                                        key={`quota-${idx}`}
+                                        className="bg-green-100 border border-green-300 text-green-800 text-xs px-2 py-1 rounded mb-1"
+                                        title={`Quota: ${quota.quotaname}\nTarget: ${quota.targetquota}\nStatus: ${quota.status}`}
+                                    >
+                                        <div className="font-semibold truncate">📊 {quota.quotaname}</div>
+                                        <div className="text-[10px]">{quota.status}</div>
+                                    </div>
+                                ))}
+
                                 {/* Event Display */}
                                 {dayEvents.map((event, idx) => (
                                     <div
-                                        key={idx}
+                                        key={`event-${idx}`}
                                         onClick={() => handleDeadlineClick(event.orderId)}
                                         className="bg-[#35408E] text-white text-xs px-2 py-1 rounded mb-1 cursor-pointer hover:bg-[#2c3575] transition-colors"
                                         title={`${event.companyName} - ${event.orderStatus}\nClick to view order details`}
@@ -277,13 +336,68 @@ const CalendarOM = () => {
             currentDate.getFullYear()
         );
 
+        const dayQuotas = getQuotasForDate(
+            currentDate.getDate(),
+            currentDate.getMonth(),
+            currentDate.getFullYear()
+        );
+
         return (
             <div className="flex-1 overflow-auto p-6">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-2xl font-bold mb-6 text-[#35408E]">
-                        Orders Due on {monthNames[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
+                        {monthNames[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
                     </h2>
-                    
+
+                    {/* Active Quotas Section */}
+                    {dayQuotas.length > 0 && (
+                        <div className="mb-8">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-700">📊 Active Quotas</h3>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {dayQuotas.map((quota, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="bg-green-50 border border-green-200 rounded-lg p-4"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <h4 className="font-semibold text-lg text-green-800">
+                                                {quota.quotaname}
+                                            </h4>
+                                            <span className={`text-xs px-2 py-1 rounded-full ${
+                                                quota.status === 'Active' ? 'bg-green-200 text-green-800' :
+                                                quota.status === 'Completed' ? 'bg-blue-200 text-blue-800' :
+                                                'bg-gray-200 text-gray-800'
+                                            }`}>
+                                                {quota.status}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-gray-700 space-y-1">
+                                            <div>Target: <span className="font-semibold">{quota.targetquota}</span> units</div>
+                                            <div>Finished: <span className="font-semibold">{quota.finishedquota || 0}</span> units</div>
+                                            <div className="mt-2">
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-green-600 h-2 rounded-full" 
+                                                        style={{ width: `${Math.min(100, (quota.finishedquota / quota.targetquota) * 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                            {quota.teams && quota.teams.length > 0 && (
+                                                <div className="mt-2">
+                                                    <span className="text-xs text-gray-600">
+                                                        Teams: {quota.teams.map(t => t.teamname).join(', ')}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Orders Section */}
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700">📦 Orders Due</h3>
                     {dayEvents.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="text-gray-400 text-lg">No orders due on this day</div>

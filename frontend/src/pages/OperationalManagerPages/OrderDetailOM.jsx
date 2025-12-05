@@ -17,6 +17,7 @@ import {
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const OrderDetailOM = () => {
     const { orderid } = useParams();
@@ -58,14 +59,14 @@ const OrderDetailOM = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched order:', data.order);
+
                 setOrder(data.order);
                 setOrderStatus(data.order.orderstatus);
                 setValidatedPrice(data.order.totalprice || '');
                 setDeadline(data.order.deadline || '');
                 setError(null);
             } catch (err) {
-                console.error('Error fetching order:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -110,7 +111,7 @@ const OrderDetailOM = () => {
 
             showNotificationMessage('Order status updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating status:', err);
+
             showNotificationMessage(err.message || 'Failed to update order status', 'error');
             setOrderStatus(order.orderstatus); // Revert on error
         } finally {
@@ -143,7 +144,7 @@ const OrderDetailOM = () => {
             setIsEditingPrice(false);
             showNotificationMessage('Price updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating price:', err);
+
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
@@ -177,12 +178,11 @@ const OrderDetailOM = () => {
                 throw new Error(data.error || 'Failed to update deadline');
             }
 
-            console.log('✅ Deadline updated:', data.order);
             setOrder(data.order);
             setIsEditingDeadline(false);
             showNotificationMessage('Deadline updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating deadline:', err);
+
             showNotificationMessage(err.message || 'Failed to update deadline', 'error');
         } finally {
             setIsSavingDeadline(false);
@@ -206,7 +206,7 @@ const OrderDetailOM = () => {
             setSelected3DDesign(design);
             setShow3DModal(true);
         } catch (error) {
-            console.error('Error parsing 3D design data:', error);
+
         }
     };
 
@@ -232,7 +232,7 @@ const OrderDetailOM = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Order approved successfully', 'success');
         } catch (err) {
-            console.error('Error approving order:', err);
+
             showNotificationMessage('Failed to approve order', 'error');
         }
     };
@@ -254,7 +254,7 @@ const OrderDetailOM = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Payment confirmed and order approved', 'success');
         } catch (err) {
-            console.error('Error confirming payment:', err);
+
             showNotificationMessage('Failed to confirm payment', 'error');
         }
     };
@@ -314,23 +314,23 @@ const OrderDetailOM = () => {
                 showNotificationMessage('Failed to start conversation. Please try again.', 'error');
             }
         } catch (error) {
-            console.error('Error starting conversation:', error);
+
             showNotificationMessage('Failed to contact customer. Please try again.', 'error');
         }
     };
 
     const handleExportXLS = () => {
-        console.log("Exporting to XLS");
+
         showNotificationMessage('XLS export feature coming soon', 'success');
     };
 
     const handleExportPDF = () => {
-        console.log("Exporting to PDF");
+
         showNotificationMessage('PDF export feature coming soon', 'success');
     };
 
     const handleViewProof = () => {
-        console.log("Viewing proof of payment");
+
         showNotificationMessage('Proof of payment viewer coming soon', 'success');
     };
 
@@ -340,8 +340,7 @@ const OrderDetailOM = () => {
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading order...</p>
+                            <LoadingSpinner size="lg" text="Loading order..." />  
                         </div>
                     </div>
                 </main>
@@ -589,7 +588,7 @@ const OrderDetailOM = () => {
                                             );
                                         }
                                     } catch (error) {
-                                        console.error('Error parsing design data:', error);
+
                                     }
                                     return <p className="text-gray-500 text-center py-8">No thumbnail available</p>;
                                 })()}

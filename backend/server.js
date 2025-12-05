@@ -10,6 +10,8 @@ import messagesRoutes from "./routes/messages.js";
 import notificationsRoutes from "./routes/notifications.js";
 import customersRoutes from "./routes/customers.js";
 import teamsRoutes from "./routes/teams.js";
+import paymentsRoutes from "./routes/payments.js";
+import quotasRoutes from "./routes/quotas.js";
 
 const app = express();
 
@@ -41,6 +43,8 @@ app.use("/messages", messagesRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/customers", customersRoutes);
 app.use("/teams", teamsRoutes);
+app.use("/payments", paymentsRoutes);
+app.use("/quotas", quotasRoutes);
 
 // Health check
 app.get("/", (req, res) => {
@@ -51,7 +55,7 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 3000;
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+
   });
 }
 

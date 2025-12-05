@@ -1,32 +1,3 @@
-/**
- * Checkout Component - Custom Hanger Order Form
- *
- * This component handles the complete order submission flow for custom hangers.
- *
- * THREE.JS INTEGRATION GUIDE:
- * ==========================
- * 1. Install Three.js: npm install three @react-three/fiber @react-three/drei
- *
- * 2. The 3D viewer container is ready at `threeCanvasRef`
- *
- * 3. Key integration points:
- *    - updateThreeJsColor(color): Called when color changes, update material.color.set(color)
- *    - customText, textPosition, textSize: Use TextGeometry or troika-three-text
- *    - logoPreview, logoPosition, logoSize: Load texture and apply to plane/decal
- *    - threeCanvasRef: Mount your Canvas component here
- *
- * 4. Example Three.js setup:
- *    - Create a separate ThreeScene component
- *    - Pass color, text, logo props to control the scene
- *    - Use OrbitControls for camera manipulation
- *    - Load hanger model with GLTFLoader
- *    - Apply color with MeshStandardMaterial
- *    - Add TextGeometry for custom text
- *    - Use texture loader for logo decals
- *
- * 5. Model files should be placed in: /public/models/
- *    - MB3.glb, MB7.glb, CQ-03.glb, 97-11.glb
- */
 
 import { button, div, label, li, span } from 'framer-motion/client'
 import React from 'react'
@@ -39,6 +10,9 @@ import validationIcon from '../../images/validation ico.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
 import { useAuth } from '../../context/AuthContext'
+import Stepper from '../../components/Checkout/CheckoutSteps/Stepper'
+import StepNavigation from '../../components/Checkout/CheckoutSteps/StepNavigation'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 
 const Checkout = () => {
@@ -57,6 +31,10 @@ const Checkout = () => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
     const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
+
+    // Multi-step wizard
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = 3;
 
     // Form state
     const [companyName, setCompanyName] = useState("");
@@ -111,7 +89,6 @@ const Checkout = () => {
         { id: "MB7", name: "MB7" },
         { id: "CQ-03", name: "CQ-03" },
         { id: "97-11", name: "97-11" },
-        { id: "own", name: "Own design" },
     ];
 
     // Predefined colors for quick selection
@@ -219,6 +196,22 @@ const Checkout = () => {
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                showNotification('Please upload a PNG, JPG, or JPEG image file');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            // Validate file size (5MB = 5 * 1024 * 1024 bytes)
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                showNotification('Logo file size must be less than 5MB');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
             setCustomLogo(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -324,10 +317,10 @@ const Checkout = () => {
                 ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
                 ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
                 thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.7);
-                console.log('📸 Captured order thumbnail');
+
             }
         } catch (thumbError) {
-            console.warn('⚠️ Could not capture thumbnail for order:', thumbError);
+
         }
 
         // Prepare complete 3D design data for database storage and admin viewing
@@ -377,11 +370,9 @@ const Checkout = () => {
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
         };
 
-        console.log("📦 Order Data being sent:", orderData);
-        console.log("📍 Addresses array:", addresses);
-        console.log("📍 Selected Address Index:", selectedAddress);
-        console.log("📍 Selected Address Object:", addresses[selectedAddress]);
-        console.log("📍 Delivery Address:", orderData.deliveryAddress);
+
+
+
 
         try {
             // Submit to backend
@@ -401,8 +392,6 @@ const Checkout = () => {
             if (!response.ok) {
                 throw new Error(result.error || "Failed to create order");
             }
-
-            console.log("✅ Order created:", result.order);
 
             // Also save to localStorage for backward compatibility with Order.jsx
             const localOrderData = {
@@ -458,7 +447,7 @@ const Checkout = () => {
                 navigate("/orders");
             }, 2000);
         } catch (error) {
-            console.error("❌ Error creating order:", error);
+
             showNotification(`Failed to create order: ${error.message}`);
         }
     };
@@ -481,8 +470,6 @@ const Checkout = () => {
             if (!canvas) {
                 throw new Error('Canvas not found. Make sure the 3D model is loaded.');
             }
-
-            console.log('📸 Canvas found:', canvas.width, 'x', canvas.height);
 
             // Create design data JSON
             const designData = {
@@ -534,7 +521,7 @@ const Checkout = () => {
                     }
                 }, 'image/png');
             } catch (pngError) {
-                console.warn('⚠️ PNG capture failed, trying alternative method:', pngError);
+
                 // Fallback to toDataURL
                 const dataUrl = canvas.toDataURL('image/png', 1.0);
                 const link = document.createElement('a');
@@ -551,7 +538,7 @@ const Checkout = () => {
             }
 
         } catch (error) {
-            console.error('❌ Error downloading design:', error);
+
             setNotificationModal({ 
                 show: true, 
                 type: 'error', 
@@ -660,10 +647,10 @@ const Checkout = () => {
                         }
 
                         thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.7);
-                        console.log('📸 Captured processed thumbnail');
+
                     } catch (e) {
                         // If reading pixel data fails (tainted canvas), fallback to simple center draw
-                        console.warn('⚠️ Could not access pixel data, falling back to center crop:', e);
+
                         const sourceSize = Math.min(canvas.width, canvas.height);
                         const cropSize = sourceSize * 0.7;
                         const sourceX = (canvas.width - cropSize) / 2;
@@ -675,7 +662,7 @@ const Checkout = () => {
                     }
                 }
             } catch (thumbError) {
-                console.warn('⚠️ Could not capture thumbnail:', thumbError);
+
                 // Continue without thumbnail
             }
 
@@ -713,8 +700,6 @@ const Checkout = () => {
                 designData: JSON.stringify(designData)
             };
 
-            console.log('💾 Saving design with payload:', { ...payload, thumbnail: thumbnailBase64 ? '[BASE64_DATA]' : null });
-
             const response = await fetch('https://gatsis-hub.vercel.app/designs/save', {
                 method: 'POST',
                 headers: {
@@ -723,17 +708,14 @@ const Checkout = () => {
                 body: JSON.stringify(payload)
             });
 
-            console.log('📡 Response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Response error:', errorText);
+
                 throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
 
             const result = await response.json();
-            console.log('✅ Design saved:', result.design);
-            
+
             setSaveDesignModal(false);
             setDesignName('');
             setNotificationModal({ 
@@ -742,8 +724,7 @@ const Checkout = () => {
                 message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.` 
             });
         } catch (error) {
-            console.error('❌ Error saving design:', error);
-            
+
             // More detailed error message
             let errorMessage = '';
             if (error.message.includes('Failed to fetch')) {
@@ -770,7 +751,7 @@ const Checkout = () => {
                 const userId = userData.userid;
 
                 if (!userId) {
-                    console.warn("No user logged in");
+
                     return;
                 }
 
@@ -782,7 +763,7 @@ const Checkout = () => {
                     .single();
 
                 if (error) {
-                    console.error("Error fetching customer data:", error);
+
                     return;
                 }
 
@@ -795,24 +776,23 @@ const Checkout = () => {
                     // Load addresses from database
                     if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
                         setAddresses(customer.addresses);
-                        console.log('✅ Addresses loaded from database:', customer.addresses);
-                        
+
                         // Automatically select the default address
                         const defaultAddressIndex = customer.addresses.findIndex(addr => addr.isDefault);
                         if (defaultAddressIndex !== -1) {
                             setSelectedAddress(defaultAddressIndex);
-                            console.log('✅ Default address selected at index:', defaultAddressIndex, customer.addresses[defaultAddressIndex]);
+
                         } else {
                             // If no default, select the first address
                             setSelectedAddress(0);
-                            console.log('✅ No default found, selected first address:', customer.addresses[0]);
+
                         }
                     } else {
-                        console.log('⚠️ No addresses found in customer data');
+
                     }
                 }
             } catch (error) {
-                console.error("Error loading customer data:", error);
+
             }
         };
 
@@ -824,8 +804,7 @@ const Checkout = () => {
     useEffect(() => {
         if (location.state?.loadDesign && location.state?.designData) {
             const designData = location.state.designData;
-            console.log('📥 Loading saved design:', designData);
-            
+
             try {
                 // Apply design data to state
                 if (designData.hangerType) setSelectedHanger(designData.hangerType);
@@ -849,7 +828,7 @@ const Checkout = () => {
                 // Clear the location state to prevent reloading on refresh
                 window.history.replaceState({}, document.title);
             } catch (error) {
-                console.error('❌ Error loading design data:', error);
+
                 setNotificationModal({ 
                     show: true, 
                     type: 'error', 
@@ -919,181 +898,78 @@ const Checkout = () => {
         },
     ];
 
+    // Navigation
+    const nextStep = () => {
+        if (validateCurrentStep()) {
+            setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const prevStep = () => {
+        setCurrentStep(prev => Math.max(prev - 1, 1));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const goToStep = (step) => {
+        if (step < currentStep) {
+            setCurrentStep(step);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const validateCurrentStep = () => {
+        if (currentStep === 1) {
+            if (!selectedHanger) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please select a hanger type' });
+                return false;
+            }
+            if (selectedHanger === "own" && !customDesignFile) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please upload your custom design file' });
+                return false;
+            }
+            if (quantity < 100) {
+                setNotificationModal({ show: true, type: 'error', message: 'Minimum order quantity is 100 pieces' });
+                return false;
+            }
+        } else if (currentStep === 2) {
+            if (Object.keys(selectedMaterials).length === 0) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please select at least one material' });
+                return false;
+            }
+            const totalPercentage = Object.values(selectedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+            if (Math.abs(totalPercentage - 100) > 0.01) {
+                setNotificationModal({ show: true, type: 'error', message: `Material percentages must total 100%. Current total: ${totalPercentage.toFixed(1)}%` });
+                return false;
+            }
+        } else if (currentStep === 3) {
+            if (!companyName.trim() || !contactPerson.trim() || !contactPhone.trim()) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please fill in all company information' });
+                return false;
+            }
+            if (!addresses || addresses.length === 0) {
+                setNotificationModal({ show: true, type: 'error', message: 'Please add a delivery address' });
+                return false;
+            }
+        }
+        return true;
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
-            <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
-            {/* Company Information Section */}
-            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-4 md:mb-6">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-4 md:mb-6">
-                    Start Your Order
-                </h3>
-                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
-                    <h4 className="text-lg md:text-xl font-semibold mb-4">Company Information</h4>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Company Name *
-                            </label>
-                            <input
-                                type="text"
-                                value={companyName}
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="Enter company name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Person *
-                            </label>
-                            <input
-                                type="text"
-                                value={contactPerson}
-                                onChange={(e) => setContactPerson(e.target.value)}
-                                placeholder="Enter contact person name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Phone *
-                            </label>
-                            <input
-                                type="tel"
-                                value={contactPhone}
-                                onChange={(e) => setContactPhone(e.target.value)}
-                                placeholder="(+63) 9XX XXX XXXX"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
+            {/* Sticky Stepper */}
+            {!isFullscreen && !showModal && !saveDesignModal && !showInstructionsModal && !showColorLimitationModal && !notificationModal.show && (
+                <div className="fixed top-16 md:top-20 left-0 right-0 z-40 bg-gray-50 shadow-lg border-b-2 border-gray-300">
+                    <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                        <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
                     </div>
                 </div>
-            </div>
+            )}
 
-            <div className="flex flex-col items-center justify-center mt-6 md:mt-10">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
-                    Select the type of hanger you want
-                </h3>
-            </div>
+            <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 mt-20 md:mt-24">
 
-            <section>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-                    {hangers.map((hanger) => (
-                        <button
-                            key={hanger.id}
-                            onClick={() => {
-                                setSelectedHanger(hanger.id);
-                                // Show modal for MB7 and 97-11
-                                if (hanger.id === 'MB7' || hanger.id === '97-11') {
-                                    setShowColorLimitationModal(true);
-                                }
-                            }}
-                            className={`border-2 rounded-lg overflow-hidden transition-all ${selectedHanger === hanger.id
-                                    ? "border-[#35408E] shadow-lg"
-                                    : "border-gray-300"
-                                }`}
-                        >
-                            <div className="bg-white p-4 md:p-6 lg:p-8 flex items-center justify-center aspect-square">
-                                <div className="text-4xl md:text-5xl lg:text-6xl">
-                                    <ProductCard />
-                                </div>
-                            </div>
-                            <div className="bg-[#ECBA0B] py-2 md:py-3 font-semibold text-center text-sm md:text-base">
-                                {hanger.name}
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                {/* Custom Design Upload */}
-                {selectedHanger === "own" && (
-                    <div className="mt-4 md:mt-6 p-4 md:p-6 bg-white rounded-lg border-2 border-gray-300">
-                        <h4 className="font-semibold mb-3 text-sm md:text-base">Upload Your Custom Design</h4>
-                        <p className="text-xs md:text-sm text-gray-600 mb-3">
-                            Accepted formats: STL, OBJ, STEP, PDF (technical drawing)
-                        </p>
-                        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-4 md:p-6 cursor-pointer hover:border-[#35408E] transition-colors">
-                            <Upload size={24} />
-                            <span>
-                                {customDesignFile
-                                    ? customDesignFile.name
-                                    : "Click to upload design file"}
-                            </span>
-                            <input
-                                type="file"
-                                accept=".stl,.obj,.step,.pdf"
-                                onChange={handleCustomDesignUpload}
-                                className="hidden"
-                            />
-                        </label>
-                    </div>
-                )}
-            </section>
-
-            <div className="flex flex-col items-center justify-center mt-10">
-                <h3 className="text-black text-4xl font-medium mb-10">
-                    Select the material you want
-                </h3>
-                <p className="text-black text-2xl font-normal">
-                    you can select multiple materials and combined by percentage
-                </p>
-            </div>
-
-            <section>
-                {/* materials selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                    {materials.map((materials) => (
-                        <button
-                            key={materials.name}
-                            onClick={() => toggleMaterial(materials.name)}
-                            className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[materials.name]
-                                    ? "border-yellow-500 bg-yellow-50"
-                                    : "border-gray-300"
-                                }`}
-                        >
-                            <h3 className="text-xl font-semibold mb-2">{materials.name}</h3>
-                            <ul className="list-disc list-inside">
-                                {materials.features.map((feature, i) => (
-                                    <li key={i} className="text-black text-base font-normal">
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                        </button>
-                    ))}
-                    {/* materials percentage */}
-                    <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
-                        <h3 className="font-semibold mb-3">Materials selected</h3>
-                        <p className="text-xs text-gray-600 mb-3">
-                            Note: You may adjust percentages to achieve 100% mixture
-                        </p>
-                        <div className="space-y-2">
-                            {Object.entries(selectedMaterials).map(([name, percentage]) => (
-                                <div key={name} className="flex items-center justify-between">
-                                    <span className="text-sm">{name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            value={percentage}
-                                            onChange={(e) =>
-                                                updateMaterialPercentage(name, e.target.value)
-                                            }
-                                            className="w-16 px-2 py-1 border rounded text-sm"
-                                            min="0"
-                                            max="100"
-                                        />
-                                        <span className="text-sm">%</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
+                {currentStep === 1 && (
+                    <>
             {/* product customization */}
             <section className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
                 <h2 className="text-center text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
@@ -1103,11 +979,11 @@ const Checkout = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
                     <div className="flex flex-col gap-4 md:gap-6">
                         {/* Three.js 3D Preview Container */}
-                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-yellow-400 min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+                        <div className="bg-gradient-to-br from-[#007BFF] to-[#0056b3] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
                             {/* Fullscreen Button */}
                             <button
                                 onClick={toggleFullscreen}
-                                className="absolute top-4 right-4 z-10 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] p-2 rounded-lg transition-colors shadow-lg"
+                                className="absolute top-4 right-4 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] p-2 rounded-lg transition-colors shadow-lg"
                                 title="Fullscreen"
                             >
                                 <Maximize2 size={20} />
@@ -1117,11 +993,8 @@ const Checkout = () => {
                             <div ref={threeCanvasRef} className="w-full h-64 md:h-80 lg:h-96 rounded-lg">
                                 <Suspense
                                     fallback={
-                                        <div className="w-full h-full flex items-center justify-center bg-[#2c3575] rounded-lg">
-                                            <div className="text-center text-white">
-                                                <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
-                                                <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
-                                            </div>
+                                        <div className="w-full h-full flex items-center justify-center bg-[#007BFF] rounded-lg">
+                                            <LoadingSpinner size="lg" text="Loading 3D Model..." color="white" />
                                         </div>
                                     }
                                 >
@@ -1142,6 +1015,62 @@ const Checkout = () => {
                             <p className="text-white text-xs md:text-sm mt-3 md:mt-4 text-center font-semibold">
                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
+                        </div>
+
+                        {/* Hanger Selection - Compact Version */}
+                        <div className="bg-white rounded-lg border-2 border-gray-300 p-3">
+                            <h3 className="font-semibold mb-3 text-sm">Type of Hanger</h3>
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                {hangers.map((hanger) => (
+                                    <button
+                                        key={hanger.id}
+                                        onClick={() => {
+                                            setSelectedHanger(hanger.id);
+                                            if (hanger.id === 'MB7' || hanger.id === '97-11') {
+                                                setShowColorLimitationModal(true);
+                                            }
+                                        }}
+                                        className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 ${
+                                            selectedHanger === hanger.id
+                                                ? "border-[#007BFF] shadow-md"
+                                                : "border-gray-300 hover:border-gray-400"
+                                        }`}
+                                    >
+                                        <div className="bg-white p-2 flex items-center justify-center aspect-square">
+                                            <div className="text-2xl">
+                                                <ProductCard />
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
+                                            {hanger.name}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* Custom Design Upload */}
+                            {selectedHanger === "own" && (
+                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <h4 className="font-semibold mb-2 text-xs">Upload Your Custom Design</h4>
+                                    <p className="text-xs text-gray-600 mb-2">
+                                        Accepted formats: STL, OBJ, STEP, PDF
+                                    </p>
+                                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-3 cursor-pointer hover:border-[#007BFF] transition-colors">
+                                        <Upload size={16} />
+                                        <span className="text-xs">
+                                            {customDesignFile
+                                                ? customDesignFile.name
+                                                : "Click to upload"}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept=".stl,.obj,.step,.pdf"
+                                            onChange={handleCustomDesignUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            )}
                         </div>
 
                         {/* quantity selector */}
@@ -1182,31 +1111,29 @@ const Checkout = () => {
                                 placeholder="Type your instructions here..."
                                 className="w-full border rounded px-3 py-2 h-20 md:h-24 text-sm md:text-base"
                             ></textarea>
-                            <div className="mt-4 text-center">
-                                <p className="text-xs md:text-sm text-gray-600">
-                                    Note: Please download the order form and attach.{" "}
-                                    <a
-                                        href="/path/to/order-form.pdf"
-                                        className="text-blue-500 underline"
-                                    >
-                                        Download Order Form
-                                    </a>
-                                </p>
-                            </div>
                         </div>
                         {/* action buttons */}
                         <div className="space-y-2 mt-4">
                             <button 
                                 onClick={handleDownloadDesign}
                                 disabled={isDownloading}
-                                className="w-full bg-[#ECBA0B] hover:bg-[#d4a709] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                                className="w-full bg-[#F5F5F5] hover:bg-[#e0e0e0] text-[#333333] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base border border-gray-300"
                             >
-                                <Download size={18} className="md:w-5 md:h-5" />
-                                {isDownloading ? 'Downloading...' : 'Download Preview'}
+                                {isDownloading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent"></div>
+                                        Downloading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={18} className="md:w-5 md:h-5" />
+                                        Download Preview
+                                    </>
+                                )}
                             </button>
                             <button 
                                 onClick={handleSaveDesign}
-                                className="w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
+                                className="w-full bg-[#007BFF] hover:bg-[#0056b3] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
                             >
                                 <Save size={18} className="md:w-5 md:h-5" />
                                 Save Design
@@ -1398,11 +1325,11 @@ const Checkout = () => {
                                     <span className="text-sm">
                                         {customLogo
                                             ? customLogo.name
-                                            : "Upload Logo (PNG, JPG, SVG)"}
+                                            : "Upload Logo (PNG, JPG, JPEG - Max 5MB)"}
                                     </span>
                                     <input
                                         type="file"
-                                        accept="image/png,image/jpeg,image/svg+xml"
+                                        accept="image/png,image/jpg,image/jpeg"
                                         onChange={handleLogoUpload}
                                         className="hidden"
                                     />
@@ -1500,6 +1427,143 @@ const Checkout = () => {
                 </div>
             </section>
 
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={false}
+            />
+            </>
+            )}
+
+            {/* STEP 2: Material Selection */}
+            {currentStep === 2 && (
+                <>
+            <div className="flex flex-col items-center justify-center mt-10">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
+                    Select the material you want
+                </h3>
+                <p className="text-black text-lg md:text-xl lg:text-2xl font-normal">
+                    you can select multiple materials and combined by percentage
+                </p>
+            </div>
+
+            <section>
+                {/* materials selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                    {materials.map((material) => (
+                        <button
+                            key={material.name}
+                            onClick={() => toggleMaterial(material.name)}
+                            className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[material.name]
+                                    ? "border-yellow-500 bg-yellow-50"
+                                    : "border-gray-300"
+                                }`}
+                        >
+                            <h3 className="text-xl font-semibold mb-2">{material.name}</h3>
+                            <ul className="list-disc list-inside">
+                                {material.features.map((feature, i) => (
+                                    <li key={i} className="text-black text-base font-normal">
+                                        {feature}
+                                    </li>
+                                ))}
+                            </ul>
+                        </button>
+                    ))}
+                    {/* materials percentage */}
+                    <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
+                        <h3 className="font-semibold mb-3">Materials selected</h3>
+                        <p className="text-xs text-gray-600 mb-3">
+                            Note: You may adjust percentages to achieve 100% mixture
+                        </p>
+                        <div className="space-y-2">
+                            {Object.entries(selectedMaterials).map(([name, percentage]) => (
+                                <div key={name} className="flex items-center justify-between">
+                                    <span className="text-sm">{name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={percentage}
+                                            onChange={(e) =>
+                                                updateMaterialPercentage(name, e.target.value)
+                                            }
+                                            className="w-16 px-2 py-1 border rounded text-sm"
+                                            min="0"
+                                            max="100"
+                                        />
+                                        <span className="text-sm">%</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={false}
+            />
+            </>
+            )}
+
+            {/* STEP 3: Review & Submit */}
+            {currentStep === 3 && (
+                <>
+            {/* Company Information */}
+            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-8">
+                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6">
+                    Company Information
+                </h3>
+                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Company Name *
+                            </label>
+                            <input
+                                type="text"
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder="Enter company name"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Contact Person *
+                            </label>
+                            <input
+                                type="text"
+                                value={contactPerson}
+                                onChange={(e) => setContactPerson(e.target.value)}
+                                placeholder="Enter contact person name"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs md:text-sm font-semibold mb-2">
+                                Contact Phone *
+                            </label>
+                            <input
+                                type="tel"
+                                value={contactPhone}
+                                onChange={(e) => setContactPhone(e.target.value)}
+                                placeholder="(+63) 9XX XXX XXXX"
+                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Order summary and address */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-5 ml-5 mr-5">
                 {/* Order summary */}
@@ -1569,7 +1633,7 @@ const Checkout = () => {
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <button
-                                className="cursor-pointer bg-[#35408E] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#2d3575] transition-colors w-full"
+                                className="cursor-pointer bg-[#DC3545] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c82333] transition-colors w-full"
                                 onClick={handleSubmitOrder}
                             >
                                 Send for Evaluation
@@ -1578,10 +1642,59 @@ const Checkout = () => {
                     </div>
                 </div>
 
+                {/* Address Selection */}
+                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
+                    <h2 className="text-xl font-semibold mb-6">My Address</h2>
+
+                    <div className="space-y-4">
+                        {addresses.length > 0 ? (
+                            addresses.map((addr, idx) => (
+                                <label
+                                    key={idx}
+                                    className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="address"
+                                        checked={selectedAddress === idx}
+                                        onChange={() => setSelectedAddress(idx)}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-semibold">{addr.name}</span>
+                                            {addr.isDefault && (
+                                                <span className="bg-[#007BFF] text-white text-xs px-2 py-0.5 rounded">
+                                                    Default
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-600">{addr.phone}</p>
+                                        <p className="text-sm text-gray-600">{addr.address}</p>
+                                    </div>
+                                </label>
+                            ))
+                        ) : (
+                            <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="mb-2 text-yellow-800 font-semibold">
+                                    ⚠️ No delivery address found
+                                </p>
+                                <p className="text-sm text-yellow-700">
+                                    Please update your company address in Account Settings
+                                </p>
+                                <p className="text-xs text-yellow-600 mt-2">
+                                    Orders without a proper address may experience delivery delays
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
                 {/* Modal */}
                 {showModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
-                        <div className="bg-[#35408E] rounded-lg shadow-lg p-8 text-center max-w-md">
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[200]">
+                        <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 text-center max-w-md">
                             <img
                                 src={validationIcon}
                                 alt="Validation Icon"
@@ -1600,7 +1713,7 @@ const Checkout = () => {
                             <div className="flex gap-3 justify-center">
                                 <Link to="/order">
                                     <button
-                                        className="bg-[#ECBA0B] text-black px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#d4a709] transition-colors"
+                                        className="bg-[#F5F5F5] text-[#333333] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#e0e0e0] transition-colors border border-gray-300"
                                         onClick={() => setShowModal(false)}
                                     >
                                         View My Orders
@@ -1608,7 +1721,7 @@ const Checkout = () => {
                                 </Link>
                                 <Link to="/messages">
                                     <button
-                                        className="bg-white text-[#35408E] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                                        className="bg-white text-[#007BFF] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
                                         onClick={() => setShowModal(false)}
                                     >
                                         Go to Messages
@@ -1619,14 +1732,24 @@ const Checkout = () => {
                     </div>
                 )}
 
-                {/* Instructions Modal */}
-                {showInstructionsModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50">
-                        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+            <StepNavigation 
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={nextStep}
+                onPrev={prevStep}
+                isLastStep={true}
+            />
+            </>
+            )}
+
+            {/* Instructions Modal */}
+            {showInstructionsModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] pt-24 md:pt-28">
+                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto mx-4 relative z-[10000] mt-4">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
-                                    <Info className="text-[#35408E]" size={24} />
-                                    <h2 className="text-2xl font-bold text-[#35408E]">
+                                    <Info className="text-[#007BFF]" size={24} />
+                                    <h2 className="text-2xl font-bold text-[#007BFF]">
                                         Ordering Process Instructions
                                     </h2>
                                 </div>
@@ -1651,7 +1774,7 @@ const Checkout = () => {
 
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className="bg-[#35408E] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             1
                                         </div>
                                         <div>
@@ -1666,7 +1789,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#35408E] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             2
                                         </div>
                                         <div>
@@ -1682,7 +1805,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#35408E] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             3
                                         </div>
                                         <div>
@@ -1697,7 +1820,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#35408E] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             4
                                         </div>
                                         <div>
@@ -1710,7 +1833,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#35408E] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             5
                                         </div>
                                         <div>
@@ -1746,7 +1869,7 @@ const Checkout = () => {
                                 <div className="flex justify-center gap-4 pt-4">
                                     <button
                                         onClick={() => setShowInstructionsModal(false)}
-                                        className="bg-[#35408E] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#2d3575] transition-colors"
+                                        className="bg-[#007BFF] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#0056b3] transition-colors"
                                     >
                                         Got it, let's start!
                                     </button>
@@ -1756,66 +1879,18 @@ const Checkout = () => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
-                    <h2 className="text-xl font-semibold mb-6">My Address</h2>
-
-                    <div className="space-y-4">
-                        {addresses.length > 0 ? (
-                            addresses.map((addr, idx) => (
-                                <label
-                                    key={idx}
-                                    className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
-                                >
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        checked={selectedAddress === idx}
-                                        onChange={() => setSelectedAddress(idx)}
-                                        className="mt-1"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold">{addr.name}</span>
-                                            {addr.isDefault && (
-                                                <span className="bg-indigo-700 text-white text-xs px-2 py-0.5 rounded">
-                                                    Default
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-600">{addr.phone}</p>
-                                        <p className="text-sm text-gray-600">{addr.address}</p>
-                                    </div>
-                                </label>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="mb-2 text-yellow-800 font-semibold">
-                                    ⚠️ No delivery address found
-                                </p>
-                                <p className="text-sm text-yellow-700">
-                                    Please update your company address in Account Settings
-                                </p>
-                                <p className="text-xs text-yellow-600 mt-2">
-                                    Orders without a proper address may experience delivery delays
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
             {/* Fullscreen 3D Viewer Modal */}
             {isFullscreen && (
-                <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
+                <div className="fixed inset-0 bg-[#007BFF] z-[200] flex flex-col">
                     {/* Header with Close Button */}
                     <div className="flex justify-between items-center p-3 md:p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
                         <div className="flex items-center gap-2 md:gap-3">
                             <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Preview</h3>
-                            <span className="text-yellow-400 text-xs md:text-sm">({selectedHanger})</span>
+                            <span className="text-[#DC3545] text-xs md:text-sm">({selectedHanger})</span>
                         </div>
                         <button
                             onClick={toggleFullscreen}
-                            className="text-white hover:bg-yellow-400 hover:text-[#353f94] p-2 rounded-lg transition-colors"
+                            className="text-white hover:bg-[#DC3545] hover:text-white p-2 rounded-lg transition-colors"
                             title="Exit Fullscreen"
                         >
                             <X size={20} className="md:w-6 md:h-6" />
@@ -1825,14 +1900,11 @@ const Checkout = () => {
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* 3D Canvas */}
-                        <div className="flex-1 relative bg-gradient-to-br from-[#4a5899] to-[#353f94]">
+                        <div className="flex-1 relative bg-gradient-to-br from-[#007BFF] to-[#0056b3]">
                             <Suspense
                                 fallback={
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <div className="text-center text-white">
-                                            <div className="text-4xl md:text-5xl lg:text-6xl mb-4">⏳</div>
-                                            <p className="text-sm md:text-base lg:text-lg">Loading 3D Model...</p>
-                                        </div>
+                                        <LoadingSpinner size="xl" text="Loading 3D Model..." color="white" />
                                     </div>
                                 }
                             >
@@ -1853,7 +1925,7 @@ const Checkout = () => {
                         {/* Customization Sidebar */}
                         <div className="w-full md:w-80 lg:w-96 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
                             {/* Color Picker */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
                                 <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
                                 <div className="space-y-2 md:space-y-3">
                                     <div className="flex items-center gap-2">
@@ -1861,13 +1933,13 @@ const Checkout = () => {
                                             type="color"
                                             value={color}
                                             onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-yellow-400"
+                                            className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-[#DC3545]"
                                         />
                                         <input
                                             type="text"
                                             value={color}
                                             onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                            className="flex-1 bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
                                             placeholder="#4F46E5"
                                         />
                                     </div>
@@ -1877,7 +1949,7 @@ const Checkout = () => {
                                             <button
                                                 key={c}
                                                 onClick={() => updateThreeJsColor(c)}
-                                                className="w-full aspect-square rounded border-2 border-[#4a5899] hover:border-yellow-400 transition-colors"
+                                                className="w-full aspect-square rounded border-2 border-[#0056b3] hover:border-[#DC3545] transition-colors"
                                                 style={{ backgroundColor: c }}
                                                 title={c}
                                             />
@@ -1887,14 +1959,14 @@ const Checkout = () => {
                             </div>
 
                             {/* Custom Text */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
+                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
+                                <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
                                 <input
                                     type="text"
                                     value={customText}
                                     onChange={(e) => setCustomText(e.target.value)}
                                     placeholder="Enter text"
-                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                    className="w-full bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
                                 />
                                 <div className="flex items-center gap-2 mb-2">
                                     <label className="text-white text-xs">Color:</label>
@@ -1902,13 +1974,13 @@ const Checkout = () => {
                                         type="color"
                                         value={textColor}
                                         onChange={(e) => setTextColor(e.target.value)}
-                                        className="w-8 h-8 rounded cursor-pointer border-2 border-yellow-400"
+                                        className="w-8 h-8 rounded cursor-pointer border-2 border-[#DC3545]"
                                     />
                                     <input
                                         type="text"
                                         value={textColor}
                                         onChange={(e) => setTextColor(e.target.value)}
-                                        className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                        className="flex-1 bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -1982,10 +2054,10 @@ const Checkout = () => {
                             </div>
 
                             {/* Logo Upload */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
-                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
-                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-yellow-400 rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#4a5899] transition-colors">
-                                    <ImageIcon size={16} className="text-yellow-400" />
+                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
+                                <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
+                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#DC3545] rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#0056b3] transition-colors">
+                                    <ImageIcon size={16} className="text-white" />
                                     <span className="text-xs text-white">
                                         {customLogo ? customLogo.name : 'Upload Logo'}
                                     </span>
@@ -1999,7 +2071,7 @@ const Checkout = () => {
                                 {logoPreview && (
                                     <div className="mt-2 space-y-2">
                                         <div className="flex items-center gap-2">
-                                            <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain border-2 border-yellow-400 rounded bg-white" />
+                                            <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain border-2 border-[#DC3545] rounded bg-white" />
                                             <button
                                                 onClick={() => {
                                                     setCustomLogo(null);
@@ -2085,13 +2157,13 @@ const Checkout = () => {
                     </div>
 
                     {/* Footer with Info */}
-                    <div className="p-4 bg-[#2c3575] backdrop-blur-sm text-center border-t-2 border-yellow-400">
+                    <div className="p-4 bg-[#0056b3] backdrop-blur-sm text-center border-t-2 border-[#DC3545]">
                         <p className="text-white text-sm">
                             Drag to rotate • Scroll to zoom • Right-click to pan • Press ESC
                             or click
                             <button
                                 onClick={toggleFullscreen}
-                                className="text-yellow-400 hover:text-yellow-300 underline ml-1 font-semibold"
+                                className="text-[#DC3545] hover:text-white underline ml-1 font-semibold"
                             >
                                 here
                             </button>{" "}
@@ -2103,7 +2175,7 @@ const Checkout = () => {
 
             {/* Save Design Modal */}
             {saveDesignModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[200] p-4">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold">Save Design</h3>
@@ -2122,7 +2194,7 @@ const Checkout = () => {
                                 value={designName}
                                 onChange={(e) => setDesignName(e.target.value)}
                                 placeholder="e.g., Red MB7 with Logo"
-                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#007BFF]"
                                 autoFocus
                             />
                         </div>
@@ -2150,7 +2222,7 @@ const Checkout = () => {
                             <button
                                 onClick={confirmSaveDesign}
                                 disabled={isSaving || !designName.trim()}
-                                className="flex-1 px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2d3575] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSaving ? 'Saving...' : 'Save Design'}
                             </button>
@@ -2161,7 +2233,7 @@ const Checkout = () => {
 
             {/* Color Limitation Modal for MB7 and 97-11 */}
             {showColorLimitationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200]">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
                         {/* Modal Icon */}
                         <div className="flex justify-center mb-4">
@@ -2182,7 +2254,7 @@ const Checkout = () => {
                         {/* Modal Button */}
                         <button
                             onClick={() => setShowColorLimitationModal(false)}
-                            className="w-full px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors"
+                            className="w-full px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors"
                         >
                             Got it
                         </button>
@@ -2192,7 +2264,7 @@ const Checkout = () => {
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[200]">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
                         {/* Modal Icon */}
                         <div className="flex justify-center mb-4">
@@ -2214,7 +2286,7 @@ const Checkout = () => {
                         {/* Modal Button */}
                         <button
                             onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                            className="w-full px-4 py-2 bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors"
+                            className="w-full px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors"
                         >
                             OK
                         </button>

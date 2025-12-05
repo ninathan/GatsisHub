@@ -1,64 +1,28 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
 import userav from '../../images/user-alt.png'
 import key from '../../images/key.png'
-import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
+import { useState } from 'react'
 
-const AuthSA = () => {
-    const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+const AuthPA = () => {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [rememberMe, setRememberMe] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    const IntputField = 'w-full border border-gray-300 rounded-lg px-10 py-2 md:px-12 md:py-3 lg:px-14 lg:py-4 text-base md:text-lg lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
 
-        try {
-            const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password })
-            });
+    const handleLogin = (e) => {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
+    }
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Login failed');
-            }
-
-            // Verify this is a Sales Admin account
-            if (data.employee.role !== 'Sales Admin' || data.employee.assigneddepartment !== 'Admin') {
-                throw new Error('Access denied. This login is for Sales Admin only. Please use the appropriate login page.');
-            }
-
-            // Store employee data in localStorage
-            localStorage.setItem('employee', JSON.stringify(data.employee));
-            
-            if (rememberMe) {
-                localStorage.setItem('rememberEmployee', 'true');
-            }
-
-            // Redirect to Sales Admin dashboard
-            navigate('/orderpage');
-
-        } catch (err) {
-
-            setError(err.message || 'Invalid email or password');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const IntputField =
-  'border border-gray-300 rounded-2xl pl-10 md:pl-12 pr-4 py-2 md:py-3 w-full text-sm md:text-lg lg:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+        
     return (
         <PageTransition direction='right'>
 
@@ -205,4 +169,4 @@ const AuthSA = () => {
     )
 }
 
-export default AuthSA
+export default AuthPA

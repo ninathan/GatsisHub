@@ -17,6 +17,7 @@ import {
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 
 const OrderDetail = () => {
@@ -41,6 +42,10 @@ const OrderDetail = () => {
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
 
+    // Payment proof states
+    const [paymentInfo, setPaymentInfo] = useState(null);
+    const [showProofModal, setShowProofModal] = useState(false);
+
     // Fetch order details
     useEffect(() => {
         const fetchOrder = async () => {
@@ -59,14 +64,14 @@ const OrderDetail = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched order:', data.order);
+
                 setOrder(data.order);
                 setOrderStatus(data.order.orderstatus);
                 setValidatedPrice(data.order.totalprice || '');
                 setDeadline(data.order.deadline || '');
                 setError(null);
             } catch (err) {
-                console.error('Error fetching order:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -74,6 +79,26 @@ const OrderDetail = () => {
         };
 
         fetchOrder();
+    }, [orderid]);
+
+    // Fetch payment info for this order
+    useEffect(() => {
+        const fetchPaymentInfo = async () => {
+            if (!orderid) return;
+
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    setPaymentInfo(payment);
+
+                }
+            } catch (error) {
+
+            }
+        };
+
+        fetchPaymentInfo();
     }, [orderid]);
 
     // Helper functions
@@ -111,7 +136,7 @@ const OrderDetail = () => {
 
             showNotificationMessage('Order status updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating status:', err);
+
             showNotificationMessage(err.message || 'Failed to update order status', 'error');
             setOrderStatus(order.orderstatus); // Revert on error
         } finally {
@@ -144,7 +169,7 @@ const OrderDetail = () => {
             setIsEditingPrice(false);
             showNotificationMessage('Price updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating price:', err);
+
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
@@ -178,12 +203,11 @@ const OrderDetail = () => {
                 throw new Error(data.error || 'Failed to update deadline');
             }
 
-            console.log('✅ Deadline updated:', data.order);
             setOrder(data.order);
             setIsEditingDeadline(false);
             showNotificationMessage('Deadline updated successfully', 'success');
         } catch (err) {
-            console.error('Error updating deadline:', err);
+
             showNotificationMessage(err.message || 'Failed to update deadline', 'error');
         } finally {
             setIsSavingDeadline(false);
@@ -207,7 +231,7 @@ const OrderDetail = () => {
             setSelected3DDesign(design);
             setShow3DModal(true);
         } catch (error) {
-            console.error('Error parsing 3D design data:', error);
+
         }
     };
 
@@ -233,7 +257,7 @@ const OrderDetail = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Order approved successfully', 'success');
         } catch (err) {
-            console.error('Error approving order:', err);
+
             showNotificationMessage('Failed to approve order', 'error');
         }
     };
@@ -255,7 +279,7 @@ const OrderDetail = () => {
             setOrderStatus('Approved');
             showNotificationMessage('Payment confirmed and order approved', 'success');
         } catch (err) {
-            console.error('Error confirming payment:', err);
+
             showNotificationMessage('Failed to confirm payment', 'error');
         }
     };
@@ -315,24 +339,112 @@ const OrderDetail = () => {
                 showNotificationMessage('Failed to start conversation. Please try again.', 'error');
             }
         } catch (error) {
-            console.error('Error starting conversation:', error);
+
             showNotificationMessage('Failed to contact customer. Please try again.', 'error');
         }
     };
 
     const handleExportXLS = () => {
-        console.log("Exporting to XLS");
+
         showNotificationMessage('XLS export feature coming soon', 'success');
     };
 
     const handleExportPDF = () => {
-        console.log("Exporting to PDF");
+
         showNotificationMessage('PDF export feature coming soon', 'success');
     };
 
     const handleViewProof = () => {
-        console.log("Viewing proof of payment");
-        showNotificationMessage('Proof of payment viewer coming soon', 'success');
+        if (!paymentInfo || !paymentInfo.proofofpayment) {
+            showNotificationMessage('No payment proof available for this order', 'error');
+            return;
+        }
+
+        setShowProofModal(true);
+    };
+
+    const handleRejectPayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to reject', 'error');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'Are you sure you want to reject this payment? The customer will need to submit a new proof of payment.'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reject payment');
+            }
+
+            showNotificationMessage('Payment rejected. Customer can now resubmit proof of payment.', 'success');
+            setShowProofModal(false);
+            setPaymentInfo(null);
+            
+            // Refresh order data
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+
+            showNotificationMessage('Failed to reject payment', 'error');
+        }
+    };
+
+    const handleApprovePayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to approve', 'error');
+            return;
+        }
+
+        try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}/verify`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Verified',
+                    verifiedby: employee?.employeeid
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to approve payment');
+            }
+
+            showNotificationMessage('Payment approved successfully', 'success');
+            setShowProofModal(false);
+            
+            // Refresh payment and order data
+            const paymentResponse = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+            if (paymentResponse.ok) {
+                const payment = await paymentResponse.json();
+                setPaymentInfo(payment);
+            }
+            
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+
+            showNotificationMessage('Failed to approve payment', 'error');
+        }
     };
 
     if (loading) {
@@ -340,10 +452,7 @@ const OrderDetail = () => {
             <div className="flex w-full bg-gray-50">
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading order...</p>
-                        </div>
+                        <LoadingSpinner size="xl" text="Loading order..." />
                     </div>
                 </main>
             </div>
@@ -569,7 +678,7 @@ const OrderDetail = () => {
                                     <h4 className="font-semibold text-gray-800">3D Design Preview:</h4>
                                     <button
                                         onClick={() => open3DModal(order.threeddesigndata)}
-                                        className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
+                                        className="bg-[#35408E] text-white px-4 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
                                     >
                                         <Eye size={16} />
                                         View 3D Design
@@ -591,7 +700,7 @@ const OrderDetail = () => {
                                             );
                                         }
                                     } catch (error) {
-                                        console.error('Error parsing design data:', error);
+
                                     }
                                     return <p className="text-gray-500 text-center py-8">No thumbnail available</p>;
                                 })()}
@@ -632,10 +741,15 @@ const OrderDetail = () => {
                             </button>
                             <button
                                 onClick={handleViewProof}
-                                className="bg-indigo-700 hover:bg-indigo-800 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                disabled={!paymentInfo}
+                                className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm ${
+                                    paymentInfo 
+                                        ? 'bg-indigo-700 hover:bg-indigo-800 text-white' 
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
                             >
                                 <Eye size={18} />
-                                View Proof
+                                View Proof {paymentInfo ? '' : '(Not Available)'}
                             </button>
                             <button
                                 onClick={handleExportXLS}
@@ -669,6 +783,103 @@ const OrderDetail = () => {
                 </div>
             </main>
 
+            {/* Proof of Payment Modal */}
+            {showProofModal && paymentInfo && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
+                            <div>
+                                <h2 className="text-white text-2xl font-semibold">Proof of Payment</h2>
+                                <p className="text-indigo-200 text-sm mt-1">
+                                    Payment Method: {paymentInfo.paymentmethod} | Status: {paymentInfo.paymentstatus}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowProofModal(false)}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Proof Content - Scrollable */}
+                        <div className="bg-white p-6 overflow-auto flex-1">
+                            {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
+                                <div className="flex flex-col items-center gap-4 py-8">
+                                    <FileText size={64} className="text-indigo-600" />
+                                    <p className="text-gray-700 font-semibold text-lg">PDF Payment Proof</p>
+                                    <a 
+                                        href={paymentInfo.proofofpayment} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                                    >
+                                        <Eye size={20} />
+                                        Open PDF
+                                    </a>
+                                </div>
+                            ) : (
+                                <div className="w-full bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                                    <img
+                                        src={paymentInfo.proofofpayment}
+                                        alt="Proof of Payment"
+                                        className="w-full h-auto max-h-[60vh] object-contain"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Payment Details */}
+                        {paymentInfo.datesubmitted && (
+                            <div className="bg-gray-50 px-6 py-4 border-t flex-shrink-0">
+                                <p className="text-sm text-gray-600">
+                                    Submitted: {formatDate(paymentInfo.datesubmitted)}
+                                </p>
+                                {paymentInfo.paymentstatus && (
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Status: <span className={`font-semibold ${
+                                            paymentInfo.paymentstatus === 'Verified' ? 'text-green-600' :
+                                            paymentInfo.paymentstatus === 'Rejected' ? 'text-red-600' :
+                                            'text-yellow-600'
+                                        }`}>{paymentInfo.paymentstatus}</span>
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Footer - Action Buttons */}
+                        <div className="bg-gray-100 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
+                            <div className="flex gap-3">
+                                {paymentInfo.paymentstatus !== 'Verified' && (
+                                    <button
+                                        onClick={handleApprovePayment}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                    >
+                                        <Check size={18} />
+                                        Approve Payment
+                                    </button>
+                                )}
+                                {paymentInfo.paymentstatus !== 'Rejected' && (
+                                    <button
+                                        onClick={handleRejectPayment}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                    >
+                                        ✕ Reject Payment
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setShowProofModal(false)}
+                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
@@ -692,10 +903,7 @@ const OrderDetail = () => {
                             <div className="w-full h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
                                 <Suspense fallback={
                                     <div className='w-full h-full flex items-center justify-center'>
-                                        <div className='text-center'>
-                                            <div className='text-6xl mb-4'>⏳</div>
-                                            <p className='text-lg text-gray-600'>Loading 3D Design...</p>
-                                        </div>
+                                        <LoadingSpinner size="lg" text="Loading 3D Design..." />
                                     </div>
                                 }>
                                     <HangerScene

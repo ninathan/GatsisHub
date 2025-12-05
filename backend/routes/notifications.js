@@ -63,7 +63,7 @@ router.get('/customer/:customerid', async (req, res) => {
             thumbnailType = 'color';
           }
         } catch (e) {
-          console.error('Error parsing design data:', e);
+
         }
       }
       // Fallback to selectedcolor if no design data
@@ -102,7 +102,7 @@ router.get('/customer/:customerid', async (req, res) => {
       unreadCount: formattedNotifications.filter(n => !n.isRead).length
     });
   } catch (err) {
-    console.error('❌ Get notifications error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -141,7 +141,7 @@ router.post('/create', async (req, res) => {
       notification: data 
     });
   } catch (err) {
-    console.error('❌ Create notification error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -165,7 +165,7 @@ router.patch('/:notificationid/read', async (req, res) => {
       notification: data 
     });
   } catch (err) {
-    console.error('❌ Mark notification as read error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -187,7 +187,7 @@ router.patch('/customer/:customerid/read-all', async (req, res) => {
       message: 'All notifications marked as read'
     });
   } catch (err) {
-    console.error('❌ Mark all notifications as read error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -206,7 +206,7 @@ router.delete('/:notificationid', async (req, res) => {
 
     res.json({ message: 'Notification deleted successfully' });
   } catch (err) {
-    console.error('❌ Delete notification error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -226,7 +226,7 @@ router.get('/customer/:customerid/unread-count', async (req, res) => {
 
     res.json({ unreadCount: count || 0 });
   } catch (err) {
-    console.error('❌ Get unread count error:', err.message);
+
     res.status(500).json({ error: err.message });
   }
 });

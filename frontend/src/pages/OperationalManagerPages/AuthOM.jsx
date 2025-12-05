@@ -25,8 +25,6 @@ const AuthOM = () => {
                 throw new Error('Please enter both email and password');
             }
 
-            console.log('🔐 Attempting OM login:', email);
-
             const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
                 method: 'POST',
                 headers: {
@@ -40,8 +38,6 @@ const AuthOM = () => {
             if (!response.ok) {
                 throw new Error(data.error || 'Login failed');
             }
-
-            console.log('✅ Login successful:', data.employee);
 
             // Verify role is Operational Manager and department matches
             if (data.employee.role !== 'Operational Manager' || data.employee.assigneddepartment !== 'Operational Manager') {
@@ -59,7 +55,7 @@ const AuthOM = () => {
             navigate('/orderpageOM');
 
         } catch (err) {
-            console.error('❌ Login error:', err);
+
             setError(err.message || 'Invalid email or password');
         } finally {
             setLoading(false);

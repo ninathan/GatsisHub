@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Search, Filter } from "lucide-react";
 import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const OrderPage = () => {
     const [orders, setOrders] = useState([]);
@@ -24,12 +25,12 @@ const OrderPage = () => {
                 }
 
                 const data = await response.json();
-                console.log('📦 Fetched orders:', data.orders);
+
                 setOrders(data.orders || []);
                 setFilteredOrders(data.orders || []);
                 setError(null);
             } catch (err) {
-                console.error('Error fetching orders:', err);
+
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -104,8 +105,7 @@ const OrderPage = () => {
                 <main className="flex-1 p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto"></div>
-                            <p className="mt-4 text-xl text-gray-600">Loading orders...</p>
+                            <LoadingSpinner size="lg" text="Loading orders..." />
                         </div>
                     </div>
                 </main>
@@ -182,7 +182,7 @@ const OrderPage = () => {
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-x-auto">
                     <table className="w-full text-sm min-w-[800px]">
-                        <thead className="bg-[#35408E] text-white">
+                        <thead className="bg-[#007BFF] text-white">
                             <tr>
                                 <th className="px-2 md:px-4 py-3 text-left">
                                     <input 

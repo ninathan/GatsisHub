@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import logo from '../../images/logo.png';
 import { useAuth } from '../../context/AuthContext';
@@ -14,9 +14,11 @@ const Navbar = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hideNavbar, setHideNavbar] = useState(false);
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   const linkClass = ({ isActive }) =>
@@ -68,9 +70,36 @@ const Navbar = () => {
     };
   }, []);
 
+  // Check if we're on checkout page and if any modal is open
+  useEffect(() => {
+    if (location.pathname === '/checkout') {
+      const checkModals = () => {
+        // Check if any modal is open by looking for elements with high z-index
+        const modals = document.querySelectorAll('[class*="z-[200]"], [class*="z-[9999]"]');
+        const hasOpenModal = Array.from(modals).some(modal => {
+          const style = window.getComputedStyle(modal);
+          return style.display !== 'none' && style.visibility !== 'hidden';
+        });
+        setHideNavbar(hasOpenModal);
+      };
+
+      // Check immediately and set up an interval to check periodically
+      checkModals();
+      const interval = setInterval(checkModals, 100);
+
+      return () => clearInterval(interval);
+    } else {
+      setHideNavbar(false);
+    }
+  }, [location.pathname]);
+
+  if (hideNavbar) {
+    return null;
+  }
+
 
   return (
-    <nav className="bg-[#353f94] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-yellow-400 sticky top-0 z-50">
+    <nav className="bg-[#007BFF] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#DC3545] sticky top-0 z-50">
       <div className="flex items-center justify-between max-w-full">
         {/* logo and title */}
         <div className="flex items-center space-x-2 md:space-x-3">
@@ -94,10 +123,10 @@ const Navbar = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center gap-2 lg:gap-3 px-3 py-2 rounded-lg hover:bg-[#4a5899] transition-all duration-200 group"
+                  className="flex items-center gap-2 lg:gap-3 px-3 py-2 rounded-lg hover:bg-[#0056b3] transition-all duration-200 group"
                 >
-                  <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
-                    <User className="text-[#353f94]" size={20} strokeWidth={2.5} />
+                  <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
+                    <User className="text-white" size={20} strokeWidth={2.5} />
                   </div>
                   <div className="hidden lg:flex flex-col items-start">
                     <span className="text-white text-sm font-medium leading-tight">{user.companyname || 'User'}</span>
@@ -115,10 +144,10 @@ const Navbar = () => {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-fadeIn">
                     {/* User Info Header */}
-                    <div className="px-4 py-4 bg-gradient-to-r from-[#353f94] to-[#4a5899] border-b border-gray-200">
+                    <div className="px-4 py-4 bg-gradient-to-r from-[#007BFF] to-[#0056b3] border-b border-gray-200">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-                          <User className="text-[#353f94]" size={24} strokeWidth={2.5} />
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                          <User className="text-white" size={24} strokeWidth={2.5} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-white font-semibold text-base truncate">{user.companyname || 'User'}</p>
@@ -237,9 +266,9 @@ const Navbar = () => {
               {/* User Profile Section */}
               <div className="mt-3 pt-3 border-t border-gray-400">
                 <div className="px-1 py-2 mb-2">
-                  <div className="flex items-center gap-3 bg-[#4a5899] rounded-lg p-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-                      <User className="text-[#353f94]" size={24} strokeWidth={2.5} />
+                  <div className="flex items-center gap-3 bg-[#0056b3] rounded-lg p-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                      <User className="text-white" size={24} strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-white font-semibold text-base truncate">{user.companyname || 'User'}</p>
@@ -252,11 +281,11 @@ const Navbar = () => {
                 <div className="space-y-1 px-1">
                   <NavLink 
                     to="/checkout" 
-                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
+                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#0056b3] rounded-lg transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <ShoppingCart size={18} className="text-yellow-400" />
+                    <div className="w-8 h-8 bg-[#0056b3] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart size={18} className="text-[#DC3545]" />
                     </div>
                     <div className="flex-1">
                       <span className="text-sm font-medium block">Place Order</span>

@@ -4,7 +4,55 @@ import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { EllipsisVertical, LogOut, SquareUser, ShoppingCart } from 'lucide-react'
 
+
 const sidebarSytemA = () => {
+    const navigate = useNavigate();
+  const [employee, setEmployee] = useState(null);
+
+  useEffect(() => {
+    // Get employee data from localStorage
+    const storedEmployee = localStorage.getItem('systemAdmin');
+    if (storedEmployee) {
+      setEmployee(JSON.parse(storedEmployee));
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    const employee = JSON.parse(localStorage.getItem('systemAdmin'));
+    
+    // Call backend to set ispresent to false
+    if (employee && employee.employeeid) {
+      try {
+        await fetch('https://gatsis-hub.vercel.app/employees/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employeeid: employee.employeeid
+          })
+        });
+
+      } catch (error) {
+
+        // Continue with logout even if presence update fails
+      }
+    }
+    
+    // Clear employee data from localStorage
+    localStorage.removeItem('systemAdmin');
+    localStorage.removeItem('rememberEmployee');
+    // Redirect to login
+    navigate('/authSystemA');
+  };
+
+  // Get initials from employee name
+  const getInitials = (name) => {
+    if (!name) return 'S';
+    const names = name.split(' ');
+    if (names.length === 1) return name.substring(0, 2).toUpperCase();
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  };
     return (
         <div>
             {/* Sidebar */}
@@ -42,14 +90,12 @@ const sidebarSytemA = () => {
                 <div className="px-6 py-4 border-t border-gray-600 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span className="text-sm font-bold text-gray-700">
-                            {/* {employee ? getInitials(employee.employeename) : 'OM'} */}
+                            {employee ? getInitials(employee.employeename) : 'S'}
                         </span>
                     </div>
                     <div className="flex-1">
-                        <p className='font-semibold'>Josh Dela Cruz</p>
-                        <p className='text-sm text-gray-300'>System Admin</p>
-                        {/* <p className="font-semibold">{employee?.employeename || 'Operational Manager'}</p> */}
-                        {/* <p className="text-sm text-gray-300">{employee?.role || 'Operational Manager'}</p> */}
+                        <p className="font-semibold">{employee?.employeename || 'System Admin'}</p>
+                        <p className="text-sm text-gray-300">{employee?.role || 'System Admin'}</p>
                     </div>
                     <Link to="/systemprofile">
                         <EllipsisVertical className="cursor-pointer" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye } from "react-icons/fa";
+import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye, FaTrophy, FaChartLine } from "react-icons/fa";
 
 const Employees = () => {
     const [employees, setEmployees] = useState([]);
@@ -21,6 +21,7 @@ const Employees = () => {
         contactdetails: "",
         shifthours: "",
         assigneddepartment: "",
+        ispresent: false,
     });
 
     // Teams state
@@ -36,13 +37,32 @@ const Employees = () => {
         description: "",
         selectedEmployees: [],
         quota: "",
+        dailyquota: "",
         assignedOrders: []
+    });
+
+    // Quotas state
+    const [quotas, setQuotas] = useState([]);
+    const [showCreateQuotaModal, setShowCreateQuotaModal] = useState(false);
+    const [showQuotaModal, setShowQuotaModal] = useState(false);
+    const [showDeleteQuotaConfirm, setShowDeleteQuotaConfirm] = useState(false);
+    const [selectedQuota, setSelectedQuota] = useState(null);
+    const [isEditingQuota, setIsEditingQuota] = useState(false);
+    const [quotaFormData, setQuotaFormData] = useState({
+        quotaname: "",
+        teamids: [],
+        assignedOrders: [],
+        finishedquota: 0,
+        startdate: "",
+        enddate: "",
+        status: "Active"
     });
 
     useEffect(() => {
         fetchEmployees();
         fetchTeams();
         fetchAvailableOrders();
+        fetchQuotas();
     }, []);
 
     useEffect(() => {
@@ -76,7 +96,7 @@ const Employees = () => {
             setEmployees(productionAndAssembly);
             setFilteredEmployees(productionAndAssembly);
         } catch (error) {
-            console.error('Error fetching employees:', error);
+
         } finally {
             setLoading(false);
         }
@@ -90,6 +110,7 @@ const Employees = () => {
             contactdetails: employee.contactdetails || "",
             shifthours: employee.shifthours || "",
             assigneddepartment: employee.assigneddepartment || "",
+            ispresent: employee.ispresent || false,
         });
         setIsModalOpen(true);
     };
@@ -103,6 +124,7 @@ const Employees = () => {
             contactdetails: "",
             shifthours: "",
             assigneddepartment: "",
+            ispresent: false,
         });
     };
 
@@ -138,7 +160,7 @@ const Employees = () => {
                 setShowErrorModal(true);
             }
         } catch (error) {
-            console.error('Error updating employee:', error);
+
             setErrorMessage('Failed to update employee. Please try again.');
             setShowErrorModal(true);
         }
@@ -173,7 +195,7 @@ const Employees = () => {
                 setShowDeleteConfirm(false);
             }
         } catch (error) {
-            console.error('Error deleting employee:', error);
+
             setErrorMessage('Failed to delete employee. Please try again.');
             setShowErrorModal(true);
             setShowDeleteConfirm(false);
@@ -188,7 +210,7 @@ const Employees = () => {
     // Team functions
     const fetchTeams = async () => {
         try {
-            console.log('📋 Fetching teams from API');
+
             const response = await fetch('https://gatsis-hub.vercel.app/teams');
 
             if (!response.ok) {
@@ -209,9 +231,9 @@ const Employees = () => {
             }));
 
             setTeams(transformedTeams);
-            console.log(`✅ Fetched ${transformedTeams.length} teams`);
+
         } catch (error) {
-            console.error('❌ Error fetching teams:', error);
+
             setErrorMessage('Failed to load teams. Please try again.');
             setShowErrorModal(true);
         }
@@ -219,7 +241,6 @@ const Employees = () => {
 
     const fetchAvailableOrders = async () => {
         try {
-            console.log('📋 Fetching available orders for team assignment');
 
             const response = await fetch('https://gatsis-hub.vercel.app/orders/all');
             if (!response.ok) {
@@ -234,9 +255,9 @@ const Employees = () => {
             );
 
             setAvailableOrders(assignableOrders);
-            console.log(`✅ Fetched ${assignableOrders.length} assignable orders`);
+
         } catch (error) {
-            console.error('❌ Error fetching available orders:', error);
+
             setErrorMessage('Failed to load available orders. Please try again.');
             setShowErrorModal(true);
         }
@@ -248,6 +269,7 @@ const Employees = () => {
             description: "",
             selectedEmployees: [],
             quota: "",
+            dailyquota: "",
             assignedOrders: []
         });
         setShowCreateTeamModal(true);
@@ -260,6 +282,7 @@ const Employees = () => {
             description: team.description || "",
             selectedEmployees: team.members || [],
             quota: team.quota || "",
+            dailyquota: team.dailyquota || "",
             assignedOrders: team.assignedOrders || []
         });
         setIsEditingTeam(false);
@@ -283,7 +306,6 @@ const Employees = () => {
         }
 
         try {
-            console.log(`${selectedTeam ? '✏️ Updating' : '➕ Creating'} team: ${teamFormData.teamname}`);
 
             // Prepare data for API
             const teamData = {
@@ -291,6 +313,7 @@ const Employees = () => {
                 description: teamFormData.description,
                 members: teamFormData.selectedEmployees,
                 quota: teamFormData.quota,
+                dailyquota: teamFormData.dailyquota,
                 assignedOrders: teamFormData.assignedOrders
             };
 
@@ -354,10 +377,8 @@ const Employees = () => {
 
             handleCloseTeamModal();
 
-            console.log(`✅ Team ${selectedTeam ? 'updated' : 'created'} successfully: ${transformedTeam.teamname}`);
-
         } catch (error) {
-            console.error('❌ Error saving team:', error);
+
             setErrorMessage(error.message || 'Failed to save team. Please try again.');
             setShowErrorModal(true);
         }
@@ -367,7 +388,6 @@ const Employees = () => {
         if (!selectedTeam) return;
 
         try {
-            console.log(`🗑️ Deleting team: ${selectedTeam.teamname} (ID: ${selectedTeam.id})`);
 
             const response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
                 method: 'DELETE'
@@ -390,10 +410,8 @@ const Employees = () => {
             setShowDeleteTeamConfirm(false);
             setSelectedTeam(null);
 
-            console.log(`✅ Team deleted successfully: ${selectedTeam.teamname}`);
-
         } catch (error) {
-            console.error('❌ Error deleting team:', error);
+
             setErrorMessage(error.message || 'Failed to delete team. Please try again.');
             setShowErrorModal(true);
             setShowDeleteTeamConfirm(false);
@@ -425,6 +443,198 @@ const Employees = () => {
                 : [...prev.assignedOrders, orderId]
         }));
     };
+
+    // ============= QUOTA FUNCTIONS =============
+    
+    const fetchQuotas = async () => {
+        try {
+
+            const response = await fetch('https://gatsis-hub.vercel.app/quotas');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            setQuotas(data.quotas || []);
+
+        } catch (error) {
+
+            setErrorMessage('Failed to load quotas. Please try again.');
+            setShowErrorModal(true);
+        }
+    };
+
+    const handleCreateQuota = () => {
+        setSelectedQuota(null);
+        setIsEditingQuota(true);
+        setQuotaFormData({
+            quotaname: "",
+            teamids: [],
+            assignedOrders: [],
+            finishedquota: 0,
+            startdate: "",
+            enddate: "",
+            status: "Active"
+        });
+        setShowCreateQuotaModal(true);
+    };
+
+    const handleViewQuota = (quota) => {
+        setSelectedQuota(quota);
+        setIsEditingQuota(false);
+        setQuotaFormData({
+            quotaname: quota.quotaname,
+            teamids: quota.teamids || [],
+            assignedOrders: quota.assignedorders || [],
+            finishedquota: quota.finishedquota || 0,
+            startdate: quota.startdate || "",
+            enddate: quota.enddate || "",
+            status: quota.status || "Active"
+        });
+        setShowQuotaModal(true);
+    };
+
+    const handleEditQuota = () => {
+        setIsEditingQuota(true);
+    };
+
+    const handleDeleteQuota = (quota) => {
+        setSelectedQuota(quota);
+        setShowDeleteQuotaConfirm(true);
+    };
+
+    const handleCancelDeleteQuota = () => {
+        setShowDeleteQuotaConfirm(false);
+        setSelectedQuota(null);
+    };
+
+    const handleCloseQuotaModal = () => {
+        setShowQuotaModal(false);
+        setShowCreateQuotaModal(false);
+        setSelectedQuota(null);
+        setIsEditingQuota(false);
+    };
+
+    const handleSaveQuota = async () => {
+        try {
+            // Validate form
+            if (!quotaFormData.quotaname || quotaFormData.assignedOrders.length === 0) {
+                setErrorMessage('Quota name and at least one assigned order are required');
+                setShowErrorModal(true);
+                return;
+            }
+
+            const quotaData = {
+                quotaname: quotaFormData.quotaname,
+                teamids: quotaFormData.teamids.map(id => parseInt(id)),
+                assignedorders: quotaFormData.assignedOrders,
+                finishedquota: parseInt(quotaFormData.finishedquota) || 0,
+                startdate: quotaFormData.startdate || null,
+                enddate: quotaFormData.enddate || null,
+                status: quotaFormData.status
+            };
+
+            let response;
+            
+            if (selectedQuota) {
+                // Update existing quota
+                response = await fetch(`https://gatsis-hub.vercel.app/quotas/${selectedQuota.quotaid}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(quotaData)
+                });
+            } else {
+                // Create new quota
+                response = await fetch('https://gatsis-hub.vercel.app/quotas/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(quotaData)
+                });
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save quota');
+            }
+
+            const savedQuota = await response.json();
+
+            // Refresh quotas and teams
+            await fetchQuotas();
+            await fetchTeams();
+
+            setSuccessMessage(`Quota "${quotaFormData.quotaname}" has been ${selectedQuota ? 'updated' : 'created'} successfully!`);
+            setShowSuccessModal(true);
+
+            handleCloseQuotaModal();
+
+        } catch (error) {
+
+            setErrorMessage(error.message || 'Failed to save quota. Please try again.');
+            setShowErrorModal(true);
+        }
+    };
+
+    const handleConfirmDeleteQuota = async () => {
+        if (!selectedQuota) return;
+
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/quotas/${selectedQuota.quotaid}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete quota');
+            }
+
+            // Refresh quotas and teams
+            await fetchQuotas();
+            await fetchTeams();
+
+            setSuccessMessage(`Quota "${selectedQuota.quotaname}" has been deleted successfully!`);
+            setShowSuccessModal(true);
+
+            setShowDeleteQuotaConfirm(false);
+            setSelectedQuota(null);
+
+        } catch (error) {
+
+            setErrorMessage(error.message || 'Failed to delete quota. Please try again.');
+            setShowErrorModal(true);
+            setShowDeleteQuotaConfirm(false);
+        }
+    };
+
+    const handleQuotaInputChange = (e) => {
+        const { name, value } = e.target;
+        setQuotaFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleQuotaOrderSelection = (orderId) => {
+        setQuotaFormData(prev => ({
+            ...prev,
+            assignedOrders: prev.assignedOrders.includes(orderId)
+                ? prev.assignedOrders.filter(id => id !== orderId)
+                : [...prev.assignedOrders, orderId]
+        }));
+    };
+
+    const handleQuotaTeamSelection = (teamId) => {
+        setQuotaFormData(prev => ({
+            ...prev,
+            teamids: prev.teamids.includes(teamId)
+                ? prev.teamids.filter(id => id !== teamId)
+                : [...prev.teamids, teamId]
+        }));
+    };
+
+    // ============= END QUOTA FUNCTIONS =============
 
     const handleCloseTeamModal = () => {
         setShowCreateTeamModal(false);
@@ -495,13 +705,35 @@ const Employees = () => {
                                                 </td>
                                                 <td className="p-3">{emp.contactdetails || 'N/A'}</td>
                                                 <td className="p-3">
-                                                    <span className={`px-3 py-1 rounded-full text-sm ${
-                                                        emp.ispresent 
-                                                            ? 'bg-green-100 text-green-700' 
-                                                            : 'bg-gray-100 text-gray-700'
-                                                    }`}>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                const response = await fetch(`https://gatsis-hub.vercel.app/employees/${emp.employeeid}`, {
+                                                                    method: 'PATCH',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ ispresent: !emp.ispresent })
+                                                                });
+                                                                if (response.ok) {
+                                                                    await fetchEmployees();
+                                                                    setSuccessMessage(`${emp.employeename} marked as ${!emp.ispresent ? 'Present' : 'Absent'}`);
+                                                                    setShowSuccessModal(true);
+                                                                }
+                                                            } catch (error) {
+
+                                                                setErrorMessage('Failed to update presence status');
+                                                                setShowErrorModal(true);
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1 rounded-full text-sm cursor-pointer transition-all hover:shadow-md ${
+                                                            emp.ispresent 
+                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
+                                                        title={`Click to mark as ${emp.ispresent ? 'Absent' : 'Present'}`}
+                                                    >
                                                         {emp.ispresent ? 'Present' : 'Absent'}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                                 <td className="p-3">{emp.shifthours || 'N/A'}</td>
                                                 <td className="p-3">
@@ -617,12 +849,24 @@ const Employees = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-gray-700 font-semibold mb-2">Presence Status</label>
-                                                    <input
-                                                        type="text"
-                                                        className="w-full border rounded px-4 py-2 bg-gray-100"
-                                                        value={selectedEmployee.ispresent ? 'Present' : 'Absent'}
-                                                        readOnly
-                                                    />
+                                                    {isEditing ? (
+                                                        <select
+                                                            name="ispresent"
+                                                            value={formData.ispresent ? 'true' : 'false'}
+                                                            onChange={(e) => setFormData(prev => ({ ...prev, ispresent: e.target.value === 'true' }))}
+                                                            className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                        >
+                                                            <option value="true">Present</option>
+                                                            <option value="false">Absent</option>
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            className="w-full border rounded px-4 py-2 bg-gray-100"
+                                                            value={selectedEmployee.ispresent ? 'Present' : 'Absent'}
+                                                            readOnly
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -788,6 +1032,18 @@ const Employees = () => {
                                                 onChange={handleTeamInputChange}
                                                 className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                 placeholder="e.g., 1000 units"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-2">Daily Quota</label>
+                                            <input
+                                                type="number"
+                                                name="dailyquota"
+                                                value={teamFormData.dailyquota}
+                                                onChange={handleTeamInputChange}
+                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                placeholder="e.g., 50 units per day"
                                             />
                                         </div>
 
@@ -1030,7 +1286,24 @@ const Employees = () => {
                                                             <FaBullseye className="text-gray-500" />
                                                             <span className="font-semibold">Monthly Quota</span>
                                                         </div>
-                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota}</p>
+                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota || 'Not Set'}</p>
+                                                        {selectedTeam.linkedquotaid && (
+                                                            <div className="mt-2">
+                                                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                                    Linked to Quota
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {selectedTeam.dailyquota && (
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <FaChartLine className="text-gray-500" />
+                                                            <span className="font-semibold">Daily Quota</span>
+                                                        </div>
+                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.dailyquota || 'Not Set'}</p>
                                                     </div>
                                                 )}
 
@@ -1156,6 +1429,436 @@ const Employees = () => {
                         )}
                     </div>
                 );
+            case "quotas":
+                return (
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-6 border-b">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Quotas Management</h2>
+                                <button
+                                    onClick={handleCreateQuota}
+                                    className="bg-[#35408E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors flex items-center gap-2"
+                                >
+                                    <FaPlus /> Create Quota
+                                </button>
+                            </div>
+                        </div>
+
+                        {quotas.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">
+                                <FaTrophy className="mx-auto text-4xl mb-4 text-gray-300" />
+                                <p className="text-lg font-medium mb-2">No quotas created yet</p>
+                                <p className="text-sm">Create your first quota to track production targets and progress.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                                {quotas.map((quota) => (
+                                    <div 
+                                        key={quota.quotaid} 
+                                        className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => handleViewQuota(quota)}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <h3 className="font-semibold text-lg">{quota.quotaname}</h3>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteQuota(quota);
+                                                }}
+                                                className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors"
+                                                title="Delete Quota"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {/* Progress Bar */}
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-600">Progress</span>
+                                                    <span className="font-semibold">
+                                                        {quota.finishedquota || 0} / {quota.targetquota}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-green-600 h-2 rounded-full transition-all"
+                                                        style={{ 
+                                                            width: `${Math.min(((quota.finishedquota || 0) / quota.targetquota) * 100, 100)}%` 
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {Math.round(((quota.finishedquota || 0) / quota.targetquota) * 100)}% Complete
+                                                </div>
+                                            </div>
+
+                                            {/* Team Assignment */}
+                                            {quota.teams && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaUsers className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        Team: {quota.teams.teamname}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Assigned Orders */}
+                                            {quota.assignedorders && quota.assignedorders.length > 0 && (
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <FaClipboardList className="text-gray-500" />
+                                                    <span className="text-gray-600">
+                                                        {quota.assignedorders.length} order{quota.assignedorders.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Status Badge */}
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                                    quota.status === 'Active' 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : quota.status === 'Completed'
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {quota.status}
+                                                </span>
+                                            </div>
+
+                                            {/* Date Range */}
+                                            {(quota.startdate || quota.enddate) && (
+                                                <div className="text-xs text-gray-500 pt-2 border-t">
+                                                    {quota.startdate && (
+                                                        <div>Start: {new Date(quota.startdate).toLocaleDateString()}</div>
+                                                    )}
+                                                    {quota.enddate && (
+                                                        <div>End: {new Date(quota.enddate).toLocaleDateString()}</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Create/Edit Quota Modal */}
+                        {(showCreateQuotaModal || showQuotaModal) && (
+                            <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+                                    <div className="sticky top-0 bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center z-10">
+                                        <h2 className="text-2xl font-bold">
+                                            {selectedQuota ? (isEditingQuota ? 'Edit Quota' : 'Quota Details') : 'Create New Quota'}
+                                        </h2>
+                                        <button
+                                            onClick={handleCloseQuotaModal}
+                                            className="text-white hover:text-gray-200 text-2xl font-bold"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+
+                                    <div className="p-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Quota Name *</label>
+                                                <input
+                                                    type="text"
+                                                    name="quotaname"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.quotaname}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                    placeholder="e.g., Monthly Production Target"
+                                                />
+                                            </div>
+
+                                            {/* Target Quota - Auto-calculated from orders */}
+                                            {!isEditingQuota && selectedQuota && (
+                                                <div>
+                                                    <label className="block text-gray-700 font-semibold mb-2">Target Quota</label>
+                                                    <div className="w-full border rounded px-4 py-2 bg-gray-100 text-gray-700">
+                                                        {selectedQuota.targetquota || 0} units (from {quotaFormData.assignedOrders.length} orders)
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Finished Quota</label>
+                                                <input
+                                                    type="number"
+                                                    name="finishedquota"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.finishedquota}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                    min="0"
+                                                />
+                                            </div>
+
+                                            {/* Assign Teams - Multi-select */}
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign to Teams</label>
+                                                {isEditingQuota ? (
+                                                    <div className="border rounded px-4 py-2 bg-white max-h-40 overflow-y-auto">
+                                                        {teams.map(team => (
+                                                            <label key={team.teamid} className="flex items-center py-1 hover:bg-gray-50 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={quotaFormData.teamids.includes(team.teamid)}
+                                                                    onChange={() => handleQuotaTeamSelection(team.teamid)}
+                                                                    className="mr-2"
+                                                                />
+                                                                <span>{team.teamname}</span>
+                                                            </label>
+                                                        ))}
+                                                        {teams.length === 0 && (
+                                                            <div className="text-gray-500 text-sm">No teams available</div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full border rounded px-4 py-2 bg-gray-100">
+                                                        {quotaFormData.teamids.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {quotaFormData.teamids.map(teamId => {
+                                                                    const team = teams.find(t => t.teamid === teamId);
+                                                                    return team ? (
+                                                                        <span key={teamId} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">
+                                                                            {team.teamname}
+                                                                        </span>
+                                                                    ) : null;
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-500">No teams assigned</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Start Date</label>
+                                                <input
+                                                    type="date"
+                                                    name="startdate"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.startdate}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">End Date</label>
+                                                <input
+                                                    type="date"
+                                                    name="enddate"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.enddate}
+                                                    onChange={handleQuotaInputChange}
+                                                    readOnly={!isEditingQuota}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-2">Status</label>
+                                                <select
+                                                    name="status"
+                                                    className={`w-full border rounded px-4 py-2 ${isEditingQuota ? 'bg-white' : 'bg-gray-100'}`}
+                                                    value={quotaFormData.status}
+                                                    onChange={handleQuotaInputChange}
+                                                    disabled={!isEditingQuota}
+                                                >
+                                                    <option value="Active">Active</option>
+                                                    <option value="Completed">Completed</option>
+                                                    <option value="Cancelled">Cancelled</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Assign Orders Section */}
+                                        {isEditingQuota && (
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 font-semibold mb-2">Assign Orders</label>
+                                                <div className="border rounded p-4 max-h-60 overflow-y-auto bg-gray-50">
+                                                    {availableOrders.length === 0 ? (
+                                                        <p className="text-gray-500 text-sm">No orders available</p>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            {availableOrders.map(order => (
+                                                                <label key={order.orderid} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={quotaFormData.assignedOrders.includes(order.orderid)}
+                                                                        onChange={() => handleQuotaOrderSelection(order.orderid)}
+                                                                        className="w-4 h-4"
+                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <span className="font-medium">{order.companyname}</span>
+                                                                        <span className="text-sm text-gray-500 ml-2">
+                                                                            ({order.hangertype} - Qty: {order.quantity})
+                                                                        </span>
+                                                                    </div>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Assigned Orders Details (View Mode) */}
+                                        {!isEditingQuota && quotaFormData.assignedOrders.length > 0 && (
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 font-semibold mb-2">Assigned Orders ({quotaFormData.assignedOrders.length})</label>
+                                                <div className="border rounded p-4 max-h-80 overflow-y-auto bg-gray-50">
+                                                    <div className="space-y-3">
+                                                        {quotaFormData.assignedOrders.map(orderId => {
+                                                            const order = availableOrders.find(o => o.orderid === orderId);
+                                                            if (!order) return null;
+                                                            return (
+                                                                <div key={orderId} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                                                    <div className="flex items-start justify-between mb-2">
+                                                                        <div>
+                                                                            <h4 className="font-semibold text-lg text-[#35408E]">{order.companyname}</h4>
+                                                                            <p className="text-sm text-gray-600">Order ID: {order.orderid.slice(0, 8)}...</p>
+                                                                        </div>
+                                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                            order.orderstatus === 'Completed' ? 'bg-green-100 text-green-700' :
+                                                                            order.orderstatus === 'In Production' ? 'bg-blue-100 text-blue-700' :
+                                                                            order.orderstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                                            'bg-gray-100 text-gray-700'
+                                                                        }`}>
+                                                                            {order.orderstatus}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                                                        <div>
+                                                                            <span className="text-gray-600">Type:</span>
+                                                                            <span className="ml-2 font-medium">{order.hangertype}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-gray-600">Quantity:</span>
+                                                                            <span className="ml-2 font-medium">{order.quantity}</span>
+                                                                        </div>
+                                                                        {order.deadline && (
+                                                                            <div>
+                                                                                <span className="text-gray-600">Deadline:</span>
+                                                                                <span className="ml-2 font-medium">{new Date(order.deadline).toLocaleDateString()}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {order.materials && Object.keys(order.materials).length > 0 && (
+                                                                            <div className="col-span-2">
+                                                                                <span className="text-gray-600">Materials:</span>
+                                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                                    {Object.entries(order.materials).map(([mat, percent]) => (
+                                                                                        <span key={mat} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">
+                                                                                            {mat}: {percent}%
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Progress Stats (View Mode) */}
+                                        {!isEditingQuota && quotaFormData.targetquota && (
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 font-semibold mb-2">Progress</label>
+                                                <div className="border rounded p-4 bg-gradient-to-r from-green-50 to-blue-50">
+                                                    <div className="flex justify-between mb-2">
+                                                        <span className="font-semibold">
+                                                            {quotaFormData.finishedquota} / {quotaFormData.targetquota}
+                                                        </span>
+                                                        <span className="font-semibold text-green-600">
+                                                            {Math.round((quotaFormData.finishedquota / quotaFormData.targetquota) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-4">
+                                                        <div 
+                                                            className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all"
+                                                            style={{ 
+                                                                width: `${Math.min((quotaFormData.finishedquota / quotaFormData.targetquota) * 100, 100)}%` 
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="mt-2 text-sm text-gray-600">
+                                                        Remaining: {quotaFormData.targetquota - quotaFormData.finishedquota}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        <div className="flex gap-3 justify-end pt-4 border-t">
+                                            {!isEditingQuota && selectedQuota && (
+                                                <button
+                                                    onClick={handleEditQuota}
+                                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                >
+                                                    <FaEdit /> Edit
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleCloseQuotaModal}
+                                                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                                            >
+                                                {isEditingQuota ? 'Cancel' : 'Close'}
+                                            </button>
+                                            {isEditingQuota && (
+                                                <button
+                                                    onClick={handleSaveQuota}
+                                                    className="bg-[#35408E] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                                >
+                                                    {selectedQuota ? 'Save Changes' : 'Create Quota'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteQuotaConfirm && selectedQuota && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
+                                <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+                                    <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                                        <FaTrash className="text-red-600 text-xl" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-center mb-2">Delete Quota</h3>
+                                    <p className="text-gray-600 text-center mb-6">
+                                        Are you sure you want to delete <span className="font-semibold">"{selectedQuota.quotaname}"</span>? 
+                                        This will unlink it from the assigned team but won't delete the team or orders.
+                                    </p>
+                                    <div className="flex gap-3 justify-end">
+                                        <button
+                                            onClick={handleCancelDeleteQuota}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmDeleteQuota}
+                                            className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                        >
+                                            Delete Quota
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -1189,6 +1892,16 @@ const Employees = () => {
                             onClick={() => setActiveTab("teams")}
                         >
                             Teams
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded cursor-pointer transition-colors ${
+                                activeTab === "quotas" 
+                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    : "bg-gray-200 hover:bg-gray-300"
+                            }`}
+                            onClick={() => setActiveTab("quotas")}
+                        >
+                            Quotas
                         </button>
                     </div>
                     <div className="flex items-center gap-2">

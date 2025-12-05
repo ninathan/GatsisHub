@@ -87,7 +87,7 @@ const profileSA = () => {
     const handleEditProfile = () => {
         if (isEditing) {
             // Save changes logic here
-            console.log('Saving profile changes:', profileData);
+
             setSuccess('Profile updated successfully!');
             setTimeout(() => setSuccess(''), 3000);
             
@@ -167,7 +167,7 @@ const profileSA = () => {
     if (loading) {
         return (
             <div className="flex-1 flex items-center justify-center min-h-screen bg-gray-50">
-                <p className="text-xl text-gray-600">Loading...</p>
+                <LoadingSpinner size="lg" text="Loading..." />
             </div>
         );
     }

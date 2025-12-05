@@ -81,7 +81,7 @@ const ProfileOM = () => {
     const handleEditProfile = () => {
         if (isEditing) {
             // Save profile changes logic dito
-            console.log('saving profile changes: ', profileData)
+
             setSuccess('Profile update successfully!')
             setTimeout(() => setSuccess(''), 3000)
 
@@ -159,7 +159,7 @@ const ProfileOM = () => {
     if (loading) {
         return (
             <div className='flex-1 flex items-center justify-center min-h-screen bg-gray-500'>
-                <p className='text-xl text-gray-600'>Loading...</p>
+                <LoadingSpinner size="lg" text="Loading..." />
             </div>
         )
     }

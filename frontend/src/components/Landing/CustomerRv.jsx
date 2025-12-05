@@ -49,7 +49,7 @@ const CustomerRv = () => {
             const data = await response.json();
             setReviews(data.feedbacks || []);
         } catch (error) {
-            console.error("Error fetching reviews:", error);
+
         } finally {
             setLoading(false);
         }
@@ -64,7 +64,7 @@ const CustomerRv = () => {
             const data = await response.json();
             setUserOrders(data.orders || []);
         } catch (error) {
-            console.error("Error fetching orders:", error);
+
             setUserOrders([]);
         }
     };
@@ -150,7 +150,7 @@ const CustomerRv = () => {
             // Refresh reviews
             fetchReviews();
         } catch (error) {
-            console.error("Error submitting review:", error);
+
             setNotification({
                 show: true,
                 message: error.message || "Failed to submit review. Please try again.",

@@ -24,8 +24,6 @@ router.post('/save', async (req, res) => {
       designData // Complete 3D design JSON string
     } = req.body;
 
-    console.log('💾 Saving design:', { customerid, userid, designName, hangerType, hasThumbnail: !!thumbnail });
-
     // Prepare the design data object
     const designDataObject = {
       hangerType,
@@ -52,19 +50,16 @@ router.post('/save', async (req, res) => {
       datecreated: new Date().toISOString()
     };
 
-    console.log('📦 Insert data:', { ...insertData, url: insertData.url ? '[JSON_DATA]' : null });
-
     const { data, error } = await supabase
       .from('designs')
       .insert([insertData])
       .select();
 
     if (error) {
-      console.error('❌ Error saving design:', error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log('✅ Design saved successfully:', data);
     res.json({ 
       success: true, 
       design: data[0],
@@ -72,7 +67,7 @@ router.post('/save', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Server error saving design:', error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -82,8 +77,6 @@ router.get('/user/:userid', async (req, res) => {
   try {
     const { userid } = req.params;
 
-    console.log('🔍 Fetching designs for user:', userid);
-
     const { data, error } = await supabase
       .from('designs')
       .select('*')
@@ -91,15 +84,14 @@ router.get('/user/:userid', async (req, res) => {
       .order('datecreated', { ascending: false });
 
     if (error) {
-      console.error('❌ Error fetching designs:', error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log(`✅ Found ${data.length} designs for user ${userid}`);
     res.json(data);
 
   } catch (error) {
-    console.error('❌ Server error fetching designs:', error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -109,8 +101,6 @@ router.get('/:designid', async (req, res) => {
   try {
     const { designid } = req.params;
 
-    console.log('🔍 Fetching design:', designid);
-
     const { data, error } = await supabase
       .from('designs')
       .select('*')
@@ -118,15 +108,14 @@ router.get('/:designid', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('❌ Error fetching design:', error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log('✅ Design found:', data);
     res.json(data);
 
   } catch (error) {
-    console.error('❌ Server error fetching design:', error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -136,8 +125,6 @@ router.delete('/:designid', async (req, res) => {
   try {
     const { designid } = req.params;
 
-    console.log('🗑️ Deleting design:', designid);
-
     const { data, error } = await supabase
       .from('designs')
       .delete()
@@ -145,18 +132,17 @@ router.delete('/:designid', async (req, res) => {
       .select();
 
     if (error) {
-      console.error('❌ Error deleting design:', error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log('✅ Design deleted successfully');
     res.json({ 
       success: true, 
       message: 'Design deleted successfully!' 
     });
 
   } catch (error) {
-    console.error('❌ Server error deleting design:', error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -179,8 +165,6 @@ router.put('/:designid', async (req, res) => {
       materials,
       designData
     } = req.body;
-
-    console.log('✏️ Updating design:', designid);
 
     const designDataObject = {
       hangerType,
@@ -209,11 +193,10 @@ router.put('/:designid', async (req, res) => {
       .select();
 
     if (error) {
-      console.error('❌ Error updating design:', error);
+
       return res.status(500).json({ error: error.message });
     }
 
-    console.log('✅ Design updated successfully');
     res.json({ 
       success: true, 
       design: data[0],
@@ -221,7 +204,7 @@ router.put('/:designid', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Server error updating design:', error);
+
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const Messages = () => {
     const [conversations, setConversations] = useState([]);
@@ -47,7 +48,7 @@ const Messages = () => {
                 fetchMessages(data.conversations[0].customerid);
             }
         } catch (error) {
-            console.error('Error fetching conversations:', error);
+
         } finally {
             setLoading(false);
         }
@@ -61,7 +62,7 @@ const Messages = () => {
             const data = await response.json();
             setMessages(data.messages || []);
         } catch (error) {
-            console.error('Error fetching messages:', error);
+
         }
     };
 
@@ -140,7 +141,7 @@ const Messages = () => {
                 fetchMessages(selectedCustomer.customerid);
             }
         } catch (error) {
-            console.error('Error sending message:', error);
+
         } finally {
             setSendingMessage(false);
         }
@@ -190,7 +191,9 @@ const Messages = () => {
                     </div>
                     <ul className="flex-1 overflow-y-auto">
                         {loading ? (
-                            <li className="p-4 text-center text-gray-500">Loading...</li>
+                            <li className="p-4 text-center text-gray-500">
+                                <LoadingSpinner size="sm" text="" />
+                            </li>
                         ) : conversations.length === 0 ? (
                             <li className="p-4 text-center text-gray-500">No conversations yet</li>
                         ) : (

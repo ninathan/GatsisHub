@@ -18,9 +18,12 @@ const Signup = () => {
   const { login } = useAuth()
 
   // form data
-  const [companyName, setCompanyName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [emailAddress, setEmailAddress] = useState('')
   const [companyNumber, setCompanyNumber] = useState('')
+  const [gender, setGender] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [Password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(false)
@@ -69,7 +72,7 @@ const Signup = () => {
     // Build address object
     const companyAddress = {
       id: Date.now(), // Generate unique ID
-      name: 'Company Address',
+      name: 'Home Address',
       phone: companyNumber || '', // Use company number as phone
       address: [
         street.trim(),
@@ -90,9 +93,12 @@ const Signup = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyName,
+          firstName,
+          lastName,
           emailAddress,
           companyNumber,
+          gender,
+          dateOfBirth,
           password: Password,
           addresses: addresses,
         }),
@@ -114,7 +120,6 @@ const Signup = () => {
     try {
       const token = credentialResponse.credential
       const decoded = jwtDecode(token)
-      console.log('✅ Google user info:', decoded)
 
       // Send token to backend for Google signup/login
       const res = await fetch('https://gatsis-hub.vercel.app/auth/google', {
@@ -132,7 +137,7 @@ const Signup = () => {
 
       // Check if user needs to complete profile (new Google users without addresses)
       if (!data.user.addresses || data.user.addresses.length === 0) {
-        console.log('🔄 New Google user - redirecting to complete profile')
+
         navigate('/complete-profile')
       } else {
         navigate('/logged')
@@ -140,7 +145,7 @@ const Signup = () => {
       
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-      console.error('❌ Google sign-up error:', err.message)
+
       setError(err.message || 'Google Sign-Up was unsuccessful. Please try again.')
     }
   }
@@ -166,42 +171,89 @@ const Signup = () => {
             <form onSubmit={handleSubmit} className='flex flex-col w-full space-y-6'>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-10'>
 
-                {/* Company Name */}
+                {/* First Name */}
                 <div className='relative'>
-                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Company Name</label>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>First Name</label>
                   <img src={userav} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
                   <input
                     type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
-                    placeholder='Enter your company name'
+                    placeholder='Enter your first name'
+                    required
                   />
                 </div>
 
-                {/* Company Email */}
+                {/* Last Name */}
                 <div className='relative'>
-                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Company Email</label>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Last Name</label>
+                  <img src={userav} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    placeholder='Enter your last name'
+                    required
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Email Address</label>
                   <img src={userav} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
                   <input
                     type="email"
                     value={emailAddress}
                     onChange={(e) => setEmailAddress(e.target.value)}
                     className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
-                    placeholder='Enter your company email'
+                    placeholder='Enter your email'
+                    required
                   />
                 </div>
 
-                {/* Company Number */}
+                {/* Phone Number */}
                 <div className='relative'>
-                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Company Number</label>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Phone Number</label>
                   <img src={phone} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
                   <input
                     type="tel"
                     value={companyNumber}
                     onChange={(e) => setCompanyNumber(e.target.value)}
                     className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
-                    placeholder='Enter your Company Number'
+                    placeholder='Enter your phone number'
+                  />
+                </div>
+
+                {/* Gender */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Gender</label>
+                  <img src={userav} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] appearance-none bg-white'
+                    required
+                  >
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+
+                {/* Date of Birth */}
+                <div className='relative'>
+                  <label className='text-black text-lg md:text-2xl font-medium mb-3 block'>Date of Birth</label>
+                  <img src={userav} alt="" className='absolute left-4 top-15 md:top-15.5 w-5 h-5 md:w-6 md:h-6' />
+                  <input
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    required
                   />
                 </div>
 

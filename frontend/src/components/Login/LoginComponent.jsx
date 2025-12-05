@@ -8,6 +8,7 @@ import PageTransition from '../Transition/PageTransition'
 import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode' // ✅ FIXED import
+import TwoFactorVerification from './TwoFactorVerification'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -17,6 +18,7 @@ const Login = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showTwoFactor, setShowTwoFactor] = useState(false)
 
   const IntputField =
     'border border-gray-300 rounded-2xl pl-12 pr-4 py-3 md:py-4 w-full text-base md:text-lg lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
@@ -36,16 +38,46 @@ const Login = () => {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Login failed')
 
-      login(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      navigate('/logged')
-      window.dispatchEvent(new Event('user-updated'))
+      // Check if 2FA is required
+      if (data.requiresVerification) {
+        setShowTwoFactor(true)
+      } else {
+        // Direct login (shouldn't happen with 2FA enabled, but kept for compatibility)
+        login(data.user)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        navigate('/logged')
+        window.dispatchEvent(new Event('user-updated'))
+      }
     } catch (err) {
-      console.error('❌ Login error:', err.message)
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleTwoFactorVerified = (user) => {
+    login(user)
+    localStorage.setItem('user', JSON.stringify(user))
+    navigate('/logged')
+    window.dispatchEvent(new Event('user-updated'))
+  }
+
+  const handleBackToLogin = () => {
+    setShowTwoFactor(false)
+    setPassword('')
+    setError('')
+  }
+
+  const handleResendCode = async () => {
+    // Resend by calling login again
+    const res = await fetch('https://gatsis-hub.vercel.app/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailAddress, password }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to resend code')
   }
 
   const handleGoogleSuccess = async (credentialResponse) => {
@@ -69,7 +101,7 @@ const Login = () => {
 
       // Check if user needs to complete profile (new Google users without addresses)
       if (!data.user.addresses || data.user.addresses.length === 0) {
-        console.log('🔄 New Google user - redirecting to complete profile')
+
         navigate('/complete-profile')
       } else {
         navigate('/logged')
@@ -77,13 +109,25 @@ const Login = () => {
       
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-      console.error('❌ Google login error:', err.message)
+
       setError(err.message)
     }
   }
 
   const handleGoogleError = () => {
     setError('Google Sign-In was unsuccessful. Please try again.')
+  }
+
+  // If showing 2FA verification, render that component instead
+  if (showTwoFactor) {
+    return (
+      <TwoFactorVerification
+        email={emailAddress}
+        onVerified={handleTwoFactorVerified}
+        onBack={handleBackToLogin}
+        onResend={handleResendCode}
+      />
+    )
   }
 
   return (

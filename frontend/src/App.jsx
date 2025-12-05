@@ -49,6 +49,11 @@ import SystemEmployee from './pages/SystemAdminPages/SystemEmployee';
 import SystemAccounts from './pages/SystemAdminPages/SystemAccounts';
 import SystemProfile from './pages/SystemAdminPages/SystemProfile';
 
+import AuthPA from './pages/ProductionAsemblyPage/AuthPA';
+import ProductionLayout from './layouts/ProductionLayout';
+import AssignOrder from './pages/ProductionAsemblyPage/AssignOrder';
+import ViewOrder from './pages/ProductionAsemblyPage/ViewOrder';
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -61,19 +66,18 @@ const ProtectedAdminRoute = ({ element, allowedDepartments = ['Admin'] }) => {
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Additional role check for Sales Admin
   if (employee.role !== 'Sales Admin') {
-    console.log(`❌ Access denied. Role: ${employee.role}, Required: Sales Admin`);
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
@@ -85,19 +89,18 @@ const ProtectedOMRoute = ({ element, allowedDepartments = ['Operational Manager'
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authOM" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authOM" replace />;
   }
   
   // Additional role check for Operational Manager
   if (employee.role !== 'Operational Manager') {
-    console.log(`❌ Access denied. Role: ${employee.role}, Required: Operational Manager`);
+
     return <Navigate to="/authOM" replace />;
   }
   
@@ -109,13 +112,12 @@ const ProtectedProductionRoute = ({ element, allowedDepartments = ['Production',
   const employee = JSON.parse(localStorage.getItem('employee'));
   
   if (!employee) {
-    console.log('❌ No employee session found');
+
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
   // Check if employee's department is allowed
   if (!allowedDepartments.includes(employee.assigneddepartment)) {
-    console.log(`❌ Access denied. Department: ${employee.assigneddepartment}, Required: ${allowedDepartments.join(', ')}`);
     return <Navigate to="/authSaleAdmin" replace />;
   }
   
@@ -183,17 +185,23 @@ const router = createBrowserRouter(
         <Route path="/systemprofile" element={<SystemProfile />} />
       </Route>
 
+      {/* Production Assembly layout */}
+      <Route element={<ProductionLayout />}>
+        <Route path="/assignorder" element={<AssignOrder />} />
+        <Route path="/vieworder" element={<ViewOrder />} />
+      </Route>
+
       {/* Admin/Manager Auth */}
       <Route path="/authOM" element={<AuthOM />} />
       <Route path="/authSaleAdmin" element={<AuthSA />} />
       <Route path="/authSystemA" element={<AuthSystemA />} />
+      <Route path="/authPA" element={<AuthPA />} />
     </Route>
   )
 );
 
 const App = () => {
-  return<RouterProvider router={router} />;
-  
+  return <RouterProvider router={router} />;
 };
 
 export default App;

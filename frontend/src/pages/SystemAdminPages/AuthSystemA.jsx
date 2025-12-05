@@ -6,6 +6,55 @@ import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
 
 const AuthSystemA = () => {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            // Verify this is a System Admin account
+            if (data.employee.role !== 'System Admin') {
+                throw new Error('Access denied. This login is for System Admin only. Please use the appropriate login page.');
+            }
+
+            // Store employee data in localStorage
+            localStorage.setItem('systemAdmin', JSON.stringify(data.employee));
+            
+            if (rememberMe) {
+                localStorage.setItem('rememberSystemAdmin', 'true');
+            }
+
+            // Redirect to System Admin dashboard
+            navigate('/systememployees');
+
+        } catch (err) {
+
+            setError(err.message || 'Invalid email or password');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const IntputField =
         'border border-gray-300 rounded-2xl px-4 md:px-12 py-3 w-full max-w-[460px] text-lg md:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
@@ -32,16 +81,16 @@ const AuthSystemA = () => {
                     {/* right */}
                     <div className='flex flex-col items-center justify-center py-10 md:py-20 lg:mt-35 px-4 order-1 lg:order-2'>
                         <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
-                            Sign In as Sytstem Admin</h1>
+                            Sign In as System Admin</h1>
 
                         {/* Error Message */}
-                        {/* {error && (
+                        {error && (
                             <div className="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
-                                <p className="text-base md:text-lg"></p>
+                                <p className="text-base md:text-lg">{error}</p>
                             </div>
-                        )} */}
+                        )}
 
-                        <form className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
+                        <form onSubmit={handleLogin} className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
                             {/* email */}
                             <div className='relative mb-6'>
                                 <label htmlFor="email" className='block text-lg md:text-2xl font-medium mb-2'>Email</label>
@@ -51,9 +100,9 @@ const AuthSystemA = () => {
                                     id="email"
                                     placeholder='Enter your email'
                                     className={IntputField}
-                                    value=""
-                                    onChange=""
-                                    disabled=""
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
                                 />
                             </div>
 
@@ -66,9 +115,9 @@ const AuthSystemA = () => {
                                     id="password"
                                     placeholder='Enter your Password'
                                     className={IntputField}
-                                    value=""
-                                    onChange=""
-                                    disabled=""
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
                                 />
                             </div>
 
@@ -78,9 +127,8 @@ const AuthSystemA = () => {
                                     <input
                                         type="checkbox"
                                         className='mr-2'
-                                        checked=""
-                                        onChange=""
-                                        disabled=""
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
                                     />
                                     <span className='text-black text-base md:text-xl font-medium'>Remember me</span>
                                 </div>
@@ -90,10 +138,9 @@ const AuthSystemA = () => {
                             <button
                                 type="submit"
                                 className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
-                                disabled=""
+                                disabled={loading}
                             >
-                                {/* {"" ? 'Signing In...' : 'Sign In'} */}
-                                <Link to="/systememployees">Sign In</Link>
+                                {loading ? 'Signing In...' : 'Sign In'}
                             </button>
                         </form>
                     </div>

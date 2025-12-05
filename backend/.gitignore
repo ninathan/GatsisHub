@@ -23,3 +23,8 @@ Thumbs.db
 # Logs
 logs
 *.log
+
+# Uploads (payment proofs)
+uploads/
+uploads/payments/*
+!uploads/payments/.gitkeep

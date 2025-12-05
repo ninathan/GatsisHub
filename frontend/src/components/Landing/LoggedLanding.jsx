@@ -33,7 +33,7 @@ const LoggedLanding = () => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
       } catch (err) {
-        console.error("Error parsing user:", err);
+
         navigate("/");
       }
     } else {
@@ -46,7 +46,7 @@ const LoggedLanding = () => {
       localStorage.removeItem("user");
       navigate("/login");
     } catch (err) {
-      console.error("Logout error:", err);
+
     }
   };
 
