@@ -82,15 +82,10 @@ const Checkout = () => {
             }
         }, [selectedHanger]);
     const [addresses, setAddresses] = useState([]);
+    const [hangers, setHangers] = useState([]);
+    const [materials, setMaterials] = useState([]);
 
-    // Hanger selection state
-    const hangers = [
-        { id: "MB3", name: "MB3" },
-        { id: "97-12", name: "97-12" },
-        { id: "CQ-807", name: "CQ-807" },
-        { id: "97-11", name: "97-11" },
-        { id: "97-08", name: "97-08" },
-    ];
+    // Hanger selection state (removed hardcoded array)
 
     // Predefined colors for quick selection
     const colors = [
@@ -851,54 +846,8 @@ const Checkout = () => {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFullscreen]);
 
-    const materials = [
-        {
-            name: "Polypropylene (PP)",
-            features: [
-                "Lightweight and durable",
-                "Good chemical resistance",
-                "Flexible enough to prevent breaking",
-                "Cost-effective",
-                "Easy to mass-produce for cellular or recycling",
-            ],
-        },
-        {
-            name: "Polystyrene (PS) / High Impact Polystyrene (HIPS)",
-            features: [
-                "Rigid and glossy",
-                "Economical but still offers durability",
-                "Commonly used for low-to-medium weight",
-            ],
-        },
-        {
-            name: "Acrylonitrile Butadiene Styrene (ABS)",
-            features: [
-                "Durable and impact-resistant",
-                "Has a smooth, glossy finish ideal for high-end displays",
-                "Resistant to heat and physical wear",
-                "Heavier and more durable than polypropylene",
-            ],
-        },
-        {
-            name: "Nylon (Polyamide)",
-            features: [
-                "Strong, flexible, and durable",
-                "Resistant to abrasion and chemicals",
-                "Used in specialized or high-end applications",
-                "Slightly more expensive",
-            ],
-        },
-        {
-            name: "Polycarbonate (PC)",
-            features: [
-                "Very strong and tough",
-                "High impact resistance",
-                "Resistant to heat and wear",
-                "Often used for premium, transparent, or designer hangers",
-            ],
-        },
-    ];
-
+    // Material percentage handling
+    
     // Navigation
     const nextStep = () => {
         if (validateCurrentStep()) {

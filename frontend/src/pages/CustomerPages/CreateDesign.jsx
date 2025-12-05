@@ -23,6 +23,8 @@ const CreateDesign = () => {
     const [selectedMaterials, setSelectedMaterials] = useState({
         'Polypropylene (PP)': 100
     });
+    const [hangers, setHangers] = useState([]);
+    const [materials, setMaterials] = useState([]);
 
     // UI state
     const [showHangerSelection, setShowHangerSelection] = useState(true);
@@ -37,27 +39,35 @@ const CreateDesign = () => {
         type: '', 
         message: '' 
     });
-
-    const hangers = [
-        { id: 'MB3', name: 'MB3' },
-        { id: '97-12', name: '97-12' },
-        { id: 'CQ-807', name: 'CQ-807' },
-        { id: '97-11', name: '97-11' },
-        { id: '97-08', name: '97-08' }
-    ];
+    
+    useEffect(() => {
+        fetchProductsAndMaterials();
+    }, []);
+    
+    const fetchProductsAndMaterials = async () => {
+        try {
+            const [productsRes, materialsRes] = await Promise.all([
+                fetch('https://gatsis-hub.vercel.app/products?is_active=true'),
+                fetch('https://gatsis-hub.vercel.app/materials?is_active=true')
+            ]);
+            
+            const productsData = await productsRes.json();
+            const materialsData = await materialsRes.json();
+            
+            setHangers((productsData.products || []).map(p => ({ id: p.productname, name: p.productname })));
+            setMaterials((materialsData.materials || []).map(m => ({
+                name: m.materialname,
+                description: m.features && m.features[0] ? m.features[0] : 'High quality material'
+            })));
+        } catch (err) {
+            console.error('Error fetching products/materials:', err);
+        }
+    };
 
     const colors = [
         '#FF6B6B', '#FF8E8E', '#FFA07A', '#FFB347',
         '#9B59B6', '#E91E63', '#3B82F6', '#10B981',
         '#06B6D4', '#14B8A6', '#84CC16', '#EAB308'
-    ];
-
-    const materials = [
-        { name: 'Polypropylene (PP)', description: 'Lightweight and durable' },
-        { name: 'Polystyrene (PS)', description: 'Rigid and glossy' },
-        { name: 'ABS', description: 'Impact-resistant' },
-        { name: 'Nylon', description: 'Strong and flexible' },
-        { name: 'Polycarbonate (PC)', description: 'Very strong and tough' }
     ];
 
     const handleLogoUpload = (e) => {

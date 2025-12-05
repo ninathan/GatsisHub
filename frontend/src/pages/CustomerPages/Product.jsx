@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import pr1 from '../../images/pr1.png';
@@ -8,7 +8,41 @@ import pr4 from '../../images/pr4.png';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 const ProductsPage = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    
     const titleAnim = useScrollAnimation({ threshold: 0.3 });
+    
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+    
+    const fetchProducts = async () => {
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
+            const data = await response.json();
+            
+            // Map products to include default images
+            const imageMap = { 'MB3': pr1, '97-12': pr2, 'CQ-807': pr3, '97-11': pr4, '97-08': pr1 };
+            const alignments = ['left', 'right', 'left', 'right', 'left'];
+            
+            const mappedProducts = (data.products || []).map((product, index) => ({
+                id: product.productname,
+                name: product.productname,
+                material: 'Polycarbonate (PC)',
+                description: product.description || 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
+                image: imageMap[product.productname] || pr1,
+                alignment: alignments[index % alignments.length],
+                hasOrderButton: product.productname === '97-11'
+            }));
+            
+            setProducts(mappedProducts);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching products:', err);
+            setLoading(false);
+        }
+    };
     
     // Create animation hooks for each product (must be at top level, not in loop)
     const product1Anim = useScrollAnimation({ threshold: 0.2 });
@@ -16,52 +50,20 @@ const ProductsPage = () => {
     const product3Anim = useScrollAnimation({ threshold: 0.2 });
     const product4Anim = useScrollAnimation({ threshold: 0.2 });
     const product5Anim = useScrollAnimation({ threshold: 0.2 });
+    const product6Anim = useScrollAnimation({ threshold: 0.2 });
     
-    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim, product5Anim];
-    
-    const products = [
-        {
-            id: 'MB3',
-            name: 'MB3',
-            material: 'Polycarbonate (PC)',
-            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
-            image: pr1,
-            alignment: 'left'
-        },
-        {
-            id: '97-12',
-            name: '97-12',
-            material: 'Polycarbonate (PC)',
-            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
-            image: pr2,
-            alignment: 'right'
-        },
-        {
-            id: 'CQ-807',
-            name: 'CQ-807',
-            material: '',
-            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
-            image: pr3,
-            alignment: 'left'
-        },
-        {
-            id: '97-11',
-            name: '97-11',
-            material: '',
-            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
-            image: pr4,
-            alignment: 'right',
-            hasOrderButton: true
-        },
-        {
-            id: '97-08',
-            name: '97-08',
-            material: '',
-            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
-            image: pr1,
-            alignment: 'left'
-        }
-    ];
+    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim, product5Anim, product6Anim];
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading products...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
