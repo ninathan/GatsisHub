@@ -32,7 +32,7 @@ const DashboardOM = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [editingQuota, setEditingQuota] = useState(null); // 'today' or 'weekly'
-    const [editValues, setEditValues] = useState({ target: 0 });
+    const [editValues, setEditValues] = useState({ target: 0, production: 0 });
     const [saving, setSaving] = useState(false);
 
     // Fetch dashboard data on component mount
@@ -58,7 +58,7 @@ const DashboardOM = () => {
             // Calculate total orders and pending orders
             const totalOrders = allOrders.length;
             const pendingOrders = allOrders.filter(order => 
-                order.status === 'Pending' || order.status === 'Processing'
+                order.orderstatus === 'For Evaluation' || order.orderstatus === 'In Production'
             ).length;
 
             // Find today's quota (most recent active quota)
@@ -154,12 +154,12 @@ const DashboardOM = () => {
     const handleEditQuota = (quotaType) => {
         const quota = quotaType === 'today' ? dashboardData.todayQuota : dashboardData.weeklyQuota;
         setEditingQuota(quotaType);
-        setEditValues({ target: quota.target });
+        setEditValues({ target: quota.target, production: quota.reached });
     };
 
     const handleCancelEdit = () => {
         setEditingQuota(null);
-        setEditValues({ target: 0 });
+        setEditValues({ target: 0, production: 0 });
     };
 
     const handleSaveQuota = async () => {
@@ -175,7 +175,8 @@ const DashboardOM = () => {
         try {
             setSaving(true);
             
-            const fieldName = editingQuota === 'today' ? 'adjusted_daily_target' : 'adjusted_weekly_target';
+            const targetFieldName = editingQuota === 'today' ? 'adjusted_daily_target' : 'adjusted_weekly_target';
+            const productionFieldName = editingQuota === 'today' ? 'daily_production' : 'weekly_production';
             
             const response = await fetch(`https://gatsis-hub.vercel.app/quotas/${quota.quotaId}`, {
                 method: 'PATCH',
@@ -183,7 +184,8 @@ const DashboardOM = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    [fieldName]: parseInt(editValues.target)
+                    [targetFieldName]: parseInt(editValues.target),
+                    [productionFieldName]: parseInt(editValues.production)
                 })
             });
 
@@ -194,7 +196,7 @@ const DashboardOM = () => {
             // Refresh dashboard data
             await fetchDashboardData();
             setEditingQuota(null);
-            setEditValues({ target: 0 });
+            setEditValues({ target: 0, production: 0 });
             
         } catch (err) {
             console.error('Failed to save quota:', err);
@@ -462,12 +464,25 @@ const DashboardOM = () => {
                             <input
                                 type="number"
                                 value={editValues.target}
-                                onChange={(e) => setEditValues({ target: e.target.value })}
+                                onChange={(e) => setEditValues({ ...editValues, target: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Quota Reached (Production)
+                            </label>
+                            <input
+                                type="number"
+                                value={editValues.production}
+                                onChange={(e) => setEditValues({ ...editValues, production: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
                                 min="0"
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                                Current Reached: {editingQuota === 'today' ? dashboardData.todayQuota.reached : dashboardData.weeklyQuota.reached}
+                                {editingQuota === 'today' ? 'Production made today' : 'Production made this week'}
                             </p>
                         </div>
 
