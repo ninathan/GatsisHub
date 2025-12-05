@@ -41,3 +41,4 @@ create_teams_table.sql
 create_system_admin.sql
 create_payment_storage_bucket.sql
 create_quotas_table.sql
+add_adjusted_quota_column.sql

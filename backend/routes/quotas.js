@@ -169,6 +169,8 @@ router.patch("/:quotaid", async (req, res) => {
     const {
       quotaname,
       finishedquota,
+      adjusted_daily_target,
+      adjusted_weekly_target,
       teamids,
       assignedorders,
       startdate,
@@ -193,6 +195,8 @@ router.patch("/:quotaid", async (req, res) => {
 
     if (quotaname !== undefined) updateData.quotaname = quotaname;
     if (finishedquota !== undefined) updateData.finishedquota = parseInt(finishedquota);
+    if (adjusted_daily_target !== undefined) updateData.adjusted_daily_target = parseInt(adjusted_daily_target);
+    if (adjusted_weekly_target !== undefined) updateData.adjusted_weekly_target = parseInt(adjusted_weekly_target);
     if (teamids !== undefined) updateData.teamids = teamids;
     if (assignedorders !== undefined) updateData.assignedorders = assignedorders;
     if (startdate !== undefined) updateData.startdate = startdate;

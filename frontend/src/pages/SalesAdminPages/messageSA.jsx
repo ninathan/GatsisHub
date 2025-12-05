@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FaPaperPlane, FaPlus } from "react-icons/fa";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const Messages = () => {
     const [conversations, setConversations] = useState([]);

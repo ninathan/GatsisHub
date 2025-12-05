@@ -3,7 +3,7 @@ import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, Tr
 import { div } from 'framer-motion/client';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 
-const Dashboard = () => {
+const DashboardOM = () => {
 
     //state for dashboard data
     const [dashboardData, setDashboardData] = useState({
@@ -52,14 +52,8 @@ const Dashboard = () => {
             const ordersResponse = await fetch('https://gatsis-hub.vercel.app/orders/all');
             const ordersData = await ordersResponse.json();
 
-            console.log('Quotas Data:', quotasData);
-            console.log('Orders Data:', ordersData);
-
             const activeQuotas = quotasData.quotas || [];
             const allOrders = ordersData.orders || [];
-            
-            console.log('Active Quotas:', activeQuotas);
-            console.log('All Orders:', allOrders);
             
             // Calculate total orders and pending orders
             const totalOrders = allOrders.length;
@@ -108,9 +102,6 @@ const Dashboard = () => {
                 weeklyQuota = activeQuotas[0];
             }
 
-            console.log('Today Quota:', todayQuota);
-            console.log('Weekly Quota:', weeklyQuota);
-
             // Calculate overall progress from all active quotas
             const totalTarget = activeQuotas.reduce((sum, q) => sum + (q.targetquota || 0), 0);
             const totalFinished = activeQuotas.reduce((sum, q) => sum + (q.finishedquota || 0), 0);
@@ -150,7 +141,6 @@ const Dashboard = () => {
                 }
             };
 
-            console.log('Setting Dashboard Data:', newData);
             setDashboardData(newData);
 
         } catch (err) {
@@ -158,7 +148,6 @@ const Dashboard = () => {
             setError('Failed to load dashboard data');
         } finally {
             setLoading(false);
-            console.log('Loading set to false');
         }
     };
 
@@ -249,17 +238,11 @@ const Dashboard = () => {
     };
 
     // Stat card component for reusable metric displays
-    const StatCard = ({ title, value, subtitle, trend }) => (
+    const StatCard = ({ title, value, subtitle }) => (
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-blue-600">
             <div className="text-lg md:text-2xl text-gray-600 font-medium mb-2">{title}</div>
             <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
             {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
-            {trend && (
-                <div className={`flex items-center mt-2 text-xs md:text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {trend > 0 ? <TrendingUp size={14} className="mr-1 md:w-4 md:h-4" /> : <TrendingDown size={14} className="mr-1 md:w-4 md:h-4" />}
-                    <span>{Math.abs(trend)}% vs last period</span>
-                </div>
-            )}
         </div>
     );
 
@@ -301,8 +284,6 @@ const Dashboard = () => {
     const quotaAnim = useScrollAnimation({ threshold: 0.2 });
     const dailyWeeklyAnim = useScrollAnimation({ threshold: 0.2 });
 
-    console.log('Render - Loading:', loading, 'Error:', error);
-
     return (
         <div className='flex-1 flex flex-col min-h-screen bg-gray-100'>
 
@@ -315,8 +296,7 @@ const Dashboard = () => {
                     }`}
                 >
                     <h1 className='text-2xl md:text-4xl font-bold text-gray-900'>Dashboard</h1>
-                    {/* <p>Welcome back, {User.name}! Here's your business overview </p> */}
-                    <p className='text-gray-600 mt-1 text-sm md:text-base'>Welcome back user! Here's your business overview</p>
+                    <p className='text-gray-600 mt-1 text-sm md:text-base'>Welcome back! Here's your operational overview</p>
                 </div>
             </div>
 
@@ -525,4 +505,4 @@ const Dashboard = () => {
     )
 }
 
-export default Dashboard
+export default DashboardOM
