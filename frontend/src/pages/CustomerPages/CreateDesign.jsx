@@ -40,9 +40,10 @@ const CreateDesign = () => {
 
     const hangers = [
         { id: 'MB3', name: 'MB3' },
-        { id: 'MB7', name: 'MB7' },
-        { id: 'CQ-03', name: 'CQ-03' },
-        { id: '97-11', name: '97-11' }
+        { id: '97-12', name: '97-12' },
+        { id: 'CQ-807', name: 'CQ-807' },
+        { id: '97-11', name: '97-11' },
+        { id: '97-08', name: '97-08' }
     ];
 
     const colors = [
@@ -971,7 +972,7 @@ const CreateDesign = () => {
                                 <div>
                                     <h3 className="font-semibold mb-2">🎨 Customization Options</h3>
                                     <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li>Select hanger type (MB3, MB7, CQ-03, 97-11, or custom)</li>
+                                        <li>Select hanger type (MB3, 97-12, CQ-807, 97-11, 97-08, or custom)</li>
                                         <li>Choose from preset colors or use custom color picker</li>
                                         <li>Add custom text with adjustable size and color</li>
                                         <li>Upload and position your logo</li>

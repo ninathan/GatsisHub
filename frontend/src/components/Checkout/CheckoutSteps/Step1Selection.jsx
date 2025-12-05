@@ -30,8 +30,8 @@ const Step1Selection = ({
                             key={hanger.id}
                             onClick={() => {
                                 setSelectedHanger(hanger.id);
-                                // Show modal for MB7 and 97-11
-                                if (hanger.id === 'MB7' || hanger.id === '97-11') {
+                                // Show modal for 97-12 and 97-11
+                                if (hanger.id === '97-12' || hanger.id === '97-11') {
                                     setShowColorLimitationModal(true);
                                 }
                             }}

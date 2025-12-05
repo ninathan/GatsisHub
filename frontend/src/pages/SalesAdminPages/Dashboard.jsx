@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown } from 'lucide-react';
 import { div } from 'framer-motion/client';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
@@ -7,26 +7,130 @@ const Dashboard = () => {
 
     //state for dashboard data
     const [dashboardData, setDashboardData] = useState({
-        totalOrders: 157,
-        producedHangers: 973,
-        pendingOrders: 1,
+        totalOrders: 0,
+        producedHangers: 0,
+        pendingOrders: 0,
         todayQuota: {
-            target: 13,
-            reached: 10,
-            percentage: 76
+            target: 0,
+            reached: 0,
+            percentage: 0
         },
         weeklyQuota: {
-            target: 78,
-            reached: 59,
-            percentage: 76
+            target: 0,
+            reached: 0,
+            percentage: 0
         },
         finalQuota: {
-            percentage: 76,
-            dailyProgress: 65,
-            weeklyProgress: 82,
-            currentProgress: 76
+            percentage: 0,
+            dailyProgress: 0,
+            weeklyProgress: 0,
+            currentProgress: 0
         }
     })
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch dashboard data on component mount
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            
+            // Fetch all active quotas
+            const quotasResponse = await fetch('https://gatsis-hub.vercel.app/quotas?status=Active');
+            const quotasData = await quotasResponse.json();
+            
+            // Fetch all orders
+            const ordersResponse = await fetch('https://gatsis-hub.vercel.app/orders');
+            const ordersData = await ordersResponse.json();
+
+            const activeQuotas = quotasData.quotas || [];
+            const allOrders = ordersData.orders || [];
+            
+            // Calculate total orders and pending orders
+            const totalOrders = allOrders.length;
+            const pendingOrders = allOrders.filter(order => 
+                order.status === 'Pending' || order.status === 'Processing'
+            ).length;
+
+            // Find today's quota (most recent active quota)
+            const today = new Date();
+            const todayQuota = activeQuotas.find(quota => {
+                if (!quota.startdate) return false;
+                const startDate = new Date(quota.startdate);
+                const endDate = quota.enddate ? new Date(quota.enddate) : null;
+                
+                // Check if today is within the quota period
+                if (endDate) {
+                    return startDate <= today && today <= endDate;
+                }
+                return startDate <= today;
+            });
+
+            // Find weekly quota
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay()); // Start of week
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6); // End of week
+            
+            const weeklyQuota = activeQuotas.find(quota => {
+                if (!quota.startdate) return false;
+                const startDate = new Date(quota.startdate);
+                const endDate = quota.enddate ? new Date(quota.enddate) : null;
+                
+                if (endDate) {
+                    return startDate <= weekEnd && endDate >= weekStart;
+                }
+                return false;
+            });
+
+            // Calculate overall progress from all active quotas
+            const totalTarget = activeQuotas.reduce((sum, q) => sum + (q.targetquota || 0), 0);
+            const totalFinished = activeQuotas.reduce((sum, q) => sum + (q.finishedquota || 0), 0);
+            const overallPercentage = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
+
+            // Calculate today's quota progress
+            const todayTarget = todayQuota?.targetquota || 0;
+            const todayFinished = todayQuota?.finishedquota || 0;
+            const todayPercentage = todayTarget > 0 ? Math.round((todayFinished / todayTarget) * 100) : 0;
+
+            // Calculate weekly quota progress
+            const weeklyTarget = weeklyQuota?.targetquota || 0;
+            const weeklyFinished = weeklyQuota?.finishedquota || 0;
+            const weeklyPercentage = weeklyTarget > 0 ? Math.round((weeklyFinished / weeklyTarget) * 100) : 0;
+
+            setDashboardData({
+                totalOrders,
+                producedHangers: totalFinished,
+                pendingOrders,
+                todayQuota: {
+                    target: todayTarget,
+                    reached: todayFinished,
+                    percentage: todayPercentage
+                },
+                weeklyQuota: {
+                    target: weeklyTarget,
+                    reached: weeklyFinished,
+                    percentage: weeklyPercentage
+                },
+                finalQuota: {
+                    percentage: overallPercentage,
+                    dailyProgress: todayPercentage,
+                    weeklyProgress: weeklyPercentage,
+                    currentProgress: overallPercentage
+                }
+            });
+
+        } catch (err) {
+            console.error('Failed to fetch dashboard data:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const CircularProgress = ({ percentage, size = 120, strokeWidth = 12 }) => {
         const radius = (size - strokeWidth) / 2
@@ -122,7 +226,34 @@ const Dashboard = () => {
                 </div>
             </div>
 
+            {/* Loading State */}
+            {loading && (
+                <div className='flex-1 flex items-center justify-center p-8'>
+                    <div className='text-center'>
+                        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                        <p className='text-gray-600'>Loading dashboard data...</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+                <div className='flex-1 flex items-center justify-center p-8'>
+                    <div className='bg-red-50 border border-red-200 rounded-lg p-6 max-w-md'>
+                        <p className='text-red-800 font-semibold mb-2'>Error Loading Dashboard</p>
+                        <p className='text-red-600 text-sm mb-4'>{error}</p>
+                        <button 
+                            onClick={fetchDashboardData}
+                            className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm'
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Dashboard content */}
+            {!loading && !error && (
             <div className='p-4 md:p-8'>
                 {/* Top Statistics card */}
                 <div 
@@ -135,19 +266,16 @@ const Dashboard = () => {
                         title="Total Orders"
                         value={dashboardData.totalOrders}
                         subtitle="As of today"
-                        trend={5}
                     />
                     <StatCard
-                        title="Produced Hangers for Order #1"
+                        title="Total Produced Hangers"
                         value={dashboardData.producedHangers}
-                        subtitle="Order #1 in Progress"
-                        trend={8.3}
+                        subtitle="Across all quotas"
                     />
                     <StatCard
                         title="Pending Orders"
                         value={dashboardData.pendingOrders}
                         subtitle="To be fulfilled"
-                        trend={-2.5}
                     />
                 </div>
 
@@ -245,6 +373,7 @@ const Dashboard = () => {
                         />
                     </div>
             </div>
+            )}
         </div>
     )
 }

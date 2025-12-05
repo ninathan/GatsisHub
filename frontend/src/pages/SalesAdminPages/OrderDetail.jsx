@@ -908,7 +908,7 @@ const OrderDetail = () => {
                                 }>
                                     <HangerScene
                                         color={selected3DDesign.color || '#4F46E5'}
-                                        hangerType={selected3DDesign.hangerType || 'MB7'}
+                                        hangerType={selected3DDesign.hangerType || '97-12'}
                                         customText={selected3DDesign.customText || ''}
                                         textColor={selected3DDesign.textColor || '#000000'}
                                         textPosition={selected3DDesign.textPosition || { x: 0, y: 0, z: 0.49 }}

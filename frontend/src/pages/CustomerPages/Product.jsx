@@ -15,8 +15,9 @@ const ProductsPage = () => {
     const product2Anim = useScrollAnimation({ threshold: 0.2 });
     const product3Anim = useScrollAnimation({ threshold: 0.2 });
     const product4Anim = useScrollAnimation({ threshold: 0.2 });
+    const product5Anim = useScrollAnimation({ threshold: 0.2 });
     
-    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim];
+    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim, product5Anim];
     
     const products = [
         {
@@ -28,16 +29,16 @@ const ProductsPage = () => {
             alignment: 'left'
         },
         {
-            id: 'MB7',
-            name: 'MB7',
+            id: '97-12',
+            name: '97-12',
             material: 'Polycarbonate (PC)',
             description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
             image: pr2,
             alignment: 'right'
         },
         {
-            id: 'CQ-03',
-            name: 'CQ-03',
+            id: 'CQ-807',
+            name: 'CQ-807',
             material: '',
             description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
             image: pr3,
@@ -51,6 +52,14 @@ const ProductsPage = () => {
             image: pr4,
             alignment: 'right',
             hasOrderButton: true
+        },
+        {
+            id: '97-08',
+            name: '97-08',
+            material: '',
+            description: 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
+            image: pr1,
+            alignment: 'left'
         }
     ];
 
@@ -85,7 +94,7 @@ const ProductsPage = () => {
                                 {/* Product Image */}
                                 <div className="flex-1 flex justify-center">
                                     <div className="text-9xl transform transition-all duration-300 hover:scale-105">
-                                        {product.id === 'MB7' ? <img src={product.image} alt={product.name} className="drop-shadow-lg" /> : <img src={product.image} alt={product.name} className="drop-shadow-lg" />}
+                                        {product.id === '97-12' ? <img src={product.image} alt={product.name} className="drop-shadow-lg" /> : <img src={product.image} alt={product.name} className="drop-shadow-lg" />}
                                     </div>
                                 </div>
 

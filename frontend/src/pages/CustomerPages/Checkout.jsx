@@ -61,20 +61,20 @@ const Checkout = () => {
         const [textSize, setTextSize] = useState(0.5);
         const [logoSize, setLogoSize] = useState(1);
 
-        // Set default positions/sizes for MB7 and 97-11
+        // Set default positions/sizes for 97-12 and 97-11
         useEffect(() => {
             if (selectedHanger === "97-11") {
                 setTextPosition({ x: 0, y: -0.045, z: 0.0537 });
                 setLogoPosition({ x: 0, y: -0.04, z: 0.0561 });
                 setTextSize(0.5);
                 setLogoSize(1);
-            } else if (selectedHanger === "MB7") {
+            } else if (selectedHanger === "97-12") {
                 setTextPosition({ x: 0, y: -0.15, z: 0.06 });
                 setLogoPosition({ x: 0, y: -0.17, z: 0.0611 });
                 setTextSize(0.4);
                 setLogoSize(0.6);
             } else {
-                // Reset to default for MB3, CQ-03, and others
+                // Reset to default for MB3, CQ-807, and others
                 setTextPosition({ x: 0, y: 0, z: 0 });
                 setLogoPosition({ x: 0, y: 0, z: 0 });
                 setTextSize(0.5);
@@ -86,9 +86,10 @@ const Checkout = () => {
     // Hanger selection state
     const hangers = [
         { id: "MB3", name: "MB3" },
-        { id: "MB7", name: "MB7" },
-        { id: "CQ-03", name: "CQ-03" },
+        { id: "97-12", name: "97-12" },
+        { id: "CQ-807", name: "CQ-807" },
         { id: "97-11", name: "97-11" },
+        { id: "97-08", name: "97-08" },
     ];
 
     // Predefined colors for quick selection
@@ -1026,7 +1027,7 @@ const Checkout = () => {
                                         key={hanger.id}
                                         onClick={() => {
                                             setSelectedHanger(hanger.id);
-                                            if (hanger.id === 'MB7' || hanger.id === '97-11') {
+                                            if (hanger.id === '97-12' || hanger.id === '97-11') {
                                                 setShowColorLimitationModal(true);
                                             }
                                         }}
@@ -1782,8 +1783,8 @@ const Checkout = () => {
                                                 Select Hanger Type
                                             </h4>
                                             <p className="text-gray-600">
-                                                Choose from our available hanger designs (MB3, MB7,
-                                                CQ-03, 97-11) or upload your own design.
+                                                Choose from our available hanger designs (MB3, 97-12,
+                                                CQ-807, 97-11, 97-08) or upload your own design.
                                             </p>
                                         </div>
                                     </div>
@@ -2193,7 +2194,7 @@ const Checkout = () => {
                                 type="text"
                                 value={designName}
                                 onChange={(e) => setDesignName(e.target.value)}
-                                placeholder="e.g., Red MB7 with Logo"
+                                placeholder="e.g., Red 97-12 with Logo"
                                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#007BFF]"
                                 autoFocus
                             />
@@ -2231,7 +2232,7 @@ const Checkout = () => {
                 </div>
             )}
 
-            {/* Color Limitation Modal for MB7 and 97-11 */}
+            {/* Color Limitation Modal for 97-12 and 97-11 */}
             {showColorLimitationModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200]">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
