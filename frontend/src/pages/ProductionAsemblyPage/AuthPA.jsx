@@ -1,12 +1,13 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../../images/logo.png'
 import userav from '../../images/user-alt.png'
 import key from '../../images/key.png'
 import PageTransition from '../../components/Transition/PageTransition'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const AuthPA = () => {
+    const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [rememberMe, setRememberMe] = useState(false)
@@ -16,10 +17,79 @@ const AuthPA = () => {
 
     const IntputField = 'w-full border border-gray-300 rounded-lg px-10 py-2 md:px-12 md:py-3 lg:px-14 lg:py-4 text-base md:text-lg lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
 
-    const handleLogin = (e) => {
+    useEffect(() => {
+        // Check if employee is already logged in
+        const employee = localStorage.getItem('employee')
+        if (employee) {
+            const employeeData = JSON.parse(employee)
+            if (employeeData.assigneddepartment === 'Production' || employeeData.assigneddepartment === 'Assembly') {
+                navigate('/assignorder')
+            }
+        }
+
+        // Check for remembered credentials
+        const rememberedEmployee = localStorage.getItem('rememberEmployee')
+        if (rememberedEmployee) {
+            const employeeData = JSON.parse(rememberedEmployee)
+            setEmail(employeeData.email || '')
+            setRememberMe(true)
+        }
+    }, [navigate])
+
+    const handleLogin = async (e) => {
         e.preventDefault()
         setLoading(true)
         setError('')
+
+        try {
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed')
+            }
+
+            // Check if employee is from Production or Assembly department
+            if (data.employee.assigneddepartment !== 'Production' && data.employee.assigneddepartment !== 'Assembly') {
+                setError('Access denied. This login is only for Production & Assembly staff.')
+                setLoading(false)
+                return
+            }
+
+            // Check account status
+            if (data.employee.accountstatus === 'Inactive') {
+                setError('Your account is inactive. Please contact the administrator.')
+                setLoading(false)
+                return
+            }
+
+            // Store employee data
+            localStorage.setItem('employee', JSON.stringify(data.employee))
+
+            // Handle remember me
+            if (rememberMe) {
+                localStorage.setItem('rememberEmployee', JSON.stringify({
+                    email: data.employee.email
+                }))
+            } else {
+                localStorage.removeItem('rememberEmployee')
+            }
+
+            // Navigate to Production & Assembly dashboard
+            navigate('/assignorder')
+        } catch (err) {
+            console.error('Login error:', err)
+            setError(err.message || 'Login failed. Please check your credentials.')
+        } finally {
+            setLoading(false)
+        }
     }
 
         
