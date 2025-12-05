@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart } from 'lucide-react'
+import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard } from 'lucide-react'
 
 
 const SidebarOM = () => {
@@ -66,6 +66,12 @@ const SidebarOM = () => {
 
                 <nav className="flex-1 mt-6">
                     <ul className="space-y-2 px-6">
+                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                            <NavLink to="/dashboardOM" className="block">
+                              <LayoutDashboard size={20} className='mr-2 inline' />
+                              Dashboard
+                            </NavLink>
+                        </li>
                         <li className="hover:bg-[#1D2D5F] p-2 rounded">
                             <NavLink to="/employees" className="block">
                               <SquareUser size={20} className='mr-2 inline' />

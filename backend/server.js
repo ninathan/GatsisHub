@@ -12,6 +12,8 @@ import customersRoutes from "./routes/customers.js";
 import teamsRoutes from "./routes/teams.js";
 import paymentsRoutes from "./routes/payments.js";
 import quotasRoutes from "./routes/quotas.js";
+import productsRoutes from "./routes/products.js";
+import materialsRoutes from "./routes/materials.js";
 
 const app = express();
 
@@ -45,6 +47,8 @@ app.use("/customers", customersRoutes);
 app.use("/teams", teamsRoutes);
 app.use("/payments", paymentsRoutes);
 app.use("/quotas", quotasRoutes);
+app.use("/products", productsRoutes);
+app.use("/materials", materialsRoutes);
 
 // Health check
 app.get("/", (req, res) => {

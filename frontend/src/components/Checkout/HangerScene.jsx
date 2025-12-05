@@ -25,9 +25,9 @@ function HangerModel({ color, hangerType }) {
     // Update color when it changes
     useEffect(() => {
         if (clonedScene) {
-            // For MB7: Calculate bounds to detect top hook area
+            // For 97-12: Calculate bounds to detect top hook area
             let topThreshold = null;
-            if (hangerType === 'MB7') {
+            if (hangerType === '97-12') {
                 const boundingBox = new THREE.Box3().setFromObject(clonedScene);
                 const modelHeight = boundingBox.max.y - boundingBox.min.y;
                 topThreshold = boundingBox.max.y - (modelHeight * 0.25); // Top 25% is hook
@@ -50,8 +50,8 @@ function HangerModel({ color, hangerType }) {
                         child.material.emissive = new THREE.Color(color);
                         child.material.emissiveIntensity = 0.15;
                     } 
-                    // MB7: Try position-based detection for hook
-                    else if (hangerType === 'MB7') {
+                    // 97-12: Try position-based detection for hook
+                    else if (hangerType === '97-12') {
                         const worldPos = new THREE.Vector3();
                         child.getWorldPosition(worldPos);
                         const isTopPart = worldPos.y > topThreshold;
@@ -72,7 +72,7 @@ function HangerModel({ color, hangerType }) {
                             child.material.emissiveIntensity = 0.15;
                         }
                     }
-                    // MB3 and CQ-03: Material-based detection
+                    // MB3 and CQ-807: Material-based detection
                     else {
                         const originalColor = child.material.originalColor;
                         const r = originalColor.r;
@@ -215,6 +215,7 @@ export default function HangerScene({ color, hangerType, customText, textColor, 
 
 // Preload models
 useGLTF.preload('/models/MB3.glb');
-useGLTF.preload('/models/MB7.glb');
-useGLTF.preload('/models/CQ-03.glb');
+useGLTF.preload('/models/97-12.glb');
+useGLTF.preload('/models/CQ-807.glb');
 useGLTF.preload('/models/97-11.glb');
+useGLTF.preload('/models/97-08.glb');

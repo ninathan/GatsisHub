@@ -38,6 +38,8 @@ const ProfileComponent = () => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+    const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+    const [isToggling2FA, setIsToggling2FA] = useState(false);
 
     // Handle default tab from navigation state
     useEffect(() => {
@@ -168,6 +170,7 @@ const ProfileComponent = () => {
                 setCompanyEmail(customer.emailaddress || '');
                 setCompanyNumber(customer.companynumber || '');
                 setEmailNotifications(customer.emailnotifications !== undefined ? customer.emailnotifications : true);
+                setTwoFactorEnabled(customer.two_factor_enabled !== undefined ? customer.two_factor_enabled : true);
 
                 // Load addresses from database
                 if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
@@ -526,6 +529,56 @@ const ProfileComponent = () => {
             setShowModal(true);
         } finally {
             setIsSavingNotifications(false);
+        }
+    };
+
+    const handleToggle2FA = async (value) => {
+        // Show confirmation modal when disabling 2FA
+        if (!value) {
+            setModalConfig({
+                type: 'confirm',
+                message: 'Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.',
+                onConfirm: async () => {
+                    await update2FAStatus(value);
+                }
+            });
+            setShowModal(true);
+        } else {
+            await update2FAStatus(value);
+        }
+    };
+
+    const update2FAStatus = async (value) => {
+        setIsToggling2FA(true);
+        try {
+            const { error } = await supabase
+                .from('customers')
+                .update({ two_factor_enabled: value })
+                .eq('userid', user.userid);
+
+            if (error) throw error;
+
+            setTwoFactorEnabled(value);
+            
+            setModalConfig({
+                type: 'success',
+                message: value 
+                    ? 'Two-Factor Authentication enabled! You will need to verify your email when logging in.' 
+                    : 'Two-Factor Authentication disabled. You can now log in with just your password.',
+                onConfirm: null
+            });
+            setShowModal(true);
+
+        } catch (error) {
+
+            setModalConfig({
+                type: 'error',
+                message: 'Failed to update Two-Factor Authentication settings. Please try again.',
+                onConfirm: null
+            });
+            setShowModal(true);
+        } finally {
+            setIsToggling2FA(false);
         }
     };
 
@@ -974,6 +1027,31 @@ const ProfileComponent = () => {
                                                         </div>
                                                     </div>
                                                     {isSavingNotifications && (
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Two-Factor Authentication Section */}
+                                        <div className="border-b border-gray-200 pb-4 md:pb-6">
+                                            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Security</h3>
+                                            <div className="space-y-2 md:space-y-3">
+                                                <label className="flex items-center justify-between">
+                                                    <div className="flex items-center">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="rounded border-gray-300 text-indigo-600 mr-2 md:mr-3 cursor-pointer" 
+                                                            checked={twoFactorEnabled}
+                                                            onChange={(e) => handleToggle2FA(e.target.checked)}
+                                                            disabled={isToggling2FA}
+                                                        />
+                                                        <div>
+                                                            <span className="text-xs md:text-sm font-medium">Two-Factor Authentication (2FA)</span>
+                                                            <p className="text-xs text-gray-500 mt-1">Require email verification code when logging in for enhanced security</p>
+                                                        </div>
+                                                    </div>
+                                                    {isToggling2FA && (
                                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
                                                     )}
                                                 </label>

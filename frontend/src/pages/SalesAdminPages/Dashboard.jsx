@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react'
+import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown, Edit2, Save, X } from 'lucide-react';
 import { div } from 'framer-motion/client';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 
@@ -7,26 +7,215 @@ const Dashboard = () => {
 
     //state for dashboard data
     const [dashboardData, setDashboardData] = useState({
-        totalOrders: 157,
-        producedHangers: 973,
-        pendingOrders: 1,
+        totalOrders: 0,
+        producedHangers: 0,
+        pendingOrders: 0,
         todayQuota: {
-            target: 13,
-            reached: 10,
-            percentage: 76
+            quotaId: null,
+            target: 0,
+            reached: 0,
+            percentage: 0
         },
         weeklyQuota: {
-            target: 78,
-            reached: 59,
-            percentage: 76
+            quotaId: null,
+            target: 0,
+            reached: 0,
+            percentage: 0
         },
         finalQuota: {
-            percentage: 76,
-            dailyProgress: 65,
-            weeklyProgress: 82,
-            currentProgress: 76
+            percentage: 0,
+            dailyProgress: 0,
+            weeklyProgress: 0,
+            currentProgress: 0
         }
     })
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [editingQuota, setEditingQuota] = useState(null); // 'today' or 'weekly'
+    const [editValues, setEditValues] = useState({ target: 0, production: 0 });
+    const [saving, setSaving] = useState(false);
+
+    // Fetch dashboard data on component mount
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            
+            // Fetch all active quotas
+            const quotasResponse = await fetch('https://gatsis-hub.vercel.app/quotas?status=Active');
+            const quotasData = await quotasResponse.json();
+            
+            // Fetch all orders
+            const ordersResponse = await fetch('https://gatsis-hub.vercel.app/orders/all');
+            const ordersData = await ordersResponse.json();
+
+            console.log('Quotas Data:', quotasData);
+            console.log('Orders Data:', ordersData);
+
+            const activeQuotas = quotasData.quotas || [];
+            const allOrders = ordersData.orders || [];
+            
+            console.log('Active Quotas:', activeQuotas);
+            console.log('All Orders:', allOrders);
+            
+            // Calculate total orders and pending orders
+            const totalOrders = allOrders.length;
+            const pendingOrders = allOrders.filter(order => 
+                order.orderstatus === 'For Evaluation' || order.orderstatus === 'In Production'
+            ).length;
+
+            // Find today's quota (most recent active quota)
+            const today = new Date();
+            let todayQuota = activeQuotas.find(quota => {
+                if (!quota.startdate) return false;
+                const startDate = new Date(quota.startdate);
+                const endDate = quota.enddate ? new Date(quota.enddate) : null;
+                
+                // Check if today is within the quota period
+                if (endDate) {
+                    return startDate <= today && today <= endDate;
+                }
+                return startDate <= today;
+            });
+
+            // Fallback: If no quota matches today, use the most recent active quota
+            if (!todayQuota && activeQuotas.length > 0) {
+                todayQuota = activeQuotas[0];
+            }
+
+            // Find weekly quota
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay()); // Start of week
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6); // End of week
+            
+            let weeklyQuota = activeQuotas.find(quota => {
+                if (!quota.startdate) return false;
+                const startDate = new Date(quota.startdate);
+                const endDate = quota.enddate ? new Date(quota.enddate) : null;
+                
+                if (endDate) {
+                    return startDate <= weekEnd && endDate >= weekStart;
+                }
+                return false;
+            });
+
+            // Fallback: If no quota matches this week, use the most recent active quota
+            if (!weeklyQuota && activeQuotas.length > 0) {
+                weeklyQuota = activeQuotas[0];
+            }
+
+            console.log('Today Quota:', todayQuota);
+            console.log('Weekly Quota:', weeklyQuota);
+
+            // Calculate overall progress from all active quotas
+            const totalTarget = activeQuotas.reduce((sum, q) => sum + (q.targetquota || 0), 0);
+            const totalFinished = activeQuotas.reduce((sum, q) => sum + (q.finishedquota || 0), 0);
+            const overallPercentage = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
+
+            // Calculate today's quota progress
+            const todayTarget = todayQuota?.adjusted_daily_target || todayQuota?.targetquota || 0;
+            const todayFinished = todayQuota?.daily_production || 0;
+            const todayPercentage = todayTarget > 0 ? Math.round((todayFinished / todayTarget) * 100) : 0;
+
+            // Calculate weekly quota progress
+            const weeklyTarget = weeklyQuota?.adjusted_weekly_target || weeklyQuota?.targetquota || 0;
+            const weeklyFinished = weeklyQuota?.weekly_production || 0;
+            const weeklyPercentage = weeklyTarget > 0 ? Math.round((weeklyFinished / weeklyTarget) * 100) : 0;
+
+            const newData = {
+                totalOrders,
+                producedHangers: totalFinished,
+                pendingOrders,
+                todayQuota: {
+                    quotaId: todayQuota?.quotaid || null,
+                    target: todayTarget,
+                    reached: todayFinished,
+                    percentage: todayPercentage
+                },
+                weeklyQuota: {
+                    quotaId: weeklyQuota?.quotaid || null,
+                    target: weeklyTarget,
+                    reached: weeklyFinished,
+                    percentage: weeklyPercentage
+                },
+                finalQuota: {
+                    percentage: overallPercentage,
+                    dailyProgress: todayPercentage,
+                    weeklyProgress: weeklyPercentage,
+                    currentProgress: overallPercentage
+                }
+            };
+
+            console.log('Setting Dashboard Data:', newData);
+            setDashboardData(newData);
+
+        } catch (err) {
+            console.error('Failed to fetch dashboard data:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+            console.log('Loading set to false');
+        }
+    };
+
+    const handleEditQuota = (quotaType) => {
+        const quota = quotaType === 'today' ? dashboardData.todayQuota : dashboardData.weeklyQuota;
+        setEditingQuota(quotaType);
+        setEditValues({ target: quota.target, production: quota.reached });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingQuota(null);
+        setEditValues({ target: 0, production: 0 });
+    };
+
+    const handleSaveQuota = async () => {
+        if (!editingQuota) return;
+        
+        const quota = editingQuota === 'today' ? dashboardData.todayQuota : dashboardData.weeklyQuota;
+        
+        if (!quota.quotaId) {
+            alert('No quota ID found. Please create a quota first.');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            
+            const targetFieldName = editingQuota === 'today' ? 'adjusted_daily_target' : 'adjusted_weekly_target';
+            const productionFieldName = editingQuota === 'today' ? 'daily_production' : 'weekly_production';
+            
+            const response = await fetch(`https://gatsis-hub.vercel.app/quotas/${quota.quotaId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    [targetFieldName]: parseInt(editValues.target),
+                    [productionFieldName]: parseInt(editValues.production)
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update quota');
+            }
+
+            // Refresh dashboard data
+            await fetchDashboardData();
+            setEditingQuota(null);
+            setEditValues({ target: 0, production: 0 });
+            
+        } catch (err) {
+            console.error('Failed to save quota:', err);
+            alert('Failed to save quota. Please try again.');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const CircularProgress = ({ percentage, size = 120, strokeWidth = 12 }) => {
         const radius = (size - strokeWidth) / 2
@@ -77,8 +266,17 @@ const Dashboard = () => {
     );
 
     // Quota card component for displaying progress metrics
-    const QuotaCard = ({ title, subtitle, percentage, reached, target }) => (
-        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg p-6 md:p-8 text-white">
+    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotaType, onEdit }) => (
+        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg p-6 md:p-8 text-white relative">
+            {/* Edit button */}
+            <button
+                onClick={() => onEdit(quotaType)}
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+                title="Edit quota"
+            >
+                <Edit2 size={16} />
+            </button>
+            
             <h3 className="text-lg md:text-xl font-bold mb-2">{title}</h3>
             <p className="text-blue-200 text-xs md:text-sm mb-4 md:mb-6">{subtitle}</p>
 
@@ -105,6 +303,8 @@ const Dashboard = () => {
     const quotaAnim = useScrollAnimation({ threshold: 0.2 });
     const dailyWeeklyAnim = useScrollAnimation({ threshold: 0.2 });
 
+    console.log('Render - Loading:', loading, 'Error:', error);
+
     return (
         <div className='flex-1 flex flex-col min-h-screen bg-gray-100'>
 
@@ -122,41 +322,61 @@ const Dashboard = () => {
                 </div>
             </div>
 
+            {/* Loading State */}
+            {loading && (
+                <div className='flex-1 flex items-center justify-center p-8'>
+                    <div className='text-center'>
+                        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                        <p className='text-gray-600'>Loading dashboard data...</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+                <div className='flex-1 flex items-center justify-center p-8'>
+                    <div className='bg-red-50 border border-red-200 rounded-lg p-6 max-w-md'>
+                        <p className='text-red-800 font-semibold mb-2'>Error Loading Dashboard</p>
+                        <p className='text-red-600 text-sm mb-4'>{error}</p>
+                        <button 
+                            onClick={fetchDashboardData}
+                            className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm'
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Dashboard content */}
+            {!loading && !error && (
             <div className='p-4 md:p-8'>
                 {/* Top Statistics card */}
                 <div 
                     ref={statsAnim.ref}
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 ${
-                        statsAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
-                    }`}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8"
                 >
                     <StatCard
                         title="Total Orders"
                         value={dashboardData.totalOrders}
                         subtitle="As of today"
-                        trend={5}
                     />
                     <StatCard
-                        title="Produced Hangers for Order #1"
+                        title="Total Produced Hangers"
                         value={dashboardData.producedHangers}
-                        subtitle="Order #1 in Progress"
-                        trend={8.3}
+                        subtitle="Across all quotas"
                     />
                     <StatCard
                         title="Pending Orders"
                         value={dashboardData.pendingOrders}
                         subtitle="To be fulfilled"
-                        trend={-2.5}
                     />
                 </div>
 
                 {/* Main Quota Overview card */}
                 <div 
                     ref={quotaAnim.ref}
-                    className={`bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8 ${
-                        quotaAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
-                    }`}
+                    className="bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8"
                 >
                     <h2 className='text-xl md:text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
 
@@ -225,9 +445,7 @@ const Dashboard = () => {
                     {/* bottom quota cards row */}
                     <div 
                         ref={dailyWeeklyAnim.ref}
-                        className={`grid grid-cols-1 mt-4 md:mt-5 md:grid-cols-2 gap-4 md:gap-8 ${
-                            dailyWeeklyAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
-                        }`}
+                        className="grid grid-cols-1 mt-4 md:mt-5 md:grid-cols-2 gap-4 md:gap-8"
                     >
                         <QuotaCard 
                             title="Today's Quota"
@@ -235,6 +453,8 @@ const Dashboard = () => {
                             percentage={dashboardData.todayQuota.percentage}
                             reached={dashboardData.todayQuota.reached}
                             target={dashboardData.todayQuota.target}
+                            quotaType="today"
+                            onEdit={handleEditQuota}
                         />
                         <QuotaCard 
                             title="Weekly Quota"
@@ -242,9 +462,80 @@ const Dashboard = () => {
                             percentage={dashboardData.weeklyQuota.percentage}
                             reached={dashboardData.weeklyQuota.reached}
                             target={dashboardData.weeklyQuota.target}
+                            quotaType="weekly"
+                            onEdit={handleEditQuota}
                         />
                     </div>
             </div>
+            )}
+
+            {/* Edit Quota Modal */}
+            {editingQuota && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-xl font-bold mb-4">
+                            Edit {editingQuota === 'today' ? "Today's" : "Weekly"} Quota
+                        </h3>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Target Quota
+                            </label>
+                            <input
+                                type="number"
+                                value={editValues.target}
+                                onChange={(e) => setEditValues({ ...editValues, target: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                min="0"
+                            />
+                        </div>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">
+                                Quota Reached (Production)
+                            </label>
+                            <input
+                                type="number"
+                                value={editValues.production}
+                                onChange={(e) => setEditValues({ ...editValues, production: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                min="0"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                {editingQuota === 'today' ? 'Production made today' : 'Production made this week'}
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleSaveQuota}
+                                disabled={saving}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={16} />
+                                        Save
+                                    </>
+                                )}
+                            </button>
+                            <button
+                                onClick={handleCancelEdit}
+                                disabled={saving}
+                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                <X size={16} />
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -43,7 +43,7 @@ const OrderDesignViewer = ({ designData }) => {
                     }>
                         <HangerScene
                             color={design.color || '#4F46E5'}
-                            hangerType={design.hangerType || 'MB7'}
+                            hangerType={design.hangerType || '97-12'}
                             customText={design.customText || ''}
                             textColor={design.textColor || '#000000'}
                             textPosition={design.textPosition || { x: 0, y: 0, z: 0.49 }}

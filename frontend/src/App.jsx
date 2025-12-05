@@ -29,6 +29,7 @@ import AuthOM from './pages/OperationalManagerPages/AuthOM';
 import OrderPage from './pages/SalesAdminPages/OrderPage';
 import OrderDetail from './pages/SalesAdminPages/OrderDetail';
 import OperationalManLayout from './layouts/OperationalManLayout';
+import DashboardOM from './pages/OperationalManagerPages/DashboardOM';
 import OrderPageOM from './pages/OperationalManagerPages/OrderPageOM';
 import Employees from './pages/OperationalManagerPages/Employees';
 import EmployeeDetail from './pages/OperationalManagerPages/employeeDetail';  
@@ -170,6 +171,7 @@ const router = createBrowserRouter(
 
       {/*  Operational Manager layout */}
       <Route element={<OperationalManLayout />}>
+        <Route path="/dashboardOM" element={<ProtectedOMRoute element={<DashboardOM />} />} />
         <Route path="/orderpageOM" element={<ProtectedOMRoute element={<OrderPageOM />} />} />
         <Route path="/calendarOM" element={<ProtectedOMRoute element={<CalendarOM />} />} />
         <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
