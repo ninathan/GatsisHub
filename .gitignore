@@ -38,3 +38,6 @@ create_default_support_employee.sql
 add_email_notifications_column.sql
 DATABASE_CHANGELOG.md
 create_teams_table.sql
+add_adjusted_quota_column.sql
+create_payment_storage_bucket.sql
+create_system_admin.sql
