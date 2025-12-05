@@ -498,7 +498,7 @@ const OrderDetail = () => {
                 {/* Order Details Card */}
                 <div className="bg-white shadow-lg rounded-lg border border-gray-200">
                     {/* Header */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#007BFF] text-white rounded-t-lg">
+                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#35408E] text-white rounded-t-lg">
                         <h2 className="font-semibold text-lg">Order Details</h2>
                         <div className="relative">
                             <select
@@ -678,7 +678,7 @@ const OrderDetail = () => {
                                     <h4 className="font-semibold text-gray-800">3D Design Preview:</h4>
                                     <button
                                         onClick={() => open3DModal(order.threeddesigndata)}
-                                        className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
+                                        className="bg-[#35408E] text-white px-4 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
                                     >
                                         <Eye size={16} />
                                         View 3D Design

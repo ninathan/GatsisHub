@@ -1546,7 +1546,7 @@ const Employees = () => {
 
                         {/* Create/Edit Quota Modal */}
                         {(showCreateQuotaModal || showQuotaModal) && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 p-4">
+                            <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
                                 <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
                                     <div className="sticky top-0 bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center z-10">
                                         <h2 className="text-2xl font-bold">
