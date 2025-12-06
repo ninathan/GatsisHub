@@ -3,6 +3,7 @@ import { Send, Plus, MoreVertical, Bell, X, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeNotifications } from '../../hooks/useRealtimeNotifications';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const MessagesPage = () => {
     const [selectedContact, setSelectedContact] = useState(null);
@@ -13,7 +14,7 @@ const MessagesPage = () => {
     const [notifications, setNotifications] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [sendingMessage, setSendingMessage] = useState(false);
+    const [sendingMessage, setSendingMessage] = useState(false);s
     const [unreadCount, setUnreadCount] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();

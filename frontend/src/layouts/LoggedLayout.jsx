@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import LoggedLanding from "../components/Landing/LoggedLanding";
 import Navbar from "../components/Landing/navbar";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const LoggedLayout = () => {
   const [isAuth, setIsAuth] = useState(null); // null = loading
