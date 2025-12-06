@@ -796,6 +796,43 @@ const Checkout = () => {
         setShowInstructionsModal(true);
     }, []);
 
+    // Fetch products and materials
+    useEffect(() => {
+        const fetchProductsAndMaterials = async () => {
+            try {
+                // Fetch products (hangers)
+                const productsResponse = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
+                const productsData = await productsResponse.json();
+                
+                if (productsData.products) {
+                    const mappedHangers = productsData.products.map(product => ({
+                        id: product.productname,
+                        name: product.productname,
+                        description: product.description || ''
+                    }));
+                    setHangers(mappedHangers);
+                }
+                
+                // Fetch materials
+                const materialsResponse = await fetch('https://gatsis-hub.vercel.app/materials?is_active=true');
+                const materialsData = await materialsResponse.json();
+                
+                if (materialsData.materials) {
+                    const mappedMaterials = materialsData.materials.map(material => ({
+                        name: material.materialname,
+                        features: material.features || []
+                    }));
+                    setMaterials(mappedMaterials);
+                }
+            } catch (error) {
+                console.error('Error fetching products and materials:', error);
+                showNotification('Failed to load products and materials. Please refresh the page.');
+            }
+        };
+
+        fetchProductsAndMaterials();
+    }, []);
+
     // Load saved design if navigated from saved designs
     useEffect(() => {
         if (location.state?.loadDesign && location.state?.designData) {
