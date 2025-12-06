@@ -14,7 +14,7 @@ const MessagesPage = () => {
     const [notifications, setNotifications] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [sendingMessage, setSendingMessage] = useState(false);s
+    const [sendingMessage, setSendingMessage] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
