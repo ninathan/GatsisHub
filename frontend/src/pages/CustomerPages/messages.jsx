@@ -3,6 +3,7 @@ import { Send, Plus, MoreVertical, Bell, X, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRealtimeMessages } from '../../hooks/useRealtimeMessages';
 import { useRealtimeNotifications } from '../../hooks/useRealtimeNotifications';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const MessagesPage = () => {
     const [selectedContact, setSelectedContact] = useState(null);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { div, em } from 'framer-motion/client';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ProfileOM = () => {
 

@@ -22,6 +22,9 @@ const ProductsPage = () => {
             const response = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
             const data = await response.json();
             
+            console.log('Products API response:', data);
+            console.log('Products array:', data.products);
+            
             // Map products to include default images
             const imageMap = { 'MB3': pr1, '97-12': pr2, 'CQ-807': pr3, '97-11': pr4, '97-08': pr1 };
             const alignments = ['left', 'right', 'left', 'right', 'left'];
@@ -29,12 +32,13 @@ const ProductsPage = () => {
             const mappedProducts = (data.products || []).map((product, index) => ({
                 id: product.productname,
                 name: product.productname,
-                material: 'Polycarbonate (PC)',
                 description: product.description || 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
                 image: imageMap[product.productname] || pr1,
                 alignment: alignments[index % alignments.length],
                 hasOrderButton: product.productname === '97-11'
             }));
+            
+            console.log('Mapped products:', mappedProducts);
             
             setProducts(mappedProducts);
             setLoading(false);
@@ -70,27 +74,25 @@ const ProductsPage = () => {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-6 py-16">
                 {/* Title */}
-                <h1 
-                    ref={titleAnim.ref}
-                    className={`text-5xl font-bold text-indigo-900 mb-16 ${
-                        titleAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
-                    }`}
-                >
+                <h1 className="text-5xl font-bold text-indigo-900 mb-16">
                     Our Product<br />presents
                 </h1>
+
+                {/* Debug: Show product count */}
+                {products.length === 0 && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-600 text-xl">No active products found.</p>
+                    </div>
+                )}
 
                 {/* Products List */}
                 <div className="space-y-24">
                     {products.map((product, index) => {
-                        const productAnim = productAnims[index];
                         return (
                             <div
                                 key={product.id}
-                                ref={productAnim.ref}
                                 className={`flex items-center gap-12 ${
                                     product.alignment === 'right' ? 'flex-row-reverse' : ''
-                                } ${
-                                    productAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                                 }`}
                             >
                                 {/* Product Image */}
@@ -105,11 +107,6 @@ const ProductsPage = () => {
                                     <h2 className="text-5xl font-bold text-indigo-900 mb-2 transform transition-all duration-300 hover:text-[#4a5899]">
                                         {product.name}
                                     </h2>
-                                    {product.material && (
-                                        <h3 className="text-xl font-semibold text-indigo-900 mb-4 opacity-90">
-                                            {product.material}
-                                        </h3>
-                                    )}
                                     <p className="text-gray-700 leading-relaxed max-w-md">
                                         {product.description}
                                     </p>
