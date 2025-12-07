@@ -32,6 +32,7 @@ const Checkout = () => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
     const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
+    const [capturedThumbnail, setCapturedThumbnail] = useState(null);
 
     // Multi-step wizard
     const [currentStep, setCurrentStep] = useState(1);
@@ -293,49 +294,11 @@ const Checkout = () => {
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         const userId = userData.userid || null;
 
-        // Capture thumbnail from canvas before preparing order data
-        let thumbnailBase64 = null;
-        try {
-            // Try multiple times with increasing delays to ensure canvas is ready
-            for (let attempt = 0; attempt < 5; attempt++) {
-                await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
-                const canvas = threeCanvasRef.current?.querySelector('canvas');
-                
-                if (canvas && canvas.width > 0 && canvas.height > 0) {
-                    console.log('Capturing thumbnail from canvas (attempt', attempt + 1, '):', canvas.width, 'x', canvas.height);
-                    
-                    const thumbnailCanvas = document.createElement('canvas');
-                    const thumbnailSize = 400;
-                    thumbnailCanvas.width = thumbnailSize;
-                    thumbnailCanvas.height = thumbnailSize;
-                    const ctx = thumbnailCanvas.getContext('2d');
-                    
-                    // Simple center crop
-                    const sourceSize = Math.min(canvas.width, canvas.height);
-                    const cropSize = sourceSize * 0.7;
-                    const sourceX = (canvas.width - cropSize) / 2;
-                    const sourceY = (canvas.height - cropSize) / 2;
-                    
-                    // White background
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
-                    
-                    // Draw the cropped canvas
-                    ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
-                    
-                    // Convert to base64
-                    thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.8);
-                    console.log('Thumbnail generated successfully, size:', thumbnailBase64.length);
-                    break; // Success, exit loop
-                } else {
-                    console.warn('Canvas not ready or invalid dimensions (attempt', attempt + 1, ')');
-                    if (attempt === 4) {
-                        console.error('Failed to capture thumbnail after 5 attempts');
-                    }
-                }
-            }
-        } catch (thumbError) {
-            console.error('Error capturing thumbnail:', thumbError);
+        // Use the pre-captured thumbnail or try to capture one now if it wasn't captured
+        let thumbnailBase64 = capturedThumbnail;
+        if (!thumbnailBase64) {
+            console.warn('Thumbnail was not captured during navigation, attempting to capture now...');
+            thumbnailBase64 = await captureThumbnail();
         }
 
         // Prepare complete 3D design data for database storage and admin viewing
@@ -904,9 +867,60 @@ const Checkout = () => {
 
     // Material percentage handling
     
+    // Function to capture thumbnail from 3D canvas
+    const captureThumbnail = async () => {
+        try {
+            // Try multiple times with increasing delays
+            for (let attempt = 0; attempt < 5; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
+                const canvas = threeCanvasRef.current?.querySelector('canvas');
+                
+                if (canvas && canvas.width > 0 && canvas.height > 0) {
+                    console.log('Capturing thumbnail from canvas (attempt', attempt + 1, '):', canvas.width, 'x', canvas.height);
+                    
+                    const thumbnailCanvas = document.createElement('canvas');
+                    const thumbnailSize = 400;
+                    thumbnailCanvas.width = thumbnailSize;
+                    thumbnailCanvas.height = thumbnailSize;
+                    const ctx = thumbnailCanvas.getContext('2d');
+                    
+                    // Simple center crop
+                    const sourceSize = Math.min(canvas.width, canvas.height);
+                    const cropSize = sourceSize * 0.7;
+                    const sourceX = (canvas.width - cropSize) / 2;
+                    const sourceY = (canvas.height - cropSize) / 2;
+                    
+                    // White background
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
+                    
+                    // Draw the cropped canvas
+                    ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
+                    
+                    // Convert to base64
+                    const thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.8);
+                    console.log('Thumbnail generated successfully, size:', thumbnailBase64.length);
+                    setCapturedThumbnail(thumbnailBase64);
+                    return thumbnailBase64;
+                } else {
+                    console.warn('Canvas not ready or invalid dimensions (attempt', attempt + 1, ')');
+                }
+            }
+            console.error('Failed to capture thumbnail after 5 attempts');
+            return null;
+        } catch (error) {
+            console.error('Error capturing thumbnail:', error);
+            return null;
+        }
+    };
+    
     // Navigation
-    const nextStep = () => {
+    const nextStep = async () => {
         if (validateCurrentStep()) {
+            // Capture thumbnail when leaving step 1 (3D customization step)
+            if (currentStep === 1 && !capturedThumbnail) {
+                await captureThumbnail();
+            }
             setCurrentStep(prev => Math.min(prev + 1, totalSteps));
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
