@@ -164,12 +164,18 @@ function CustomLogo({ logoUrl, position, size }) {
 }
 
 // Main Scene Component
-export default function HangerScene({ color, hangerType, customText, textColor, textPosition, textSize, logoPreview, logoPosition, logoSize }) {
+export default function HangerScene({ color, hangerType, customText, textColor, textPosition, textSize, logoPreview, logoPosition, logoSize, onSceneReady }) {
     return (
         <Canvas
             camera={{ position: [0, 0, 2.5], fov: 25}}
             style={{ width: '100%', height: '100%', background: '#ffffff' }}
             gl={{ preserveDrawingBuffer: true }}
+            onCreated={(state) => {
+                // Notify parent component that canvas is ready
+                if (onSceneReady) {
+                    setTimeout(() => onSceneReady(), 100);
+                }
+            }}
         >
             {/* Enhanced lighting for vibrant colors */}
             <ambientLight intensity={0.8} />
