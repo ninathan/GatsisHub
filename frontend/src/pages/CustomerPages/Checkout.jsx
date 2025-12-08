@@ -87,8 +87,6 @@ const Checkout = () => {
     const [hangers, setHangers] = useState([]);
     const [materials, setMaterials] = useState([]);
 
-    // Hanger selection state (removed hardcoded array)
-
     // Predefined colors for quick selection
     const colors = [
         "#FF6B6B",

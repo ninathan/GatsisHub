@@ -5,13 +5,10 @@ import pr1 from '../../images/pr1.png';
 import pr2 from '../../images/pr2.png';
 import pr3 from '../../images/pr3.png';
 import pr4 from '../../images/pr4.png';
-import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 const ProductsPage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    const titleAnim = useScrollAnimation({ threshold: 0.3 });
     
     useEffect(() => {
         fetchProducts();
@@ -22,9 +19,6 @@ const ProductsPage = () => {
             const response = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
             const data = await response.json();
             
-            console.log('Products API response:', data);
-            console.log('Products array:', data.products);
-            
             // Map products to include default images
             const imageMap = { 'MB3': pr1, '97-12': pr2, 'CQ-807': pr3, '97-11': pr4, '97-08': pr1 };
             const alignments = ['left', 'right', 'left', 'right', 'left'];
@@ -32,13 +26,11 @@ const ProductsPage = () => {
             const mappedProducts = (data.products || []).map((product, index) => ({
                 id: product.productname,
                 name: product.productname,
-                description: product.description || 'Very strong and tough. Transparent or can be colored. Resistant to heat and wear. Often used for premium, transparent, or designer hangers.',
+                description: product.description || 'High quality hanger for professional use.',
                 image: imageMap[product.productname] || pr1,
                 alignment: alignments[index % alignments.length],
                 hasOrderButton: product.productname === '97-11'
             }));
-            
-            console.log('Mapped products:', mappedProducts);
             
             setProducts(mappedProducts);
             setLoading(false);
@@ -47,16 +39,6 @@ const ProductsPage = () => {
             setLoading(false);
         }
     };
-    
-    // Create animation hooks for each product (must be at top level, not in loop)
-    const product1Anim = useScrollAnimation({ threshold: 0.2 });
-    const product2Anim = useScrollAnimation({ threshold: 0.2 });
-    const product3Anim = useScrollAnimation({ threshold: 0.2 });
-    const product4Anim = useScrollAnimation({ threshold: 0.2 });
-    const product5Anim = useScrollAnimation({ threshold: 0.2 });
-    const product6Anim = useScrollAnimation({ threshold: 0.2 });
-    
-    const productAnims = [product1Anim, product2Anim, product3Anim, product4Anim, product5Anim, product6Anim];
 
     if (loading) {
         return (
@@ -77,13 +59,6 @@ const ProductsPage = () => {
                 <h1 className="text-5xl font-bold text-indigo-900 mb-16">
                     Our Product<br />presents
                 </h1>
-
-                {/* Debug: Show product count */}
-                {products.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-600 text-xl">No active products found.</p>
-                    </div>
-                )}
 
                 {/* Products List */}
                 <div className="space-y-24">

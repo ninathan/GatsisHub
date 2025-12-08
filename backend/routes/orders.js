@@ -42,6 +42,36 @@ router.post("/create", async (req, res) => {
       return res.status(400).json({ error: "Minimum quantity is 100 pieces" });
     }
 
+    // Get productid from products table based on hangerType name
+    let productid = null;
+    if (hangerType) {
+      const { data: product, error: productError } = await supabase
+        .from('products')
+        .select('productid')
+        .eq('productname', hangerType)
+        .single();
+      
+      if (productError || !product) {
+        return res.status(400).json({ error: `Invalid product: ${hangerType}` });
+      }
+      productid = product.productid;
+    }
+
+    // Validate materials exist in materials table
+    if (materials && Object.keys(materials).length > 0) {
+      for (const materialName of Object.keys(materials)) {
+        const { data: material, error: matError } = await supabase
+          .from('materials')
+          .select('materialid')
+          .eq('materialname', materialName)
+          .single();
+        
+        if (matError || !material) {
+          return res.status(400).json({ error: `Invalid material: ${materialName}` });
+        }
+      }
+    }
+
     // Insert order into database
     const insertData = {
       userid: userid || null,
@@ -49,6 +79,7 @@ router.post("/create", async (req, res) => {
       contactperson: contactPerson,
       contactphone: contactPhone,
       hangertype: hangerType,
+      productid: productid, // Add the foreign key
       materialtype: materialType || null,
       quantity: quantity,
       materials: materials || {},
@@ -77,6 +108,45 @@ router.post("/create", async (req, res) => {
 
     if (insertError) {
       return res.status(400).json({ error: insertError.message });
+    }
+
+    // Insert materials into order_materials junction table
+    if (materials && Object.keys(materials).length > 0 && order && order[0]) {
+      const orderid = order[0].orderid;
+      
+      // Get material IDs from material names and prepare entries
+      const materialEntries = [];
+      for (const [materialName, percentage] of Object.entries(materials)) {
+        const { data: material, error: matError } = await supabase
+          .from('materials')
+          .select('materialid')
+          .eq('materialname', materialName)
+          .single();
+        
+        if (!matError && material) {
+          materialEntries.push({
+            orderid: orderid,
+            materialid: material.materialid,
+            percentage: parseFloat(percentage)
+          });
+        } else {
+          console.error(`Material not found: ${materialName}`);
+        }
+      }
+      
+      // Insert all material associations
+      if (materialEntries.length > 0) {
+        const { error: matInsertError } = await supabase
+          .from('order_materials')
+          .insert(materialEntries);
+        
+        if (matInsertError) {
+          console.error('Error inserting order materials:', matInsertError);
+          // Rollback: delete the order if materials insert fails
+          await supabase.from('orders').delete().eq('orderid', orderid);
+          return res.status(400).json({ error: 'Failed to save order materials' });
+        }
+      }
     }
 
     // 📧 Send order confirmation email to customer
@@ -229,8 +299,34 @@ router.get("/user/:userid", async (req, res) => {
     if (orders && orders.length > 0) {
     }
 
+    // Fetch materials for each order from junction table
+    const ordersWithMaterials = await Promise.all(orders.map(async (order) => {
+      const { data: orderMaterials } = await supabase
+        .from('order_materials')
+        .select(`
+          percentage,
+          materials!inner(
+            materialname
+          )
+        `)
+        .eq('orderid', order.orderid);
+      
+      // Convert to the format expected by frontend: {"PP": 50, "ABS": 50}
+      const materialsObj = {};
+      if (orderMaterials) {
+        orderMaterials.forEach(om => {
+          materialsObj[om.materials.materialname] = om.percentage;
+        });
+      }
+      
+      return {
+        ...order,
+        materials: Object.keys(materialsObj).length > 0 ? materialsObj : order.materials // fallback to JSONB if no junction data
+      };
+    }));
+
     res.status(200).json({
-      orders: orders || []
+      orders: ordersWithMaterials || []
     });
   } catch (err) {
     res.status(500).json({ 
@@ -250,8 +346,34 @@ router.get("/all", async (req, res) => {
 
     if (error) throw error;
 
+    // Fetch materials for each order from junction table
+    const ordersWithMaterials = await Promise.all(orders.map(async (order) => {
+      const { data: orderMaterials } = await supabase
+        .from('order_materials')
+        .select(`
+          percentage,
+          materials!inner(
+            materialname
+          )
+        `)
+        .eq('orderid', order.orderid);
+      
+      // Convert to the format expected by frontend: {"PP": 50, "ABS": 50}
+      const materialsObj = {};
+      if (orderMaterials) {
+        orderMaterials.forEach(om => {
+          materialsObj[om.materials.materialname] = om.percentage;
+        });
+      }
+      
+      return {
+        ...order,
+        materials: Object.keys(materialsObj).length > 0 ? materialsObj : order.materials // fallback to JSONB if no junction data
+      };
+    }));
+
     res.status(200).json({
-      orders: orders || []
+      orders: ordersWithMaterials || []
     });
   } catch (err) {
 
@@ -272,7 +394,31 @@ router.get("/:orderid", async (req, res) => {
 
     if (error) throw error;
 
-    res.status(200).json({ order });
+    // Fetch materials from junction table
+    const { data: orderMaterials } = await supabase
+      .from('order_materials')
+      .select(`
+        percentage,
+        materials!inner(
+          materialname
+        )
+      `)
+      .eq('orderid', orderid);
+    
+    // Convert to the format expected by frontend: {"PP": 50, "ABS": 50}
+    const materialsObj = {};
+    if (orderMaterials) {
+      orderMaterials.forEach(om => {
+        materialsObj[om.materials.materialname] = om.percentage;
+      });
+    }
+    
+    const orderWithMaterials = {
+      ...order,
+      materials: Object.keys(materialsObj).length > 0 ? materialsObj : order.materials // fallback to JSONB if no junction data
+    };
+
+    res.status(200).json({ order: orderWithMaterials });
   } catch (err) {
 
     res.status(500).json({ error: err.message });
