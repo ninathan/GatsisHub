@@ -34,26 +34,26 @@ const CreateDesign = () => {
     const [designName, setDesignName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [notificationModal, setNotificationModal] = useState({ 
-        show: false, 
-        type: '', 
-        message: '' 
+    const [notificationModal, setNotificationModal] = useState({
+        show: false,
+        type: '',
+        message: ''
     });
-    
+
     useEffect(() => {
         fetchProductsAndMaterials();
     }, []);
-    
+
     const fetchProductsAndMaterials = async () => {
         try {
             const [productsRes, materialsRes] = await Promise.all([
                 fetch('https://gatsis-hub.vercel.app/products?is_active=true'),
                 fetch('https://gatsis-hub.vercel.app/materials?is_active=true')
             ]);
-            
+
             const productsData = await productsRes.json();
             const materialsData = await materialsRes.json();
-            
+
             setHangers((productsData.products || []).map(p => ({ id: p.productname, name: p.productname })));
             setMaterials((materialsData.materials || []).map(m => ({
                 name: m.materialname,
@@ -85,7 +85,7 @@ const CreateDesign = () => {
     const toggleMaterial = (materialName) => {
         setSelectedMaterials(prev => {
             const newMaterials = { ...prev };
-            
+
             if (newMaterials[materialName]) {
                 delete newMaterials[materialName];
                 const remainingCount = Object.keys(newMaterials).length;
@@ -103,27 +103,27 @@ const CreateDesign = () => {
                     newMaterials[key] = evenPercentage;
                 });
             }
-            
+
             return newMaterials;
         });
     };
 
     const updateMaterialPercentage = (materialName, value) => {
         const newValue = Math.max(0, Math.min(100, parseInt(value) || 0));
-        
+
         setSelectedMaterials(prev => {
             const newMaterials = { ...prev };
             const otherMaterials = Object.keys(newMaterials).filter(key => key !== materialName);
-            
+
             if (otherMaterials.length === 0) {
                 newMaterials[materialName] = newValue;
                 return newMaterials;
             }
-            
+
             newMaterials[materialName] = newValue;
             const remainingPercentage = 100 - newValue;
             const otherTotal = otherMaterials.reduce((sum, key) => sum + prev[key], 0);
-            
+
             if (otherTotal > 0) {
                 otherMaterials.forEach(key => {
                     const proportion = prev[key] / otherTotal;
@@ -135,17 +135,17 @@ const CreateDesign = () => {
                     newMaterials[key] = evenShare;
                 });
             }
-            
+
             return newMaterials;
         });
     };
 
     const handleSaveDesign = async () => {
         if (!user || !user.userid) {
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: 'Please log in to save designs' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: 'Please log in to save designs'
             });
             return;
         }
@@ -155,10 +155,10 @@ const CreateDesign = () => {
 
     const confirmSaveDesign = async () => {
         if (!designName.trim()) {
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: 'Please enter a name for your design' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: 'Please enter a name for your design'
             });
             return;
         }
@@ -229,17 +229,17 @@ const CreateDesign = () => {
 
             setSaveDesignModal(false);
             setDesignName('');
-            setNotificationModal({ 
-                show: true, 
-                type: 'success', 
-                message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.` 
+            setNotificationModal({
+                show: true,
+                type: 'success',
+                message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.`
             });
         } catch (error) {
 
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: error.message || 'Failed to save design. Please try again.' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: error.message || 'Failed to save design. Please try again.'
             });
         } finally {
             setIsSaving(false);
@@ -248,10 +248,10 @@ const CreateDesign = () => {
 
     const handleDownloadDesign = async () => {
         if (!threeCanvasRef.current) {
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: 'Please wait for the 3D model to load' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: 'Please wait for the 3D model to load'
             });
             return;
         }
@@ -303,20 +303,20 @@ const CreateDesign = () => {
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
-                    setNotificationModal({ 
-                        show: true, 
-                        type: 'success', 
-                        message: 'Design downloaded successfully! (PNG + JSON files)' 
+                    setNotificationModal({
+                        show: true,
+                        type: 'success',
+                        message: 'Design downloaded successfully! (PNG + JSON files)'
                     });
                 }
             }, 'image/png');
 
         } catch (error) {
 
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: `Failed to download design: ${error.message}` 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: `Failed to download design: ${error.message}`
             });
         } finally {
             setIsDownloading(false);
@@ -348,9 +348,9 @@ const CreateDesign = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Fullscreen Modal with Sidebar */}
             {isFullscreen && (
-                <div className="fixed inset-0 bg-[#353f94] z-50 flex flex-col">
+                <div className="fixed inset-0 bg-[#191716] z-50 flex flex-col">
                     {/* Header */}
-                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
+                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#191716] backdrop-blur-sm border-b-2 border-yellow-400">
                         <div className="flex items-center gap-2 md:gap-3">
                             <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Design Studio</h3>
                             <span className="text-yellow-400 text-xs md:text-sm">({selectedHanger})</span>
@@ -386,20 +386,19 @@ const CreateDesign = () => {
                         </div>
 
                         {/* Customization Sidebar */}
-                        <div className="w-full md:w-80 lg:w-96 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
+                        <div className="w-full md:w-80 lg:w-96 bg-[#E6AF2E] backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
                             {/* Hanger Type */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                            <div className="bg-[#191716] rounded-lg p-3 md:p-4 border border-[#191716]">
                                 <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Hanger Type</h4>
                                 <div className="grid grid-cols-3 md:grid-cols-2 gap-2">
                                     {hangers.map((hanger) => (
                                         <button
                                             key={hanger.id}
                                             onClick={() => setSelectedHanger(hanger.id)}
-                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                                                selectedHanger === hanger.id
-                                                    ? 'bg-yellow-400 text-[#353f94]'
-                                                    : 'bg-[#4a5899] text-white hover:bg-yellow-400 hover:text-[#353f94]'
-                                            }`}
+                                            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedHanger === hanger.id
+                                                    ? 'bg-yellow-400 text-[#191716] hover:bg-yellow-300 hover:text-[#191716]'
+                                                    : 'bg-[#191716] text-white hover:bg-yellow-400 hover:text-[#191716] border-1 border-[#E6AF2E]'
+                                                }`}
                                         >
                                             {hanger.name}
                                         </button>
@@ -408,7 +407,7 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Color */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                            <div className="bg-[#191716] rounded-lg p-3 md:p-4 border border-[#191716]">
                                 <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
                                 <div className="space-y-2 md:space-y-3">
                                     <div className="flex items-center gap-2">
@@ -422,7 +421,7 @@ const CreateDesign = () => {
                                             type="text"
                                             value={color}
                                             onChange={(e) => setColor(e.target.value)}
-                                            className="flex-1 bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                            className="flex-1 bg-[#191716] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer"
                                         />
                                     </div>
                                     <div className="grid grid-cols-6 gap-1.5 md:gap-2">
@@ -430,7 +429,7 @@ const CreateDesign = () => {
                                             <button
                                                 key={col}
                                                 onClick={() => setColor(col)}
-                                                className="w-full aspect-square rounded border-2 border-[#4a5899] hover:border-yellow-400 transition-colors"
+                                                className="w-full aspect-square rounded border-2 border-[#191716] hover:border-yellow-400 transition-colors cursor-pointer"
                                                 style={{ backgroundColor: col }}
                                             />
                                         ))}
@@ -439,14 +438,14 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Custom Text */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                            <div className="bg-[#191716] rounded-lg p-3 md:p-4 border border-[#191716]">
                                 <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
                                 <input
                                     type="text"
                                     value={customText}
                                     onChange={(e) => setCustomText(e.target.value)}
                                     placeholder="Enter text"
-                                    className="w-full bg-[#4a5899] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                    className="w-full bg-[#191716] text-white border border-yellow-400 rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                                 />
                                 <div className="flex items-center gap-2 mb-2">
                                     <label className="text-white text-xs">Color:</label>
@@ -479,7 +478,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.x}
-                                                onChange={(e) => setTextPosition({...textPosition, x: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, x: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.x.toFixed(1)}</span>
@@ -492,7 +491,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.y}
-                                                onChange={(e) => setTextPosition({...textPosition, y: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, y: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.y.toFixed(1)}</span>
@@ -505,7 +504,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.z}
-                                                onChange={(e) => setTextPosition({...textPosition, z: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, z: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.z.toFixed(1)}</span>
@@ -528,13 +527,13 @@ const CreateDesign = () => {
                             </div>
 
                             {/* Logo */}
-                            <div className="bg-[#353f94]/70 rounded-lg p-3 md:p-4 border border-[#4a5899]">
+                            <div className="bg-[#191716] rounded-lg p-3 md:p-4 border border-[#191716]">
                                 <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
                                 <input
                                     type="file"
                                     accept="image/*"
                                     onChange={handleLogoUpload}
-                                    className="w-full text-xs text-white file:mr-2 file:py-1.5 md:file:py-2 file:px-2 md:file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-400 file:text-[#353f94] hover:file:bg-yellow-300 cursor-pointer"
+                                    className="w-full text-xs text-white file:mr-2 file:py-1.5 md:file:py-2 file:px-2 md:file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-400 file:text-[#191716] hover:file:bg-yellow-300 cursor-pointer"
                                 />
                                 {logoPreview && (
                                     <div className="mt-2 space-y-2">
@@ -572,7 +571,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.x}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, x: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, x: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.x.toFixed(1)}</span>
@@ -585,7 +584,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.y}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, y: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, y: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.y.toFixed(1)}</span>
@@ -598,7 +597,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.z}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, z: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, z: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.z.toFixed(1)}</span>
@@ -625,7 +624,7 @@ const CreateDesign = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 bg-[#2c3575] backdrop-blur-sm text-center border-t-2 border-yellow-400">
+                    <div className="p-4 bg-[#191716] backdrop-blur-sm text-center border-t-2 border-yellow-400">
                         <p className="text-white text-sm">
                             Click and drag to rotate • Scroll to zoom • Press ESC to exit
                         </p>
@@ -637,23 +636,23 @@ const CreateDesign = () => {
             {showHangerSelection && (
                 <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg max-w-3xl w-full p-4 md:p-6 lg:p-8">
-                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#35408E] mb-2 text-center">Choose Your Hanger Type</h2>
-                        <p className="text-sm md:text-base text-gray-600 text-center mb-6 md:mb-8">Select a hanger model to start designing</p>
-                        
+                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-[#191716] mb-2 text-center">Choose Your Hanger Type</h2>
+                        <p className="text-sm md:text-base text-[#191716] text-center mb-6 md:mb-8">Select a hanger model to start designing</p>
+
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
                             {hangers.map((hanger) => (
                                 <button
                                     key={hanger.id}
                                     onClick={() => handleSelectHanger(hanger.id)}
-                                    className="group relative bg-white border-2 border-gray-300 hover:border-[#35408E] rounded-xl p-3 md:p-4 lg:p-6 transition-all hover:shadow-xl hover:scale-105"
+                                    className="group relative bg-white border-2 border-gray-300 hover:border-[#E6AF2E] rounded-xl p-3 md:p-4 lg:p-6 transition-all hover:shadow-xl hover:scale-105"
                                 >
                                     <div className="aspect-square bg-gray-100 rounded-lg mb-2 md:mb-4 flex items-center justify-center">
-                                        <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#35408E] group-hover:scale-110 transition-transform">
+                                        <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#E6AF2E] group-hover:scale-110 transition-transform">
                                             {hanger.name}
                                         </span>
                                     </div>
                                     <h3 className="font-semibold text-sm md:text-base lg:text-lg text-center">{hanger.name}</h3>
-                                    <p className="text-xs md:text-sm text-gray-500 text-center mt-1">Model {hanger.id}</p>
+                                    <p className="text-xs md:text-sm text-[#191716] text-center mt-1">Model {hanger.id}</p>
                                 </button>
                             ))}
                         </div>
@@ -683,7 +682,7 @@ const CreateDesign = () => {
                                         <ArrowLeft size={20} />
                                         <span className="text-sm md:text-base">Back</span>
                                     </button>
-                                    <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#35408E]">
+                                    <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#191716]">
                                         Create Design - {selectedHanger}
                                     </h1>
                                 </div>
@@ -692,13 +691,13 @@ const CreateDesign = () => {
                                         onClick={() => setShowInstructionsModal(true)}
                                         className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm md:text-base"
                                     >
-                                        <Info size={18} />
+                                        <Info className="text-[#191716]" size={18} />
                                         <span className="hidden sm:inline">Instructions</span>
                                     </button>
                                     <button
                                         onClick={handleDownloadDesign}
                                         disabled={isDownloading}
-                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base"
+                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base cursor-pointer"
                                     >
                                         <Download size={18} />
                                         <span className="hidden sm:inline">
@@ -707,7 +706,7 @@ const CreateDesign = () => {
                                     </button>
                                     <button
                                         onClick={handleSaveDesign}
-                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-[#35408E] hover:bg-[#2a3270] text-white rounded-lg transition-colors text-sm md:text-base"
+                                        className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-[#E6AF2E] hover:bg-[#191716] text-[#191716] hover:text-white rounded-lg transition-colors text-sm md:text-base cursor-pointer"
                                     >
                                         <Save size={18} />
                                         <span className="hidden sm:inline">Save Design</span>
@@ -718,336 +717,334 @@ const CreateDesign = () => {
                     </div>
 
                     {/* Main Content Area */}
-                    <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                    {/* Left Panel - 3D Viewer */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg shadow-lg overflow-hidden border-2 border-yellow-400 h-[400px] md:h-[500px] lg:h-[600px]">
-                            <div className="relative h-full">
-                                {/* 3D Canvas */}
-                                <div ref={threeCanvasRef} className="w-full h-full">
-                                    {selectedHanger && (
-                                        <HangerScene
-                                            hangerType={selectedHanger}
-                                            color={color}
-                                            customText={customText}
-                                            textColor={textColor}
-                                            logoPreview={logoPreview}
-                                            textPosition={textPosition}
-                                            logoPosition={logoPosition}
-                                            textSize={textSize}
-                                            logoSize={logoSize}
-                                            onTextPositionChange={setTextPosition}
-                                            onLogoPositionChange={setLogoPosition}
-                                        />
-                                    )}
-                                </div>
-
-                                {/* Fullscreen Toggle */}
-                                <button
-                                    onClick={toggleFullscreen}
-                                    className="absolute top-4 right-4 p-2 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] rounded-lg shadow-lg transition-colors"
-                                >
-                                    <Maximize2 size={20} />
-                                </button>
-
-                                {/* Info Overlay */}
-                                <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 bg-[#2c3575]/90 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg text-xs md:text-sm border border-yellow-400">
-                                    <p className="font-semibold">Click and drag to rotate • Scroll to zoom</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Panel - Customization Options */}
-                    <div className="space-y-4 md:space-y-6">
-                        {/* Hanger Type Selection */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Hanger Type</h2>
-                            <div className="grid grid-cols-2 gap-2 md:gap-3">
-                                {hangers.map((hanger) => (
-                                    <button
-                                        key={hanger.id}
-                                        onClick={() => setSelectedHanger(hanger.id)}
-                                        className={`px-2 md:px-4 py-2 md:py-3 rounded-lg border-2 transition-all text-sm md:text-base ${
-                                            selectedHanger === hanger.id
-                                                ? 'border-[#35408E] bg-[#35408E] text-white'
-                                                : 'border-gray-300 hover:border-[#35408E]'
-                                        }`}
-                                    >
-                                        {hanger.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Color Selection */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Color</h2>
-                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 md:gap-3 mb-3 md:mb-4">
-                                {colors.map((col) => (
-                                    <button
-                                        key={col}
-                                        onClick={() => setColor(col)}
-                                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 transition-all ${
-                                            color === col ? 'border-gray-800 scale-110' : 'border-gray-300'
-                                        }`}
-                                        style={{ backgroundColor: col }}
-                                    />
-                                ))}
-                            </div>
-                            <input
-                                type="color"
-                                value={color}
-                                onChange={(e) => setColor(e.target.value)}
-                                className="w-full h-8 md:h-10 rounded-lg cursor-pointer"
-                            />
-                        </div>
-
-                        {/* Custom Text */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Custom Text</h2>
-                            <input
-                                type="text"
-                                value={customText}
-                                onChange={(e) => setCustomText(e.target.value)}
-                                placeholder="Enter text to display"
-                                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-3 text-sm md:text-base"
-                            />
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs md:text-sm font-medium">Text Color:</label>
-                                <input
-                                    type="color"
-                                    value={textColor}
-                                    onChange={(e) => setTextColor(e.target.value)}
-                                    className="w-12 h-6 md:w-16 md:h-8 rounded cursor-pointer"
-                                />
-                            </div>
-                            <div className="mt-3">
-                                <label className="text-xs md:text-sm font-medium block mb-2">Text Size: {textSize.toFixed(1)}</label>
-                                <input
-                                    type="range"
-                                    min="0.1"
-                                    max="1"
-                                    step="0.1"
-                                    value={textSize}
-                                    onChange={(e) => setTextSize(parseFloat(e.target.value))}
-                                    className="w-full"
-                                />
-                            </div>
-                            {customText && (
-                                <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                                    <div>
-                                        <label className="text-gray-600 block mb-1">X Position</label>
-                                        <input
-                                            type="number"
-                                            value={textPosition.x}
-                                            onChange={(e) => setTextPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-1 md:px-2 py-1"
-                                            step="0.1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-gray-600 block mb-1">Y Position</label>
-                                        <input
-                                            type="number"
-                                            value={textPosition.y}
-                                            onChange={(e) => setTextPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-1 md:px-2 py-1"
-                                            step="0.1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-gray-600 block mb-1">Z Position</label>
-                                        <input
-                                            type="number"
-                                            value={textPosition.z}
-                                            onChange={(e) => setTextPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
-                                            className="w-full border rounded px-1 md:px-2 py-1"
-                                            step="0.1"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Logo Upload */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Logo</h2>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleLogoUpload}
-                                className="w-full text-xs md:text-sm text-gray-500 file:mr-3 md:file:mr-4 file:py-2 file:px-3 md:file:px-4 file:rounded-lg file:border-0 file:text-xs md:file:text-sm file:font-semibold file:bg-[#35408E] file:text-white hover:file:bg-[#2a3270] cursor-pointer"
-                            />
-                            {logoPreview && (
-                                <div className="mt-3">
-                                    <img src={logoPreview} alt="Logo preview" className="w-16 h-16 md:w-20 md:h-20 object-contain border rounded" />
-                                    <div className="mt-3">
-                                        <label className="text-xs md:text-sm font-medium block mb-2">Logo Size: {logoSize.toFixed(1)}</label>
-                                        <input
-                                            type="range"
-                                            min="0.1"
-                                            max="2"
-                                            step="0.1"
-                                            value={logoSize}
-                                            onChange={(e) => setLogoSize(parseFloat(e.target.value))}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                                        <div>
-                                            <label className="text-gray-600 block mb-1">X Position</label>
-                                            <input
-                                                type="number"
-                                                value={logoPosition.x}
-                                                onChange={(e) => setLogoPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-1 md:px-2 py-1"
-                                                step="0.1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-gray-600 block mb-1">Y Position</label>
-                                            <input
-                                                type="number"
-                                                value={logoPosition.y}
-                                                onChange={(e) => setLogoPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-1 md:px-2 py-1"
-                                                step="0.1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-gray-600 block mb-1">Z Position</label>
-                                            <input
-                                                type="number"
-                                                value={logoPosition.z}
-                                                onChange={(e) => setLogoPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
-                                                className="w-full border rounded px-1 md:px-2 py-1"
-                                                step="0.1"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Materials */}
-                        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
-                            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Materials</h2>
-                            <div className="space-y-3">
-                                {materials.map((material) => (
-                                    <div key={material.name}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!selectedMaterials[material.name]}
-                                                    onChange={() => toggleMaterial(material.name)}
-                                                    className="w-4 h-4 text-[#35408E] rounded"
-                                                />
-                                                <span className="text-sm font-medium">{material.name}</span>
-                                            </label>
-                                            {selectedMaterials[material.name] !== undefined && (
-                                                <input
-                                                    type="number"
-                                                    value={Math.round(selectedMaterials[material.name])}
-                                                    onChange={(e) => updateMaterialPercentage(material.name, e.target.value)}
-                                                    className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
-                                                    min="0"
-                                                    max="100"
+                    <div className=" max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-6 md:py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                            {/* Left Panel - 3D Viewer */}
+                            <div className="lg:col-span-2">
+                                <div className="bg-gradient-to-br from-[#4a5899] to-[#353f94] rounded-lg shadow-lg overflow-hidden border-2 border-yellow-400 h-[400px] md:h-[500px] lg:h-[600px]">
+                                    <div className="relative h-full">
+                                        {/* 3D Canvas */}
+                                        <div ref={threeCanvasRef} className="w-full h-full">
+                                            {selectedHanger && (
+                                                <HangerScene
+                                                    hangerType={selectedHanger}
+                                                    color={color}
+                                                    customText={customText}
+                                                    textColor={textColor}
+                                                    logoPreview={logoPreview}
+                                                    textPosition={textPosition}
+                                                    logoPosition={logoPosition}
+                                                    textSize={textSize}
+                                                    logoSize={logoSize}
+                                                    onTextPositionChange={setTextPosition}
+                                                    onLogoPositionChange={setLogoPosition}
                                                 />
                                             )}
                                         </div>
-                                        <p className="text-xs text-gray-500 ml-6">{material.description}</p>
+
+                                        {/* Fullscreen Toggle */}
+                                        <button
+                                            onClick={toggleFullscreen}
+                                            className="absolute top-4 right-4 p-2 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] rounded-lg shadow-lg transition-colors"
+                                        >
+                                            <Maximize2 size={20} />
+                                        </button>
+
+                                        {/* Info Overlay */}
+                                        <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 bg-[#191716] text-white px-2 md:px-4 py-1 md:py-2 rounded-lg text-xs md:text-sm border border-yellow-400">
+                                            <p className="font-semibold">Click and drag to rotate • Scroll to zoom</p>
+                                        </div>
                                     </div>
-                                ))}
+                                </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t">
-                                <p className="text-sm font-semibold">
-                                    Total: {Math.round(Object.values(selectedMaterials).reduce((a, b) => a + b, 0))}%
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Instructions Modal */}
-            {showInstructionsModal && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                        <div className="p-4 md:p-6">
-                            <h2 className="text-xl md:text-2xl font-bold mb-4">Design Instructions</h2>
-                            <div className="space-y-4 text-gray-700">
-                                <div>
-                                    <h3 className="font-semibold mb-2">🎨 Customization Options</h3>
-                                    <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li>Select hanger type (MB3, 97-12, CQ-807, 97-11, 97-08, or custom)</li>
-                                        <li>Choose from preset colors or use custom color picker</li>
-                                        <li>Add custom text with adjustable size and color</li>
-                                        <li>Upload and position your logo</li>
-                                        <li>Select materials and their percentages</li>
-                                    </ul>
+                            {/* Right Panel - Customization Options */}
+                            <div className="space-y-4 md:space-y-6">
+                                {/* Hanger Type Selection */}
+                                <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Hanger Type</h2>
+                                    <div className="grid grid-cols-2 gap-2 md:gap-3">
+                                        {hangers.map((hanger) => (
+                                            <button
+                                                key={hanger.id}
+                                                onClick={() => setSelectedHanger(hanger.id)}
+                                                className={`cursor-pointer px-2 md:px-4 py-2 md:py-3 rounded-lg border-2 transition-all text-sm md:text-base ${selectedHanger === hanger.id
+                                                        ? 'border-[#E6AF2E] bg-[#191716] text-white'
+                                                        : 'border-gray-300 hover:border-[#E6AF2E]'
+                                                    }`}
+                                            >
+                                                {hanger.name}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold mb-2">🖱️ 3D Viewer Controls</h3>
-                                    <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li>Click and drag to rotate the hanger</li>
-                                        <li>Scroll to zoom in/out</li>
-                                        <li>Click fullscreen button for better view</li>
-                                        <li>Press ESC to exit fullscreen</li>
-                                    </ul>
+
+                                {/* Color Selection */}
+                                <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Color</h2>
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 md:gap-3 mb-3 md:mb-4">
+                                        {colors.map((col) => (
+                                            <button
+                                                key={col}
+                                                onClick={() => setColor(col)}
+                                                className={`w-8 h-8 md:w-10 md:h-10 rounded-lg border-2 transition-all ${color === col ? 'border-gray-800 scale-110' : 'border-gray-300'
+                                                    }`}
+                                                style={{ backgroundColor: col }}
+                                            />
+                                        ))}
+                                    </div>
+                                    <input
+                                        type="color"
+                                        value={color}
+                                        onChange={(e) => setColor(e.target.value)}
+                                        className="w-full h-8 md:h-10 rounded-lg cursor-pointer"
+                                    />
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold mb-2">💾 Saving & Downloading</h3>
-                                    <ul className="list-disc list-inside space-y-1 text-sm">
-                                        <li>Save: Stores design in your account (requires login)</li>
-                                        <li>Download: Exports PNG image + JSON data file</li>
-                                        <li>View saved designs in Account Settings</li>
-                                    </ul>
+
+                                {/* Custom Text */}
+                                <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Custom Text</h2>
+                                    <input
+                                        type="text"
+                                        value={customText}
+                                        onChange={(e) => setCustomText(e.target.value)}
+                                        placeholder="Enter text to display"
+                                        className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-3 text-sm md:text-base"
+                                    />
+                                    <div className="flex items-center gap-3">
+                                        <label className="text-xs md:text-sm font-medium">Text Color:</label>
+                                        <input
+                                            type="color"
+                                            value={textColor}
+                                            onChange={(e) => setTextColor(e.target.value)}
+                                            className="w-12 h-6 md:w-16 md:h-8 rounded cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="mt-3">
+                                        <label className="text-xs md:text-sm font-medium block mb-2">Text Size: {textSize.toFixed(1)}</label>
+                                        <input
+                                            type="range"
+                                            min="0.1"
+                                            max="1"
+                                            step="0.1"
+                                            value={textSize}
+                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    {customText && (
+                                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                                            <div>
+                                                <label className="text-gray-600 block mb-1">X Position</label>
+                                                <input
+                                                    type="number"
+                                                    value={textPosition.x}
+                                                    onChange={(e) => setTextPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
+                                                    className="w-full border rounded px-1 md:px-2 py-1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-gray-600 block mb-1">Y Position</label>
+                                                <input
+                                                    type="number"
+                                                    value={textPosition.y}
+                                                    onChange={(e) => setTextPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
+                                                    className="w-full border rounded px-1 md:px-2 py-1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-gray-600 block mb-1">Z Position</label>
+                                                <input
+                                                    type="number"
+                                                    value={textPosition.z}
+                                                    onChange={(e) => setTextPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
+                                                    className="w-full border rounded px-1 md:px-2 py-1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Logo Upload */}
+                                <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Logo</h2>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleLogoUpload}
+                                        className="w-full text-xs md:text-sm text-[#191716] file:mr-3 md:file:mr-4 file:py-2 file:px-3 md:file:px-4 file:rounded-lg file:border-0 file:text-xs md:file:text-sm file:font-semibold file:bg-[#E6AF2E] hover:file:text-white  file:text-[#191716] hover:file:bg-[#191716] cursor-pointer"
+                                    />
+                                    {logoPreview && (
+                                        <div className="mt-3">
+                                            <img src={logoPreview} alt="Logo preview" className="w-16 h-16 md:w-20 md:h-20 object-contain border rounded" />
+                                            <div className="mt-3">
+                                                <label className="text-xs md:text-sm font-medium block mb-2">Logo Size: {logoSize.toFixed(1)}</label>
+                                                <input
+                                                    type="range"
+                                                    min="0.1"
+                                                    max="2"
+                                                    step="0.1"
+                                                    value={logoSize}
+                                                    onChange={(e) => setLogoSize(parseFloat(e.target.value))}
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                                                <div>
+                                                    <label className="text-gray-600 block mb-1">X Position</label>
+                                                    <input
+                                                        type="number"
+                                                        value={logoPosition.x}
+                                                        onChange={(e) => setLogoPosition(prev => ({ ...prev, x: parseFloat(e.target.value) || 0 }))}
+                                                        className="w-full border rounded px-1 md:px-2 py-1"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-gray-600 block mb-1">Y Position</label>
+                                                    <input
+                                                        type="number"
+                                                        value={logoPosition.y}
+                                                        onChange={(e) => setLogoPosition(prev => ({ ...prev, y: parseFloat(e.target.value) || 0 }))}
+                                                        className="w-full border rounded px-1 md:px-2 py-1"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-gray-600 block mb-1">Z Position</label>
+                                                    <input
+                                                        type="number"
+                                                        value={logoPosition.z}
+                                                        onChange={(e) => setLogoPosition(prev => ({ ...prev, z: parseFloat(e.target.value) || 0 }))}
+                                                        className="w-full border rounded px-1 md:px-2 py-1"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Materials */}
+                                <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+                                    <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Materials</h2>
+                                    <div className="space-y-3">
+                                        {materials.map((material) => (
+                                            <div key={material.name}>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!selectedMaterials[material.name]}
+                                                            onChange={() => toggleMaterial(material.name)}
+                                                            className="w-4 h-4 text-[#35408E] rounded cursor-pointer"
+                                                        />
+                                                        <span className="text-sm font-medium">{material.name}</span>
+                                                    </label>
+                                                    {selectedMaterials[material.name] !== undefined && (
+                                                        <input
+                                                            type="number"
+                                                            value={Math.round(selectedMaterials[material.name])}
+                                                            onChange={(e) => updateMaterialPercentage(material.name, e.target.value)}
+                                                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
+                                                            min="0"
+                                                            max="100"
+                                                        />
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-6">{material.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t">
+                                        <p className="text-sm font-semibold">
+                                            Total: {Math.round(Object.values(selectedMaterials).reduce((a, b) => a + b, 0))}%
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowInstructionsModal(false)}
-                                className="mt-6 w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors"
-                            >
-                                Got it!
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
 
-            {/* Save Design Modal */}
-            {saveDesignModal && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
-                        <h2 className="text-lg md:text-xl font-bold mb-4">Save Design</h2>
-                        <input
-                            type="text"
-                            value={designName}
-                            onChange={(e) => setDesignName(e.target.value)}
-                            placeholder="Enter design name"
-                            className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-4 text-sm md:text-base"
-                        />
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setSaveDesignModal(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmSaveDesign}
-                                disabled={isSaving}
-                                className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base"
-                            >
-                                {isSaving ? 'Saving...' : 'Save'}
-                            </button>
+                    {/* Instructions Modal */}
+                    {showInstructionsModal && (
+                        <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                                <div className="p-4 md:p-6">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-4 text-[#191716]">Design Instructions</h2>
+                                    <div className="space-y-4 text-gray-700">
+                                        <div>
+                                            <h3 className="font-semibold mb-2">🎨 Customization Options</h3>
+                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                <li>Select hanger type (MB3, 97-12, CQ-807, 97-11, 97-08, or custom)</li>
+                                                <li>Choose from preset colors or use custom color picker</li>
+                                                <li>Add custom text with adjustable size and color</li>
+                                                <li>Upload and position your logo</li>
+                                                <li>Select materials and their percentages</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold mb-2">🖱️ 3D Viewer Controls</h3>
+                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                <li>Click and drag to rotate the hanger</li>
+                                                <li>Scroll to zoom in/out</li>
+                                                <li>Click fullscreen button for better view</li>
+                                                <li>Press ESC to exit fullscreen</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold mb-2">💾 Saving & Downloading</h3>
+                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                <li>Save: Stores design in your account (requires login)</li>
+                                                <li>Download: Exports PNG image + JSON data file</li>
+                                                <li>View saved designs in Account Settings</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowInstructionsModal(false)}
+                                        className="mt-6 w-full bg-[#E6AF2E] text-[#191716] hover:bg-[#191716] hover:text-white py-2 px-4 rounded-lg transition-colors"
+                                    >
+                                        Got it!
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
+
+                    {/* Save Design Modal */}
+                    {saveDesignModal && (
+                        <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
+                                <h2 className="text-lg md:text-xl font-bold mb-4">Save Design</h2>
+                                <input
+                                    type="text"
+                                    value={designName}
+                                    onChange={(e) => setDesignName(e.target.value)}
+                                    placeholder="Enter design name"
+                                    className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-4 text-sm md:text-base"
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setSaveDesignModal(false)}
+                                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmSaveDesign}
+                                        disabled={isSaving}
+                                        className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base"
+                                    >
+                                        {isSaving ? 'Saving...' : 'Save'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 
@@ -1078,7 +1075,7 @@ const CreateDesign = () => {
                                 </button>
                                 <button
                                     onClick={() => navigate('/login')}
-                                    className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base"
+                                    className="flex-1 bg-[#E6AF2E] text-[#191716] hover:bg-[#191716] hover:text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base cursor-pointer"
                                 >
                                     Login
                                 </button>

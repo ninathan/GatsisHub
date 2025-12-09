@@ -1,5 +1,6 @@
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import banner from '../../images/contanctusbanner.png'
+import banner2 from '../../images/contanctusbanner2.png'
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 
 const ContanctUs = () => {
@@ -14,7 +15,7 @@ const ContanctUs = () => {
     <div>
       <img 
         ref={bannerAnim.ref}
-        src={banner} 
+        src={banner2} 
         alt="Contact Us" 
         className={bannerAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'}
       />
@@ -77,7 +78,7 @@ const ContanctUs = () => {
                 className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base resize-none min-h-[120px] md:min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all"
                 placeholder="Write your message here..."
               />
-              <button className="mt-4 self-end bg-blue-600 text-white py-2 px-4 md:px-6 rounded-full hover:bg-blue-700 hover:scale-105 hover:shadow-lg transition-all duration-300 text-sm md:text-base">
+              <button className="mt-4 self-end bg-[#e6af2e] text-white py-2 px-4 md:px-6 rounded-full hover:bg-[#c5941f] hover:scale-105 hover:shadow-lg transition-all duration-300 text-sm md:text-base">
                 Send
               </button>
             </div>

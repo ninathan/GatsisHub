@@ -180,7 +180,7 @@ const SystemProfile = () => {
                 {/* Profile Card */}
                 <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl">
                     {/* Card Header */}
-                    <div className="bg-[#007BFF] text-white px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
+                    <div className="bg-[#191919] text-white px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
                         <h2 className="text-lg md:text-xl font-semibold">Profile Details</h2>
                     </div>
 

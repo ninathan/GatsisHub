@@ -54,6 +54,7 @@ import AuthPA from './pages/ProductionAsemblyPage/AuthPA';
 import ProductionLayout from './layouts/ProductionLayout';
 import AssignOrder from './pages/ProductionAsemblyPage/AssignOrder';
 import ViewOrder from './pages/ProductionAsemblyPage/ViewOrder';
+import ProfilePA from './pages/ProductionAsemblyPage/profilePA';
 
 
 // ✅ Protect logged-in customer routes
@@ -191,6 +192,7 @@ const router = createBrowserRouter(
       <Route element={<ProductionLayout />}>
         <Route path="/assignorder" element={<AssignOrder />} />
         <Route path="/vieworder" element={<ViewOrder />} />
+        <Route path="/profilePA" element={<ProfilePA />} />
       </Route>
 
       {/* Admin/Manager Auth */}

@@ -997,7 +997,7 @@ const Checkout = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
                     <div className="flex flex-col gap-4 md:gap-6">
                         {/* Three.js 3D Preview Container */}
-                        <div className="bg-gradient-to-br from-[#007BFF] to-[#0056b3] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
                             {/* Fullscreen Button */}
                             <button
                                 onClick={toggleFullscreen}
@@ -1152,7 +1152,7 @@ const Checkout = () => {
                             </button>
                             <button 
                                 onClick={handleSaveDesign}
-                                className="w-full bg-[#007BFF] hover:bg-[#0056b3] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
+                                className="w-full bg-[#e6af2e] hover:bg-[#c8971e] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
                             >
                                 <Save size={18} className="md:w-5 md:h-5" />
                                 Save Design
@@ -1652,7 +1652,7 @@ const Checkout = () => {
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <button
-                                className="cursor-pointer bg-[#DC3545] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c82333] transition-colors w-full"
+                                className="cursor-pointer bg-[#e6af2e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c8971e] transition-colors w-full"
                                 onClick={handleSubmitOrder}
                             >
                                 Send for Evaluation
@@ -1900,26 +1900,26 @@ const Checkout = () => {
 
             {/* Fullscreen 3D Viewer Modal */}
             {isFullscreen && (
-                <div className="fixed inset-0 bg-[#007BFF] z-[200] flex flex-col">
+                <div className="fixed inset-0 bg-[#191716] z-[200] flex flex-col">
                     {/* Header with Close Button */}
-                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#2c3575] backdrop-blur-sm border-b-2 border-yellow-400">
+                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#191716] backdrop-blur-sm border-b-2 border-[#E6AF2E]">
                         <div className="flex items-center gap-2 md:gap-3">
                             <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Preview</h3>
-                            <span className="text-[#DC3545] text-xs md:text-sm">({selectedHanger})</span>
+                            <span className="text-[#E6AF2E] text-xs md:text-sm">({selectedHanger})</span>
                         </div>
                         <button
                             onClick={toggleFullscreen}
                             className="text-white hover:bg-[#DC3545] hover:text-white p-2 rounded-lg transition-colors"
-                            title="Exit Fullscreen"
+                            title="Exit Fullscreen cursor-pointer"
                         >
-                            <X size={20} className="md:w-6 md:h-6" />
+                            <X size={20} className="md:w-6 md:h-6 cursor-pointer" />
                         </button>
                     </div>
 
                     {/* Main Content Area */}
                     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                         {/* 3D Canvas */}
-                        <div className="flex-1 relative bg-gradient-to-br from-[#007BFF] to-[#0056b3]">
+                        <div className="flex-1 relative bg-gradient-to-br from-[#191716] to-[#191716]">
                             <Suspense
                                 fallback={
                                     <div className="w-full h-full flex items-center justify-center">
@@ -1942,10 +1942,10 @@ const Checkout = () => {
                         </div>
 
                         {/* Customization Sidebar */}
-                        <div className="w-full md:w-80 lg:w-96 bg-[#2c3575]/95 backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-yellow-400 max-h-[40vh] md:max-h-none">
+                        <div className="w-full md:w-80 lg:w-96 bg-[#191716] backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-[#E6AF2E] max-h-[40vh] md:max-h-none">
                             {/* Color Picker */}
-                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
-                                <h4 className="text-yellow-400 font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
+                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
+                                <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
                                 <div className="space-y-2 md:space-y-3">
                                     <div className="flex items-center gap-2">
                                         <input
@@ -1958,7 +1958,7 @@ const Checkout = () => {
                                             type="text"
                                             value={color}
                                             onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="flex-1 bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
+                                            className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                             placeholder="#4F46E5"
                                         />
                                     </div>
@@ -1978,14 +1978,14 @@ const Checkout = () => {
                             </div>
 
                             {/* Custom Text */}
-                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
+                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
                                 <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
                                 <input
                                     type="text"
                                     value={customText}
                                     onChange={(e) => setCustomText(e.target.value)}
                                     placeholder="Enter text"
-                                    className="w-full bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
+                                    className="w-full bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                 />
                                 <div className="flex items-center gap-2 mb-2">
                                     <label className="text-white text-xs">Color:</label>
@@ -1999,7 +1999,7 @@ const Checkout = () => {
                                         type="text"
                                         value={textColor}
                                         onChange={(e) => setTextColor(e.target.value)}
-                                        className="flex-1 bg-[#0056b3] text-white border border-[#DC3545] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#DC3545]"
+                                        className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -2073,11 +2073,11 @@ const Checkout = () => {
                             </div>
 
                             {/* Logo Upload */}
-                            <div className="bg-[#007BFF]/70 rounded-lg p-3 md:p-4 border border-[#0056b3]">
-                                <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
-                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#DC3545] rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#0056b3] transition-colors">
+                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
+                                <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
+                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#E6AF2E] rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#E6AF2E] transition-colors">
                                     <ImageIcon size={16} className="text-white" />
-                                    <span className="text-xs text-white">
+                                    <span className="text-xs text-white ">
                                         {customLogo ? customLogo.name : 'Upload Logo'}
                                     </span>
                                     <input
@@ -2176,13 +2176,13 @@ const Checkout = () => {
                     </div>
 
                     {/* Footer with Info */}
-                    <div className="p-4 bg-[#0056b3] backdrop-blur-sm text-center border-t-2 border-[#DC3545]">
+                    <div className="p-4 bg-[#191716] backdrop-blur-sm text-center border-t-2 border-[#DC3545]">
                         <p className="text-white text-sm">
                             Drag to rotate • Scroll to zoom • Right-click to pan • Press ESC
-                            or click
+                            or click{" "}
                             <button
                                 onClick={toggleFullscreen}
-                                className="text-[#DC3545] hover:text-white underline ml-1 font-semibold"
+                                className="text-[#DC3545] hover:text-white underline ml-1 font-semibold cursor-pointer"
                             >
                                 here
                             </button>{" "}

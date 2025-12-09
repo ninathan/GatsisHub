@@ -657,7 +657,7 @@ const Employees = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         {loading ? (
                             <div className="p-8 text-center text-gray-500">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#35408E] mx-auto mb-4"></div>
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E6AF2E] mx-auto mb-4"></div>
                                 Loading employees...
                             </div>
                         ) : filteredEmployees.length === 0 ? (
@@ -667,7 +667,7 @@ const Employees = () => {
                         ) : (
                             <>
                                 <table className="w-full text-left">
-                                    <thead className="bg-[#35408E] text-white">
+                                    <thead className="bg-[#191716] text-white">
                                         <tr>
                                             <th className="p-3">Employee</th>
                                             <th className="p-3">Department</th>
@@ -685,7 +685,7 @@ const Employees = () => {
                                             >
                                                 <td className="p-3">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center font-semibold">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#191716] to-[#4a5899] text-white flex items-center justify-center font-semibold">
                                                             {emp.employeename?.charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
@@ -780,7 +780,7 @@ const Employees = () => {
                                                 &times;
                                             </button>
                                             <div className="flex gap-4 items-center mb-6">
-                                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#35408E] to-[#4a5899] text-white flex items-center justify-center text-2xl font-bold">
+                                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#191716] to-[#4a5899] text-white flex items-center justify-center text-2xl font-bold">
                                                     {selectedEmployee.employeename?.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
@@ -879,7 +879,7 @@ const Employees = () => {
                                                 </button>
                                                 {isEditing && (
                                                     <button
-                                                        className="bg-[#35408E] text-white px-6 py-2 rounded text-lg font-semibold hover:bg-[#2a3470] transition-colors"
+                                                        className="bg-[#E6AF2E] text-[#191716] hover:text-white px-6 py-2 rounded text-lg font-semibold hover:bg-[#191716] transition-colors"
                                                         onClick={handleUpdateEmployee}
                                                     >
                                                         Save Changes
@@ -908,7 +908,7 @@ const Employees = () => {
                                 <h2 className="text-xl font-bold">Teams Management</h2>
                                 <button
                                     onClick={handleCreateTeam}
-                                    className="bg-[#35408E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors flex items-center gap-2"
+                                    className="bg-[#E6AF2E] text-[#191716] px-4 py-2 rounded-lg font-semibold hover:bg-[#191716] hover:text-white cursor-pointer transition-colors flex items-center gap-2"
                                 >
                                     <FaPlus /> Create Team
                                 </button>
@@ -1437,7 +1437,7 @@ const Employees = () => {
                                 <h2 className="text-xl font-bold">Quotas Management</h2>
                                 <button
                                     onClick={handleCreateQuota}
-                                    className="bg-[#35408E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#2a3470] transition-colors flex items-center gap-2"
+                                    className="bg-[#E6AF2E] text-[#191716] px-4 py-2 rounded-lg font-semibold hover:bg-[#191716] hover:text-white cursor-pointer transition-colors flex items-center gap-2"
                                 >
                                     <FaPlus /> Create Quota
                                 </button>
@@ -1548,13 +1548,13 @@ const Employees = () => {
                         {(showCreateQuotaModal || showQuotaModal) && (
                             <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
                                 <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
-                                    <div className="sticky top-0 bg-[#35408E] text-white px-6 py-4 rounded-t-lg flex justify-between items-center z-10">
+                                    <div className="sticky top-0 bg-[#191716] text-white px-6 py-4 rounded-t-lg flex justify-between items-center z-10">
                                         <h2 className="text-2xl font-bold">
                                             {selectedQuota ? (isEditingQuota ? 'Edit Quota' : 'Quota Details') : 'Create New Quota'}
                                         </h2>
                                         <button
                                             onClick={handleCloseQuotaModal}
-                                            className="text-white hover:text-gray-200 text-2xl font-bold"
+                                            className="text-white hover:text-gray-200 text-2xl font-bold cursor-pointer"
                                         >
                                             ×
                                         </button>
@@ -1876,7 +1876,7 @@ const Employees = () => {
                         <button
                             className={`px-4 py-2 rounded cursor-pointer transition-colors ${
                                 activeTab === "all" 
-                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    ? "bg-[#E6AF2E] text-black font-semibold" 
                                     : "bg-gray-200 hover:bg-gray-300"
                             }`}
                             onClick={() => setActiveTab("all")}
@@ -1886,7 +1886,7 @@ const Employees = () => {
                         <button
                             className={`px-4 py-2 rounded cursor-pointer transition-colors ${
                                 activeTab === "teams" 
-                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    ? "bg-[#E6AF2E] text-black font-semibold" 
                                     : "bg-gray-200 hover:bg-gray-300"
                             }`}
                             onClick={() => setActiveTab("teams")}
@@ -1896,7 +1896,7 @@ const Employees = () => {
                         <button
                             className={`px-4 py-2 rounded cursor-pointer transition-colors ${
                                 activeTab === "quotas" 
-                                    ? "bg-[#ECBA0B] text-black font-semibold" 
+                                    ? "bg-[#E6AF2E] text-black font-semibold" 
                                     : "bg-gray-200 hover:bg-gray-300"
                             }`}
                             onClick={() => setActiveTab("quotas")}

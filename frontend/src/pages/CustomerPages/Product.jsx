@@ -18,6 +18,9 @@ const ProductsPage = () => {
         try {
             const response = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
             const data = await response.json();
+
+            console.log('API Response:', data); // Add this
+            console.log('First product:', data.products?.[0]); // Add this
             
             // Map products to include default images
             const imageMap = { 'MB3': pr1, '97-12': pr2, 'CQ-807': pr3, '97-11': pr4, '97-08': pr1 };
@@ -29,7 +32,7 @@ const ProductsPage = () => {
                 description: product.description || 'High quality hanger for professional use.',
                 image: imageMap[product.productname] || pr1,
                 alignment: alignments[index % alignments.length],
-                hasOrderButton: product.productname === '97-11'
+                hasOrderButton: product.productname === 'MB3'
             }));
             
             setProducts(mappedProducts);
@@ -56,7 +59,7 @@ const ProductsPage = () => {
             {/* Content */}
             <div className="max-w-6xl mx-auto px-6 py-16">
                 {/* Title */}
-                <h1 className="text-5xl font-bold text-indigo-900 mb-16">
+                <h1 className="text-5xl font-bold text-[#191716] mb-16">
                     Our Product<br />presents
                 </h1>
 
@@ -79,15 +82,16 @@ const ProductsPage = () => {
 
                                 {/* Product Details */}
                                 <div className={`flex-1 ${product.alignment === 'right' ? 'text-right' : ''}`}>
-                                    <h2 className="text-5xl font-bold text-indigo-900 mb-2 transform transition-all duration-300 hover:text-[#4a5899]">
+                                    <h2 className="text-5xl font-bold text-[#e6af2e] mb-2 transform transition-all duration-300">
                                         {product.name}
                                     </h2>
-                                    <p className="text-gray-700 leading-relaxed max-w-md">
+                                    <p className="text-[#191716] leading-relaxed max-w-md">
                                         {product.description}
+                                        
                                     </p>
                                     {product.hasOrderButton && (
                                         <Link to="/checkout">
-                                            <button className="mt-6 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform">
+                                            <button className="mt-6 bg-[#e6af2e] hover:bg-[#c5941f] text-black font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform">
                                                 Order Now
                                             </button>
                                         </Link>

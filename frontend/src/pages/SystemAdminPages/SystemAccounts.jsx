@@ -250,7 +250,7 @@ const SystemAccounts = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-[#35408E] text-white">
+                                <thead className="bg-[#191916] text-white">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-sm font-semibold">Company Name</th>
                                         <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
@@ -266,7 +266,7 @@ const SystemAccounts = () => {
                                         <tr key={customer.customerid} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
-                                                    <div className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                                                    <div className="w-10 h-10 bg-[#] rounded-full flex items-center justify-center bg-gradient-to-b from-[#191716] to-[#3D348B] text-white font-semibold mr-3">
                                                         {customer.companyname.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <span className="font-medium text-gray-900">{customer.companyname}</span>
@@ -326,7 +326,7 @@ const SystemAccounts = () => {
                 <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="bg-[#191916] px-6 py-4 flex justify-between items-center sticky top-0">
                             <h2 className="text-white text-2xl font-semibold">Customer Details</h2>
                             <button
                                 onClick={() => setShowViewModal(false)}
@@ -339,7 +339,7 @@ const SystemAccounts = () => {
                         {/* Modal Body */}
                         <div className="p-6">
                             <div className="flex items-center mb-6">
-                                <div className="w-20 h-20 bg-[#35408E] rounded-full flex items-center justify-center text-white font-bold text-2xl mr-4">
+                                <div className="w-20 h-20 bg-gradient-to-b from-[#191916] to-[#3D348B] rounded-full flex items-center justify-center text-white font-bold text-2xl mr-4">
                                     {selectedCustomer.companyname.substring(0, 2).toUpperCase()}
                                 </div>
                                 <div>
@@ -445,7 +445,7 @@ const SystemAccounts = () => {
                 <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="bg-[#191916] px-6 py-4 flex justify-between items-center sticky top-0">
                             <h2 className="text-white text-2xl font-semibold">Edit Customer</h2>
                             <button
                                 onClick={() => setShowEditModal(false)}
@@ -478,7 +478,7 @@ const SystemAccounts = () => {
                                         name="companyname"
                                         value={formData.companyname}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     />
                                 </div>
@@ -492,7 +492,7 @@ const SystemAccounts = () => {
                                         name="emailaddress"
                                         value={formData.emailaddress}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     />
                                 </div>
@@ -506,7 +506,7 @@ const SystemAccounts = () => {
                                         name="companynumber"
                                         value={formData.companynumber}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         placeholder="Phone number"
                                     />
                                 </div>
@@ -519,7 +519,7 @@ const SystemAccounts = () => {
                                         name="gender"
                                         value={formData.gender}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                     >
                                         <option value="">Select gender</option>
                                         <option value="Male">Male</option>
@@ -538,7 +538,7 @@ const SystemAccounts = () => {
                                         name="dateofbirth"
                                         value={formData.dateofbirth}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                     />
                                 </div>
 
@@ -551,7 +551,7 @@ const SystemAccounts = () => {
                                         name="password"
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         placeholder="Enter new password (min 6 characters)"
                                     />
                                 </div>
@@ -564,7 +564,7 @@ const SystemAccounts = () => {
                                         name="accountstatus"
                                         value={formData.accountstatus}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     >
                                         <option value="Active">Active</option>
@@ -580,7 +580,7 @@ const SystemAccounts = () => {
                                             name="emailnotifications"
                                             checked={formData.emailnotifications}
                                             onChange={handleInputChange}
-                                            className="w-4 h-4 text-[#35408E] border-gray-300 rounded focus:ring-[#35408E] mr-2"
+                                            className="w-4 h-4 text-[#E6AF2E] border-gray-300 rounded focus:ring-[#E6AF2E] mr-2"
                                         />
                                         <span className="text-sm font-medium text-gray-700">Email Notifications</span>
                                     </label>
@@ -598,7 +598,7 @@ const SystemAccounts = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                    className="bg-[#E6AF2E] hover:bg-[#c49723] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                                 >
                                     Update Customer
                                 </button>

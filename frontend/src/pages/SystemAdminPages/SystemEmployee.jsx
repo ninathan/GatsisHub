@@ -267,7 +267,7 @@ const SystemEmployee = () => {
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                     <div className="flex gap-2">
                         <button
-                            className="px-6 py-2 bg-[#35408E] text-white font-semibold rounded cursor-pointer transition-colors hover:bg-[#2d3575]"
+                            className="px-6 py-2 bg-[#191716] text-white font-semibold rounded cursor-pointer transition-colors hover:bg-[#ECBA0B] hover:text-black"
                             onClick={handleAddEmployeeClick}
                         >
                             + Add Employee
@@ -291,7 +291,7 @@ const SystemEmployee = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow p-4">
                         <h3 className="text-gray-600 text-sm font-medium mb-1">Total Employees</h3>
-                        <p className="text-3xl font-bold text-[#35408E]">{employees.length}</p>
+                        <p className="text-3xl font-bold text-[#191716]">{employees.length}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow p-4">
                         <h3 className="text-gray-600 text-sm font-medium mb-1">Present Today</h3>
@@ -320,7 +320,7 @@ const SystemEmployee = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead className="bg-[#35408E] text-white">
+                                <thead className="bg-[#191716] text-white">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
                                         <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
@@ -336,7 +336,7 @@ const SystemEmployee = () => {
                                         <tr key={employee.employeeid} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
-                                                    <div className="w-10 h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-b from-[#191716] to-[#3D348B] rounded-full flex items-center justify-center text-white font-semibold mr-3">
                                                         {employee.employeename.split(' ').map(n => n[0]).join('').toUpperCase()}
                                                     </div>
                                                     <span className="font-medium text-gray-900">{employee.employeename}</span>
@@ -398,7 +398,7 @@ const SystemEmployee = () => {
                 <div className="fixed inset-0 backdrop-blur-sm  flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="bg-[#191716] px-6 py-4 flex justify-between items-center sticky top-0">
                             <h2 className="text-white text-2xl font-semibold">Employee Details</h2>
                             <button
                                 onClick={() => setShowViewModal(false)}
@@ -507,7 +507,7 @@ const SystemEmployee = () => {
                 <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="bg-[#191716] px-6 py-4 flex justify-between items-center sticky top-0">
                             <h2 className="text-white text-2xl font-semibold">Edit Employee</h2>
                             <button
                                 onClick={() => setShowEditModal(false)}
@@ -540,7 +540,7 @@ const SystemEmployee = () => {
                                         name="employeename"
                                         value={formData.employeename}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     />
                                 </div>
@@ -554,7 +554,7 @@ const SystemEmployee = () => {
                                         name="email"
                                         value={formData.email}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     />
                                 </div>
@@ -568,7 +568,7 @@ const SystemEmployee = () => {
                                         name="password"
                                         value={formData.password}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         placeholder="Enter new password (min 6 characters)"
                                     />
                                 </div>
@@ -581,7 +581,7 @@ const SystemEmployee = () => {
                                         name="assigneddepartment"
                                         value={formData.assigneddepartment}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     >
                                         <option value="">Select Department</option>
@@ -601,7 +601,7 @@ const SystemEmployee = () => {
                                         name="role"
                                         value={formData.role}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     >
                                         <option value="">Select Role</option>
@@ -621,7 +621,7 @@ const SystemEmployee = () => {
                                         name="accountstatus"
                                         value={formData.accountstatus}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
                                     >
                                         <option value="Active">Active</option>
@@ -639,7 +639,7 @@ const SystemEmployee = () => {
                                         name="contactdetails"
                                         value={formData.contactdetails}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         placeholder="Phone number or contact info"
                                     />
                                 </div>
@@ -653,7 +653,7 @@ const SystemEmployee = () => {
                                         name="shifthours"
                                         value={formData.shifthours}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         placeholder="e.g., 9:00 AM - 6:00 PM"
                                     />
                                 </div>
@@ -670,7 +670,7 @@ const SystemEmployee = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                    className="bg-[#E6AF2E] hover:bg-[#b38a1a] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                                 >
                                     Update Employee
                                 </button>
@@ -682,10 +682,10 @@ const SystemEmployee = () => {
 
             {/* Add Employee Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4 flex justify-between items-center sticky top-0">
+                        <div className="bg-[#191916] px-6 py-4 flex justify-between items-center sticky top-0">
                             <h2 className="text-white text-2xl font-semibold">Add New Employee</h2>
                             <button
                                 onClick={() => setShowAddModal(false)}

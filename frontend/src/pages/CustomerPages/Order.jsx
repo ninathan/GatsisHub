@@ -755,7 +755,7 @@ const Order = () => {
                                                         {order.threeddesigndata && (
                                                             <button
                                                                 onClick={() => open3DModal(order.threeddesigndata)}
-                                                                className="w-full bg-[#007BFF] text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-[#0056b3] mt-3 transition-all duration-300 hover:scale-105"
+                                                                className="w-full bg-[#E6AF2E] text-[#191716] hover:text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-[#191716] mt-3 transition-all duration-300 hover:scale-105 cursor-pointer"
                                                             >
                                                                 <Eye size={16} />
                                                                 View 3D Design
@@ -787,7 +787,7 @@ const Order = () => {
                                                     {orderPayments[order.orderid] && orderPayments[order.orderid].paymentstatus !== 'Rejected' && (
                                                         <button
                                                             onClick={() => openProofModal(orderPayments[order.orderid].proofofpayment)}
-                                                            className="bg-indigo-700 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-800 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold"
+                                                            className="bg-[#191716] text-white px-3 md:px-6 py-2 rounded transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
                                                         >
                                                             <FileText size={16} className="md:w-[18px] md:h-[18px]" />
                                                             <span className="hidden sm:inline">View Proof</span>
@@ -806,7 +806,7 @@ const Order = () => {
 
                                                     {/* Payment - Show when Waiting for Payment AND (no payment OR payment rejected) */}
                                                     {order.orderstatus === 'Waiting for Payment' && 
-                                                     (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
+                                                    (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
                                                         <Link 
                                                             to="/payment" 
                                                             state={{ orderDetails: order }}
@@ -820,7 +820,7 @@ const Order = () => {
                                                     {/* Contact Support - Always visible */}
                                                     <button 
                                                         onClick={() => handleContactSupport(order)}
-                                                        className="bg-[#007BFF] text-white px-6 py-2 rounded hover:bg-[#0056b3] transition-colors flex items-center gap-2 text-sm font-semibold"
+                                                        className="bg-[#191716] text-white px-3 md:px-6 py-2 rounded transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
                                                     >
                                                         <MessageCircle size={18} />
                                                         Contact Support
@@ -840,7 +840,7 @@ const Order = () => {
                                                     {order.orderstatus === 'Completed' && (
                                                         <button
                                                             onClick={() => openRatingModal(order)}
-                                                            className="bg-indigo-600 text-white px-3 md:px-6 py-2 rounded hover:bg-indigo-700 transition-all duration-300 hover:scale-105 text-xs md:text-sm font-semibold"
+                                                            className="bg-[#191716] text-white px-3 md:px-6 py-2 rounded  transition-all duration-300 hover:scale-105 text-xs md:text-sm font-semibold cursor-pointer"
                                                         >
                                                             Rate
                                                         </button>
@@ -917,14 +917,14 @@ const Order = () => {
                 <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#007BFF] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+                        <div className="bg-[#191716] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                             <div>
                                 <h2 className="text-white text-lg md:text-2xl font-semibold">3D Design Preview</h2>
                                 <p className="text-white text-xs md:text-sm mt-1">Interactive view of your customized hanger</p>
                             </div>
                             <button
                                 onClick={close3DModal}
-                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold cursor-pointer"
                             >
                                 ×
                             </button>

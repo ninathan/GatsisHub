@@ -498,7 +498,7 @@ const OrderDetail = () => {
                 {/* Order Details Card */}
                 <div className="bg-white shadow-lg rounded-lg border border-gray-200">
                     {/* Header */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#35408E] text-white rounded-t-lg">
+                    <div className="flex justify-between items-center px-6 py-4 border-b bg-[#191716] text-white rounded-t-lg">
                         <h2 className="font-semibold text-lg">Order Details</h2>
                         <div className="relative">
                             <select
@@ -678,7 +678,7 @@ const OrderDetail = () => {
                                     <h4 className="font-semibold text-gray-800">3D Design Preview:</h4>
                                     <button
                                         onClick={() => open3DModal(order.threeddesigndata)}
-                                        className="bg-[#35408E] text-white px-4 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
+                                        className="bg-[#E6AF2E] text-[#191716] hover:text-white px-4 py-2 rounded hover:bg-[#191716] flex items-center gap-2 cursor-pointer transition-colors font-medium"
                                     >
                                         <Eye size={16} />
                                         View 3D Design
@@ -885,14 +885,14 @@ const OrderDetail = () => {
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-[#191716] px-6 py-4 flex items-center justify-between">
                             <div>
                                 <h2 className="text-white text-2xl font-semibold">3D Design Preview</h2>
                                 <p className="text-indigo-200 text-sm mt-1">Interactive view of customized hanger</p>
                             </div>
                             <button
                                 onClick={close3DModal}
-                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold cursor-pointer"
                             >
                                 ×
                             </button>

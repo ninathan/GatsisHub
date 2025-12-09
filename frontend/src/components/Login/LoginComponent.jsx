@@ -134,7 +134,7 @@ const Login = () => {
     <PageTransition direction='right'>
       <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
         {/* Left side */}
-        <div className='bg-[#35408E] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1'>
+        <div className='bg-[#191716] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1'>
           <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4'>
             <Link to='/'>
               <img src={logo} alt='Logo' className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto' />
@@ -145,7 +145,7 @@ const Login = () => {
             </p>
             <Link
               to='/signup'
-              className='bg-[#DAC325] text-black px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg lg:text-xl rounded-2xl mt-4 md:mt-6 hover:bg-[#c4ad1f] transition-colors'
+              className='bg-[#E6AF2E] text-black px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg lg:text-xl rounded-2xl mt-4 md:mt-6 hover:bg-[#c4ad1f] transition-colors'
             >
               Sign Up
             </Link>
@@ -155,7 +155,7 @@ const Login = () => {
 
         {/* Right side */}
         <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2'>
-          <h1 className='text-[#35408E] text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-center'>
+          <h1 className='text-[#191716] text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-center'>
             Sign In to GatsisHub
           </h1>
 
@@ -197,7 +197,7 @@ const Login = () => {
             <button
               type='submit'
               disabled={loading}
-              className={`bg-[#35408E] text-white w-full py-3 md:py-3.5 text-lg md:text-xl lg:text-2xl rounded-2xl hover:bg-[#2d3575] transition-colors ${
+              className={`bg-[#E6AF2E] text-white w-full py-3 md:py-3.5 text-lg md:text-xl lg:text-2xl rounded-2xl transition-colors cursor-pointer ${
                 loading ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >

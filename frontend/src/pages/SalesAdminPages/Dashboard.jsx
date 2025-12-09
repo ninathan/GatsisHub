@@ -252,8 +252,8 @@ const Dashboard = () => {
 
     // Stat card component for reusable metric displays
     const StatCard = ({ title, value, subtitle, trend }) => (
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-[#35408E]">
-            <div className="text-lg md:text-2xl text-gray-600 font-medium mb-2">{title}</div>
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-[#E6AF2E]">
+            <div className="text-lg md:text-2xl text-[#191716] font-medium mb-2">{title}</div>
             <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
             {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
             {trend && (
@@ -267,7 +267,7 @@ const Dashboard = () => {
 
     // Quota card component for displaying progress metrics
     const QuotaCard = ({ title, subtitle, percentage, reached, target, quotaType, onEdit }) => (
-        <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-xl shadow-lg p-6 md:p-8 text-white relative">
+        <div className="bg-[#191716] rounded-xl shadow-lg p-6 md:p-8 text-white relative">
             {/* Edit button */}
             <button
                 onClick={() => onEdit(quotaType)}
@@ -326,7 +326,7 @@ const Dashboard = () => {
             {loading && (
                 <div className='flex-1 flex items-center justify-center p-8'>
                     <div className='text-center'>
-                        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#E6AF2E] mx-auto mb-4'></div>
                         <p className='text-gray-600'>Loading dashboard data...</p>
                     </div>
                 </div>
@@ -376,7 +376,7 @@ const Dashboard = () => {
                 {/* Main Quota Overview card */}
                 <div 
                     ref={quotaAnim.ref}
-                    className="bg-gradient-to-br from-[#35408E] to-blue-900 rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8"
+                    className="bg-[#191716] rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8"
                 >
                     <h2 className='text-xl md:text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
 
@@ -401,7 +401,7 @@ const Dashboard = () => {
                                 <div className='flex justify-between text-white mb-2'>
                                     <span className='text-xs md:text-sm font-medium'>End Quota to be reached</span>
                                 </div>
-                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
+                                <div className='w-full bg-[#E6AF2E] rounded-full h-2 md:h-3'>
                                     <div className='bg-[#EC6666] h-2 md:h-3 rounded-full' style={{ width: '100%' }}></div>
                                 </div>
 
@@ -424,7 +424,7 @@ const Dashboard = () => {
                                     <span className='text-xs md:text-sm'>{dashboardData.finalQuota.weeklyProgress}%</span>
                                 </div>
                                 <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
-                                    <div className='bg-blue-400 h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
+                                    <div className='bg-[#DAC325] h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
                                 </div>
                             </div>
 

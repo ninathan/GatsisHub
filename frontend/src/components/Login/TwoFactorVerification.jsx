@@ -133,7 +133,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
 
   return (
     <PageTransition direction='right'>
-      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-[#35408E] to-[#4a5899] p-4'>
+      <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-[#191716] to-[#E6AF2E] p-4'>
         <div className='bg-white rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md'>
           {/* Logo */}
           <div className='flex justify-center mb-6'>
@@ -142,13 +142,13 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
 
           {/* Header */}
           <div className='text-center mb-8'>
-            <h2 className='text-2xl md:text-3xl font-bold text-[#35408E] mb-2'>
+            <h2 className='text-2xl md:text-3xl font-bold text-[#191716] mb-2'>
               Verify Your Login
             </h2>
             <p className='text-gray-600 text-sm md:text-base'>
               We've sent a 6-digit code to
             </p>
-            <p className='text-[#35408E] font-semibold mt-1'>{email}</p>
+            <p className='text-[#191716] font-semibold mt-1'>{email}</p>
           </div>
 
           {/* Timer */}
@@ -177,7 +177,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   disabled={loading || timeLeft === 0}
                   className={`w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold border-2 rounded-lg
-                    focus:outline-none focus:ring-2 focus:ring-[#35408E] focus:border-[#35408E]
+                    focus:outline-none focus:ring-2 focus:ring-[#191716] focus:border-[#191716]
                     ${digit ? 'border-[#35408E] bg-blue-50' : 'border-gray-300'}
                     ${error ? 'border-red-500' : ''}
                     ${loading || timeLeft === 0 ? 'bg-gray-100 cursor-not-allowed' : ''}
@@ -199,7 +199,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
           <button
             onClick={() => handleVerify()}
             disabled={loading || code.some(d => !d) || timeLeft === 0}
-            className='w-full bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold py-3 md:py-4 rounded-xl
+            className='w-full bg-[#E6AF2E] hover:bg-[#c4ad1f] text-white font-semibold py-3 md:py-4 rounded-xl
               transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed
               transform active:scale-95 shadow-lg hover:shadow-xl'
           >
@@ -224,7 +224,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
               disabled={loading || timeLeft > 840} // Can resend after 1 minute
               className='text-[#35408E] hover:text-[#2d3575] font-semibold text-sm underline
                 disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed
-                transition-colors duration-200'
+                transition-colors duration-200 cursor-pointer'
             >
               {timeLeft > 840 ? `Resend in ${Math.ceil((900 - timeLeft))}s` : 'Resend Code'}
             </button>
@@ -236,7 +236,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
               onClick={onBack}
               disabled={loading}
               className='w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg
-                hover:bg-gray-100 transition-all duration-200 disabled:cursor-not-allowed'
+                hover:bg-gray-100 transition-all duration-200 disabled:cursor-not-allowed cursor-pointer'
             >
               ← Back to Login
             </button>

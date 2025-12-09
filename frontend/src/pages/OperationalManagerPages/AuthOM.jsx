@@ -63,13 +63,13 @@ const AuthOM = () => {
     };
 
     const IntputField =
-  'border border-gray-300 rounded-2xl px-4 md:px-12 py-3 w-full max-w-[460px] text-lg md:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+    'border border-gray-300 rounded-2xl pl-10 md:pl-12 pr-4 py-2 md:py-3 w-full text-sm md:text-lg lg:text-2xl focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
     return (
         <PageTransition direction='right'>
 
             <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
                 {/* left */}
-                <div className='bg-[#35408E] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
+                <div className='bg-[#191716] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
                     <div className='flex flex-col items-center py-10 md:py-20 lg:mt-25 px-4'>
                         <Link to="/">
                             <img src={logo} alt="Logo" className='w-[120px] h-[120px] md:w-[170px] md:h-[170px] mx-auto mt-5 md:mt-10' />
@@ -84,7 +84,7 @@ const AuthOM = () => {
 
                 {/* right */}
                 <div className='flex flex-col items-center justify-center py-10 md:py-20 lg:mt-35 px-4 order-1 lg:order-2'>
-                    <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
+                    <h1 className='text-[#191716] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
                         Sign In as Operational Manager</h1>
 
                     {/* Error Message */}
@@ -94,9 +94,9 @@ const AuthOM = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className='flex flex-col mt-10 md:mt-20 lg:mt-25 w-full max-w-md lg:max-w-lg'>
+                    <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-10 lg:mt-20 w-full max-w-md lg:max-w-lg'>
                         {/* email */}
-                        <div className='relative mb-6'>
+                        <div className='relative mb-4 md:mb-6'>
                             <label htmlFor="email" className='block text-lg md:text-2xl font-medium mb-2'>Email</label>
                             <img src={userav} alt="" className='absolute left-4 top-12 md:top-14.5 w-5 h-5 md:w-6 md:h-6' />
                             <input 
@@ -153,7 +153,7 @@ const AuthOM = () => {
                         {/* Sign In Button */}
                         <button 
                             type="submit" 
-                            className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='bg-[#E6AF2E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed'
                             disabled={loading}
                         >
                             {loading ? 'Signing In...' : 'Sign In'}
@@ -167,15 +167,15 @@ const AuthOM = () => {
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4">
+                        <div className="bg-[#191716] px-6 py-4">
                             <h2 className="text-white text-2xl font-semibold">Password Reset</h2>
                         </div>
 
                         {/* Modal Body */}
                         <div className="p-6">
                             <div className="flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                                    <svg className="w-8 h-8 text-[#35408E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-16 h-16 bg-[#191716] rounded-full flex items-center justify-center mb-4">
+                                    <svg className="w-8 h-8 text-[#e6af2e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
@@ -197,7 +197,7 @@ const AuthOM = () => {
                         <div className="px-6 py-4 bg-gray-50 flex justify-end">
                             <button
                                 onClick={() => setShowForgotPasswordModal(false)}
-                                className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                className="bg-[#e6af2e] hover:bg-[#c49723] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
                                 Close
                             </button>

@@ -10,7 +10,7 @@ const Hero = () => {
             <div className="flex flex-col md:flex-row">
                 {/* Left Image */}
                 <div className="md:w-1/2 h-[300px] md:h-[400px] lg:h-[500px] xl:h-auto animate-slideIn">
-                    <img src={herobg} alt="Suits" className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
+                    <img src={herobg} alt="Suits" className="w-full h-full object-cover transition-transform duration-700" />
                 </div>
                 {/* Right Text Content */}
                 <div className="md:w-1/2 flex flex-col justify-center items-start p-6 md:p-8 lg:p-10 xl:p-12 bg-white">
@@ -23,10 +23,10 @@ const Hero = () => {
                         holds the story behind its grace.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full sm:w-auto animate-fadeInUp" style={{ animationDelay: '400ms' }}>
-                        <Link to="/checkout" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer text-black text-lg md:text-xl lg:text-2xl xl:text-3xl font-light py-3 md:py-3.5 lg:py-4 px-6 md:px-7 lg:px-8 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl text-center transform">
+                        <Link to="/checkout" className="bg-[#e6af2e] cursor-pointer text-black text-lg md:text-xl lg:text-2xl xl:text-3xl font-light py-3 md:py-3.5 lg:py-4 px-6 md:px-7 lg:px-8 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl text-center transform">
                             Order Now
                         </Link>
-                        <Link to="/create-design" className="bg-[#353f94] hover:bg-[#2a3270] cursor-pointer text-white text-lg md:text-xl lg:text-2xl xl:text-3xl font-light py-3 md:py-3.5 lg:py-4 px-6 md:px-7 lg:px-8 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl text-center transform">
+                        <Link to="/create-design" className="bg-[#191716] cursor-pointer text-white text-lg md:text-xl lg:text-2xl xl:text-3xl font-light py-3 md:py-3.5 lg:py-4 px-6 md:px-7 lg:px-8 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-xl text-center transform">
                             Design Now
                         </Link>
                     </div>

@@ -29,7 +29,7 @@ const SampleCard = () => {
                     }`}
                 >
                     <img src={sampleP1} alt="Product 1" className="w-full h-auto aspect-[524/579] object-cover shadow-lg hover:shadow-2xl transition-shadow duration-300" />
-                    <div className='bg-[#FFD41C] py-4 md:py-5 lg:py-6 text-2xl md:text-3xl lg:text-4xl text-center font-extralight'>
+                    <div className='bg-[#e6af2e] py-4 md:py-5 lg:py-6 text-2xl md:text-3xl lg:text-4xl text-center font-extralight'>
                         <h1>Colorful</h1>
                     </div>
                 </div>
@@ -41,7 +41,7 @@ const SampleCard = () => {
                     style={{ animationDelay: card2.isVisible ? '150ms' : '0ms' }}
                 >
                     <img src={sampleP3} alt="Product 2" className="w-full h-auto aspect-[524/579] object-cover shadow-lg hover:shadow-2xl transition-shadow duration-300" />
-                    <div className='bg-[#35408E] text-white text-2xl md:text-3xl lg:text-4xl py-4 md:py-5 lg:py-6 text-center font-extralight'>
+                    <div className='bg-[#191716] text-white text-2xl md:text-3xl lg:text-4xl py-4 md:py-5 lg:py-6 text-center font-extralight'>
                         <h1>Formal</h1>
                     </div>
                 </div>
@@ -53,7 +53,7 @@ const SampleCard = () => {
                     style={{ animationDelay: card3.isVisible ? '300ms' : '0ms' }}
                 >
                     <img src={sampleP2} alt="Product 3" className="w-full h-auto aspect-[524/579] object-cover shadow-lg hover:shadow-2xl transition-shadow duration-300" />
-                    <div className='bg-[#FFD41C] py-4 md:py-5 lg:py-6 text-2xl md:text-3xl lg:text-4xl text-center font-extralight'>
+                    <div className='bg-[#e6af2e] py-4 md:py-5 lg:py-6 text-2xl md:text-3xl lg:text-4xl text-center font-extralight'>
                         <h1>Stylish</h1>
                     </div>
                 </div>

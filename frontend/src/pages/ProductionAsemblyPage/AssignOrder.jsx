@@ -132,8 +132,8 @@ const AssignOrder = () => {
                     <button
                         onClick={() => setFilterStatus('Assign Orders')}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'Assign Orders'
-                                ? 'bg-indigo-700 text-white'
-                                : 'bg-indigo-700 text-white hover:bg-indigo-800'
+                                ? 'bg-[#E6AF2E] text-[#191716] hover:bg-[#c49723]'
+                                : 'bg-white text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         Assign Orders
@@ -169,7 +169,7 @@ const AssignOrder = () => {
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <table className="w-full">
                     <thead>
-                        <tr className="bg-indigo-700 text-white">
+                        <tr className="bg-[#191716] text-white">
                             <th className="p-3 text-left">
                                 <input
                                     type="checkbox"
@@ -214,7 +214,7 @@ const AssignOrder = () => {
                                     <div className="flex items-center gap-2">
                                         <Link
                                             onClick={() => handleViewOrder(order.id)}
-                                            className="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-1 rounded transition-colors text-sm font-medium"
+                                            className="bg-[#E6AF2E] hover:bg-[#c49723] text-[#191716] px-4 py-1 rounded transition-colors text-sm font-medium"
                                             to="/vieworder"
                                         >
                                             View

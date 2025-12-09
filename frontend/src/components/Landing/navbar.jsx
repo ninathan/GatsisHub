@@ -22,9 +22,9 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   const linkClass = ({ isActive }) =>
-    `${isActive ? 'text-yellow-400' : 'text-white'} relative text-lg lg:text-xl xl:text-2xl transition-colors duration-200
-    after:content-[''] after:block after:h-[2px] after:bg-yellow-400 after:scale-x-0 after:transition-transform after:duration-300 after:origin-left
-    hover:after:scale-x-100 hover:after:bg-yellow-400`;
+    `${isActive ? 'text-[#e6af2e]' : 'text-white'} relative text-lg lg:text-xl xl:text-2xl transition-colors duration-200
+    after:content-[''] after:block after:h-[2px] after:bg-[#e6af2e] after:scale-x-0 after:transition-transform after:duration-300 after:origin-left
+    hover:after:scale-x-100 hover:after:bg-[#e6af2e]`;
 
   const mobileLinkClass = ({ isActive }) =>
     `${isActive ? 'text-yellow-400' : 'text-white'} block px-1 py-2 text-lg md:text-xl transition-colors duration-200 hover:text-yellow-400`;
@@ -99,7 +99,7 @@ const Navbar = () => {
 
 
   return (
-    <nav className="bg-[#007BFF] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#DC3545] sticky top-0 z-50">
+    <nav className="bg-[#191716] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#e6af2e] sticky top-0 z-50">
       <div className="flex items-center justify-between max-w-full">
         {/* logo and title */}
         <div className="flex items-center space-x-2 md:space-x-3">
@@ -123,9 +123,9 @@ const Navbar = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center gap-2 lg:gap-3 px-3 py-2 rounded-lg hover:bg-[#0056b3] transition-all duration-200 group"
+                  className="flex items-center gap-2 lg:gap-3 px-3 py-2 rounded-lg hover:bg-[#e6af2e] transition-all duration-200 group"
                 >
-                  <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
+                  <div className="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
                     <User className="text-white" size={20} strokeWidth={2.5} />
                   </div>
                   <div className="hidden lg:flex flex-col items-start">
@@ -144,9 +144,9 @@ const Navbar = () => {
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-fadeIn">
                     {/* User Info Header */}
-                    <div className="px-4 py-4 bg-gradient-to-r from-[#007BFF] to-[#0056b3] border-b border-gray-200">
+                    <div className="px-4 py-4 bg-gradient-to-r from-[#e6af2e] to-[#c82333] border-b border-gray-200">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                           <User className="text-white" size={24} strokeWidth={2.5} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -163,7 +163,7 @@ const Navbar = () => {
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#e6af2e] transition-colors">
                           <ShoppingCart size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="flex-1">
@@ -177,7 +177,7 @@ const Navbar = () => {
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#e6af2e] transition-colors">
                           <Settings size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="flex-1">
@@ -191,7 +191,7 @@ const Navbar = () => {
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-150 group"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#353f94] transition-colors">
+                        <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-[#e6af2e] transition-colors">
                           <MessageCircle size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                         </div>
                         <div className="flex-1">

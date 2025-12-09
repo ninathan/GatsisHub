@@ -132,7 +132,7 @@ const OrderPage = () => {
         <div className="flex w-full bg-gray-100">
             {/* Main content */}
             <main className="flex-1 p-3 md:p-6">
-                <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6">Orders</h1>
+                <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6 text-[#191716]">Orders</h1>
 
                 {/* Filters */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
@@ -141,7 +141,8 @@ const OrderPage = () => {
                         <button 
                             onClick={() => setSelectedFilter('All')}
                             className={`px-3 md:px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'All' ? 'bg-yellow-400' : 'bg-indigo-200'
+                                selectedFilter === 'All' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200]'
+
                             }`}
                         >
                             All
@@ -149,7 +150,7 @@ const OrderPage = () => {
                         <button 
                             onClick={() => setSelectedFilter('Orders')}
                             className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'Orders' ? 'bg-yellow-400 font-medium' : 'bg-indigo-200'
+                                selectedFilter === 'Orders' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
                             }`}
                         >
                             Orders
@@ -157,7 +158,7 @@ const OrderPage = () => {
                         <button 
                             onClick={() => setSelectedFilter('Order Request')}
                             className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'Order Request' ? 'bg-yellow-400 font-medium' : 'bg-indigo-200'
+                                selectedFilter === 'Order Request' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
                             }`}
                         >
                             Order Request
@@ -182,7 +183,7 @@ const OrderPage = () => {
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-x-auto">
                     <table className="w-full text-sm min-w-[800px]">
-                        <thead className="bg-[#007BFF] text-white">
+                        <thead className="bg-[#191716] text-white">
                             <tr>
                                 <th className="px-2 md:px-4 py-3 text-left">
                                     <input 

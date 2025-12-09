@@ -174,7 +174,7 @@ const OrderPageOM = () => {
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-x-auto">
                     <table className="w-full text-sm min-w-[800px]">
-                        <thead className="bg-[#35408E] text-white">
+                        <thead className="bg-[#191716] text-white">
                             <tr>
                                 <th className="px-4 py-3 text-left">
                                     <input 

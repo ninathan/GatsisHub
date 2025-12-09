@@ -214,7 +214,7 @@ const CustomerRv = () => {
             <section className="px-4 md:px-8 lg:px-20 py-12 md:py-16 lg:py-20">
                 <h2 
                     ref={heading.ref}
-                    className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37"
+                    className="text-2xl md:text-3xl lg:text-4xl font-bold mb-8 md:mb-10 lg:mb-12 -mt-20 md:-mt-28 lg:-mt-37 text-[#191716]"
                     style={{ 
                         opacity: headingShown ? 1 : 0,
                         transform: headingShown ? 'translateY(0)' : 'translateY(30px)',

@@ -266,18 +266,18 @@ const MessagesPage = () => {
                 <div className="flex border-b shadow-sm">
                     <button
                         onClick={() => setActiveTab('Messages')}
-                        className={`flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold transition-all duration-200 ${activeTab === 'Messages'
-                                ? 'bg-[#ECBA0B] text-black'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`cursor-pointer border-r-2 flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold transition-all duration-200 ${activeTab === 'Messages'
+                                ? 'bg-[#e6af2e] text-black'
+                                : 'bg-[#191716] text-white hover:bg-[#e6af2e]'
                             }`}
                     >
                         Messages
                     </button>
                     <button
                         onClick={() => setActiveTab('Notifications')}
-                        className={`flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold relative transition-all duration-200 ${activeTab === 'Notifications'
-                                ? 'bg-[#ECBA0B] text-black'
-                                : 'bg-[#35408E] text-white hover:bg-indigo-800'
+                        className={`cursor-pointer flex-1 py-3 md:py-4 text-xs md:text-sm font-semibold relative transition-all duration-200 ${activeTab === 'Notifications'
+                                ? 'bg-[#e6af2e] text-black'
+                                : 'bg-[#191716] text-white hover:bg-[#e6af2e]'
                             }`}
                     >
                         Notifications
@@ -310,11 +310,11 @@ const MessagesPage = () => {
                                             setIsSidebarOpen(false);
                                         }}
                                         className={`w-full p-3 md:p-4 flex items-center gap-2 md:gap-3 border-b hover:bg-gray-50 transition-all duration-200 ${
-                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100 border-l-4 border-[#DC3545]' : ''
+                                            selectedContact?.employeeid === contact.employeeid ? 'bg-gray-100 border-l-4 border-[#e6af2e]' : ''
                                         }`}
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center text-lg md:text-xl font-semibold shadow-md flex-shrink-0">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-[#e6af2e] to-[#c82333] text-white rounded-full flex items-center justify-center text-lg md:text-xl font-semibold shadow-md flex-shrink-0">
                                             {contact.employeename?.charAt(0) || 'A'}
                                         </div>
                                         <div className="flex-1 text-left min-w-0">
@@ -386,7 +386,7 @@ const MessagesPage = () => {
                                                 <p className="text-xs text-gray-500 mb-1 truncate">
                                                     Order: {notification.orderId?.substring(0, 18)}...
                                                 </p>
-                                                <p className="text-xs text-blue-600">{notification.timestamp}</p>
+                                                <p className="text-xs text-black">{notification.timestamp}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -400,7 +400,7 @@ const MessagesPage = () => {
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Chat Header */}
-                <div className="bg-gradient-to-r from-[#007BFF] to-[#0056b3] text-white py-3 md:py-4 px-4 md:px-6 shadow-md">
+                <div className="bg-gradient-to-r from-[#e6af2e] to-[#c82333] text-[#191919] border-b-2 py-3 md:py-4 px-4 md:px-6 shadow-md">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -424,7 +424,7 @@ const MessagesPage = () => {
                         <div className="flex-1 bg-white p-3 md:p-4 lg:p-6 overflow-y-auto">
                             {/* Contact Info Header */}
                             <div className="flex flex-col items-center mb-6 md:mb-8 animate-fadeIn">
-                                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mb-2 font-semibold shadow-lg">
+                                <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-[#e6af2e] to-[#c82333] text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mb-2 font-semibold shadow-lg">
                                     {selectedContact.employeename?.charAt(0) || 'A'}
                                 </div>
                                 <h3 className="font-semibold text-base md:text-lg">{selectedContact.employeename}</h3>
@@ -442,7 +442,7 @@ const MessagesPage = () => {
                                         style={{ animationDelay: `${index * 50}ms` }}
                                     >
                                         {msg.sender === 'admin' && (
-                                            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#007BFF] to-[#0056b3] text-white rounded-full flex items-center justify-center flex-shrink-0 text-base md:text-xl font-semibold shadow-md">
+                                            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#e6af2e] to-[#c82333] text-white rounded-full flex items-center justify-center flex-shrink-0 text-base md:text-xl font-semibold shadow-md">
                                                 {msg.senderName?.charAt(0) || 'A'}
                                             </div>
                                         )}
@@ -454,7 +454,7 @@ const MessagesPage = () => {
                                                 className={`rounded-2xl px-3 py-2 md:px-5 md:py-3 shadow-sm hover:shadow-md transition-shadow ${
                                                     msg.sender === 'customer'
                                                         ? 'bg-[#F5F5F5] text-[#333333] border border-gray-300'
-                                                        : 'bg-[#007BFF] text-white'
+                                                        : 'bg-[#e6af2e] text-white'
                                                 }`}
                                             >
                                                 {/* Show message text only if it's not just a file indicator */}
@@ -519,7 +519,7 @@ const MessagesPage = () => {
                                 />
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#35408E] rounded-full flex items-center justify-center text-white hover:bg-indigo-800 transition-all duration-200 hover:scale-110 shadow-md flex-shrink-0"
+                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#e6af2e] rounded-full flex items-center justify-center text-white hover:bg-[#c8971e] transition-all duration-200 hover:scale-110 shadow-md flex-shrink-0"
                                     title="Attach file"
                                 >
                                     <Plus size={18} className="md:w-5 md:h-5" />
@@ -530,13 +530,13 @@ const MessagesPage = () => {
                                     onChange={(e) => setMessage(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Type a message..."
-                                    className="flex-1 border border-gray-300 rounded-full px-4 md:px-5 py-2 md:py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm md:text-base transition-all"
+                                    className="flex-1 border border-gray-300 rounded-full px-4 md:px-5 py-2 md:py-2.5 focus:outline-none focus:ring-2 focus:ring-[#e6af2e] text-sm md:text-base transition-all"
                                     disabled={sendingMessage}
                                 />
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={sendingMessage}
-                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#007BFF] rounded-full flex items-center justify-center text-white hover:bg-[#0056b3] transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-md flex-shrink-0"
+                                    className="w-9 h-9 md:w-10 md:h-10 bg-[#e6af2e] rounded-full flex items-center justify-center text-white hover:bg-[#c8971e] transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-md flex-shrink-0"
                                 >
                                     <Send size={16} className="md:w-[18px] md:h-[18px]" />
                                 </button>

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react'
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { div, em } from 'framer-motion/client';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-const ProfileOM = () => {
+const profilePA = () => {
 
     const [loading, setLoading] = useState(true);
 
@@ -45,7 +45,7 @@ const ProfileOM = () => {
 
     // load employee data from localstorage on component mount
     useEffect(() => {
-        const storedEmployee = localStorage.getItem('employee')
+        const storedEmployee = localStorage.getItem('systemAdmin')
         if (storedEmployee) {
             const employeeData = JSON.parse(storedEmployee)
             setEmployee(employeeData)
@@ -53,11 +53,11 @@ const ProfileOM = () => {
                 employeename: employeeData.employeename || '',
                 email: employeeData.email || '',
                 contactDetails: employeeData.contactdetails || '',
-                assigneddepartment: employeeData.assigneddepartment || 'N/A',
+                assigneddepartment: employeeData.assigneddepartment || 'System Administration',
                 shifthours: employeeData.shifthours || '',
             })
         } else {
-            navigate('/authOM')
+            navigate('/authsystema')
         }
         setLoading(false)
 
@@ -88,7 +88,7 @@ const ProfileOM = () => {
 
             // Update localStorage
             const updatedEmployee = { ...employees, ...profileData}
-            localStorage.setItem('employee', JSON.stringify
+            localStorage.setItem('systemAdmin', JSON.stringify
                 (updatedEmployee))
                 setEmployee(updatedEmployee)
         }
@@ -117,7 +117,7 @@ const ProfileOM = () => {
         setIsSaving(true)
 
         try {
-            const response = await fetch('http://gatsis.hub:5000/api/employees/change-password', {
+            const response = await fetch('https://gatsis-hub.vercel.app/api/employees/change-password', {
                 method: 'POST',
                 header: {
                     'Content-Type': 'application/json',
@@ -152,9 +152,9 @@ const ProfileOM = () => {
 
     // logout function
     const  handleLogout = () => {
-        localStorage.removeItem('employee')
+        localStorage.removeItem('systemAdmin')
         localStorage.removeItem('customer')
-        navigate('/authOM')
+        navigate('/authsystema')
     }
 
     if (loading) {
@@ -164,8 +164,6 @@ const ProfileOM = () => {
             </div>
         )
     }
-
-
     return (
         <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
             {/* Header Section */}
@@ -180,7 +178,7 @@ const ProfileOM = () => {
                 {/* Profile Card */}
                 <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl">
                     {/* Card Header */}
-                    <div className="bg-[#191716] text-white px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
+                    <div className="bg-[#191919] text-white px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
                         <h2 className="text-lg md:text-xl font-semibold">Profile Details</h2>
                     </div>
 
@@ -206,7 +204,7 @@ const ProfileOM = () => {
                                 </span>
                             </div>
                             <h3 className='text-lg md:text-xl font-bold text-gray-900 text-center'>{profileData.employeename}</h3>
-                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.role || 'Operational Manager'}</p>
+                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.role || 'System Admin'}</p>
                         </div>
 
                         {/* Profile Form Fields */}
@@ -289,100 +287,100 @@ const ProfileOM = () => {
                             {/* Password Change Section */}
                             <div className="border-t pt-4 md:pt-6">
                                 <button
-                                    onClick={() => 
+                                    onClick={() =>
                                         setIsChangingPassword(!isChangingPassword)
                                     }
                                     className="text-xs md:text-sm text-blue-600 hover:text-blue-800 hover:underline font-semibold"
                                 >
                                     {isChangingPassword ? 'Cancel password change' : 'Change Password?'}
                                 </button>
-                                
-                                
+
+
                                 {isChangingPassword && (
-                                <div className="mt-4 space-y-4 bg-gray-50 p-3 md:p-4 rounded-lg">
-                                    {/* Current Password */}
-                                    <div>
-                                        <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
-                                            Current Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showCurrentPassword ? "text" : "password"}
-                                                name="currentPassword"
-                                                value={passwordData.currentPassword}
-                                                onChange={handlePasswordChange}
-                                                className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => 
-                                                    setShowCurrentPassword (!showCurrentPassword)}
-                                                
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                            >
-                                                {showCurrentPassword ?
-                                                <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <div className="mt-4 space-y-4 bg-gray-50 p-3 md:p-4 rounded-lg">
+                                        {/* Current Password */}
+                                        <div>
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
+                                                Current Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showCurrentPassword ? "text" : "password"}
+                                                    name="currentPassword"
+                                                    value={passwordData.currentPassword}
+                                                    onChange={handlePasswordChange}
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setShowCurrentPassword(!showCurrentPassword)}
 
-                                    {/* New Password */}
-                                    <div>
-                                        <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
-                                            New Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type= {showNewPassword ?
-                                                    "text" : "password"
-                                                }
-                                                name="newPassword"
-                                                value={passwordData.newpassword}
-                                                onChange={handlePasswordChange}
-                                                className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                            >
-                                                {showNewPassword ? <EyeOff size={18} /> : <Eye size= {18} />}
-                                            </button>
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                >
+                                                    {showCurrentPassword ?
+                                                        <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Confirm Password */}
-                                    <div>
-                                        <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
-                                            Confirm New Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                name="confirmPassword"
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                            >
-                                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
+                                        {/* New Password */}
+                                        <div>
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
+                                                New Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showNewPassword ?
+                                                        "text" : "password"
+                                                    }
+                                                    name="newPassword"
+                                                    value={passwordData.newpassword}
+                                                    onChange={handlePasswordChange}
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                >
+                                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <button
-                                        onClick={handleChangePassword}
-                                        disabled={isSaving}
-                                        className="w-full bg-green-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 text-sm md:text-base"
-                                    >
-                                        {isSaving ? 'Changing Password...' : 'Change Password'}
-                                    </button>
-                                </div>
-                                )} 
+                                        {/* Confirm Password */}
+                                        <div>
+                                            <label className="block text-xs md:text-sm font-bold text-gray-900 mb-2">
+                                                Confirm New Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    name="confirmPassword"
+                                                    value={passwordData.confirmPassword}
+                                                    onChange={handlePasswordChange}
+                                                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={handleChangePassword}
+                                            disabled={isSaving}
+                                            className="w-full bg-green-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 text-sm md:text-base"
+                                        >
+                                            {isSaving ? 'Changing Password...' : 'Change Password'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -398,7 +396,7 @@ const ProfileOM = () => {
 
                             {/* Logout Button */}
                             <button
-                                onClick={handleLogout}
+                                onClick=""
                                 className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm md:text-base"
                             >
                                 <LogOut size={18} className="md:w-5 md:h-5" />
@@ -412,4 +410,4 @@ const ProfileOM = () => {
     )
 }
 
-export default ProfileOM
+export default profilePA

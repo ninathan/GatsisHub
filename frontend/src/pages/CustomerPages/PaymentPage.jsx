@@ -133,7 +133,7 @@ const PaymentPage = () => {
             {/* Bank Transfer */}
             <div 
                 ref={bankAnim.ref}
-                className={`h-75 w-75 bg-[#35408E] m-10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl ${
+                className={`h-75 w-75 bg-[#191716] m-10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl ${
                     bankAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                 }`}
                 onClick={() => handleConfirm('Bank Transfer')}
@@ -146,7 +146,7 @@ const PaymentPage = () => {
             {/* Cheque Payment */}
             <div 
                 ref={chequeAnim.ref}
-                className={`h-75 w-75 bg-[#35408E] m-10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl ${
+                className={`h-75 w-75 bg-[#191716] m-10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl ${
                     chequeAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                 }`}
                 onClick={() => handleConfirm('Cheque Payment')}
@@ -187,7 +187,7 @@ const PaymentPage = () => {
                 <div className="bg-white rounded-lg shadow-2xl p-8 max-w-lg w-full mx-4">
                     {/* Modal Header */}
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-2xl font-bold text-[#35408E]">
+                        <h3 className="text-2xl font-bold text-[#191716]">
                             Upload Proof of Payment
                         </h3>
                         <button
@@ -204,7 +204,7 @@ const PaymentPage = () => {
                     </div>
 
                     {/* Payment Method Info */}
-                    <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <p className="text-sm text-gray-700">
                             <strong>Payment Method:</strong> {paymentMethod}
                         </p>
@@ -300,7 +300,7 @@ const PaymentPage = () => {
                         <button
                             onClick={handleSubmitPayment}
                             disabled={!selectedFile || uploading || uploadSuccess}
-                            className="px-6 py-2 bg-[#DC3545] text-white rounded-lg hover:bg-[#c82333] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="px-6 py-2 bg-[#e6af2e] text-white rounded-lg hover:bg-[#c9a72a] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {uploading ? (
                                 <>
@@ -323,7 +323,7 @@ const PaymentPage = () => {
         {/* Success Modal */}
         {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50 animate-fadeIn">
-                    <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-scaleIn">
+                    <div className="bg-[#191716] rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-scaleIn">
                         <div className="mb-4">
                             <FaCheckCircle className="text-6xl text-green-400 mx-auto" />
                         </div>

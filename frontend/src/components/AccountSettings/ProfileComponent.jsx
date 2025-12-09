@@ -648,10 +648,10 @@ const ProfileComponent = () => {
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
                                         className={`flex-shrink-0 px-4 md:px-6 py-3 md:py-4 transition-colors whitespace-nowrap ${activeTab === tab
-                                            ? 'bg-[#35408E] text-white font-semibold'
+                                            ? 'bg-[#e6af2e] text-[#191716] font-semibold'
                                             : 'text-gray-700 hover:bg-gray-100'
                                             }`}
-                                        style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
+                                        style={activeTab === tab ? { backgroundColor: '#e6af2e', color: 'white' } : {}}
                                     >
                                         {tab}
                                     </button>
@@ -664,10 +664,10 @@ const ProfileComponent = () => {
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
                                         className={`w-full text-left px-6 py-4 transition-colors ${activeTab === tab
-                                            ? 'bg-[#35408E] text-white font-semibold'
+                                            ? 'bg-[#e6af2e] text-[#191716] font-semibold'
                                             : 'text-gray-700 hover:bg-gray-100'
                                             }`}
-                                        style={activeTab === tab ? { backgroundColor: '#35408E', color: 'white' } : {}}
+                                        style={activeTab === tab ? { backgroundColor: '#e6af2e', color: '#191716' } : {}}
                                     >
                                         {tab}
                                     </button>
@@ -686,8 +686,8 @@ const ProfileComponent = () => {
                                     <div>
                                         {/* Profile Picture */}
                                         <div className="flex flex-col items-center mb-6 md:mb-8">
-                                            <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-400 rounded-full flex items-center justify-center mb-3">
-                                                <User size={40} className="md:w-12 md:h-12 text-white" />
+                                            <div className="w-20 h-20 md:w-24 md:h-24 bg-[#e6af2e] rounded-full flex items-center justify-center mb-3">
+                                                <User size={40} className="md:w-12 md:h-12 text-[#191716]" />
                                             </div>
                                             <p className="text-base md:text-lg font-semibold text-center break-words max-w-full px-2">{user.companyname}</p>
                                         </div>
@@ -701,7 +701,7 @@ const ProfileComponent = () => {
                                                     value={companyName}
                                                     onChange={(e) => setCompanyName(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -712,7 +712,7 @@ const ProfileComponent = () => {
                                                     value={companyEmail}
                                                     onChange={(e) => setCompanyEmail(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -723,7 +723,7 @@ const ProfileComponent = () => {
                                                     value={companyNumber}
                                                     onChange={(e) => setCompanyNumber(e.target.value)}
                                                     disabled={!isEditing}
-                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                                    className={`w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e] ${!isEditing ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                                                 />
                                             </div>
 
@@ -732,14 +732,14 @@ const ProfileComponent = () => {
                                                     <>
                                                         <button
                                                             onClick={handleCancelEdit}
-                                                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 md:px-6 rounded transition-colors text-sm md:text-base"
+                                                            className="flex-1 bg-gray-200 hover:bg-gray-300 text-[#191716] font-semibold py-2 px-4 md:px-6 rounded transition-colors text-sm md:text-base"
                                                         >
                                                             Cancel
                                                         </button>
                                                         <button
                                                             onClick={handleEditProfile}
                                                             disabled={isSavingProfile}
-                                                            className="flex-1 bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                                                            className="flex-1 bg-[#e6af2e] hover:bg-[#191716] text-[#191716] hover:text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                                         >
                                                             {isSavingProfile ? 'Saving...' : 'Save Profile'}
                                                         </button>
@@ -747,7 +747,8 @@ const ProfileComponent = () => {
                                                 ) : (
                                                     <button
                                                         onClick={handleEditProfile}
-                                                        className="w-full bg-[#35408E] hover:bg-[#2c3e50] text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
+                                                        className="w-full bg-[#e6af2e] hover:bg-[#191716] text-[#191716]
+                                                        hover:text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
                                                     >
                                                         <Edit size={16} />
                                                         Edit Profile
@@ -760,10 +761,10 @@ const ProfileComponent = () => {
                                     {/* Right Column - My Address */}
                                     <div>
                                         <div className="flex items-center justify-between mb-4 md:mb-6">
-                                            <h2 className="text-lg md:text-xl font-bold">My Addresses</h2>
+                                            <h2 className="text-lg text-[#191716] md:text-xl font-bold">My Addresses</h2>
                                             <button
                                                 onClick={handleAddAddress}
-                                                className="bg-[#35408E] hover:bg-[#2c3e50] text-white py-1.5 md:py-2 px-3 md:px-4 rounded text-xs md:text-sm transition-colors flex items-center gap-1 md:gap-2 whitespace-nowrap"
+                                                className="bg-[#e6af2e] hover:bg-[#191716] text-[#191716] hover:text-white py-1.5 md:py-2 px-3 md:px-4 rounded text-xs md:text-sm transition-colors flex items-center gap-1 md:gap-2 whitespace-nowrap cursor-pointer"
                                             >
                                                 <span className="text-base md:text-lg">+</span>
                                                 <span className="hidden sm:inline">Add Address</span>
@@ -777,7 +778,7 @@ const ProfileComponent = () => {
                                                     <p className="text-gray-500 mb-4">No address saved yet</p>
                                                     <button
                                                         onClick={handleAddAddress}
-                                                        className="text-[#35408E] hover:text-[#2c3e50] font-medium"
+                                                        className="text-[#e6af2e] hover:text-[#191716] font-medium cursor-pointer"
                                                     >
                                                         + Add your first address
                                                     </button>
@@ -788,7 +789,7 @@ const ProfileComponent = () => {
                                                         key={address.id}
                                                         className={`border-2 rounded-lg p-4 ${
                                                             address.isDefault 
-                                                                ? 'border-[#35408E] bg-blue-50' 
+                                                                ? 'border-[#e6af2e] bg-yellow-50' 
                                                                 : 'border-gray-300 bg-white'
                                                         }`}
                                                     >
@@ -796,7 +797,7 @@ const ProfileComponent = () => {
                                                             <div className="flex-1">
                                                                 <div className="flex items-center gap-2 mb-2">
                                                                     {address.isDefault && (
-                                                                        <span className="text-xs bg-[#35408E] text-white px-2 py-1 rounded font-semibold">
+                                                                        <span className="text-xs bg-[#191716] text-white px-2 py-1 rounded font-semibold">
                                                                             DEFAULT
                                                                         </span>
                                                                     )}
@@ -804,21 +805,21 @@ const ProfileComponent = () => {
                                                                 <p className="font-semibold mb-1">
                                                                     {address.name} {address.phone && `| ${address.phone}`}
                                                                 </p>
-                                                                <p className="text-sm text-gray-700 whitespace-pre-line">{address.address}</p>
+                                                                <p className="text-sm text-[#191716] whitespace-pre-line">{address.address}</p>
                                                                 
                                                                 {/* Action Buttons */}
                                                                 <div className="flex gap-2 mt-3">
                                                                     {!address.isDefault && (
                                                                         <button
                                                                             onClick={() => handleSetDefault(address.id)}
-                                                                            className="text-xs text-[#35408E] hover:text-[#2c3e50] font-medium"
+                                                                            className="px-3 py-1.5 text-xs bg-[#e6af2e] text-black hover:text-white hover:bg-[#191716] rounded font-medium transition-all duration-200 cursor-pointer"
                                                                         >
                                                                             Set as Default
                                                                         </button>
                                                                     )}
                                                                     <button
                                                                         onClick={() => handleEditAddress(address.id)}
-                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
                                                                     >
                                                                         Edit
                                                                     </button>
@@ -837,8 +838,8 @@ const ProfileComponent = () => {
 
                                             {/* Info Text */}
                                             {addresses.length > 0 && (
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                    <p className="text-sm text-blue-800">
+                                                <div className="bg-[#e6af2e17] border border-[#e6af2e] rounded-lg p-4">
+                                                    <p className="text-sm text-[#191716]">
                                                         <span className="font-semibold">💡 Tip:</span> Set a default address to be used automatically for deliveries.
                                                     </p>
                                                 </div>
@@ -864,7 +865,7 @@ const ProfileComponent = () => {
                                             <p className="text-gray-600 mb-6">Start creating custom hanger designs and save them here!</p>
                                             <a 
                                                 href="/create-design" 
-                                                className="inline-block bg-[#35408E] text-white py-2 px-6 rounded hover:bg-[#2c3e50] transition-colors"
+                                                className="inline-block bg-[#e6af2e] text-[#191716] py-2 px-6 rounded hover:bg-[#191716] hover:text-white transition-colors"
                                             >
                                                 Create Your First Design
                                             </a>
@@ -925,7 +926,7 @@ const ProfileComponent = () => {
                                                         <div className="flex gap-2">
                                                             <button 
                                                                 onClick={() => handleDuplicateDesign(design)}
-                                                                className="flex-1 border border-[#35408E] text-[#35408E] py-2 px-3 rounded text-sm hover:bg-[#35408E] hover:text-white transition-colors flex items-center justify-center gap-1"
+                                                                className="flex-1 border border-[#e6af2e] text-[#191716] py-2 px-3 rounded text-sm hover:bg-[#e6af2e] hover:text-white transition-colors flex items-center justify-center gap-1"
                                                                 title="Use this design"
                                                             >
                                                                 <Copy size={14} />
@@ -946,7 +947,7 @@ const ProfileComponent = () => {
                                             {/* Add New Design Card */}
                                             <a 
                                                 href="/create-design"
-                                                className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-[360px] hover:border-[#35408E] transition-colors cursor-pointer"
+                                                className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-[360px] hover:border-[#e6af2e] transition-colors cursor-pointer"
                                             >
                                                 <div className="text-gray-400 text-4xl mb-4">+</div>
                                                 <h3 className="font-semibold text-gray-600 mb-2">Create New Design</h3>
@@ -972,7 +973,7 @@ const ProfileComponent = () => {
                                                         type="password"
                                                         value={currentPassword}
                                                         onChange={(e) => setCurrentPassword(e.target.value)}
-                                                        className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                        className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e]"
                                                         placeholder="Enter current password"
                                                     />
                                                 </div>
@@ -983,7 +984,7 @@ const ProfileComponent = () => {
                                                             type="password"
                                                             value={newPassword}
                                                             onChange={(e) => setNewPassword(e.target.value)}
-                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e]"
                                                             placeholder="Enter new password (min 6 characters)"
                                                         />
                                                     </div>
@@ -993,7 +994,7 @@ const ProfileComponent = () => {
                                                             type="password"
                                                             value={confirmPassword}
                                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#e6af2e]"
                                                             placeholder="Confirm new password"
                                                         />
                                                     </div>
@@ -1002,7 +1003,7 @@ const ProfileComponent = () => {
                                             <button 
                                                 onClick={handleChangePassword}
                                                 disabled={isChangingPassword}
-                                                className="mt-4 bg-[#35408E] hover:bg-[#2c3e50] text-white py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                                                className="mt-4 bg-[#e6af2e] hover:bg-[#191716] text-[#191716] hover:text-white py-2 px-4 md:px-6 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                             >
                                                 {isChangingPassword ? 'Updating...' : 'Update Password'}
                                             </button>

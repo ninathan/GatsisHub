@@ -105,7 +105,7 @@ const fogotpassword = () => {
     return (
         <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
             {/* Left side */}
-            <div className='bg-[#35408E] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
+            <div className='bg-[#191716] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
                 <div className='flex flex-col items-center py-10 md:py-20 lg:mt-25 px-4'>
                     <Link to='/'>
                         <img src={logo} alt='Logo' className='w-[120px] h-[120px] md:w-[170px] md:h-[170px] mx-auto mt-5 md:mt-10' />
@@ -116,7 +116,7 @@ const fogotpassword = () => {
                     </p>
                     <Link
                         to='/signup'
-                        className='bg-[#DAC325] text-black px-6 py-3 text-xl rounded-2xl mt-5 hover:bg-[#c4ad1f]'
+                        className='bg-[#E6AF2E] text-black px-6 py-3 text-xl rounded-2xl mt-5 hover:bg-[#c4ad1f]'
                     >
                         Sign Up
                     </Link>
@@ -162,7 +162,7 @@ const fogotpassword = () => {
                     </button>
                 </form>
 
-                <button className='mt-6 bg-[#DAC325] text-black px-6 py-3 text-xl rounded-2xl hover:bg-[#c4ad1f] cursor-pointer'>
+                <button className='mt-6 bg-[#E6AF2E] text-black px-6 py-3 text-xl rounded-2xl hover:bg-[#c4ad1f] cursor-pointer'>
                     <Link to='/login'>Back to Login</Link>
                 </button>
             </div>
@@ -172,7 +172,7 @@ const fogotpassword = () => {
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-6 py-4">
+                        <div className="bg-[#191716] px-6 py-4">
                             <h2 className="text-white text-2xl font-semibold">Enter Verification Code</h2>
                         </div>
 
@@ -181,7 +181,7 @@ const fogotpassword = () => {
                             <p className="text-gray-700 mb-4">
                                 We've sent a 6-digit verification code to:
                             </p>
-                            <p className="text-center font-semibold text-lg text-[#35408E] mb-6">
+                            <p className="text-center font-semibold text-lg text-[#191716] mb-6">
                                 {email}
                             </p>
 
@@ -214,7 +214,7 @@ const fogotpassword = () => {
                                         type="button"
                                         onClick={handleResendCode}
                                         disabled={isLoading}
-                                        className="text-[#35408E] text-sm font-semibold hover:underline disabled:opacity-50"
+                                        className="text-[#35408E] text-sm font-semibold hover:underline disabled:opacity-50 cursor-pointer"
                                     >
                                         Didn't receive the code? Resend
                                     </button>

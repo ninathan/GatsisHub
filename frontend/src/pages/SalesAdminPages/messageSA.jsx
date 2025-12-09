@@ -186,7 +186,7 @@ const Messages = () => {
             <div className="flex flex-1">
                 {/* People List */}
                 <div className="w-64 border-r bg-white flex flex-col">
-                    <div className="p-4 border-b bg-[#35408E] text-white">
+                    <div className="p-4 border-b bg-[#191716] text-white">
                         <h3 className="font-semibold">Customer Messages</h3>
                     </div>
                     <ul className="flex-1 overflow-y-auto">
@@ -205,7 +205,7 @@ const Messages = () => {
                                         selectedCustomer?.customerid === conversation.customerid ? 'bg-gray-200' : ''
                                     }`}
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-[#35408E] text-white flex items-center justify-center font-semibold">
+                                    <div className="w-8 h-8 rounded-full bg-[#191716] text-white flex items-center justify-center font-semibold">
                                         {conversation.companyname?.charAt(0) || 'C'}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -227,7 +227,7 @@ const Messages = () => {
                         <>
                             {/* Header */}
                             <div className="p-4 border-b flex items-center gap-2 bg-white">
-                                <div className="w-10 h-10 bg-[#35408E] text-white rounded-full flex items-center justify-center font-semibold">
+                                <div className="w-10 h-10 bg-[#191716] text-white rounded-full flex items-center justify-center font-semibold">
                                     {selectedCustomer.companyname?.charAt(0) || 'C'}
                                 </div>
                                 <div>
@@ -248,8 +248,8 @@ const Messages = () => {
                                         <div
                                             className={`p-3 rounded-lg max-w-xs ${
                                                 msg.sender === "admin"
-                                                    ? "bg-yellow-400 text-black"
-                                                    : "bg-[#35408E] text-white"
+                                                    ? "bg-[#E6AF2E] text-black"
+                                                    : "bg-[#191716] text-white"
                                             }`}
                                         >
                                             {/* Show message text only if it's not just a file indicator */}
@@ -312,7 +312,7 @@ const Messages = () => {
                                     />
                                     <button 
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="bg-[#35408E] text-white p-2 rounded-full hover:bg-indigo-800"
+                                        className="bg-[#E6AF2E] text-white p-2 rounded-full hover:bg-yellow-600 cursor-pointer"
                                         title="Attach file"
                                     >
                                         <FaPlus />
@@ -323,11 +323,11 @@ const Messages = () => {
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                                        className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         disabled={sendingMessage}
                                     />
                                     <button
-                                        className="bg-[#35408E] text-white p-2 rounded-full hover:bg-indigo-800 disabled:opacity-50"
+                                        className="bg-[#E6AF2E] text-white p-2 rounded-full hover:bg-yellow-600 disabled:opacity-50"
                                         onClick={handleSend}
                                         disabled={sendingMessage}
                                     >

@@ -192,7 +192,7 @@ const CalendarOM = () => {
                     {dayNames.map((day, index) => (
                         <div
                             key={index}
-                            className="bg-[#35408E] text-white p-3 text-center font-semibold text-sm border-r border-[#1D2D5F] last:border-r-0"
+                            className="bg-[#191716] text-white p-3 text-center font-semibold text-sm border-r border-[#1D2D5F] last:border-r-0"
                         >
                             {day}
                         </div>
@@ -240,7 +240,7 @@ const CalendarOM = () => {
                                     <div
                                         key={`event-${idx}`}
                                         onClick={() => handleDeadlineClick(event.orderId)}
-                                        className="bg-[#35408E] text-white text-xs px-2 py-1 rounded mb-1 cursor-pointer hover:bg-[#2c3575] transition-colors"
+                                        className="bg-[#F71735] text-white text-xs px-2 py-1 rounded mb-1 cursor-pointer hover:bg-[#2c3575] transition-colors"
                                         title={`${event.companyName} - ${event.orderStatus}\nClick to view order details`}
                                     >
                                         <div className="font-semibold truncate">{event.companyName}</div>
@@ -274,7 +274,7 @@ const CalendarOM = () => {
                                 onClick={() => handleMonthClick(monthIndex)}
                             >
                                 {/* Month Name */}
-                                <h3 className="text-lg font-bold text-center mb-3 text-[#35408E]">
+                                <h3 className="text-lg font-bold text-center mb-3 text-[#191016]">
                                     {monthName}
                                 </h3>
 
@@ -302,7 +302,7 @@ const CalendarOM = () => {
                                                 key={i} 
                                                 className={`text-xs p-1 text-center rounded ${
                                                     hasEvent 
-                                                        ? 'bg-[#35408E] text-white font-bold' 
+                                                        ? 'bg-[#F71735] text-white font-bold' 
                                                         : 'hover:bg-gray-100'
                                                 }`}
                                             >
@@ -315,7 +315,7 @@ const CalendarOM = () => {
                                 {/* Event Count Badge */}
                                 {monthEvents.length > 0 && (
                                     <div className="mt-3 text-center">
-                                        <span className="bg-[#35408E] text-white text-xs px-2 py-1 rounded-full">
+                                        <span className="bg-[#F71735] text-white text-xs px-2 py-1 rounded-full">
                                             {monthEvents.length} {monthEvents.length === 1 ? 'deadline' : 'deadlines'}
                                         </span>
                                     </div>
@@ -345,7 +345,7 @@ const CalendarOM = () => {
         return (
             <div className="flex-1 overflow-auto p-6">
                 <div className="max-w-4xl mx-auto">
-                    <h2 className="text-2xl font-bold mb-6 text-[#35408E]">
+                    <h2 className="text-2xl font-bold mb-6 text-[#191016]">
                         {monthNames[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
                     </h2>
 
@@ -412,10 +412,10 @@ const CalendarOM = () => {
                                     className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer hover:border-[#35408E]"
                                 >
                                     <div className="flex items-start justify-between mb-2">
-                                        <h3 className="font-semibold text-lg text-[#35408E] truncate">
+                                        <h3 className="font-semibold text-lg text-[#191716] truncate">
                                             {event.companyName}
                                         </h3>
-                                        <span className="bg-[#35408E] text-white text-xs px-2 py-1 rounded-full ml-2">
+                                        <span className="bg-[#ECBA0B] text-[#191716] text-xs px-2 py-1 rounded-full ml-2">
                                             {event.orderStatus}
                                         </span>
                                     </div>
@@ -453,7 +453,7 @@ const CalendarOM = () => {
                                 onClick={() => setViewMode('day')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'day' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#ECBA0B] text-[#191716] hover:text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
@@ -463,7 +463,7 @@ const CalendarOM = () => {
                                 onClick={() => setViewMode('month')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'month' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#ECBA0B] text-[#191716] hover:text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
@@ -473,7 +473,7 @@ const CalendarOM = () => {
                                 onClick={() => setViewMode('year')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'year' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#ECBA0B] text-[#191716] hover:text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >

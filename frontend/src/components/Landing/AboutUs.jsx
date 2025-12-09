@@ -37,9 +37,9 @@ const AboutUs = () => {
                     }`}
                 >
                     {(Array.isArray(about) ? about : []).map(({ id, title, subtitle }) => (
-                        <div key={id} className='w-full'>
-                            <h1 className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 md:mb-4 text-[#353f94] break-words'>{title}</h1>
-                            <p className='text-gray-700 text-base md:text-lg lg:text-xl xl:text-2xl mb-6 md:mb-10 lg:mb-15 leading-relaxed'>
+                        <div key={id} className='w-full' style={{ animationDelay: `${id * 200}ms` }}>
+                            <h1 className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 md:mb-4 text-[#e6af2e] break-words'>{title}</h1>
+                            <p className='text-[#191716] text-base md:text-lg lg:text-xl xl:text-2xl mb-6 md:mb-10 lg:mb-15 leading-relaxed'>
                                 {subtitle}
                             </p>
                         </div>

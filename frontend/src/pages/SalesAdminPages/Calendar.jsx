@@ -149,7 +149,7 @@ const Calendar = () => {
                     {dayNames.map((day, index) => (
                         <div
                             key={index}
-                            className="bg-[#35408E] text-white p-3 text-center font-semibold text-sm border-r border-[#1D2D5F] last:border-r-0"
+                            className="bg-[#191716] text-white p-3 text-center font-semibold text-sm border-r border-[#1D2D5F] last:border-r-0"
                         >
                             {day}
                         </div>
@@ -179,7 +179,7 @@ const Calendar = () => {
                                     <div
                                         key={idx}
                                         onClick={() => handleDeadlineClick(event.orderId)}
-                                        className="bg-[#35408E] text-white text-xs px-2 py-1 rounded mb-1 cursor-pointer hover:bg-[#2c3575] transition-colors"
+                                        className="bg-[#F71735] text-white text-xs px-2 py-1 rounded mb-1 cursor-pointer hover:bg-[#C99700] transition-colors"
                                         title={`${event.companyName} - ${event.orderStatus}\nClick to view order details`}
                                     >
                                         <div className="font-semibold truncate">{event.companyName}</div>
@@ -213,7 +213,7 @@ const Calendar = () => {
                                 onClick={() => handleMonthClick(monthIndex)}
                             >
                                 {/* Month Name */}
-                                <h3 className="text-lg font-bold text-center mb-3 text-[#35408E]">
+                                <h3 className="text-lg font-bold text-center mb-3 text-[#1910716]">
                                     {monthName}
                                 </h3>
 
@@ -241,7 +241,7 @@ const Calendar = () => {
                                                 key={i} 
                                                 className={`text-xs p-1 text-center rounded ${
                                                     hasEvent 
-                                                        ? 'bg-[#35408E] text-white font-bold' 
+                                                        ? 'bg-[#F71735] text-white font-bold' 
                                                         : 'hover:bg-gray-100'
                                                 }`}
                                             >
@@ -254,7 +254,7 @@ const Calendar = () => {
                                 {/* Event Count Badge */}
                                 {monthEvents.length > 0 && (
                                     <div className="mt-3 text-center">
-                                        <span className="bg-[#35408E] text-white text-xs px-2 py-1 rounded-full">
+                                        <span className="bg-[#F71735] text-white text-xs px-2 py-1 rounded-full">
                                             {monthEvents.length} {monthEvents.length === 1 ? 'deadline' : 'deadlines'}
                                         </span>
                                     </div>
@@ -337,7 +337,7 @@ const Calendar = () => {
                                 onClick={() => setViewMode('day')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'day' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#191716] text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
@@ -347,7 +347,7 @@ const Calendar = () => {
                                 onClick={() => setViewMode('month')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'month' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#191716] text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
@@ -357,7 +357,7 @@ const Calendar = () => {
                                 onClick={() => setViewMode('year')}
                                 className={`px-3 py-1 text-xs rounded transition-colors ${
                                     viewMode === 'year' 
-                                        ? 'bg-[#35408E] text-white' 
+                                        ? 'bg-[#191716] text-white' 
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >

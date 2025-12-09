@@ -163,7 +163,7 @@ const Signup = () => {
 
         {/* LEFT SIDE */}
         <div className='flex flex-col items-center py-5 md:py-10 px-4 order-1 lg:order-1'>
-          <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center text-center'>
+          <h1 className='text-[#191716] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center text-center'>
             Create an Account
           </h1>
 
@@ -179,7 +179,7 @@ const Signup = () => {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Enter your first name'
                     required
                   />
@@ -193,7 +193,7 @@ const Signup = () => {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Enter your last name'
                     required
                   />
@@ -207,7 +207,7 @@ const Signup = () => {
                     type="email"
                     value={emailAddress}
                     onChange={(e) => setEmailAddress(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Enter your email'
                     required
                   />
@@ -221,7 +221,7 @@ const Signup = () => {
                     type="tel"
                     value={companyNumber}
                     onChange={(e) => setCompanyNumber(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Enter your phone number'
                   />
                 </div>
@@ -233,7 +233,7 @@ const Signup = () => {
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] appearance-none bg-white'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E] appearance-none bg-white'
                     required
                   >
                     <option value="">Select gender</option>
@@ -252,7 +252,7 @@ const Signup = () => {
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     required
                   />
                 </div>
@@ -265,7 +265,7 @@ const Signup = () => {
                     type="text"
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Street Address'
                     required
                   />
@@ -279,7 +279,7 @@ const Signup = () => {
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='City'
                   />
                 </div>
@@ -292,7 +292,7 @@ const Signup = () => {
                     type="text"
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Province/State'
                   />
                 </div>
@@ -305,7 +305,7 @@ const Signup = () => {
                     type="text"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Postal Code'
                   />
                 </div>
@@ -318,7 +318,7 @@ const Signup = () => {
                     type="text"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                     placeholder='Country'
                   />
                 </div>
@@ -332,7 +332,7 @@ const Signup = () => {
                     value={Password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder='Enter your Password'
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 pr-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 pr-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword
@@ -362,7 +362,7 @@ const Signup = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder='Re-enter your Password'
-                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 pr-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+                    className='border border-gray-300 rounded-2xl px-4 md:px-15 py-3 pl-10 md:pl-12 pr-12 w-full mt-2 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]'
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                     {showConfirmPassword
@@ -451,7 +451,7 @@ const Signup = () => {
               <button
                 type='submit'
                 disabled={loading}
-                className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer hover:bg-[#2d3575] transition-colors'>
+                className='bg-[#E6AF2E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-colors'>
                 {loading ? 'Signing up...' : 'Sign Up'}
               </button>
 
@@ -479,13 +479,13 @@ const Signup = () => {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className='bg-[#35408E] w-full min-h-screen order-2 lg:order-2 flex flex-col items-center justify-center text-center text-white px-4'>
+        <div className='bg-[#191716] w-full min-h-screen order-2 lg:order-2 flex flex-col items-center justify-center text-center text-white px-4'>
           <img src={logo} alt='Logo' className='w-[120px] h-[120px] md:w-[170px] md:h-[170px]' />
           <h1 className='text-4xl font-semibold mt-5'>Welcome to Gatsishub</h1>
           <p className='mt-4 text-lg max-w-md'>Premium Hanger Solutions Crafted for Quality and Style.</p>
           <Link
             to='/login'
-            className='bg-[#DAC325] text-black px-6 md:px-15 lg:px-25 py-2 md:py-3 text-lg md:text-2xl lg:text-3xl rounded-2xl md:rounded-4xl mt-5 md:mt-10 cursor-pointer transition-all hover:bg-[#c4ad1f]'>
+            className='bg-[#E6AF2E] text-black px-6 md:px-15 lg:px-25 py-2 md:py-3 text-lg md:text-2xl lg:text-3xl rounded-2xl md:rounded-4xl mt-5 md:mt-10 cursor-pointer transition-all hover:bg-[#c4ad1f]'>
             Sign In
           </Link>
           <p className='text-white text-lg md:text-2xl lg:text-3xl mt-3 md:mt-5 text-center px-4'>

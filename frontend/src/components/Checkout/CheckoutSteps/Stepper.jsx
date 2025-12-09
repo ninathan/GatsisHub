@@ -18,7 +18,7 @@ const Stepper = ({ currentStep, totalSteps, goToStep }) => {
                                 disabled={step.number > currentStep}
                                 className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-xs md:text-sm transition-all flex-shrink-0 ${
                                     step.number === currentStep
-                                        ? 'bg-[#007BFF] text-white scale-110 shadow-lg'
+                                        ? 'bg-[#e6af2e] text-white scale-110 shadow-lg'
                                         : step.number < currentStep
                                         ? 'bg-green-500 text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -27,7 +27,7 @@ const Stepper = ({ currentStep, totalSteps, goToStep }) => {
                                 {step.number < currentStep ? '✓' : step.number}
                             </button>
                             <span className={`text-xs md:text-sm font-semibold ${
-                                step.number === currentStep ? 'text-[#007BFF]' : step.number < currentStep ? 'text-green-500' : 'text-gray-500'
+                                step.number === currentStep ? 'text-[#191716]' : step.number < currentStep ? 'text-green-500' : 'text-gray-500'
                             }`}>
                                 {step.label}
                             </span>

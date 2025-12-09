@@ -193,7 +193,7 @@ const ProductSA = () => {
                 <div className="text-6xl"><ProductCards /></div>
             </div>
             {/* Product Name Badge */}
-            <div className="bg-[#DAC325] p-3 text-center">
+            <div className="bg-[#E6AF2E] p-3 text-center">
                 <span className="font-bold text-gray-900">{product.productname}</span>
             </div>
         </div>
@@ -203,14 +203,14 @@ const ProductSA = () => {
     const AddProductCard = () => (
         <div 
             onClick={handleAddProduct}
-            className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-gray-300 hover:border-[#DAC325] hover:shadow-lg transition-all cursor-pointer"
+            className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-gray-300 hover:border-[#E6AF2E] hover:shadow-lg transition-all cursor-pointer"
         >
             {/* Add Button Area */}
             <div className="bg-gray-50 h-32 flex items-center justify-center border-b border-gray-200">
                 <Plus size={48} className="text-gray-400" />
             </div>
             {/* Add Label */}
-            <div className="bg-[#DAC325] p-3 text-center">
+            <div className="bg-[#E6AF2E] p-3 text-center">
                 <span className="font-bold text-gray-900">Add Product</span>
             </div>
         </div>
@@ -333,7 +333,7 @@ const ProductSA = () => {
             
             {/* Product Modal */}
             {showProductModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-blur-50 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
                         <h3 className="text-xl font-bold mb-4">
                             {editingProduct ? 'Edit Product' : 'Add New Product'}

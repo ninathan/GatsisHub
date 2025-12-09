@@ -98,7 +98,7 @@ const AuthPA = () => {
 
             <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
                 {/* left */}
-                <div className='bg-[#35408E] w-full min-h-[300px] lg:min-h-screen order-2 lg:order-1'>
+                <div className='bg-[#191716] w-full min-h-[300px] lg:min-h-screen order-2 lg:order-1'>
                     <div className='flex flex-col items-center py-8 md:py-10 lg:py-20 px-4'>
                         <Link to="/">
                             <img src={logo} alt="Logo" className='w-[80px] h-[80px] md:w-[120px] md:h-[120px] lg:w-[170px] lg:h-[170px] mx-auto mt-3 md:mt-5 lg:mt-10' />
@@ -113,8 +113,8 @@ const AuthPA = () => {
 
                 {/* right */}
                 <div className='flex flex-col items-center justify-center py-8 md:py-10 lg:py-20 px-4 order-1 lg:order-2'>
-                    <h1 className='text-[#35408E] text-xl md:text-3xl lg:text-4xl xl:text-6xl font-semibold tracking-wide flex flex-col items-center mt-3 md:mt-5 lg:mt-10 text-center max-w-md lg:max-w-none'>
-                        Sign In as Gatsishub</h1>
+                    <h1 className='text-[#191716] text-xl md:text-3xl lg:text-4xl xl:text-6xl font-semibold tracking-wide flex flex-col items-center mt-3 md:mt-5 lg:mt-10 text-center max-w-md lg:max-w-none'>
+                        Sign In as Production/Assembly</h1>
 
                     {error && (
                         <div className='mt-4 md:mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md lg:max-w-lg w-full'>
@@ -179,7 +179,7 @@ const AuthPA = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className='bg-[#35408E] text-white w-full py-2 md:py-3 lg:py-4 text-base md:text-xl lg:text-2xl xl:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3'
+                            className='bg-[#E6AF2E] text-white w-full py-2 md:py-3 lg:py-4 text-base md:text-xl lg:text-2xl xl:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#c49723] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3'
                         >
                             {loading ? (
                                 <>
@@ -197,15 +197,15 @@ const AuthPA = () => {
                 <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-[#35408E] px-4 md:px-6 py-3 md:py-4">
+                        <div className="bg-[#191716] px-4 md:px-6 py-3 md:py-4">
                             <h2 className="text-white text-lg md:text-2xl font-semibold">Password Reset</h2>
                         </div>
 
                         {/* Modal Body */}
                         <div className="p-4 md:p-6">
                             <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center mb-3 md:mb-4">
-                                    <svg className="w-6 h-6 md:w-8 md:h-8 text-[#35408E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-[#191716] rounded-full flex items-center justify-center mb-3 md:mb-4">
+                                    <svg className="w-6 h-6 md:w-8 md:h-8 text-[#e6af2e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
@@ -227,7 +227,7 @@ const AuthPA = () => {
                         <div className="px-4 md:px-6 py-3 md:py-4 bg-gray-50 flex justify-end">
                             <button
                                 onClick={() => setShowForgotPasswordModal(false)}
-                                className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-4 md:px-6 py-2 rounded-lg transition-colors text-sm md:text-base"
+                                className="bg-[#e6af2e] hover:bg-[#c49723] text-white font-semibold px-4 md:px-6 py-2 rounded-lg transition-colors text-sm md:text-base"
                             >
                                 Close
                             </button>

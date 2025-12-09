@@ -65,7 +65,7 @@ const AuthSystemA = () => {
             <PageTransition direction='right'>
                 <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
                     {/* left */}
-                    <div className='bg-[#35408E] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
+                    <div className='bg-[#191716] w-full min-h-screen lg:min-h-[964px] order-2 lg:order-1'>
                         <div className='flex flex-col items-center py-10 md:py-20 lg:mt-25 px-4'>
                             <Link to="/">
                                 <img src={logo} alt="Logo" className='w-[120px] h-[120px] md:w-[170px] md:h-[170px] mx-auto mt-5 md:mt-10' />
@@ -80,7 +80,7 @@ const AuthSystemA = () => {
 
                     {/* right */}
                     <div className='flex flex-col items-center justify-center py-10 md:py-20 lg:mt-35 px-4 order-1 lg:order-2'>
-                        <h1 className='text-[#35408E] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
+                        <h1 className='text-[#191716] text-3xl md:text-4xl lg:text-6xl font-semibold tracking-wide flex flex-col items-center mt-5 md:mt-10 text-center max-w-md lg:max-w-none'>
                             Sign In as System Admin</h1>
 
                         {/* Error Message */}
@@ -137,7 +137,7 @@ const AuthSystemA = () => {
                             {/* Sign In Button */}
                             <button
                                 type="submit"
-                                className='bg-[#35408E] text-white w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer transition-all hover:bg-[#2d3575] disabled:opacity-50 disabled:cursor-not-allowed'
+                                className='bg-[#ECBA0B] text-[#191716] w-full py-3 md:py-4 text-xl md:text-2xl lg:text-3xl rounded-2xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
                                 disabled={loading}
                             >
                                 {loading ? 'Signing In...' : 'Sign In'}

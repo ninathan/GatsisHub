@@ -57,7 +57,7 @@ const Sidebar = () => {
     return (
         <div>
             {/* Sidebar */}
-            <aside className="w-64 bg-[#35408E] text-white flex flex-col border-r-5 border-[#DAC325] h-full">
+            <aside className="w-64 bg-[#191716] text-white flex flex-col border-r-5 border-[#DAC325] h-full">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-600">
                     <div className="flex items-center gap-3">
                         <img src={logo} alt="Logo" className="w-20 h-20" />
@@ -66,38 +66,38 @@ const Sidebar = () => {
 
                 <nav className="flex-1 mt-6">
                     <ul className="space-y-2 px-6">
-                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
                             <NavLink to="/dashboardSA" className="block">
                                 <LayoutDashboard size={20} className="mr-2 inline" />
                                 Dashboard
                             </NavLink>
                         </li>
-                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
                             <NavLink to="/orderpage" className="block">
                                 <ShoppingCart size={20} className="mr-2 inline" />
                                 Orders
                             </NavLink>
                         </li>
-                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
                             <NavLink to="/productSA" className="block">
                                 <Package size={20} className="mr-2 inline" />
                                 Products
                             </NavLink>
                         </li>
-                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
                             <NavLink to="/calendar" className="block">
                                 <Calendar size={20} className="mr-2 inline" />
                                 Calendar
                             </NavLink>
                         </li>
-                        <li className="hover:bg-[#1D2D5F] p-2 rounded">
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
 
                             <NavLink to="/messageSA" className="block">
                                 <Mail size={20} className='mr-2 inline' />
                                 Messages
                             </NavLink>
                         </li>
-                        <li className='hover:bg-[#1D2D5F] p-2 rounded'>
+                        <li className='hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer'>
                             <button onClick={handleLogout} className="block w-full text-left">
                                 <LogOut size={20} className='mr-2 inline' />
                                 Logout
