@@ -401,7 +401,7 @@ const SystemAccounts = () => {
                                         <div className="space-y-2">
                                             {selectedCustomer.addresses.map((address, index) => (
                                                 <p key={index} className="font-semibold text-gray-900 text-sm">
-                                                    {index + 1}. {typeof address === 'string' ? address : JSON.stringify(address)}
+                                                    {index + 1}. {typeof address === 'object' && address.address ? address.address : (typeof address === 'string' ? address : 'N/A')}
                                                 </p>
                                             ))}
                                         </div>
