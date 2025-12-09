@@ -123,7 +123,29 @@ router.delete("/:customerid", async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    // Delete customer's messages first (if any)
+    // Delete customer's feedback first (if any)
+    const { error: feedbackError } = await supabase
+      .from("feedback")
+      .delete()
+      .eq("customerid", customerid);
+
+    if (feedbackError) {
+      console.error("Error deleting feedback:", feedbackError);
+      // Continue anyway
+    }
+
+    // Delete customer's payments (if any)
+    const { error: paymentsError } = await supabase
+      .from("payments")
+      .delete()
+      .eq("customerid", customerid);
+
+    if (paymentsError) {
+      console.error("Error deleting payments:", paymentsError);
+      // Continue anyway
+    }
+
+    // Delete customer's messages (if any)
     const { error: messagesError } = await supabase
       .from("messages")
       .delete()
