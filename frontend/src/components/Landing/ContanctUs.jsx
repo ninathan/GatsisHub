@@ -40,7 +40,7 @@ const ContanctUs = () => {
                 }`}
               >
                 <FaPhoneAlt className='inline text-xl md:text-2xl text-black flex-shrink-0' />
-                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>+91 1234567890</span>
+                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>+63 976 026 4719</span>
               </div>
               <div 
                 ref={emailAnim.ref}
@@ -49,7 +49,7 @@ const ContanctUs = () => {
                 }`}
               >
                 <FaEnvelope className='inline text-xl md:text-2xl text-black flex-shrink-0' />
-                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>GtGatsisCorporation@gmail.com</span>
+                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>Gatsishub@gmail.com</span>
               </div>
               <div 
                 ref={addressAnim.ref}
@@ -72,8 +72,8 @@ const ContanctUs = () => {
           >
             <div className="flex flex-col justify-between border p-4 md:p-6 rounded-2xl shadow-lg h-full bg-white hover:shadow-2xl transition-shadow duration-300">
               <h3 className="text-lg md:text-xl font-semibold mb-4">Send us a Message</h3>
-              <input type="text" className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" placeholder='Company Name' />
-              <input type="email" className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all" placeholder="Company Email" />
+              <input type="text" className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" placeholder='Customer Name' />
+              <input type="email" className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all" placeholder="Customer Email" />
               <textarea
                 className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base resize-none min-h-[120px] md:min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all"
                 placeholder="Write your message here..."
