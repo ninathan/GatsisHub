@@ -45,7 +45,7 @@ const profilePA = () => {
 
     // load employee data from localstorage on component mount
     useEffect(() => {
-        const storedEmployee = localStorage.getItem('systemAdmin')
+        const storedEmployee = localStorage.getItem('employee')
         if (storedEmployee) {
             const employeeData = JSON.parse(storedEmployee)
             setEmployee(employeeData)
@@ -53,11 +53,11 @@ const profilePA = () => {
                 employeename: employeeData.employeename || '',
                 email: employeeData.email || '',
                 contactDetails: employeeData.contactdetails || '',
-                assigneddepartment: employeeData.assigneddepartment || 'System Administration',
+                assigneddepartment: employeeData.assigneddepartment || 'Production/Assembly',
                 shifthours: employeeData.shifthours || '',
             })
         } else {
-            navigate('/authsystema')
+            navigate('/authPA')
         }
         setLoading(false)
 
@@ -79,20 +79,51 @@ const profilePA = () => {
         }))
     }
 
-    const handleEditProfile = () => {
+    const handleEditProfile = async () => {
         if (isEditing) {
-            // Save profile changes logic dito
+            // Save profile changes
+            setIsSaving(true);
+            setError('');
+            setSuccess('');
 
-            setSuccess('Profile update successfully!')
-            setTimeout(() => setSuccess(''), 3000)
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/employees/${employees.employeeid}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        employeename: profileData.employeename,
+                        contactdetails: profileData.contactDetails,
+                        shifthours: profileData.shifthours,
+                    })
+                });
 
-            // Update localStorage
-            const updatedEmployee = { ...employees, ...profileData}
-            localStorage.setItem('systemAdmin', JSON.stringify
-                (updatedEmployee))
-                setEmployee(updatedEmployee)
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update profile');
+                }
+
+                setSuccess('Profile updated successfully!');
+                setTimeout(() => setSuccess(''), 3000);
+
+                // Update localStorage
+                const updatedEmployee = { 
+                    ...employees, 
+                    employeename: profileData.employeename,
+                    contactdetails: profileData.contactDetails,
+                    shifthours: profileData.shifthours
+                };
+                localStorage.setItem('employee', JSON.stringify(updatedEmployee));
+                setEmployee(updatedEmployee);
+            } catch (err) {
+                setError(err.message || 'Failed to update profile');
+            } finally {
+                setIsSaving(false);
+            }
         }
-        setIsEditing(!isEditing)
+        setIsEditing(!isEditing);
     }
 
     const handleChangePassword = async () => {
@@ -117,15 +148,15 @@ const profilePA = () => {
         setIsSaving(true)
 
         try {
-            const response = await fetch('https://gatsis-hub.vercel.app/api/employees/change-password', {
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/change-password', {
                 method: 'POST',
-                header: {
+                headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     employeeid: employees.employeeid,
                     currentPassword: passwordData.currentPassword,
-                    newpassword: passwordData.newpassword
+                    newPassword: passwordData.newpassword
                 })
             })
 
@@ -144,17 +175,16 @@ const profilePA = () => {
             setIsChangingPassword(false)
             setTimeout(() => setSuccess(''), 3000)
         }catch (err) {
-            setError(err.message || 'Failing to change password')
+            setError(err.message || 'Failed to change password')
         }finally {
             setIsSaving(false)
         }
     }
 
     // logout function
-    const  handleLogout = () => {
-        localStorage.removeItem('systemAdmin')
-        localStorage.removeItem('customer')
-        navigate('/authsystema')
+    const handleLogout = () => {
+        localStorage.removeItem('employee')
+        navigate('/authPA')
     }
 
     if (loading) {
@@ -204,7 +234,7 @@ const profilePA = () => {
                                 </span>
                             </div>
                             <h3 className='text-lg md:text-xl font-bold text-gray-900 text-center'>{profileData.employeename}</h3>
-                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.role || 'System Admin'}</p>
+                            <p className='text-gray-600 text-xs md:text-sm'>{employees?.assigneddepartment || 'Production/Assembly'}</p>
                         </div>
 
                         {/* Profile Form Fields */}
@@ -334,7 +364,7 @@ const profilePA = () => {
                                                     type={showNewPassword ?
                                                         "text" : "password"
                                                     }
-                                                    name="newPassword"
+                                                    name="newpassword"
                                                     value={passwordData.newpassword}
                                                     onChange={handlePasswordChange}
                                                     className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
@@ -389,14 +419,15 @@ const profilePA = () => {
                             {/* Edit Profile Button */}
                             <button
                                 onClick={handleEditProfile}
-                                className="flex-1 bg-blue-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm md:text-base"
+                                disabled={isSaving}
+                                className="flex-1 bg-blue-600 text-white py-2 md:py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm md:text-base disabled:opacity-50"
                             >
-                                {isEditing ? 'Save Profile' : 'Edit Profile'}
+                                {isSaving ? 'Saving...' : (isEditing ? 'Save Profile' : 'Edit Profile')}
                             </button>
 
                             {/* Logout Button */}
                             <button
-                                onClick=""
+                                onClick={handleLogout}
                                 className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm md:text-base"
                             >
                                 <LogOut size={18} className="md:w-5 md:h-5" />

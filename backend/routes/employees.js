@@ -212,7 +212,7 @@ router.post("/change-password", async (req, res) => {
 router.patch("/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
-    const { employeename, email, password, contactdetails, shifthours, assigneddepartment, accountstatus, role } = req.body;
+    const { employeename, email, password, contactdetails, shifthours, assigneddepartment, accountstatus, role, ispresent } = req.body;
 
     // Build update object with only provided fields
     const updateData = {};
@@ -223,6 +223,7 @@ router.patch("/:employeeid", async (req, res) => {
     if (assigneddepartment !== undefined) updateData.assigneddepartment = assigneddepartment;
     if (accountstatus !== undefined) updateData.accountstatus = accountstatus;
     if (role !== undefined) updateData.role = role;
+    if (ispresent !== undefined) updateData.ispresent = ispresent;
     
     // Hash password if provided
     if (password !== undefined && password !== '') {

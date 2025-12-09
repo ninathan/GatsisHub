@@ -767,9 +767,6 @@ const SystemEmployee = () => {
                                         <option value="Admin">Admin</option>
                                         <option value="Production">Production</option>
                                         <option value="Assembly">Assembly</option>
-                                        <option value="Quality Control">Quality Control</option>
-                                        <option value="Packaging">Packaging</option>
-                                        <option value="Logistics">Logistics</option>
                                         <option value="Operational Manager">Operational Manager</option>
                                         <option value="System Administration">System Administration</option>
                                     </select>

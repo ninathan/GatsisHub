@@ -1,40 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-    Home,
-    Package,
-    ShoppingBag,
-    Calendar,
-    MessageSquare,
-    ChevronDown,
+    ArrowLeft,
     Eye
 } from "lucide-react";
 import LoadingSpinner from "../../components/LoadingSpinner";
-
+import HangerScene from "../../components/Checkout/HangerScene";
 
 const ViewOrder = () => {
-    // Static mock order data (frontend only)
-    const mockOrder = {
-        orderid: "1234567890abcdef",
-        companyname: "Sample Company",
-        quantity: 120,
-        datecreated: "2024-12-01",
-        hangertype: "Plastic Hanger",
-        orderstatus: "For Evaluation",
-        totalprice: 5000,
-        deadline: "2024-12-20",
-        materials: {
-            ABS: 60,
-            Wood: 40
-        }
-    };
+    const location = useLocation();
+    const navigate = useNavigate();
+    const orderFromState = location.state?.order;
 
-    const [order, setOrder] = useState(mockOrder);
-    const [orderStatus, setOrderStatus] = useState(mockOrder.orderstatus);
-    const [validatedPrice, setValidatedPrice] = useState(mockOrder.totalprice);
-    const [deadline, setDeadline] = useState(mockOrder.deadline);
-    const [loading] = useState(false);
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [show3DModal, setShow3DModal] = useState(false);
+    const [designData, setDesignData] = useState(null);
+
+    useEffect(() => {
+        if (orderFromState) {
+            setOrder(orderFromState);
+            
+            // Parse 3D design data if available
+            if (orderFromState.threeddesigndata) {
+                try {
+                    const parsed = typeof orderFromState.threeddesigndata === 'string' 
+                        ? JSON.parse(orderFromState.threeddesigndata)
+                        : orderFromState.threeddesigndata;
+                    setDesignData(parsed);
+                } catch (error) {
+                    console.error('Error parsing 3D design data:', error);
+                }
+            }
+            
+            setLoading(false);
+        } else {
+            // No order data, redirect back
+            navigate('/assignorder');
+        }
+    }, [orderFromState, navigate]);
 
     const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleDateString("en-US", {
             year: "numeric",
@@ -42,43 +49,75 @@ const ViewOrder = () => {
             day: "numeric",
         });
     };
+
+    const formatMaterials = (materialsObj) => {
+        if (!materialsObj) return 'N/A';
+        try {
+            const materials = typeof materialsObj === 'string' ? JSON.parse(materialsObj) : materialsObj;
+            return Object.entries(materials)
+                .map(([mat, val]) => `${mat} ${val}%`)
+                .join(" | ");
+        } catch (error) {
+            return 'N/A';
+        }
+    };
+
+    const handleView3D = () => {
+        if (designData) {
+            setShow3DModal(true);
+        } else {
+            alert('No 3D design data available for this order');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <LoadingSpinner size="xl" text="Loading order..." />
+            </div>
+        );
+    }
+
+    if (!order) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <div className="text-center">
+                    <p className="text-xl text-gray-600">No order data found</p>
+                    <button
+                        onClick={() => navigate('/assignorder')}
+                        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg"
+                    >
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex w-full bg-gray-50">
             <main className="flex-1 p-6 overflow-y-auto">
-                {/* Title */}
-                <h1 className="text-4xl font-bold text-gray-800 mb-6">Orders</h1>
-
-                {/* Loading */}
-                {loading && (
-                    <div className="flex items-center justify-center h-96">
-                        <LoadingSpinner size="xl" text="Loading..." />
-                    </div>
-                )}
+                {/* Back Button and Title */}
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={() => navigate('/assignorder')}
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 className="text-4xl font-bold text-gray-800">Order Details</h1>
+                </div>
 
                 {/* Order Card */}
                 {!loading && (
                     <div className="bg-white shadow-lg rounded-lg border border-gray-200">
                         {/* Header */}
                         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#35408E] text-white rounded-t-lg">
-                            <h2 className="font-semibold text-lg">Order Details</h2>
-
-                            {/* Status Dropdown */}
-                            <div className="relative">
-                                <select
-                                    value={orderStatus}
-                                    onChange={(e) => setOrderStatus(e.target.value)}
-                                    className="px-4 py-2 pr-10 rounded bg-white text-gray-800 cursor-pointer"
-                                >
-                                    <option>For Evaluation</option>
-                                    <option>Waiting for Payment</option>
-                                    <option>Approved</option>
-                                    <option>In Production</option>
-                                    <option>Waiting for Shipment</option>
-                                    <option>In Transit</option>
-                                    <option>Completed</option>
-                                    <option>Cancelled</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+                            <h2 className="font-semibold text-lg">Order Information</h2>
+                            
+                            {/* Status Badge (Read-only) */}
+                            <div className="px-4 py-2 bg-yellow-400 text-black rounded font-semibold">
+                                {order.orderstatus}
                             </div>
                         </div>
 
@@ -86,7 +125,7 @@ const ViewOrder = () => {
                         <div className="p-6 space-y-6">
                             {/* Company Name */}
                             <h3 className="text-2xl font-bold text-gray-800">
-                                {order.companyname}
+                                {order.companyname || order.contactperson}
                             </h3>
 
                             {/* Grid Info */}
@@ -112,52 +151,174 @@ const ViewOrder = () => {
                                     <span className="text-sm text-gray-600">Product:</span>
                                     <p className="font-semibold">{order.hangertype}</p>
                                 </div>
+
+                                <div className="p-3 border bg-gray-50">
+                                    <span className="text-sm text-gray-600">Contact Person:</span>
+                                    <p className="font-semibold">{order.contactperson}</p>
+                                </div>
+
+                                <div className="p-3 border bg-gray-50">
+                                    <span className="text-sm text-gray-600">Contact Phone:</span>
+                                    <p className="font-semibold">{order.contactphone}</p>
+                                </div>
                             </div>
 
                             {/* Materials */}
                             <div>
-                                <h4 className="font-semibold text-lg">Materials</h4>
+                                <h4 className="font-semibold text-lg mb-2">Materials</h4>
                                 <p className="text-gray-700">
-                                    {Object.entries(order.materials)
-                                        .map(([mat, val]) => `${mat} ${val}%`)
-                                        .join(" | ")}
+                                    {formatMaterials(order.materials)}
                                 </p>
                             </div>
 
+                            {/* Color */}
+                            {order.selectedcolor && (
+                                <div>
+                                    <h4 className="font-semibold text-lg mb-2">Color</h4>
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className="w-12 h-12 rounded border-2 border-gray-300"
+                                            style={{ backgroundColor: order.selectedcolor }}
+                                        />
+                                        <span className="text-gray-700">{order.selectedcolor}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Custom Text */}
+                            {order.customtext && (
+                                <div>
+                                    <h4 className="font-semibold text-lg mb-2">Custom Text</h4>
+                                    <p className="text-gray-700 italic">"{order.customtext}"</p>
+                                    {order.textcolor && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="text-sm text-gray-600">Text Color:</span>
+                                            <div
+                                                className="w-8 h-8 rounded border border-gray-300"
+                                                style={{ backgroundColor: order.textcolor }}
+                                            />
+                                            <span className="text-sm">{order.textcolor}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Price */}
                             <div>
-                                <h4 className="font-semibold text-lg">Total Price</h4>
-                                <input
-                                    type="number"
-                                    className="border rounded px-3 py-2 w-40"
-                                    value={validatedPrice}
-                                    onChange={(e) => setValidatedPrice(e.target.value)}
-                                />
+                                <h4 className="font-semibold text-lg mb-2">Total Price</h4>
+                                <p className="text-2xl font-bold text-green-600">
+                                    {order.totalprice ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : 'N/A'}
+                                </p>
                             </div>
 
                             {/* Deadline */}
                             <div>
-                                <h4 className="font-semibold text-lg">Deadline</h4>
-                                <input
-                                    type="date"
-                                    className="border rounded px-3 py-2"
-                                    value={deadline}
-                                    onChange={(e) => setDeadline(e.target.value)}
-                                />
+                                <h4 className="font-semibold text-lg mb-2">Expected Deadline</h4>
+                                <p className="text-xl font-semibold text-indigo-600">
+                                    {formatDate(order.deadline)}
+                                </p>
                             </div>
 
-                            {/* PDF / XLS Buttons */}
-                            <div className="flex gap-4">
-                                <button className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2">
+                            {/* Delivery Address */}
+                            {order.deliveryaddress && (
+                                <div>
+                                    <h4 className="font-semibold text-lg mb-2">Delivery Address</h4>
+                                    <p className="text-gray-700">
+                                        {typeof order.deliveryaddress === 'string' 
+                                            ? order.deliveryaddress 
+                                            : order.deliveryaddress.address}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Order Instructions */}
+                            {order.orderinstructions && (
+                                <div>
+                                    <h4 className="font-semibold text-lg mb-2">Order Instructions</h4>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <p className="text-gray-700">{order.orderinstructions}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Delivery Notes */}
+                            {order.deliverynotes && (
+                                <div>
+                                    <h4 className="font-semibold text-lg mb-2">Delivery Notes</h4>
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <p className="text-gray-700">{order.deliverynotes}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-4 pt-4 border-t">
+                                <button 
+                                    onClick={handleView3D}
+                                    disabled={!designData}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                >
                                     <Eye size={18} /> View 3D Model
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                                <button className="px-4 py-2 bg-yellow-400 rounded-lg font-semibold">
-                                    Export PDF
+                {/* 3D Modal */}
+                {show3DModal && designData && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                            {/* Modal Header */}
+                            <div className="bg-[#007BFF] px-6 py-4 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-white text-2xl font-semibold">3D Design Preview</h2>
+                                    <p className="text-white text-sm mt-1">Order: ORD-{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShow3DModal(false)}
+                                    className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                >
+                                    ×
                                 </button>
+                            </div>
 
-                                <button className="px-4 py-2 bg-green-400 rounded-lg font-semibold">
-                                    Export XLS
+                            {/* 3D Viewer */}
+                            <div className="bg-white p-6">
+                                <div className="w-full h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                                    <Suspense fallback={
+                                        <div className='w-full h-full flex items-center justify-center'>
+                                            <div className='text-center'>
+                                                <div className='text-6xl mb-4'>⏳</div>
+                                                <p className='text-lg text-gray-600'>Loading 3D Design...</p>
+                                            </div>
+                                        </div>
+                                    }>
+                                        <HangerScene
+                                            color={designData.color || '#4F46E5'}
+                                            hangerType={designData.hangerType || 'MB3'}
+                                            customText={designData.customText || ''}
+                                            textColor={designData.textColor || '#000000'}
+                                            textPosition={designData.textPosition || { x: 0, y: 0, z: 0.49 }}
+                                            textSize={designData.textSize || 0.5}
+                                            logoPreview={designData.logoPreview || null}
+                                            logoPosition={designData.logoPosition || { x: 0, y: 0.5, z: 0.49 }}
+                                            logoSize={designData.logoSize || 0.3}
+                                        />
+                                    </Suspense>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
+                                <p className="text-sm text-gray-600">
+                                    💡 Drag to rotate • Scroll to zoom • Right-click to pan
+                                </p>
+                                <button
+                                    onClick={() => setShow3DModal(false)}
+                                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-all duration-300 hover:scale-105"
+                                >
+                                    Close
                                 </button>
                             </div>
                         </div>

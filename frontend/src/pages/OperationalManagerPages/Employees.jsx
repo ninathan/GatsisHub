@@ -221,11 +221,12 @@ const Employees = () => {
 
             // Transform API data to match frontend structure
             const transformedTeams = data.teams.map(team => ({
-                id: team.teamid,
+                teamid: team.teamid,
                 teamname: team.teamname,
                 description: team.description,
                 members: team.members || [],
                 quota: team.quota,
+                dailyquota: team.dailyquota,
                 assignedOrders: team.assignedorders || [],
                 createdAt: team.createdat
             }));
@@ -322,7 +323,7 @@ const Employees = () => {
 
             if (selectedTeam) {
                 // Update existing team
-                response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
+                response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.teamid}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -349,11 +350,12 @@ const Employees = () => {
 
             // Transform API response to match frontend structure
             const transformedTeam = {
-                id: result.team.teamid,
+                teamid: result.team.teamid,
                 teamname: result.team.teamname,
                 description: result.team.description,
                 members: result.team.members || [],
                 quota: result.team.quota,
+                dailyquota: result.team.dailyquota,
                 assignedOrders: result.team.assignedorders || [],
                 createdAt: result.team.createdat
             };
@@ -363,7 +365,7 @@ const Employees = () => {
             if (selectedTeam) {
                 // Update existing team
                 updatedTeams = teams.map(team =>
-                    team.id === selectedTeam.id ? transformedTeam : team
+                    team.teamid === selectedTeam.teamid ? transformedTeam : team
                 );
             } else {
                 // Add new team
@@ -389,7 +391,7 @@ const Employees = () => {
 
         try {
 
-            const response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.id}`, {
+            const response = await fetch(`https://gatsis-hub.vercel.app/teams/${selectedTeam.teamid}`, {
                 method: 'DELETE'
             });
 
@@ -401,7 +403,7 @@ const Employees = () => {
             const result = await response.json();
 
             // Update local state
-            const updatedTeams = teams.filter(team => team.id !== selectedTeam.id);
+            const updatedTeams = teams.filter(team => team.teamid !== selectedTeam.teamid);
             setTeams(updatedTeams);
 
             setSuccessMessage(`Team "${selectedTeam.teamname}" has been deleted successfully!`);
