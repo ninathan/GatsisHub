@@ -333,4 +333,53 @@ router.get("/:teamid/stats", async (req, res) => {
   }
 });
 
+// 📋 Get orders assigned to a specific employee
+router.get("/employee/:employeeid/orders", async (req, res) => {
+  try {
+    const { employeeid } = req.params;
+
+    // First, find all teams where this employee is a member
+    const { data: teams, error: teamsError } = await supabase
+      .from("teams")
+      .select("assignedorders")
+      .contains('members', [employeeid]);
+
+    if (teamsError) {
+      throw teamsError;
+    }
+
+    if (!teams || teams.length === 0) {
+      return res.status(200).json({ orders: [] });
+    }
+
+    // Collect all unique order IDs from all teams this employee is part of
+    const orderIds = new Set();
+    teams.forEach(team => {
+      if (team.assignedorders && Array.isArray(team.assignedorders)) {
+        team.assignedorders.forEach(orderId => orderIds.add(orderId));
+      }
+    });
+
+    if (orderIds.size === 0) {
+      return res.status(200).json({ orders: [] });
+    }
+
+    // Fetch the actual orders
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("*")
+      .in('orderid', Array.from(orderIds))
+      .order('datecreated', { ascending: false });
+
+    if (ordersError) {
+      throw ordersError;
+    }
+
+    res.status(200).json({ orders: orders || [] });
+  } catch (err) {
+    console.error('Error fetching employee orders:', err);
+    res.status(500).json({ error: "Failed to fetch employee orders" });
+  }
+});
+
 export default router;

@@ -1,10 +1,37 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
 import { EllipsisVertical, LogOut, SquareUser, ShoppingCart } from 'lucide-react'
 
 const SidebarPA = () => {
+    const navigate = useNavigate();
+    const [employee, setEmployee] = useState(null);
+
+    useEffect(() => {
+        // Fetch employee data from localStorage
+        const employeeData = localStorage.getItem('employee');
+        if (employeeData) {
+            setEmployee(JSON.parse(employeeData));
+        }
+    }, []);
+
+    const handleLogout = () => {
+        // Clear employee data from localStorage
+        localStorage.removeItem('employee');
+        // Redirect to login page
+        navigate('/authPA');
+    };
+
+    const getInitials = (name) => {
+        if (!name) return 'PA';
+        const names = name.split(' ');
+        if (names.length >= 2) {
+            return names[0][0] + names[1][0];
+        }
+        return names[0][0];
+    };
+
     return (
         <div>
             {/* Sidebar */}
@@ -24,10 +51,10 @@ const SidebarPA = () => {
                             </NavLink>
                         </li>
                         <li className='hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded'>
-                            <NavLink to="/authPA" onClick="" className="block w-full text-left">
+                            <button onClick={handleLogout} className="block w-full text-left">
                                 <LogOut size={20} className='mr-2 inline' />
                                 Logout
-                            </NavLink>
+                            </button>
                         </li>
                     </ul>
                 </nav>
@@ -36,14 +63,12 @@ const SidebarPA = () => {
                 <div className="px-6 py-4 border-t border-gray-600 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span className="text-sm font-bold text-gray-700">
-                            {/* {employee ? getInitials(employee.employeename) : 'S'} */}
-                            PA
+                            {employee ? getInitials(employee.employeename) : 'PA'}
                         </span>
                     </div>
                     <div className="flex-1">
-                        {/* <p className="font-semibold">{employee?.employeename || 'System Admin'}</p>
-                        <p className="text-sm text-gray-300">{employee?.role || 'System Admin'}</p> */}
-                        <p>production assembly</p>
+                        <p className="font-semibold">{employee?.employeename || 'Production Assembly'}</p>
+                        <p className="text-sm text-gray-300">{employee?.assigneddepartment || 'Employee'}</p>
                     </div>
                     <Link to="/profilePA">
                         <EllipsisVertical className="cursor-pointer" />
