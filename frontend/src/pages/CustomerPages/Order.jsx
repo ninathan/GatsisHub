@@ -622,12 +622,20 @@ const Order = () => {
 
                 <div class="no-print" style="text-align: center; margin-top: 30px;">
                     <button onclick="window.print()" style="background: #191716; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">
-                        Print / Save as PDF
+                        Save as PDF
                     </button>
                     <button onclick="window.close()" style="background: #666; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
                         Close
                     </button>
                 </div>
+                <script>
+                    // Instructions for saving as PDF
+                    const instructionDiv = document.createElement('div');
+                    instructionDiv.className = 'no-print';
+                    instructionDiv.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px; text-align: left;';
+                    instructionDiv.innerHTML = '<strong>💡 To save as PDF:</strong><ol style="margin: 10px 0; padding-left: 20px;"><li>Click "Save as PDF" button above</li><li>In the print dialog, select <strong>"Save as PDF"</strong> or <strong>"Microsoft Print to PDF"</strong> as the destination</li><li>Click Save and choose where to save the file</li></ol>';
+                    document.querySelector('.no-print').parentNode.insertBefore(instructionDiv, document.querySelector('.no-print'));
+                </script>
             </body>
             </html>
         `;
