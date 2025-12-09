@@ -337,14 +337,20 @@ router.get("/:teamid/stats", async (req, res) => {
 router.get("/employee/:employeeid/orders", async (req, res) => {
   try {
     const { employeeid } = req.params;
+    const employeeIdInt = parseInt(employeeid);
+
+    if (isNaN(employeeIdInt)) {
+      return res.status(400).json({ error: "Invalid employee ID" });
+    }
 
     // First, find all teams where this employee is a member
     const { data: teams, error: teamsError } = await supabase
       .from("teams")
       .select("assignedorders")
-      .contains('members', [employeeid]);
+      .contains('members', [employeeIdInt]);
 
     if (teamsError) {
+      console.error('Error fetching teams:', teamsError);
       throw teamsError;
     }
 
@@ -372,13 +378,14 @@ router.get("/employee/:employeeid/orders", async (req, res) => {
       .order('datecreated', { ascending: false });
 
     if (ordersError) {
+      console.error('Error fetching orders:', ordersError);
       throw ordersError;
     }
 
     res.status(200).json({ orders: orders || [] });
   } catch (err) {
     console.error('Error fetching employee orders:', err);
-    res.status(500).json({ error: "Failed to fetch employee orders" });
+    res.status(500).json({ error: "Failed to fetch employee orders", details: err.message });
   }
 });
 
