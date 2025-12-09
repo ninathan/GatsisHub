@@ -344,23 +344,33 @@ router.get("/employee/:employeeid/orders", async (req, res) => {
     }
 
     // First, find all teams where this employee is a member
+    // Using @> operator for JSONB containment
     const { data: teams, error: teamsError } = await supabase
       .from("teams")
-      .select("assignedorders")
-      .contains('members', [employeeIdInt]);
+      .select("assignedorders, members");
 
     if (teamsError) {
       console.error('Error fetching teams:', teamsError);
-      throw teamsError;
+      return res.status(500).json({ error: "Failed to fetch teams", details: teamsError.message });
     }
 
     if (!teams || teams.length === 0) {
       return res.status(200).json({ orders: [] });
     }
 
+    // Filter teams that include this employee
+    const employeeTeams = teams.filter(team => {
+      if (!team.members || !Array.isArray(team.members)) return false;
+      return team.members.includes(employeeIdInt);
+    });
+
+    if (employeeTeams.length === 0) {
+      return res.status(200).json({ orders: [] });
+    }
+
     // Collect all unique order IDs from all teams this employee is part of
     const orderIds = new Set();
-    teams.forEach(team => {
+    employeeTeams.forEach(team => {
       if (team.assignedorders && Array.isArray(team.assignedorders)) {
         team.assignedorders.forEach(orderId => orderIds.add(orderId));
       }
@@ -379,7 +389,7 @@ router.get("/employee/:employeeid/orders", async (req, res) => {
 
     if (ordersError) {
       console.error('Error fetching orders:', ordersError);
-      throw ordersError;
+      return res.status(500).json({ error: "Failed to fetch orders", details: ordersError.message });
     }
 
     res.status(200).json({ orders: orders || [] });

@@ -33,11 +33,15 @@ const AssignOrder = () => {
             if (response.ok) {
                 setOrders(data.orders || []);
             } else {
-                console.error('Error fetching orders:', data.error);
+                console.error('Error fetching orders:', data.error, data.details);
+                // Show error in UI
+                alert(`Error loading orders: ${data.error || 'Unknown error'}`);
                 setOrders([]);
             }
         } catch (error) {
             console.error('Error fetching employee orders:', error);
+            // Show error in UI
+            alert('Failed to connect to server. Please try again later.');
             setOrders([]);
         } finally {
             setLoading(false);
