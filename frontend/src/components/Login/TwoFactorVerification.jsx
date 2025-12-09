@@ -226,7 +226,7 @@ const TwoFactorVerification = ({ email, onVerified, onBack, onResend }) => {
                 disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed
                 transition-colors duration-200 cursor-pointer'
             >
-              {timeLeft > 840 ? `Resend in ${Math.ceil((900 - timeLeft))}s` : 'Resend Code'}
+              {timeLeft > 840 ? `Resend in ${timeLeft - 840}s` : 'Resend Code'}
             </button>
           </div>
 

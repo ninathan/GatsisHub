@@ -1037,8 +1037,8 @@ const Checkout = () => {
                         </div>
 
                         {/* Hanger Selection - Compact Version */}
-                        <div className="bg-white rounded-lg border-2 border-gray-300 p-3">
-                            <h3 className="font-semibold mb-3 text-sm">Type of Hanger</h3>
+                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg border-2 border-gray-300 p-3">
+                            <h3 className="font-semibold mb-3 text-sm text-white">Type of Hanger</h3>
                             <div className="flex gap-2 overflow-x-auto pb-2">
                                 {hangers.map((hanger) => (
                                     <button
@@ -1542,13 +1542,13 @@ const Checkout = () => {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Company Name *
+                                Customer Name *
                             </label>
                             <input
                                 type="text"
                                 value={companyName}
                                 onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="Enter company name"
+                                placeholder="Enter customer name"
                                 className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
                                 required
                             />

@@ -407,6 +407,236 @@ const Order = () => {
         }
     };
 
+    const handleDownloadInvoice = (order) => {
+        // Create a simple HTML invoice for printing/saving as PDF
+        const invoiceWindow = window.open('', '_blank');
+        
+        // Format materials as a readable string
+        const formatMaterialsForInvoice = (materialsObj) => {
+            if (!materialsObj || typeof materialsObj !== 'object') return 'N/A';
+            return Object.entries(materialsObj)
+                .map(([name, percentage]) => `${name} ${Math.round(percentage)}%`)
+                .join(', ');
+        };
+        
+        const invoiceHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Invoice - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 3px solid #E6AF2E;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }
+                    .company-name {
+                        font-size: 32px;
+                        font-weight: bold;
+                        color: #191716;
+                        margin-bottom: 5px;
+                    }
+                    .invoice-title {
+                        font-size: 24px;
+                        color: #666;
+                        margin-top: 10px;
+                    }
+                    .info-section {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .info-block {
+                        flex: 1;
+                    }
+                    .info-block h3 {
+                        color: #191716;
+                        border-bottom: 2px solid #E6AF2E;
+                        padding-bottom: 5px;
+                        margin-bottom: 10px;
+                    }
+                    .info-row {
+                        margin: 8px 0;
+                    }
+                    .label {
+                        font-weight: bold;
+                        color: #555;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    th {
+                        background-color: #191716;
+                        color: white;
+                        padding: 12px;
+                        text-align: left;
+                    }
+                    td {
+                        padding: 12px;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    .total-section {
+                        margin-top: 30px;
+                        text-align: right;
+                    }
+                    .total-row {
+                        margin: 10px 0;
+                        font-size: 18px;
+                    }
+                    .total-amount {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #191716;
+                        margin-top: 15px;
+                        padding-top: 15px;
+                        border-top: 2px solid #E6AF2E;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                        border-top: 1px solid #ddd;
+                        padding-top: 20px;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="company-name">GatsisHub</div>
+                    <div class="invoice-title">INVOICE</div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-block">
+                        <h3>Invoice Details</h3>
+                        <div class="info-row">
+                            <span class="label">Invoice Number:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Date:</span> ${formatDate(order.datecreated)}
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Status:</span> ${order.orderstatus}
+                        </div>
+                        ${order.deadline ? `
+                        <div class="info-row">
+                            <span class="label">Deadline:</span> ${formatDate(order.deadline)}
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="info-block">
+                        <h3>Bill To</h3>
+                        <div class="info-row">
+                            <strong>${order.companyname}</strong>
+                        </div>
+                        <div class="info-row">
+                            ${order.contactperson}
+                        </div>
+                        <div class="info-row">
+                            ${order.contactphone}
+                        </div>
+                        ${order.deliveryaddress ? `
+                        <div class="info-row" style="margin-top: 10px;">
+                            ${typeof order.deliveryaddress === 'object' ? order.deliveryaddress.address : order.deliveryaddress}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>${order.hangertype}</strong>
+                                ${order.selectedcolor ? `<br><small>Color: ${order.selectedcolor}</small>` : ''}
+                                ${order.customtext ? `<br><small>Custom Text: "${order.customtext}"</small>` : ''}
+                                ${order.customlogo ? `<br><small>Custom Logo: Yes</small>` : ''}
+                                ${order.materials ? `<br><small>Material: ${formatMaterialsForInvoice(order.materials)}</small>` : ''}
+                            </td>
+                            <td style="text-align: center;">${order.quantity}</td>
+                            <td style="text-align: right;">₱${order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                            <td style="text-align: right;">₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                ${order.orderinstructions || order.deliverynotes ? `
+                <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-left: 4px solid #E6AF2E;">
+                    ${order.orderinstructions ? `
+                    <div style="margin-bottom: 10px;">
+                        <strong>Order Instructions:</strong><br>
+                        ${order.orderinstructions}
+                    </div>
+                    ` : ''}
+                    ${order.deliverynotes ? `
+                    <div>
+                        <strong>Delivery Notes:</strong><br>
+                        ${order.deliverynotes}
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                <div class="total-section">
+                    <div class="total-row">
+                        Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
+                    </div>
+                    <div class="total-amount">
+                        Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your business!</p>
+                    <p>GatsisHub - Custom Hanger Solutions</p>
+                    <p>For inquiries, please contact us through our support system.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 30px;">
+                    <button onclick="window.print()" style="background: #191716; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">
+                        Print / Save as PDF
+                    </button>
+                    <button onclick="window.close()" style="background: #666; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                        Close
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        invoiceWindow.document.write(invoiceHTML);
+        invoiceWindow.document.close();
+    };
+
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -534,7 +764,7 @@ const Order = () => {
                                                 <div>
                                                     <p className="text-xs text-gray-500 mb-1">Status</p>
                                                     <span 
-                                                        className="text-black px-3 py-1 rounded font-semibold text-xs inline-block"
+                                                        className="text-white px-3 py-1 rounded font-semibold text-xs inline-block"
                                                         style={{ backgroundColor: statusColor }}
                                                     >
                                                         {order.orderstatus}
@@ -589,7 +819,7 @@ const Order = () => {
                                     {/* Status */}
                                     <div className="flex-1 text-center">
                                         <span 
-                                            className="text-black px-4 py-1 rounded font-semibold text-sm inline-block"
+                                            className="text-white px-4 py-1 rounded font-semibold text-sm inline-block"
                                             style={{ backgroundColor: statusColor }}
                                         >
                                             {order.orderstatus}
@@ -687,12 +917,6 @@ const Order = () => {
                                                                     <span>✓ Included</span>
                                                                 </div>
                                                             )}
-                                                            {order.designoption && (
-                                                                <div className="flex justify-between">
-                                                                    <span className="font-semibold">Design Option:</span>
-                                                                    <span className="capitalize">{order.designoption}</span>
-                                                                </div>
-                                                            )}
                                                             {order.totalprice && (
                                                                 <div className="flex justify-between border-t pt-2 mt-2">
                                                                     <span className="font-semibold text-lg">Total Price:</span>
@@ -776,7 +1000,10 @@ const Order = () => {
                                                 <div className="flex gap-2 md:gap-3 mt-4 md:mt-6 flex-wrap">
                                                     {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
                                                     {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                        <button className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold">
+                                                        <button 
+                                                            onClick={() => handleDownloadInvoice(order)}
+                                                            className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
+                                                        >
                                                             <Download size={16} className="md:w-[18px] md:h-[18px]" />
                                                             <span className="hidden sm:inline">Download Invoice</span>
                                                             <span className="sm:hidden">Invoice</span>

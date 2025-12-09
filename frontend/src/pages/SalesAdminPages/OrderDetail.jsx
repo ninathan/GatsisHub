@@ -344,15 +344,15 @@ const OrderDetail = () => {
         }
     };
 
-    const handleExportXLS = () => {
+    // const handleExportXLS = () => {
 
-        showNotificationMessage('XLS export feature coming soon', 'success');
-    };
+    //     showNotificationMessage('XLS export feature coming soon', 'success');
+    // };
 
-    const handleExportPDF = () => {
+    // const handleExportPDF = () => {
 
-        showNotificationMessage('PDF export feature coming soon', 'success');
-    };
+    //     showNotificationMessage('PDF export feature coming soon', 'success');
+    // };
 
     const handleViewProof = () => {
         if (!paymentInfo || !paymentInfo.proofofpayment) {
@@ -410,6 +410,7 @@ const OrderDetail = () => {
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
             
+            // Approve payment
             const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}/verify`, {
                 method: 'PATCH',
                 headers: {
@@ -425,7 +426,20 @@ const OrderDetail = () => {
                 throw new Error('Failed to approve payment');
             }
 
-            showNotificationMessage('Payment approved successfully', 'success');
+            // Update order status to Approved
+            const orderStatusResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'Approved' })
+            });
+
+            if (!orderStatusResponse.ok) {
+                throw new Error('Failed to update order status');
+            }
+
+            showNotificationMessage('Payment approved and order status updated to Approved', 'success');
             setShowProofModal(false);
             
             // Refresh payment and order data
@@ -751,7 +765,7 @@ const OrderDetail = () => {
                                 <Eye size={18} />
                                 View Proof {paymentInfo ? '' : '(Not Available)'}
                             </button>
-                            <button
+                            {/* <button
                                 onClick={handleExportXLS}
                                 className="bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
                             >
@@ -764,7 +778,7 @@ const OrderDetail = () => {
                             >
                                 <FileText size={18} />
                                 Export PDF
-                            </button>
+                            </button> */}
                             <button
                                 onClick={handleContactCustomer}
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"

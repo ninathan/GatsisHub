@@ -203,12 +203,18 @@ const MessagesPage = () => {
     };
 
     const formatTime = (timestamp) => {
+        // Convert from UTC to UTC+8 (Philippine Time)
         const date = new Date(timestamp);
         const now = new Date();
-        const diffInMinutes = Math.floor((now - date) / 60000);
         
-        // Get start of today and yesterday
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        // Add 8 hours to convert UTC to Philippine Time
+        const utc8Date = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        const utc8Now = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+        
+        const diffInMinutes = Math.floor((utc8Now - utc8Date) / 60000);
+        
+        // Get start of today and yesterday in UTC+8
+        const todayStart = new Date(utc8Now.getFullYear(), utc8Now.getMonth(), utc8Now.getDate());
         const yesterdayStart = new Date(todayStart);
         yesterdayStart.setDate(yesterdayStart.getDate() - 1);
         
@@ -217,21 +223,25 @@ const MessagesPage = () => {
         if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
         
         // Check if message is from today
-        if (date >= todayStart) return 'Today';
+        if (utc8Date >= todayStart) return 'Today';
         
         // Check if message is from yesterday
-        if (date >= yesterdayStart) return 'Yesterday';
+        if (utc8Date >= yesterdayStart) return 'Yesterday';
         
         // For older messages, show the date
-        return date.toLocaleDateString();
+        return utc8Date.toLocaleDateString('en-US');
     };
 
     const formatMessageTime = (timestamp) => {
+        // Convert from UTC to UTC+8 (Philippine Time)
         const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', { 
+        // Add 8 hours to convert UTC to Philippine Time
+        const utc8Date = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        
+        return utc8Date.toLocaleTimeString('en-US', { 
             hour: 'numeric', 
             minute: '2-digit',
-            hour12: true 
+            hour12: true
         });
     };
 
@@ -247,7 +257,7 @@ const MessagesPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100 overflow-hidden">
+        <div className="flex h-[calc(100vh-64px)] bg-gray-100 overflow-hidden">
             {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div 
@@ -258,7 +268,7 @@ const MessagesPage = () => {
 
             {/* Sidebar */}
             <div className={`
-                fixed md:relative w-80 md:w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col h-full z-50
+                fixed md:relative w-80 md:w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col h-full z-30
                 transform transition-transform duration-300 ease-in-out
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
