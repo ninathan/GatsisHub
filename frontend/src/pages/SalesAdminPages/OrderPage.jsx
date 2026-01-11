@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Search, Filter } from "lucide-react";
 import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
@@ -13,13 +14,17 @@ const OrderPage = () => {
     const [selectedFilter, setSelectedFilter] = useState('All');
     const [selectedOrders, setSelectedOrders] = useState([]);
 
+    //pagination  state
+    const [currentPage, setCurrentPage] = useState(1);
+    const ordersPerPage = 10;
+
     // Fetch all orders on component mount
     useEffect(() => {
         const fetchOrders = async () => {
             try {
                 setLoading(true);
                 const response = await fetch('https://gatsis-hub.vercel.app/orders/all');
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch orders');
                 }
@@ -46,7 +51,7 @@ const OrderPage = () => {
 
         // Apply search filter
         if (searchQuery) {
-            filtered = filtered.filter(order => 
+            filtered = filtered.filter(order =>
                 order.orderid.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 order.companyname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 order.contactperson?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -56,18 +61,36 @@ const OrderPage = () => {
         // Apply status filter
         if (selectedFilter === 'Orders') {
             // Show only orders that have been evaluated and processed
-            filtered = filtered.filter(order => 
+            filtered = filtered.filter(order =>
                 !['For Evaluation'].includes(order.orderstatus)
             );
         } else if (selectedFilter === 'Order Request') {
             // Show only orders waiting for evaluation
-            filtered = filtered.filter(order => 
+            filtered = filtered.filter(order =>
                 order.orderstatus === 'For Evaluation'
             );
         }
 
         setFilteredOrders(filtered);
+        setCurrentPage(1); // Reset to first page on filter change
     }, [searchQuery, selectedFilter, orders]);
+
+    // Pagination logic
+    const indexOfLastOrder = currentPage * ordersPerPage;
+    const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+    const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder)
+    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+    //pagination handlers
+    const goToNextPage = () => {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+    }
+    const goToPreviousPage = () => {
+        setCurrentPage((prev) => Math.max(prev - 1, 1))
+    }
+    const goToPage = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    }
 
     // Helper function to get payment status
     const getPaymentStatus = (orderStatus) => {
@@ -83,8 +106,8 @@ const OrderPage = () => {
 
     // Toggle individual order selection
     const toggleOrderSelection = (orderId) => {
-        setSelectedOrders(prev => 
-            prev.includes(orderId) 
+        setSelectedOrders(prev =>
+            prev.includes(orderId)
                 ? prev.filter(id => id !== orderId)
                 : [...prev, orderId]
         );
@@ -98,6 +121,44 @@ const OrderPage = () => {
             setSelectedOrders(filteredOrders.map(order => order.orderid));
         }
     };
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages = []
+        const maxPagesToShow = 5
+
+        if (totalPages <= maxPagesToShow) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i)
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) {
+                    pages.push(i)
+                }
+                pages.push("...", totalPages)
+
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1, "...")
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i)
+                }
+
+            } else {
+                pages.push(1)
+                pages.push('...')
+                pages.push(currentPage - 1)
+                pages.push(currentPage)
+                pages.push(currentPage + 1)
+                pages.push('...')
+                pages.push(totalPages)
+            }
+        
+        }
+        return pages
+    }
+
+
 
     if (loading) {
         return (
@@ -138,28 +199,25 @@ const OrderPage = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
                     {/* Status Filter */}
                     <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 md:pb-0">
-                        <button 
-                            onClick={() => setSelectedFilter('All')}
-                            className={`px-3 md:px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'All' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200]'
+                        <button
+                            onClick={() => setSelectedFilter('All')} 
+                            className={`px-3 md:px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${selectedFilter === 'All' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200]'
 
-                            }`}
+                                }`}
                         >
                             All
                         </button>
-                        <button 
+                        <button
                             onClick={() => setSelectedFilter('Orders')}
-                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'Orders' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
-                            }`}
+                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${selectedFilter === 'Orders' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
+                                }`}
                         >
                             Orders
                         </button>
-                        <button 
+                        <button
                             onClick={() => setSelectedFilter('Order Request')}
-                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
-                                selectedFilter === 'Order Request' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
-                            }`}
+                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${selectedFilter === 'Order Request' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
+                                }`}
                         >
                             Order Request
                         </button>
@@ -186,8 +244,8 @@ const OrderPage = () => {
                         <thead className="bg-[#191716] text-white">
                             <tr>
                                 <th className="px-2 md:px-4 py-3 text-left">
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                                         onChange={toggleSelectAll}
                                     />
@@ -203,14 +261,14 @@ const OrderPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOrders.length === 0 ? (
+                            {currentOrders.length === 0 ? (
                                 <tr>
                                     <td colSpan="9" className="px-4 py-8 text-center text-gray-500">
                                         No orders found
                                     </td>
                                 </tr>
                             ) : (
-                                filteredOrders.map((order) => {
+                                currentOrders.map((order) => {
                                     const paymentStatus = getPaymentStatus(order.orderstatus);
                                     const isPaid = paymentStatus === 'Paid';
                                     
@@ -268,15 +326,127 @@ const OrderPage = () => {
                                     );
                                 })
                             )}
+                            {/* {filteredOrders.length === 0 ? (
+                                <tr>
+                                    <td colSpan="9" className="px-4 py-8 text-center text-gray-500">
+                                        No orders found
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredOrders.map((order) => {
+                                    const paymentStatus = getPaymentStatus(order.orderstatus);
+                                    const isPaid = paymentStatus === 'Paid';
+
+                                    return (
+                                        <tr key={order.orderid} className="border-t hover:bg-gray-50">
+                                            <td className="px-2 md:px-4 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedOrders.includes(order.orderid)}
+                                                    onChange={() => toggleOrderSelection(order.orderid)}
+                                                />
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3 font-medium text-xs md:text-sm">
+                                                ORD-{order.orderid.slice(0, 8).toUpperCase()}
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3 text-xs md:text-sm">{formatDate(order.datecreated)}</td>
+                                            <td className="px-2 md:px-4 py-3">
+                                                <div>
+                                                    <div className="font-medium text-xs md:text-sm">{order.contactperson}</div>
+                                                    <div className="text-xs text-gray-500">{order.companyname}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3">
+                                                <span
+                                                    className={`px-2 md:px-3 py-1 rounded-full text-xs font-semibold ${isPaid
+                                                            ? "bg-green-100 text-green-700 border border-green-500"
+                                                            : "bg-yellow-100 text-yellow-700 border border-yellow-500"
+                                                        }`}
+                                                >
+                                                    {paymentStatus}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3 font-medium text-xs md:text-sm">
+                                                {order.totalprice
+                                                    ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
+                                                    : '₱0.00'
+                                                }
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3">
+                                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                    {order.orderstatus}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 md:px-4 py-3 text-xs md:text-sm">{order.quantity}x</td>
+                                            <td className="px-2 md:px-4 py-3">
+                                                <Link
+                                                    to={`/orderdetail/${order.orderid}`}
+                                                    className="bg-yellow-400 px-3 md:px-4 py-1 rounded hover:bg-yellow-500 font-medium inline-block text-xs md:text-sm"
+                                                >
+                                                    View
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )} */}
                         </tbody>
                     </table>
                 </div>
 
                 {/* Pagination */}
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
                     <p className="text-xs md:text-sm text-gray-500">
-                        Showing {filteredOrders.length} of {orders.length} orders
+                        Showing {indexOfFirstOrder + 1} to {Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
                     </p>
+                    
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded border cursor-pointer ${
+                                    currentPage === 1 
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                        : 'bg-white hover:bg-gray-50 text-gray-700'
+                                }`}
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            
+                            <div className="flex gap-1">
+                                {getPageNumbers().map((page, index) => (
+                                    page === '...' ? (
+                                        <span key={`ellipsis-${index}`} className="px-3 py-2">...</span>
+                                    ) : (
+                                        <button
+                                            key={page}
+                                            onClick={() => goToPage(page)}
+                                            className={`px-3 py-2 rounded text-sm cursor-pointer ${
+                                                currentPage === page
+                                                    ? 'bg-[#E6AF2E] text-white font-medium'
+                                                    : 'bg-white hover:bg-gray-50 text-gray-700 border'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                ))}
+                            </div>
+                            
+                            <button
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded border cursor-pointer ${
+                                    currentPage === totalPages 
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                        : 'bg-white hover:bg-gray-50 text-gray-700'
+                                }`}
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

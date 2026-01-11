@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode' // ✅ FIXED import
 import TwoFactorVerification from './TwoFactorVerification'
+import { Eye, EyeOff, Check, X, Mail, Phone, Calendar, MapPin, Lock, User, Building, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -21,7 +22,7 @@ const Login = () => {
   const [showTwoFactor, setShowTwoFactor] = useState(false)
 
   const IntputField =
-    'border border-gray-300 rounded-2xl pl-12 pr-4 py-3 md:py-4 w-full text-base md:text-lg lg:text-xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
+    'border-2 border-gray-300 rounded-xl pl-12 pr-4 py-3 w-full text-base focus:outline-none focus:border-[#E6AF2E] focus:ring-2 focus:ring-[#E6AF2E]/20 transition-all'
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -159,10 +160,11 @@ const Login = () => {
             Sign In to GatsisHub
           </h1>
 
-          <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md'>
+          <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
+
+            <label className='block text-base md:text-lg font-medium mb-2'>Email Address</label>
             <div className='relative mb-5 md:mb-6'>
-              <label className='block text-base md:text-lg font-medium mb-2'>Email Address</label>
-              <img src={userav} alt='' className='absolute left-4 top-11 md:top-12 w-5 h-5 md:w-6 md:h-6' />
+              <User className='absolute left-4 top-3.5 md:top-4 w-5 h-5 md:w-6 md:h-6 text-[#E6AF2E]' />
               <input
                 type='email'
                 placeholder='you@example.com'
@@ -181,7 +183,7 @@ const Login = () => {
             </div>
 
             <div className='relative mb-5 md:mb-6'>
-              <img src={key} alt='key' className='absolute left-4 top-3.5 md:top-4 w-5 h-5 md:w-6 md:h-6' />
+              <Lock className='absolute left-4 top-3.5 md:top-4 w-5 h-5 md:w-6 md:h-6 text-[#E6AF2E]' />
               <input
                 type='password'
                 placeholder='Enter your Password'

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard } from 'lucide-react'
+import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard, ClipboardClock } from 'lucide-react'
 
 
 const SidebarOM = () => {
@@ -82,6 +82,12 @@ const SidebarOM = () => {
                             <NavLink to="/orderpageOM" className="block">
                               <ShoppingCart size={20} className='mr-2 inline' />
                               Orders
+                            </NavLink>
+                        </li>
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">
+                            <NavLink to="/logpageOM" className="block">
+                              <ClipboardClock size={20} className='mr-2 inline' />
+                              Orders Log
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">

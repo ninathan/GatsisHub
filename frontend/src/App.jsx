@@ -56,6 +56,10 @@ import AssignOrder from './pages/ProductionAsemblyPage/AssignOrder';
 import ViewOrder from './pages/ProductionAsemblyPage/ViewOrder';
 import ProfilePA from './pages/ProductionAsemblyPage/profilePA';
 
+import LogPageSA from './pages/SalesAdminPages/LogPageSA';
+import LogPageOM from './pages/OperationalManagerPages/LogPageOM';
+import PerfomancePage from './pages/ProductionAsemblyPage/PerfomancePage';
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -168,6 +172,7 @@ const router = createBrowserRouter(
         <Route path="/dashboardSA" element={<ProtectedAdminRoute element={<DashboardSA />} />} />
         <Route path="/productSA" element={<ProtectedAdminRoute element={<ProductSA />} />} />
         <Route path="/profileSA" element={<ProtectedAdminRoute element={<ProfileSA />} />} />
+        <Route path="/logpageSA" element={<ProtectedAdminRoute element={<LogPageSA />} />} />
       </Route>
 
       {/*  Operational Manager layout */}
@@ -179,6 +184,7 @@ const router = createBrowserRouter(
         <Route path="/employeeDetail" element={<ProtectedOMRoute element={<EmployeeDetail />} />} />
         <Route path="/profileOM" element={<ProtectedOMRoute element={<ProfileOM />} />} />
         <Route path="/orderdetailOM/:orderid" element={<ProtectedOMRoute element={<OrderDetailOM />} />} />
+        <Route path="/logpageOM" element={<ProtectedOMRoute element={<LogPageOM />} />} />
       </Route>
 
       {/* System Admin layout */}
@@ -193,6 +199,7 @@ const router = createBrowserRouter(
         <Route path="/assignorder" element={<AssignOrder />} />
         <Route path="/vieworder" element={<ViewOrder />} />
         <Route path="/profilePA" element={<ProfilePA />} />
+        <Route path="/performance" element={<PerfomancePage />} />
       </Route>
 
       {/* Admin/Manager Auth */}

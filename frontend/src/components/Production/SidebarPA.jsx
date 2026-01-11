@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, SquareUser, ShoppingCart } from 'lucide-react'
+import { EllipsisVertical, LogOut, SquareUser, ShoppingCart, Target } from 'lucide-react'
 
 const SidebarPA = () => {
     const navigate = useNavigate();
@@ -48,6 +48,12 @@ const SidebarPA = () => {
                             <NavLink to="/assignorder" className="block">
                                 <SquareUser size={20} className='mr-2 inline' />
                                 Assign Orders
+                            </NavLink>
+                        </li>
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">
+                            <NavLink to="/performance" className="block">
+                                <Target size={20} className='mr-2 inline' />
+                                Performance
                             </NavLink>
                         </li>
                         <li className='hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded'>

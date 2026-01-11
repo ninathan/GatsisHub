@@ -763,7 +763,7 @@ const CreateDesign = () => {
                                 {/* Hanger Type Selection */}
                                 <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
                                     <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Hanger Type</h2>
-                                    <div className="grid grid-cols-2 gap-2 md:gap-3">
+                                    <div className="grid grid-cols-3 gap-2 md:gap-3">
                                         {hangers.map((hanger) => (
                                             <button
                                                 key={hanger.id}
