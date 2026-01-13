@@ -120,12 +120,20 @@ const OrderDetail = () => {
         
         try {
             setIsSavingStatus(true);
+            
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ 
+                    status: newStatus,
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
             });
 
             const data = await response.json();
@@ -152,12 +160,20 @@ const OrderDetail = () => {
 
         try {
             setIsSavingPrice(true);
+            
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/price`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ price: parseFloat(validatedPrice) })
+                body: JSON.stringify({ 
+                    price: parseFloat(validatedPrice),
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
             });
 
             const data = await response.json();
@@ -189,12 +205,19 @@ const OrderDetail = () => {
 
         setIsSavingDeadline(true);
         try {
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/deadline`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ deadline })
+                body: JSON.stringify({ 
+                    deadline,
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
             });
 
             const data = await response.json();

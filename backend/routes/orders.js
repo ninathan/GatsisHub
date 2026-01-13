@@ -4,6 +4,27 @@ import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
+// Helper function to create order log
+async function createOrderLog(orderid, employeeid, employeename, action, fieldChanged, oldValue, newValue, description) {
+  try {
+    await supabase
+      .from("order_logs")
+      .insert([{
+        orderid,
+        employeeid: employeeid || null,
+        employeename: employeename || null,
+        action,
+        field_changed: fieldChanged || null,
+        old_value: oldValue ? String(oldValue) : null,
+        new_value: newValue ? String(newValue) : null,
+        description: description || null
+      }]);
+  } catch (error) {
+    console.error("Failed to create order log:", error);
+    // Don't throw - logging failure shouldn't stop the operation
+  }
+}
+
 // 📝 Create new order
 router.post("/create", async (req, res) => {
   try {
@@ -501,7 +522,7 @@ router.delete("/:orderid", async (req, res) => {
 router.patch("/:orderid/price", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { price } = req.body;
+    const { price, employeeid, employeename } = req.body;
 
 
 
@@ -517,6 +538,13 @@ router.patch("/:orderid/price", async (req, res) => {
 
       return res.status(400).json({ error: "Price must be a valid number" });
     }
+
+    // Get old price before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("totalprice")
+      .eq("orderid", orderid)
+      .single();
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -534,6 +562,18 @@ router.patch("/:orderid/price", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    // Log the price change
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Price Updated',
+      'totalprice',
+      oldOrder?.totalprice,
+      priceValue,
+      `Price changed from ₱${oldOrder?.totalprice || 0} to ₱${priceValue}`
+    );
+
     res.status(200).json({
       message: "Order price updated",
       order: order[0]
@@ -545,11 +585,11 @@ router.patch("/:orderid/price", async (req, res) => {
   }
 });
 
-// � Update order deadline (PATCH)
+// 📅 Update order deadline (PATCH)
 router.patch("/:orderid/deadline", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { deadline } = req.body;
+    const { deadline, employeeid, employeename } = req.body;
 
 
     // Validate deadline (should be a valid date string)
@@ -564,6 +604,13 @@ router.patch("/:orderid/deadline", async (req, res) => {
 
       return res.status(400).json({ error: "Invalid deadline date format" });
     }
+
+    // Get old deadline before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("deadline")
+      .eq("orderid", orderid)
+      .single();
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -581,6 +628,18 @@ router.patch("/:orderid/deadline", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    // Log the deadline change
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Deadline Updated',
+      'deadline',
+      oldOrder?.deadline,
+      deadline,
+      `Deadline changed from ${oldOrder?.deadline ? new Date(oldOrder.deadline).toLocaleDateString() : 'Not set'} to ${new Date(deadline).toLocaleDateString()}`
+    );
+
     res.status(200).json({
       message: "Order deadline updated",
       order: order[0]
@@ -592,11 +651,11 @@ router.patch("/:orderid/deadline", async (req, res) => {
   }
 });
 
-// �🔄 Update order status (PATCH)
+// 📋🔄 Update order status (PATCH)
 router.patch("/:orderid/status", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { status } = req.body;
+    const { status, employeeid, employeename } = req.body;
 
 
     // Validate status
@@ -619,6 +678,13 @@ router.patch("/:orderid/status", async (req, res) => {
       });
     }
 
+    // Get old status before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("orderstatus")
+      .eq("orderid", orderid)
+      .single();
+
     const { data: order, error } = await supabase
       .from("orders")
       .update({ orderstatus: status })
@@ -634,6 +700,18 @@ router.patch("/:orderid/status", async (req, res) => {
 
       return res.status(404).json({ error: "Order not found" });
     }
+
+    // Log the status change
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Status Updated',
+      'orderstatus',
+      oldOrder?.orderstatus,
+      status,
+      `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"`
+    );
 
     // Create notification and send email for customer about order status change
     try {

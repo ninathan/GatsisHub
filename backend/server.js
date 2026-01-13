@@ -14,6 +14,7 @@ import paymentsRoutes from "./routes/payments.js";
 import quotasRoutes from "./routes/quotas.js";
 import productsRoutes from "./routes/products.js";
 import materialsRoutes from "./routes/materials.js";
+import orderLogsRoutes from "./routes/orderLogs.js";
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/payments", paymentsRoutes);
 app.use("/quotas", quotasRoutes);
 app.use("/products", productsRoutes);
 app.use("/materials", materialsRoutes);
+app.use("/order-logs", orderLogsRoutes);
 
 // Health check
 app.get("/", (req, res) => {
