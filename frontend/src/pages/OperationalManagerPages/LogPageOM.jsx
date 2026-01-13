@@ -14,27 +14,41 @@ const LogPageOM = () => {
 
     useEffect(() => {
         const fetchOrderAndLogs = async () => {
+            const timeoutId = setTimeout(() => {
+                console.error('Request timeout after 10 seconds');
+                setError('Request timed out. Please try again.');
+                setLoading(false);
+            }, 10000);
+
             try {
                 setLoading(true);
+                console.log('Fetching order and logs for orderId:', orderId);
                 
                 // Fetch order details
                 const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderId}`);
+                console.log('Order response status:', orderResponse.status);
                 if (!orderResponse.ok) {
                     throw new Error('Failed to fetch order details');
                 }
                 const orderData = await orderResponse.json();
+                console.log('Order data:', orderData);
                 setOrder(orderData.order);
 
                 // Fetch order logs
                 const logsResponse = await fetch(`https://gatsis-hub.vercel.app/order-logs/${orderId}`);
+                console.log('Logs response status:', logsResponse.status);
                 if (!logsResponse.ok) {
                     throw new Error('Failed to fetch order logs');
                 }
                 const logsData = await logsResponse.json();
+                console.log('Logs data:', logsData);
                 setLogs(logsData.logs || []);
                 
+                clearTimeout(timeoutId);
                 setError(null);
             } catch (err) {
+                console.error('Error fetching data:', err);
+                clearTimeout(timeoutId);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -43,6 +57,9 @@ const LogPageOM = () => {
 
         if (orderId) {
             fetchOrderAndLogs();
+        } else {
+            setLoading(false);
+            setError('No order ID provided');
         }
     }, [orderId]);
 
