@@ -31,8 +31,13 @@ const OrderPage = () => {
 
                 const data = await response.json();
 
-                setOrders(data.orders || []);
-                setFilteredOrders(data.orders || []);
+                // Sort orders oldest to newest (first come, first priority)
+                const sortedOrders = (data.orders || []).sort((a, b) => 
+                    new Date(a.datecreated) - new Date(b.datecreated)
+                );
+
+                setOrders(sortedOrders);
+                setFilteredOrders(sortedOrders);
                 setError(null);
             } catch (err) {
 
@@ -59,15 +64,20 @@ const OrderPage = () => {
         }
 
         // Apply status filter
-        if (selectedFilter === 'Orders') {
-            // Show only orders that have been evaluated and processed
+        if (selectedFilter === 'New Orders') {
+            // New orders: For Evaluation, Pending Approval, Pending Payment
             filtered = filtered.filter(order =>
-                !['For Evaluation'].includes(order.orderstatus)
+                ['For Evaluation', 'Pending Approval', 'Pending Payment'].includes(order.orderstatus)
             );
-        } else if (selectedFilter === 'Order Request') {
-            // Show only orders waiting for evaluation
+        } else if (selectedFilter === 'Ongoing Orders') {
+            // Ongoing orders: Approved, In Production, Waiting for Shipment, In Transit
             filtered = filtered.filter(order =>
-                order.orderstatus === 'For Evaluation'
+                ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
+            );
+        } else if (selectedFilter === 'Completed Orders') {
+            // Completed orders
+            filtered = filtered.filter(order =>
+                order.orderstatus === 'Completed'
             );
         }
 
@@ -201,25 +211,35 @@ const OrderPage = () => {
                     <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 md:pb-0">
                         <button
                             onClick={() => setSelectedFilter('All')} 
-                            className={`px-3 md:px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${selectedFilter === 'All' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200]'
-
-                                }`}
+                            className={`px-3 md:px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
+                                selectedFilter === 'All' ? 'bg-[#E6AF2E] text-white' : 'bg-gray-200 hover:bg-gray-300'
+                            }`}
                         >
-                            All
+                            All Orders
                         </button>
                         <button
-                            onClick={() => setSelectedFilter('Orders')}
-                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${selectedFilter === 'Orders' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
-                                }`}
+                            onClick={() => setSelectedFilter('New Orders')}
+                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
+                                selectedFilter === 'New Orders' ? 'bg-blue-600 text-white' : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                            }`}
                         >
-                            Orders
+                            New Orders
                         </button>
                         <button
-                            onClick={() => setSelectedFilter('Order Request')}
-                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${selectedFilter === 'Order Request' ? 'bg-[#E6AF2E] font-medium' : 'bg-indigo-200'
-                                }`}
+                            onClick={() => setSelectedFilter('Ongoing Orders')}
+                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
+                                selectedFilter === 'Ongoing Orders' ? 'bg-orange-600 text-white' : 'bg-orange-100 hover:bg-orange-200 text-orange-700'
+                            }`}
                         >
-                            Order Request
+                            Ongoing Orders
+                        </button>
+                        <button
+                            onClick={() => setSelectedFilter('Completed Orders')}
+                            className={`px-3 md:px-4 py-2 rounded-lg whitespace-nowrap text-sm md:text-base ${
+                                selectedFilter === 'Completed Orders' ? 'bg-green-600 text-white' : 'bg-green-100 hover:bg-green-200 text-green-700'
+                            }`}
+                        >
+                            Completed Orders
                         </button>
                     </div>
 

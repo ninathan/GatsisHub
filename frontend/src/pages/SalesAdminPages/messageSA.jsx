@@ -11,6 +11,9 @@ const Messages = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sendingMessage, setSendingMessage] = useState(false);
+    const [showOrdersModal, setShowOrdersModal] = useState(false);
+    const [customerOrders, setCustomerOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
     const employee = JSON.parse(localStorage.getItem('employee'));
     const fileInputRef = React.useRef(null);
 
@@ -190,6 +193,73 @@ const Messages = () => {
         });
     };
 
+    const fetchCustomerOrders = async (customerid) => {
+        try {
+            setLoadingOrders(true);
+            
+            // First, get the customer's userid from the customers table
+            const customerResponse = await fetch(`https://gatsis-hub.vercel.app/customers/${customerid}`);
+            
+            if (!customerResponse.ok) {
+                console.error('Failed to fetch customer');
+                setCustomerOrders([]);
+                setLoadingOrders(false);
+                return;
+            }
+            
+            const customer = await customerResponse.json();
+            
+            if (!customer || !customer.userid) {
+                console.error('Customer userid not found', customer);
+                setCustomerOrders([]);
+                setLoadingOrders(false);
+                return;
+            }
+            
+            const userid = customer.userid;
+            
+            // Now fetch orders using the userid
+            const ordersResponse = await fetch(`https://gatsis-hub.vercel.app/orders/user/${userid}`);
+            
+            if (!ordersResponse.ok) {
+                console.error('Failed to fetch orders');
+                setCustomerOrders([]);
+                setLoadingOrders(false);
+                return;
+            }
+            
+            const data = await ordersResponse.json();
+            
+            // Sort orders by date (oldest first)
+            const sortedOrders = (data.orders || []).sort((a, b) => 
+                new Date(a.datecreated) - new Date(b.datecreated)
+            );
+            
+            setCustomerOrders(sortedOrders);
+        } catch (error) {
+            console.error('Error fetching customer orders:', error);
+            setCustomerOrders([]);
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    const handleViewOrders = () => {
+        if (selectedCustomer) {
+            fetchCustomerOrders(selectedCustomer.customerid);
+            setShowOrdersModal(true);
+        }
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    };
+
     return (
         <div className="flex w-full bg-gray-100 h-screen">
             {/* People + Chat */}
@@ -236,14 +306,22 @@ const Messages = () => {
                     {selectedCustomer ? (
                         <>
                             {/* Header */}
-                            <div className="p-4 border-b flex items-center gap-2 bg-white">
-                                <div className="w-10 h-10 bg-[#191716] text-white rounded-full flex items-center justify-center font-semibold">
-                                    {selectedCustomer.companyname?.charAt(0) || 'C'}
+                            <div className="p-4 border-b flex items-center justify-between bg-white">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-10 h-10 bg-[#191716] text-white rounded-full flex items-center justify-center font-semibold">
+                                        {selectedCustomer.companyname?.charAt(0) || 'C'}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold">{selectedCustomer.companyname}</p>
+                                        <p className="text-sm text-gray-500">Customer</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-bold">{selectedCustomer.companyname}</p>
-                                    <p className="text-sm text-gray-500">Customer</p>
-                                </div>
+                                <button
+                                    onClick={handleViewOrders}
+                                    className="bg-[#191716] hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    Customer Orders
+                                </button>
                             </div>
 
                             {/* Messages */}
@@ -353,6 +431,114 @@ const Messages = () => {
                     )}
                 </div>
             </div>
+
+            {/* Customer Orders Modal */}
+            {showOrdersModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b bg-[#191716] bg-opacity-90 backdrop-blur-sm text-white">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-bold">
+                                    Orders - {selectedCustomer?.companyname}
+                                </h2>
+                                <button
+                                    onClick={() => setShowOrdersModal(false)}
+                                    className="text-white hover:text-gray-300 text-2xl font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {loadingOrders ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <LoadingSpinner size="lg" text="Loading orders..." />
+                                </div>
+                            ) : customerOrders.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500 text-lg">No orders found for this customer</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {customerOrders.map((order) => (
+                                        <div
+                                            key={order.orderid}
+                                            className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
+                                        >
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h3 className="font-bold text-lg">
+                                                            ORD-{order.orderid.slice(0, 8).toUpperCase()}
+                                                        </h3>
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                            order.orderstatus === 'Completed' 
+                                                                ? 'bg-green-100 text-green-700 border border-green-500'
+                                                                : ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
+                                                                ? 'bg-orange-100 text-orange-700 border border-orange-500'
+                                                                : 'bg-blue-100 text-blue-700 border border-blue-500'
+                                                        }`}>
+                                                            {order.orderstatus}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                        <div>
+                                                            <span className="text-gray-600">Date:</span>
+                                                            <span className="ml-2 font-medium">{formatDate(order.datecreated)}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-600">Quantity:</span>
+                                                            <span className="ml-2 font-medium">{order.quantity} items</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-gray-600">Total:</span>
+                                                            <span className="ml-2 font-medium text-green-700">
+                                                                {order.totalprice 
+                                                                    ? `₱${parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` 
+                                                                    : 'Pending'
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        {order.deadline && (
+                                                            <div>
+                                                                <span className="text-gray-600">Deadline:</span>
+                                                                <span className="ml-2 font-medium">{formatDate(order.deadline)}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a
+                                                        href={`/orderdetail/${order.orderid}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="bg-[#E6AF2E] hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium inline-block transition-colors"
+                                                    >
+                                                        View Details
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-4 border-t bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setShowOrdersModal(false)}
+                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
