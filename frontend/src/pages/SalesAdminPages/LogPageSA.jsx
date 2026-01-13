@@ -105,7 +105,7 @@ const LogPageSA = () => {
     };
 
     const handleBackClick = () => {
-        navigate('/salesadmin/orderpage');
+        navigate('/orderdetail/' + orderId);
     };
 
     if (loading) {
@@ -151,7 +151,7 @@ const LogPageSA = () => {
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
                     >
                         <ChevronLeft size={20} />
-                        <span>Back to Orders</span>
+                        <span>Back</span>
                     </button>
                     
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

@@ -12,7 +12,8 @@ import {
     FileText,
     Phone,
     Eye,
-    Edit2
+    Edit2,
+    ClipboardClock
 } from "lucide-react";
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
@@ -1040,6 +1041,13 @@ const OrderDetail = () => {
                             >
                                 <Phone size={18} />
                                 Contact Customer
+                            </button>
+                            <button
+                                onClick={() => navigate(`/logpageSA/${orderid}`)}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                            >
+                                <ClipboardClock size={18} />
+                                View Activity Log
                             </button>
                             <button
                                 onClick={() => navigate('/orderpage')}

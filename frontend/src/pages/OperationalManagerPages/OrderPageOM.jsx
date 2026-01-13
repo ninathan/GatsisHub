@@ -313,7 +313,7 @@ const OrderPageOM = () => {
                                             <td className="px-2 md:px-4 py-3 text-xs md:text-sm">{order.quantity}x</td>
                                             <td className="px-2 md:px-4 py-3">
                                                 <Link 
-                                                    to={`/orderdetail/${order.orderid}`}
+                                                    to={`/orderdetailOM/${order.orderid}`}
                                                     className="bg-yellow-400 px-3 md:px-4 py-1 rounded hover:bg-yellow-500 font-medium inline-block text-xs md:text-sm"
                                                 >
                                                     View

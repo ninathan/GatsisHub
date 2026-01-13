@@ -79,12 +79,6 @@ const Sidebar = () => {
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
-                            <NavLink to="/logpageSA" className="block">
-                                <ClipboardClock size={20} className="mr-2 inline" />
-                                Orders Log
-                            </NavLink>
-                        </li>
-                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
                             <NavLink to="/productSA" className="block">
                                 <Package size={20} className="mr-2 inline" />
                                 Products

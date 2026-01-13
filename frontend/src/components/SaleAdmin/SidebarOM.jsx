@@ -85,12 +85,6 @@ const SidebarOM = () => {
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">
-                            <NavLink to="/logpageOM" className="block">
-                              <ClipboardClock size={20} className='mr-2 inline' />
-                              Orders Log
-                            </NavLink>
-                        </li>
-                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">
                             <NavLink to="/calendarOM" className="block">
                                 <Calendar size={20} className='mr-2 inline' />
                                 Calendar

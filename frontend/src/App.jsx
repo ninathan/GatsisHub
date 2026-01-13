@@ -172,7 +172,7 @@ const router = createBrowserRouter(
         <Route path="/dashboardSA" element={<ProtectedAdminRoute element={<DashboardSA />} />} />
         <Route path="/productSA" element={<ProtectedAdminRoute element={<ProductSA />} />} />
         <Route path="/profileSA" element={<ProtectedAdminRoute element={<ProfileSA />} />} />
-        <Route path="/logpageSA" element={<ProtectedAdminRoute element={<LogPageSA />} />} />
+        <Route path="/logpageSA/:orderId" element={<ProtectedAdminRoute element={<LogPageSA />} />} />
       </Route>
 
       {/*  Operational Manager layout */}
@@ -184,7 +184,7 @@ const router = createBrowserRouter(
         <Route path="/employeeDetail" element={<ProtectedOMRoute element={<EmployeeDetail />} />} />
         <Route path="/profileOM" element={<ProtectedOMRoute element={<ProfileOM />} />} />
         <Route path="/orderdetailOM/:orderid" element={<ProtectedOMRoute element={<OrderDetailOM />} />} />
-        <Route path="/logpageOM" element={<ProtectedOMRoute element={<LogPageOM />} />} />
+        <Route path="/logpageOM/:orderId" element={<ProtectedOMRoute element={<LogPageOM />} />} />
       </Route>
 
       {/* System Admin layout */}
