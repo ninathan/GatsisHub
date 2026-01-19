@@ -42,3 +42,4 @@ add_adjusted_quota_column.sql
 create_payment_storage_bucket.sql
 create_system_admin.sql
 create_signup_verification_table.sql
+EMAIL_TEMPLATES_UPDATED.md

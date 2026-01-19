@@ -748,12 +748,6 @@ const Signup = () => {
                         Didn't receive the code? Resend
                       </button>
                     </div>
-
-                    {success && (
-                      <div className='bg-green-50 border-l-4 border-green-500 p-4 rounded-lg'>
-                        <p className='text-green-700 text-sm font-medium'>{success}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

@@ -1,6 +1,7 @@
 import express from "express";
 import supabase from "../supabaseClient.js";
 import { v4 as uuidv4 } from "uuid";
+import emailTemplates from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
@@ -191,8 +192,18 @@ router.post("/create", async (req, res) => {
 
         // Send email if we have an email address
         if (customerEmail) {
-
           const orderNumber = `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${order[0].orderid}`;
+          
+          // Build order details object
+          const orderDetails = {
+            'Hanger Type': hangerType,
+            'Quantity': `${quantity} pieces`,
+            'Contact Person': contactPerson,
+            'Contact Phone': contactPhone
+          };
+          
+          if (selectedColor) orderDetails['Color'] = selectedColor;
+          if (customText) orderDetails['Custom Text'] = `"${customText}"`;
           
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -204,75 +215,9 @@ router.post("/create", async (req, res) => {
               from: 'GatsisHub <noreply@gatsishub.com>',
               to: [customerEmail],
               subject: `Order Confirmation - ${orderNumber}`,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #35408E; margin-bottom: 10px;">Order Received!</h1>
-                    <p style="font-size: 18px; color: #666;">Thank you for your order</p>
-                  </div>
-                  
-                  <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h2 style="color: #35408E; margin-top: 0;">Hello ${companyName}!</h2>
-                    <p style="color: #333; line-height: 1.6;">
-                      We've received your custom hanger order and our team is reviewing it now. 
-                    </p>
-                    <p style="color: #333; line-height: 1.6;">
-                      <strong>Order Number:</strong> ${orderNumber}
-                    </p>
-                  </div>
-
-                  <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h3 style="margin-top: 0;">Order Details:</h3>
-                    <p style="margin: 5px 0;"><strong>Hanger Type:</strong> ${hangerType}</p>
-                    <p style="margin: 5px 0;"><strong>Quantity:</strong> ${quantity} pieces</p>
-                    <p style="margin: 5px 0;"><strong>Contact Person:</strong> ${contactPerson}</p>
-                    <p style="margin: 5px 0;"><strong>Contact Phone:</strong> ${contactPhone}</p>
-                    ${selectedColor ? `<p style="margin: 5px 0;"><strong>Color:</strong> ${selectedColor}</p>` : ''}
-                    ${customText ? `<p style="margin: 5px 0;"><strong>Custom Text:</strong> "${customText}"</p>` : ''}
-                  </div>
-
-                  <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #DAC325; margin-bottom: 20px;">
-                    <h3 style="color: #856404; margin-top: 0;">📋 What Happens Next?</h3>
-                    <ul style="color: #856404; line-height: 1.8; margin: 10px 0;">
-                      <li><strong>Order Verification:</strong> Our team will review your order specifications and requirements</li>
-                      <li><strong>Quote & Timeline:</strong> We'll contact you with pricing, production timeline, and any clarifications needed</li>
-                      <li><strong>Production:</strong> Once confirmed, we'll begin manufacturing your custom hangers</li>
-                    </ul>
-                  </div>
-
-                  <div style="background-color: #e7f3ff; padding: 15px; border-left: 4px solid #35408E; margin-bottom: 20px;">
-                    <h3 style="color: #35408E; margin-top: 0;">⏱️ Important Notes:</h3>
-                    <ul style="color: #35408E; line-height: 1.8; margin: 10px 0; font-size: 14px;">
-                      <li>Production time varies based on complexity and quantity</li>
-                      <li>Custom designs may require additional review time</li>
-                      <li>We'll keep you updated throughout the process via email and our messaging system</li>
-                    </ul>
-                  </div>
-
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders" 
-                       style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-right: 10px;">
-                      View Order Status
-                    </a>
-                    <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/messages" 
-                       style="background-color: #35408E; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                      Contact Support
-                    </a>
-                  </div>
-
-                  <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-                    <p>If you have any questions about your order, feel free to reach out to us through our messaging system or reply to this email.</p>
-                    <p style="margin-top: 20px;">
-                      Best regards,<br/>
-                      <strong>The GatsisHub Team</strong><br/>
-                      Premium Hanger Solutions
-                    </p>
-                  </div>
-                </div>
-              `
+              html: emailTemplates.orderConfirmation(companyName, orderNumber, orderDetails)
             })
           });
-
         } else {
 
         }
@@ -781,40 +726,7 @@ router.patch("/:orderid/status", async (req, res) => {
                   from: 'GatsisHub <noreply@gatsishub.com>',
                   to: [customerData.emailaddress],
                   subject: `${emailSubject} - Order #${orderNumber}`,
-                  html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                      <div style="background-color: #35408E; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-                        <h1 style="color: white; margin: 0;">GatsisHub</h1>
-                      </div>
-                      <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-                        <h2 style="color: #35408E; margin-top: 0;">${emailSubject}</h2>
-                        <p style="font-size: 16px; color: #333;">Hello ${customerData.companyname},</p>
-                        <p style="font-size: 16px; color: #333; line-height: 1.6;">${emailMessage}</p>
-                        
-                        <div style="background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #35408E; border-radius: 4px;">
-                          <p style="margin: 0; color: #666; font-size: 14px;"><strong>Order Number:</strong> ORD-${orderNumber}</p>
-                          <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;"><strong>Status:</strong> ${status}</p>
-                        </div>
-
-                        <p style="font-size: 14px; color: #666; line-height: 1.6;">
-                          You can view your order details and track its progress by logging into your account.
-                        </p>
-
-                        <div style="text-align: center; margin: 30px 0;">
-                          <a href="https://gatsishub.com/orders" style="background-color: #35408E; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                            View Order
-                          </a>
-                        </div>
-
-                        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-                        
-                        <p style="font-size: 12px; color: #999; text-align: center;">
-                          You're receiving this email because you have order notifications enabled.<br>
-                          You can manage your notification preferences in your account settings.
-                        </p>
-                      </div>
-                    </div>
-                  `
+                  html: emailTemplates.orderStatusUpdate(customerData.companyname, orderNumber, status, emailSubject, emailMessage)
                 })
               });
 

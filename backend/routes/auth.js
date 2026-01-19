@@ -4,6 +4,7 @@ import supabase from "../supabaseClient.js";
 import { v4 as uuidv4 } from "uuid";
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
+import emailTemplates from '../utils/emailTemplates.js';
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -66,44 +67,8 @@ router.post("/send-signup-verification", async (req, res) => {
         body: JSON.stringify({
           from: 'GatsisHub <noreply@gatsishub.com>',
           to: [emailAddress],
-          subject: 'Verify Your Email - GatsisHub Registration',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
-                <p style="font-size: 18px; color: #666;">Email Verification Required</p>
-              </div>
-              
-              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
-                <p style="color: #333; line-height: 1.6;">
-                  Thank you for signing up with GatsisHub. To complete your registration, please verify your email address using the code below:
-                </p>
-              </div>
-
-              <div style="background-color: #35408E; color: white; padding: 30px; text-align: center; border-radius: 10px; margin: 20px 0;">
-                <p style="margin: 0 0 10px 0; font-size: 16px;">Your Verification Code:</p>
-                <div style="font-size: 42px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                  ${verificationCode}
-                </div>
-              </div>
-
-              <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
-                <p style="color: #856404; margin: 0;">
-                  ⏰ This code will expire in <strong>15 minutes</strong>
-                </p>
-              </div>
-
-              <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-                <p>If you didn't request this verification code, please ignore this email.</p>
-                <p style="margin-top: 20px;">
-                  Best regards,<br/>
-                  <strong>The GatsisHub Team</strong><br/>
-                  Premium Hanger Solutions
-                </p>
-              </div>
-            </div>
-          `
+          subject: 'Verify Your Email - GatsisHub',
+          html: emailTemplates.verification(`${firstName} ${lastName}`, verificationCode)
         })
       });
 
@@ -236,6 +201,8 @@ router.post("/verify-signup-code", async (req, res) => {
       const resendApiKey = process.env.RESEND_API_KEY;
       
       if (resendApiKey) {
+        const loginUrl = `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login`;
+        
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -245,36 +212,8 @@ router.post("/verify-signup-code", async (req, res) => {
           body: JSON.stringify({
             from: 'GatsisHub <noreply@gatsishub.com>',
             to: [emailAddress],
-            subject: 'Welcome to GatsisHub - Account Created!',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
-                  <p style="font-size: 18px; color: #666;">Account Successfully Created</p>
-                </div>
-                
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
-                  <p style="color: #333; line-height: 1.6;">
-                    Your email has been verified and your account is now active. You can start ordering premium custom hangers for your business!
-                  </p>
-                </div>
-
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
-                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                    Login to Your Account
-                  </a>
-                </div>
-
-                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-                  <p>Best regards,<br/>
-                    <strong>The GatsisHub Team</strong><br/>
-                    Premium Hanger Solutions
-                  </p>
-                </div>
-              </div>
-            `
+            subject: 'Welcome to GatsisHub! 🎉',
+            html: emailTemplates.welcome(`${firstName} ${lastName}`, emailAddress, loginUrl)
           })
         });
       }
@@ -451,47 +390,7 @@ router.post("/signup", async (req, res) => {
             from: 'GatsisHub <noreply@gatsishub.com>',
             to: [emailAddress],
             subject: 'Welcome to GatsisHub - Registration Successful!',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
-                  <p style="font-size: 18px; color: #666;">Registration Successful</p>
-                </div>
-                
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
-                  <p style="color: #333; line-height: 1.6;">
-                    Thank you for registering with GatsisHub. Your account has been successfully created!
-                  </p>
-                  <p style="color: #333; line-height: 1.6;">
-                    You can now log in to start ordering premium custom hangers for your business.
-                  </p>
-                </div>
-
-                <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h3 style="margin-top: 0;">Account Details:</h3>
-                  <p style="margin: 5px 0;"><strong>Email:</strong> ${emailAddress}</p>
-                  <p style="margin: 5px 0;"><strong>Name:</strong> ${firstName} ${lastName}</p>
-                  ${companyNumber ? `<p style="margin: 5px 0;"><strong>Phone:</strong> ${companyNumber}</p>` : ''}
-                </div>
-
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
-                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                    Login to Your Account
-                  </a>
-                </div>
-
-                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-                  <p>If you didn't create this account, please ignore this email or contact our support team.</p>
-                  <p style="margin-top: 20px;">
-                    Best regards,<br/>
-                    <strong>The GatsisHub Team</strong><br/>
-                    Premium Hanger Solutions
-                  </p>
-                </div>
-              </div>
-            `
+            html: emailTemplates.welcome(`${firstName} ${lastName}`, emailAddress, `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login`)
           })
         });
 
@@ -621,24 +520,7 @@ router.post("/login", async (req, res) => {
           from: 'GatsisHub <noreply@gatsishub.com>',
           to: [emailAddress],
           subject: 'Your Login Verification Code',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #35408E;">Login Verification</h2>
-              <p>Hello ${user.companyname || 'there'},</p>
-              <p>Someone is trying to log in to your GatsisHub account. If this is you, please use the verification code below:</p>
-              <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                ${verificationCode}
-              </div>
-              <p>This code will expire in 15 minutes.</p>
-              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0;">
-                <strong>Security Notice:</strong>
-                <p style="margin: 5px 0;">IP Address: ${ipAddress}</p>
-                <p style="margin: 5px 0;">Time: ${new Date().toLocaleString()}</p>
-              </div>
-              <p>If you didn't attempt to log in, please secure your account immediately by changing your password.</p>
-              <p>Best regards,<br/>GatsisHub Security Team</p>
-            </div>
-          `
+          html: emailTemplates.loginVerification(user.companyname || 'there', verificationCode, ipAddress, new Date().toLocaleString())
         })
       });
 
@@ -845,54 +727,7 @@ router.post('/google', async (req, res) => {
             from: 'GatsisHub <noreply@gatsishub.com>',
             to: [email],
             subject: 'Welcome to GatsisHub - Google Sign-In Successful!',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
-                  <p style="font-size: 18px; color: #666;">You're All Set!</p>
-                </div>
-                
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h2 style="color: #35408E; margin-top: 0;">Hello ${name}!</h2>
-                  <p style="color: #333; line-height: 1.6;">
-                    Thank you for signing up with GatsisHub using your Google account. Your account has been successfully created!
-                  </p>
-                  <p style="color: #333; line-height: 1.6;">
-                    You can now start ordering premium custom hangers for your business.
-                  </p>
-                </div>
-
-                <div style="background-color: #35408E; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <h3 style="margin-top: 0;">Account Details:</h3>
-                  <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                  <p style="margin: 5px 0;"><strong>Sign-In Method:</strong> Google Account</p>
-                  <p style="margin: 5px 0;"><strong>Account Status:</strong> Active</p>
-                </div>
-
-                <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #DAC325; margin-bottom: 20px;">
-                  <p style="color: #856404; margin: 0; line-height: 1.6;">
-                    <strong>📍 Next Step:</strong> Complete your delivery address to start placing orders!
-                  </p>
-                </div>
-
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
-                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                    Access Your Account
-                  </a>
-                </div>
-
-                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
-                  <p>You can sign in anytime using your Google account - no password needed!</p>
-                  <p>If you didn't create this account, please ignore this email or contact our support team.</p>
-                  <p style="margin-top: 20px;">
-                    Best regards,<br/>
-                    <strong>The GatsisHub Team</strong><br/>
-                    Premium Hanger Solutions
-                  </p>
-                </div>
-              </div>
-            `
+            html: emailTemplates.googleWelcome(name, email, `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login`)
           })
         });
 
@@ -1125,19 +960,7 @@ router.post("/forgot-password", async (req, res) => {
           from: 'GatsisHub <noreply@gatsishub.com>',
           to: [emailAddress],
           subject: 'Password Reset Verification Code',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #35408E;">Password Reset Request</h2>
-              <p>Hello ${customer.companyname || 'there'},</p>
-              <p>You requested to reset your password. Use the verification code below:</p>
-              <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                ${verificationCode}
-              </div>
-              <p>This code will expire in 15 minutes.</p>
-              <p>If you didn't request this, please ignore this email.</p>
-              <p>Best regards,<br/>GatsisHub Team</p>
-            </div>
-          `
+          html: emailTemplates.passwordReset(customer.companyname || 'there', verificationCode)
         })
       });
 
