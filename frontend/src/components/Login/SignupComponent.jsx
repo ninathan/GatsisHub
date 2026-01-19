@@ -5,7 +5,7 @@ import key from '../../images/key.png'
 import location from '../../images/location.png'
 import phone from '../../images/phone.png'
 import googlelogo from '../../images/googlelogo.png'
-import { Eye, EyeOff, Check, X, Mail, Phone, Calendar, MapPin, Lock, User, Building, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, EyeOff, Check, X, Mail, Phone, Calendar, MapPin, Lock, User, Building, ChevronDown, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import Terms from '../TermsAndConditions'
 import PageTransition from '../Transition/PageTransition'
@@ -19,7 +19,10 @@ const Signup = () => {
 
   // steps
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 3
+  const totalSteps = 4 // Changed from 3 to 4 to include verification step
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
 
   // form data
   const [firstName, setFirstName] = useState('')
@@ -82,6 +85,9 @@ const Signup = () => {
       allPasswordRulesMet &&
       agreeTerms
   }
+  const isStep4Valid = () => {
+    return verificationCode.length === 6
+  }
   const nextStep = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
@@ -101,48 +107,72 @@ const Signup = () => {
     }
   }
 
+  const sendVerificationCode = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const res = await fetch('https://gatsis-hub.vercel.app/auth/send-signup-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailAddress,
+          firstName,
+          lastName
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send verification code')
+
+      setCodeSent(true)
+      setSuccess('Verification code sent to your email!')
+      nextStep() // Move to verification step
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendVerificationCode = async () => {
+    setVerificationCode('')
+    await sendVerificationCode()
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
     setSuccess(null)
 
-    if (!agreeTerms) {
-      setError('You must agree to the Terms and Conditions')
-      return
-    }
-
-    if (!passwordMatch) {
-      setError('Passwords do not match')
-      return
-    }
-
     // Build address object
     const companyAddress = {
-      id: Date.now(), // Generate unique ID
+      id: Date.now(),
       name: 'Home Address',
-      phone: companyNumber || '', // Use company number as phone
+      phone: companyNumber || '',
       address: [
         street.trim(),
         city.trim() && `${city.trim()}${province.trim() ? ', ' + province.trim() : ''}`,
         postalCode.trim(),
         country.trim()
-      ].filter(Boolean).join('\n'), // Combine into multi-line address
-      isDefault: true // First address is default
+      ].filter(Boolean).join('\n'),
+      isDefault: true
     };
 
-    // Street is now required, so always include the address
     const addresses = [companyAddress];
 
     try {
-      setLoading(true)
-      // 👇 Change this URL to your deployed backend
-      const res = await fetch('https://gatsis-hub.vercel.app/auth/signup', {
+      setIsVerifying(true)
+      
+      // Verify the code and create account
+      const res = await fetch('https://gatsis-hub.vercel.app/auth/verify-signup-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          emailAddress,
+          code: verificationCode,
           firstName,
           lastName,
-          emailAddress,
           companyNumber,
           gender,
           dateOfBirth,
@@ -152,14 +182,14 @@ const Signup = () => {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Signup failed')
+      if (!res.ok) throw new Error(data.error || 'Verification failed')
 
-      // Show success modal instead of immediate redirect
+      // Show success modal
       setShowSuccessModal(true)
     } catch (err) {
       setError(err.message)
     } finally {
-      setLoading(false)
+      setIsVerifying(false)
     }
   }
 
@@ -208,6 +238,7 @@ const Signup = () => {
     { number: 1, label: 'Personal Info', icon: User },
     { number: 2, label: 'Address Info', icon: MapPin },
     { number: 3, label: 'Security', icon: Lock },
+    { number: 4, label: 'Verify Email', icon: Shield },
   ]
 
   return (
@@ -667,6 +698,66 @@ const Signup = () => {
                   </div>
                 </div>
               )}
+
+              {/* Step4: Email Verification */}
+              {currentStep === 4 && (
+                <div className='bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
+                  <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2'>
+                    <Shield className='w-6 h-6 text-[#E6AF2E]' />
+                    Verify Your Email
+                  </h2>
+
+                  <div className='bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded'>
+                    <p className='text-blue-800 text-sm'>
+                      We've sent a 6-digit verification code to <strong>{emailAddress}</strong>
+                    </p>
+                  </div>
+
+                  <div className='space-y-6'>
+                    <div className='relative group'>
+                      <label className='text-gray-700 text-sm md:text-base font-medium mb-2 block'>
+                        Verification Code <span className='text-red-500'>*</span>
+                      </label>
+                      <div className='relative'>
+                        <input
+                          type='text'
+                          value={verificationCode}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                            setVerificationCode(value)
+                          }}
+                          placeholder='Enter 6-digit code'
+                          maxLength={6}
+                          className='border-2 border-gray-300 rounded-xl px-4 py-3 md:py-4 w-full text-center text-2xl font-bold tracking-widest focus:outline-none focus:border-[#E6AF2E] focus:ring-2 focus:ring-[#E6AF2E]/20 transition-all'
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <p className='text-xs text-gray-500 mt-2'>
+                        Code expires in 15 minutes
+                      </p>
+                    </div>
+
+                    <div className='text-center'>
+                      <button
+                        type='button'
+                        onClick={resendVerificationCode}
+                        disabled={loading}
+                        className='text-[#E6AF2E] hover:text-[#d19b1a] font-semibold text-sm underline disabled:opacity-50 disabled:cursor-not-allowed'
+                      >
+                        Didn't receive the code? Resend
+                      </button>
+                    </div>
+
+                    {success && (
+                      <div className='bg-green-50 border-l-4 border-green-500 p-4 rounded-lg'>
+                        <p className='text-green-700 text-sm font-medium'>{success}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {modalOpen && (
                   <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50 p-4">
                     <div className="bg-white rounded-2xl p-6 md:p-8 max-w-lg w-full max-h-[90vh] shadow-xl relative overflow-hidden">
@@ -735,26 +826,48 @@ const Signup = () => {
                           setError('Please fill in all required fields')
                           return
                         }
-                        nextStep()
+                        if (currentStep === 3 && !isStep3Valid()) {
+                          setError('Please complete all security requirements')
+                          return
+                        }
+                        // Step 3 -> Step 4: Send verification code
+                        if (currentStep === 3) {
+                          sendVerificationCode()
+                        } else {
+                          nextStep()
+                        }
                       }}
-                      className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#E6AF2E] to-[#d19b1a] text-white py-4 text-lg md:text-xl font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]'>
-                      Next
-                      <ChevronRight className='w-5 h-5' />
-                    </button>
-                  ) : (
-                    <button
-                      type='submit'
-                      disabled={loading || !isStep3Valid()}
-                      className='flex-1 bg-gradient-to-r from-[#E6AF2E] to-[#d19b1a] text-white py-4 text-lg md:text-xl font-semibold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]'>
-                      {loading ? (
+                      disabled={loading}
+                      className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#E6AF2E] to-[#d19b1a] text-white py-4 text-lg md:text-xl font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed'>
+                      {loading && currentStep === 3 ? (
                         <span className='flex items-center justify-center gap-2'>
                           <svg className='animate-spin h-5 w-5' viewBox='0 0 24 24'>
                             <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none' />
                             <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
                           </svg>
-                          Creating Account...
+                          Sending Code...
                         </span>
-                      ) : 'Create Account'}
+                      ) : (
+                        <>
+                          Next
+                          <ChevronRight className='w-5 h-5' />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type='submit'
+                      disabled={isVerifying || !isStep4Valid()}
+                      className='flex-1 bg-gradient-to-r from-[#E6AF2E] to-[#d19b1a] text-white py-4 text-lg md:text-xl font-semibold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]'>
+                      {isVerifying ? (
+                        <span className='flex items-center justify-center gap-2'>
+                          <svg className='animate-spin h-5 w-5' viewBox='0 0 24 24'>
+                            <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' fill='none' />
+                            <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
+                          </svg>
+                          Verifying...
+                        </span>
+                      ) : 'Verify & Create Account'}
                     </button>
                   )}
                 </div>
@@ -800,7 +913,7 @@ const Signup = () => {
                   Welcome to GatsisHub!
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Your account has been created successfully. A confirmation email has been sent to:
+                  Your email has been verified and your account has been created successfully!
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 w-full mb-4">
                   <p className="text-sm font-semibold text-blue-800">
@@ -808,7 +921,7 @@ const Signup = () => {
                   </p>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  Please check your email to verify your account. You can now log in to start ordering custom hangers!
+                  You can now log in to start ordering custom hangers!
                 </p>
               </div>
             </div>

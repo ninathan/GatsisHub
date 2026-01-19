@@ -840,7 +840,7 @@ const ProfileComponent = () => {
                                             {addresses.length > 0 && (
                                                 <div className="bg-[#e6af2e17] border border-[#e6af2e] rounded-lg p-4">
                                                     <p className="text-sm text-[#191716]">
-                                                        <span className="font-semibold">💡 Tip:</span> Set a default address to be used automatically for deliveries.
+                                                        <span className="font-semibold"> Tip:</span> Set a default address to be used automatically for deliveries.
                                                     </p>
                                                 </div>
                                             )}

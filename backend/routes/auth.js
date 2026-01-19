@@ -8,7 +8,291 @@ import crypto from 'crypto';
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// 📝 Signup route
+// � Send signup verification code
+router.post("/send-signup-verification", async (req, res) => {
+  try {
+    const { emailAddress, firstName, lastName } = req.body;
+
+    if (!emailAddress) {
+      return res.status(400).json({ error: "Email address is required" });
+    }
+
+    // Check if email already exists
+    const { data: existingUser, error: findError } = await supabase
+      .from("customers")
+      .select("emailaddress")
+      .eq("emailaddress", emailAddress)
+      .maybeSingle();
+
+    if (existingUser) {
+      return res.status(400).json({ error: "Email is already registered" });
+    }
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    // Store verification code
+    const { error: insertError } = await supabase
+      .from("signup_verification_codes")
+      .insert([{
+        email: emailAddress,
+        code: verificationCode,
+        expires_at: expiresAt.toISOString(),
+        used: false
+      }]);
+
+    if (insertError) {
+      return res.status(500).json({ 
+        error: "Failed to generate verification code",
+        details: insertError.message 
+      });
+    }
+
+    // Send verification email
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (!resendApiKey) {
+        return res.status(500).json({ error: "Email service not configured" });
+      }
+
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'GatsisHub <noreply@gatsishub.com>',
+          to: [emailAddress],
+          subject: 'Verify Your Email - GatsisHub Registration',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
+                <p style="font-size: 18px; color: #666;">Email Verification Required</p>
+              </div>
+              
+              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
+                <p style="color: #333; line-height: 1.6;">
+                  Thank you for signing up with GatsisHub. To complete your registration, please verify your email address using the code below:
+                </p>
+              </div>
+
+              <div style="background-color: #35408E; color: white; padding: 30px; text-align: center; border-radius: 10px; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0; font-size: 16px;">Your Verification Code:</p>
+                <div style="font-size: 42px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                  ${verificationCode}
+                </div>
+              </div>
+
+              <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+                <p style="color: #856404; margin: 0;">
+                  ⏰ This code will expire in <strong>15 minutes</strong>
+                </p>
+              </div>
+
+              <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+                <p>If you didn't request this verification code, please ignore this email.</p>
+                <p style="margin-top: 20px;">
+                  Best regards,<br/>
+                  <strong>The GatsisHub Team</strong><br/>
+                  Premium Hanger Solutions
+                </p>
+              </div>
+            </div>
+          `
+        })
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.message || 'Failed to send email');
+      }
+
+      return res.status(200).json({ 
+        message: "Verification code sent to your email",
+        email: emailAddress 
+      });
+
+    } catch (emailError) {
+      return res.status(500).json({ 
+        error: "Failed to send verification email",
+        details: emailError.message 
+      });
+    }
+
+  } catch (err) {
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// 🔐 Verify signup code and create account
+router.post("/verify-signup-code", async (req, res) => {
+  try {
+    const { emailAddress, code, firstName, lastName, companyNumber, gender, dateOfBirth, password, addresses } = req.body;
+
+    if (!emailAddress || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    // Find valid code
+    const { data: verificationRecord, error: findError } = await supabase
+      .from("signup_verification_codes")
+      .select("*")
+      .eq("email", emailAddress)
+      .eq("code", code)
+      .eq("used", false)
+      .single();
+
+    if (findError || !verificationRecord) {
+      return res.status(400).json({ error: "Invalid or expired verification code" });
+    }
+
+    // Check if code is expired
+    const now = new Date();
+    const expiresAt = new Date(verificationRecord.expires_at);
+    
+    if (now > expiresAt) {
+      return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+    }
+
+    // Mark code as used
+    await supabase
+      .from("signup_verification_codes")
+      .update({ used: true })
+      .eq("id", verificationRecord.id);
+
+    // Now proceed with account creation (original signup logic)
+    if (!firstName || !lastName || !password || !gender || !dateOfBirth) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create Supabase Auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: emailAddress,
+      password: password,
+      options: {
+        emailRedirectTo: `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login`
+      }
+    });
+
+    let userId;
+
+    if (authError) {
+      if (authError.code === 'user_already_exists' || authError.message.includes("already")) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailAddress,
+          password: password
+        });
+        
+        if (signInError) {
+          return res.status(400).json({ error: "This email is already registered" });
+        }
+        
+        userId = signInData.user?.id;
+      } else {
+        return res.status(400).json({ error: "Failed to create account: " + authError.message });
+      }
+    } else {
+      userId = authData.user?.id;
+    }
+
+    if (!userId) {
+      return res.status(500).json({ error: "User creation failed" });
+    }
+
+    // Insert into customers table
+    const { data: customerData, error: dbError } = await supabase
+      .from("customers")
+      .insert([{ 
+        userid: userId,
+        google_id: null,
+        companyname: `${firstName} ${lastName}`,
+        emailaddress: emailAddress,
+        companynumber: companyNumber || null,
+        password: hashedPassword,
+        addresses: addresses || [],
+        datecreated: new Date().toISOString(),
+        accountstatus: 'Active',
+        profilePicture: null,
+        emailnotifications: true,
+        gender: gender,
+        dateofbirth: dateOfBirth
+      }])
+      .select();
+
+    if (dbError) {
+      return res.status(400).json({ error: dbError.message });
+    }
+
+    // Send welcome email
+    try {
+      const resendApiKey = process.env.RESEND_API_KEY;
+      
+      if (resendApiKey) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'GatsisHub <noreply@gatsishub.com>',
+            to: [emailAddress],
+            subject: 'Welcome to GatsisHub - Account Created!',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #35408E; margin-bottom: 10px;">Welcome to GatsisHub!</h1>
+                  <p style="font-size: 18px; color: #666;">Account Successfully Created</p>
+                </div>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <h2 style="color: #35408E; margin-top: 0;">Hello ${firstName} ${lastName}!</h2>
+                  <p style="color: #333; line-height: 1.6;">
+                    Your email has been verified and your account is now active. You can start ordering premium custom hangers for your business!
+                  </p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login" 
+                     style="background-color: #DAC325; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Login to Your Account
+                  </a>
+                </div>
+
+                <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+                  <p>Best regards,<br/>
+                    <strong>The GatsisHub Team</strong><br/>
+                    Premium Hanger Solutions
+                  </p>
+                </div>
+              </div>
+            `
+          })
+        });
+      }
+    } catch (emailError) {
+      // Don't fail if welcome email fails
+    }
+
+    res.status(201).json({
+      message: "Account created successfully!",
+      customer: customerData[0]
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// �📝 Signup route
 router.post("/signup", async (req, res) => {
   try {
     

@@ -33,6 +33,7 @@ const Checkout = () => {
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
     const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
     const [capturedThumbnail, setCapturedThumbnail] = useState(null);
+    const [showStepper, setShowStepper] = useState(false);
 
     // Multi-step wizard
     const [currentStep, setCurrentStep] = useState(1);
@@ -83,6 +84,24 @@ const Checkout = () => {
                 setLogoSize(1);
             }
         }, [selectedHanger]);
+
+    // Scroll listener for stepper dropdown animation
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 100) {
+                setShowStepper(true);
+            } else {
+                setShowStepper(false);
+            }
+        };
+
+        // Check initial scroll position
+        handleScroll();
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const [addresses, setAddresses] = useState([]);
     const [hangers, setHangers] = useState([]);
     const [materials, setMaterials] = useState([]);
@@ -975,14 +994,12 @@ const Checkout = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Sticky Stepper */}
-            {!isFullscreen && !showModal && !saveDesignModal && !showInstructionsModal && !showColorLimitationModal && !notificationModal.show && (
-                <div className="fixed top-16 md:top-20 left-0 right-0 z-40 bg-gray-50 shadow-lg border-b-2 border-gray-300">
-                    <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-3 md:py-4">
-                        <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
-                    </div>
+            {/* Sticky Stepper - Right Side for Large Screens */}
+            <div className="hidden lg:block fixed top-1/2 -translate-y-1/2 right-0 z-40 transition-transform duration-500 ease-out">
+                <div className="px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                    <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
                 </div>
-            )}
+            </div>
 
             <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 mt-20 md:mt-24">
 
@@ -1446,6 +1463,11 @@ const Checkout = () => {
                 </div>
             </section>
 
+            {/* Stepper for Small/Medium Screens - Stationary */}
+            <div className="lg:hidden mt-8 mb-8">
+                <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
+            </div>
+
             <StepNavigation 
                 currentStep={currentStep}
                 totalSteps={totalSteps}
@@ -1730,7 +1752,7 @@ const Checkout = () => {
                                 {companyName ? `ORD-${new Date().getFullYear()}...` : ""}
                             </p>
                             <div className="flex gap-3 justify-center">
-                                <Link to="/order">
+                                <Link to="/orders">
                                     <button
                                         className="bg-[#F5F5F5] text-[#333333] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#e0e0e0] transition-colors border border-gray-300"
                                         onClick={() => setShowModal(false)}
