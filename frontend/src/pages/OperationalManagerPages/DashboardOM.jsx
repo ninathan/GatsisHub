@@ -15,20 +15,26 @@ const DashboardOM = () => {
             target: 0,
             reached: 0,
             percentage: 0,
-            quotasCount: 0
+            actualPercentage: 0,
+            quotasCount: 0,
+            isExceeded: false
         },
         weeklyQuota: {
             quotaId: null,
             target: 0,
             reached: 0,
             percentage: 0,
-            quotasCount: 0
+            actualPercentage: 0,
+            quotasCount: 0,
+            isExceeded: false
         },
         finalQuota: {
             percentage: 0,
             dailyProgress: 0,
             weeklyProgress: 0,
-            currentProgress: 0
+            currentProgress: 0,
+            remaining: 0,
+            total: 0
         }
     })
     const [loading, setLoading] = useState(true);
@@ -64,6 +70,11 @@ const DashboardOM = () => {
             const today = new Date();
             today.setHours(0, 0, 0, 0); // Reset time for accurate date comparison
 
+            console.log('=== QUOTA DEBUG ===');
+            console.log('Active Quotas Found:', activeQuotas.length);
+            console.log('Today:', today);
+            console.log('All Quotas:', activeQuotas);
+
             // Helper function to calculate remaining working days (excluding Sundays)
             const getRemainingWorkingDays = (startDate, endDate, fromDate = today) => {
                 const start = new Date(Math.max(fromDate, new Date(startDate)));
@@ -93,26 +104,65 @@ const DashboardOM = () => {
             let totalWeeklyProduction = 0;
             let quotasWithDailyTargets = [];
             let quotasWithWeeklyTargets = [];
+            let processedOrderIds = new Set(); // Track orders to avoid double-counting
 
             activeQuotas.forEach(quota => {
-                if (!quota.startdate || !quota.enddate) return;
+                console.log('Processing quota:', quota.quotaname);
+                console.log('  - Start Date:', quota.startdate);
+                console.log('  - End Date:', quota.enddate);
+                console.log('  - Target Quota:', quota.targetquota);
+                console.log('  - Finished Quota:', quota.finishedquota);
+                console.log('  - Assigned Orders:', quota.assignedorders);
+                
+                if (!quota.startdate || !quota.enddate) {
+                    console.log('   Skipped: Missing start or end date');
+                    return;
+                }
+
+                // Check for overlapping orders with already processed quotas
+                const hasOverlappingOrders = quota.assignedorders?.some(orderId => 
+                    processedOrderIds.has(orderId)
+                );
+                
+                if (hasOverlappingOrders) {
+                    console.log('   WARNING: This quota shares orders with another active quota');
+                    console.log('  - This will result in double-counting the same work');
+                }
+                
+                // Add this quota's orders to the processed set
+                quota.assignedorders?.forEach(orderId => processedOrderIds.add(orderId));
 
                 const startDate = new Date(quota.startdate);
                 const endDate = new Date(quota.enddate);
                 
+                // Reset time to midnight for proper date comparison
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999); // End of day
+                
+                console.log('  - Parsed Start:', startDate);
+                console.log('  - Parsed End:', endDate);
+                console.log('  - Is Active?', today >= startDate && today <= endDate);
+                
                 // Check if quota is currently active (today is within the period)
                 if (today >= startDate && today <= endDate) {
                     const remaining = (quota.targetquota || 0) - (quota.finishedquota || 0);
+                    console.log('  ✓ Active! Remaining:', remaining);
                     
                     // Calculate daily target based on remaining work and remaining days
                     const remainingDays = getRemainingWorkingDays(startDate, endDate, today);
+                    console.log('  - Remaining working days:', remainingDays);
+                    
                     if (remainingDays > 0 && remaining > 0) {
                         const dailyTarget = Math.ceil(remaining / remainingDays);
+                        const dailyProd = quota.finishedquota || 0; // Use finishedquota as production
+                        console.log('  - Daily target calculated:', dailyTarget);
+                        console.log('  - Daily production (finishedquota):', dailyProd);
                         totalDailyTarget += dailyTarget;
-                        totalDailyProduction += (quota.daily_production || 0);
+                        totalDailyProduction += dailyProd;
                         quotasWithDailyTargets.push({
                             name: quota.quotaname,
                             daily: dailyTarget,
+                            production: dailyProd,
                             remaining: remaining,
                             remainingDays: remainingDays
                         });
@@ -120,28 +170,48 @@ const DashboardOM = () => {
                     
                     // Calculate weekly target based on remaining work and remaining weeks
                     const remainingWeeks = getRemainingWeeks(startDate, endDate, today);
+                    console.log('  - Remaining weeks:', remainingWeeks);
+                    
                     if (remainingWeeks > 0 && remaining > 0) {
                         const weeklyTarget = Math.ceil(remaining / remainingWeeks);
+                        const weeklyProd = quota.finishedquota || 0; // Use finishedquota as production
+                        console.log('  - Weekly target calculated:', weeklyTarget);
+                        console.log('  - Weekly production (finishedquota):', weeklyProd);
                         totalWeeklyTarget += weeklyTarget;
-                        totalWeeklyProduction += (quota.weekly_production || 0);
+                        totalWeeklyProduction += weeklyProd;
                         quotasWithWeeklyTargets.push({
                             name: quota.quotaname,
                             weekly: weeklyTarget,
+                            production: weeklyProd,
                             remaining: remaining,
                             remainingWeeks: remainingWeeks
                         });
                     }
+                } else {
+                    console.log('  Not active for today');
                 }
             });
 
             // Calculate overall progress from all active quotas
             const totalTarget = activeQuotas.reduce((sum, q) => sum + (q.targetquota || 0), 0);
             const totalFinished = activeQuotas.reduce((sum, q) => sum + (q.finishedquota || 0), 0);
+            const totalRemaining = totalTarget - totalFinished;
             const overallPercentage = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
 
             // Calculate today's and weekly percentages
             const todayPercentage = totalDailyTarget > 0 ? Math.round((totalDailyProduction / totalDailyTarget) * 100) : 0;
+            const todayPercentageCapped = Math.min(todayPercentage, 100);
             const weeklyPercentage = totalWeeklyTarget > 0 ? Math.round((totalWeeklyProduction / totalWeeklyTarget) * 100) : 0;
+            const weeklyPercentageCapped = Math.min(weeklyPercentage, 100);
+
+            console.log('Total Daily Target:', totalDailyTarget);
+            console.log('Total Daily Production:', totalDailyProduction);
+            console.log('Today Percentage:', todayPercentage, '% (Display:', todayPercentageCapped, '%)');
+            console.log('Total Weekly Target:', totalWeeklyTarget);
+            console.log('Total Weekly Production:', totalWeeklyProduction);
+            console.log('Weekly Percentage:', weeklyPercentage, '% (Display:', weeklyPercentageCapped, '%)');
+            console.log('Quotas with daily targets:', quotasWithDailyTargets);
+            console.log('Quotas with weekly targets:', quotasWithWeeklyTargets);
 
             const newData = {
                 totalOrders,
@@ -151,21 +221,27 @@ const DashboardOM = () => {
                     quotaId: null, // Multiple quotas, no single ID
                     target: totalDailyTarget,
                     reached: totalDailyProduction,
-                    percentage: todayPercentage,
-                    quotasCount: quotasWithDailyTargets.length
+                    percentage: todayPercentageCapped,
+                    actualPercentage: todayPercentage,
+                    quotasCount: quotasWithDailyTargets.length,
+                    isExceeded: todayPercentage > 100
                 },
                 weeklyQuota: {
                     quotaId: null, // Multiple quotas, no single ID
                     target: totalWeeklyTarget,
                     reached: totalWeeklyProduction,
-                    percentage: weeklyPercentage,
-                    quotasCount: quotasWithWeeklyTargets.length
+                    percentage: weeklyPercentageCapped,
+                    actualPercentage: weeklyPercentage,
+                    quotasCount: quotasWithWeeklyTargets.length,
+                    isExceeded: weeklyPercentage > 100
                 },
                 finalQuota: {
                     percentage: overallPercentage,
-                    dailyProgress: todayPercentage,
-                    weeklyProgress: weeklyPercentage,
-                    currentProgress: overallPercentage
+                    dailyProgress: todayPercentageCapped,
+                    weeklyProgress: weeklyPercentageCapped,
+                    currentProgress: overallPercentage,
+                    remaining: totalRemaining,
+                    total: totalTarget
                 }
             };
 
@@ -222,8 +298,9 @@ const DashboardOM = () => {
     );
 
     // Quota card component for displaying progress metrics
-    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotasCount }) => {
+    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotasCount, isExceeded, actualPercentage }) => {
         const remaining = Math.max(0, target - reached);
+        const excess = Math.max(0, reached - target);
         
         return (
             <div className="bg-[#191716] rounded-xl shadow-lg p-6 md:p-8 text-white relative">
@@ -240,7 +317,9 @@ const DashboardOM = () => {
                 {/* Circular progress indicator */}
                 <div className="flex justify-center items-center mb-4 md:mb-6 relative">
                     <CircularProgress percentage={percentage} size={100} strokeWidth={10} />
-                    <div className="absolute text-2xl md:text-3xl font-bold">{percentage}%</div>
+                    <div className="absolute text-2xl md:text-3xl font-bold">
+                        {isExceeded ? '100%' : `${percentage}%`}
+                    </div>
                 </div>
 
                 {/* Progress statistics */}
@@ -250,15 +329,30 @@ const DashboardOM = () => {
                             Quota reached: <span className="font-bold text-white">{reached}</span> / {target}
                         </p>
                         <div className="pt-2 border-t border-white/20">
-                            <p className="text-xs md:text-sm text-[#E6AF2E] font-semibold">
-                                Remaining: <span className="text-lg md:text-xl font-bold">{remaining}</span> units
-                            </p>
-                            {remaining > 0 && (
-                                <p className="text-xs text-blue-200 mt-1">
-                                    {remaining} more {remaining === 1 ? 'unit' : 'units'} needed to reach quota
-                                </p>
+                            {!isExceeded && remaining > 0 && (
+                                <>
+                                    <p className="text-xs md:text-sm text-[#E6AF2E] font-semibold">
+                                        Remaining: <span className="text-lg md:text-xl font-bold">{remaining}</span> units
+                                    </p>
+                                    <p className="text-xs text-blue-200 mt-1">
+                                        {remaining} more {remaining === 1 ? 'unit' : 'units'} needed to reach quota
+                                    </p>
+                                </>
                             )}
-                            {remaining === 0 && target > 0 && (
+                            {isExceeded && (
+                                <>
+                                    <p className="text-xs md:text-sm text-green-400 font-bold mb-1">
+                                         Quota Exceeded!
+                                    </p>
+                                    <p className="text-xs text-green-300">
+                                        +{excess} {excess === 1 ? 'unit' : 'units'} over target
+                                    </p>
+                                    <p className="text-xs text-blue-200 mt-1">
+                                        ({actualPercentage}% of target)
+                                    </p>
+                                </>
+                            )}
+                            {!isExceeded && remaining === 0 && target > 0 && (
                                 <p className="text-xs text-green-400 mt-1 font-semibold">
                                     ✓ Quota reached!
                                 </p>
@@ -371,15 +465,18 @@ const DashboardOM = () => {
 
                         {/* Progress breakdown bars */}
                         <div className='flex flex-col justify-center space-y-4 md:space-y-6'>
-                            {/* first bar */}
+                            {/* first bar - Total target quota */}
                             <div>
                                 <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-xs md:text-sm font-medium'>End Quota to be reached</span>
+                                    <span className='text-xs md:text-sm font-medium'>Total Target Quota</span>
+                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.percentage}%</span>
                                 </div>
                                 <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
-                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full' style={{ width: '100%' }}></div>
+                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full transition-all duration-1000' style={{ width: `${dashboardData.finalQuota.percentage}%` }}></div>
                                 </div>
-
+                                <p className='text-xs text-blue-200 mt-1'>
+                                    {dashboardData.producedHangers} / {dashboardData.producedHangers + (dashboardData.finalQuota.remaining || 0)} units
+                                </p>
                             </div>
                             {/* second bar */}
                             <div>
@@ -431,6 +528,8 @@ const DashboardOM = () => {
                             reached={dashboardData.todayQuota.reached}
                             target={dashboardData.todayQuota.target}
                             quotasCount={dashboardData.todayQuota.quotasCount}
+                            isExceeded={dashboardData.todayQuota.isExceeded}
+                            actualPercentage={dashboardData.todayQuota.actualPercentage}
                         />
                         <QuotaCard 
                             title="Weekly Quota"
@@ -441,6 +540,8 @@ const DashboardOM = () => {
                             reached={dashboardData.weeklyQuota.reached}
                             target={dashboardData.weeklyQuota.target}
                             quotasCount={dashboardData.weeklyQuota.quotasCount}
+                            isExceeded={dashboardData.weeklyQuota.isExceeded}
+                            actualPercentage={dashboardData.weeklyQuota.actualPercentage}
                         />
                     </div>
             </div>
