@@ -118,10 +118,36 @@ router.post("/create", async (req, res) => {
     // Calculate target quota as sum of order quantities
     const targetquota = orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
 
+    // Auto-distribute quota evenly across the timeframe
+    let adjustedDailyTarget = 0;
+    let adjustedWeeklyTarget = 0;
+
+    if (startdate && enddate) {
+      const start = new Date(startdate);
+      const end = new Date(enddate);
+      const daysInPeriod = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      const weeksInPeriod = Math.ceil(daysInPeriod / 7);
+
+      // Distribute evenly across working days (assuming 6-day work week)
+      const workingDays = Math.max(1, Math.floor(daysInPeriod * (6/7)));
+      adjustedDailyTarget = Math.ceil(targetquota / workingDays);
+      
+      // Distribute evenly across weeks
+      adjustedWeeklyTarget = Math.ceil(targetquota / Math.max(1, weeksInPeriod));
+    } else if (startdate) {
+      // If only start date provided, default to 30-day period
+      adjustedDailyTarget = Math.ceil(targetquota / 25); // 25 working days
+      adjustedWeeklyTarget = Math.ceil(targetquota / 4); // ~4 weeks
+    }
+
     const quotaData = {
       quotaname,
       targetquota,
       finishedquota: 0,
+      adjusted_daily_target: adjustedDailyTarget,
+      adjusted_weekly_target: adjustedWeeklyTarget,
+      daily_production: 0,
+      weekly_production: 0,
       teamids: teamids || [],
       assignedorders: assignedorders || [],
       startdate: startdate || null,
@@ -216,6 +242,46 @@ router.patch("/:quotaid", async (req, res) => {
 
       if (!ordersError && orders) {
         updateData.targetquota = orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+        
+        // Recalculate daily and weekly targets based on new quota
+        if (existingQuota.startdate && existingQuota.enddate) {
+          const start = new Date(existingQuota.startdate);
+          const end = new Date(existingQuota.enddate);
+          const daysInPeriod = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+          const weeksInPeriod = Math.ceil(daysInPeriod / 7);
+
+          // Distribute evenly across working days (assuming 6-day work week)
+          const workingDays = Math.max(1, Math.floor(daysInPeriod * (6/7)));
+          updateData.adjusted_daily_target = Math.ceil(updateData.targetquota / workingDays);
+          
+          // Distribute evenly across weeks
+          updateData.adjusted_weekly_target = Math.ceil(updateData.targetquota / Math.max(1, weeksInPeriod));
+        } else if (existingQuota.startdate) {
+          // If only start date provided, default to 30-day period
+          updateData.adjusted_daily_target = Math.ceil(updateData.targetquota / 25); // 25 working days
+          updateData.adjusted_weekly_target = Math.ceil(updateData.targetquota / 4); // ~4 weeks
+        }
+      }
+    }
+    
+    // Also recalculate if dates are updated
+    if ((startdate !== undefined || enddate !== undefined) && updateData.targetquota === undefined) {
+      const newStartDate = startdate !== undefined ? startdate : existingQuota.startdate;
+      const newEndDate = enddate !== undefined ? enddate : existingQuota.enddate;
+      const targetQuota = existingQuota.targetquota;
+      
+      if (newStartDate && newEndDate && targetQuota) {
+        const start = new Date(newStartDate);
+        const end = new Date(newEndDate);
+        const daysInPeriod = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        const weeksInPeriod = Math.ceil(daysInPeriod / 7);
+
+        // Distribute evenly across working days
+        const workingDays = Math.max(1, Math.floor(daysInPeriod * (6/7)));
+        updateData.adjusted_daily_target = Math.ceil(targetQuota / workingDays);
+        
+        // Distribute evenly across weeks
+        updateData.adjusted_weekly_target = Math.ceil(targetQuota / Math.max(1, weeksInPeriod));
       }
     }
 

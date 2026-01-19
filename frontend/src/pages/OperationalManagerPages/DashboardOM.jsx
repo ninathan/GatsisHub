@@ -249,36 +249,55 @@ const DashboardOM = () => {
     );
 
     // Quota card component for displaying progress metrics
-    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotaType, onEdit }) => (
-        <div className="bg-[#191716] rounded-xl shadow-lg p-6 md:p-8 text-white relative">
-            {/* Edit button */}
-            <button
-                onClick={() => onEdit(quotaType)}
-                className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
-                title="Edit quota"
-            >
-                <Edit2 size={16} />
-            </button>
-            
-            <h3 className="text-lg md:text-xl font-bold mb-2">{title}</h3>
-            <p className="text-blue-200 text-xs md:text-sm mb-4 md:mb-6">{subtitle}</p>
+    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotaType, onEdit }) => {
+        const remaining = Math.max(0, target - reached);
+        
+        return (
+            <div className="bg-[#191716] rounded-xl shadow-lg p-6 md:p-8 text-white relative">
+                {/* Edit button */}
+                <button
+                    onClick={() => onEdit(quotaType)}
+                    className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+                    title="Edit quota"
+                >
+                    <Edit2 size={16} />
+                </button>
+                
+                <h3 className="text-lg md:text-xl font-bold mb-2">{title}</h3>
+                <p className="text-blue-200 text-xs md:text-sm mb-4 md:mb-6">{subtitle}</p>
 
-            {/* Circular progress indicator */}
-            <div className="flex justify-center items-center mb-4 md:mb-6 relative">
-                <CircularProgress percentage={percentage} size={100} strokeWidth={10} />
-                <div className="absolute text-2xl md:text-3xl font-bold">{percentage}%</div>
-            </div>
-
-            {/* Progress statistics */}
-            {reached !== undefined && target !== undefined && (
-                <div className="text-center">
-                    <p className="text-blue-200 text-xs md:text-sm">
-                        Quota reached: <span className="font-bold text-white">{reached}</span> / {target}
-                    </p>
+                {/* Circular progress indicator */}
+                <div className="flex justify-center items-center mb-4 md:mb-6 relative">
+                    <CircularProgress percentage={percentage} size={100} strokeWidth={10} />
+                    <div className="absolute text-2xl md:text-3xl font-bold">{percentage}%</div>
                 </div>
-            )}
-        </div>
-    );
+
+                {/* Progress statistics */}
+                {reached !== undefined && target !== undefined && (
+                    <div className="text-center space-y-2">
+                        <p className="text-blue-200 text-xs md:text-sm">
+                            Quota reached: <span className="font-bold text-white">{reached}</span> / {target}
+                        </p>
+                        <div className="pt-2 border-t border-white/20">
+                            <p className="text-xs md:text-sm text-[#E6AF2E] font-semibold">
+                                Remaining: <span className="text-lg md:text-xl font-bold">{remaining}</span> units
+                            </p>
+                            {remaining > 0 && (
+                                <p className="text-xs text-blue-200 mt-1">
+                                    {remaining} more {remaining === 1 ? 'unit' : 'units'} needed to reach quota
+                                </p>
+                            )}
+                            {remaining === 0 && (
+                                <p className="text-xs text-green-400 mt-1 font-semibold">
+                                    ✓ Quota reached!
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     // Scroll animations
     const titleAnim = useScrollAnimation({ threshold: 0.3 });
@@ -429,7 +448,7 @@ const DashboardOM = () => {
                     >
                         <QuotaCard 
                             title="Today's Quota"
-                            subtitle={`End Quota to be reached by the end of the day: ${dashboardData.todayQuota.target}`}
+                            subtitle={`Target for today: ${dashboardData.todayQuota.target} units`}
                             percentage={dashboardData.todayQuota.percentage}
                             reached={dashboardData.todayQuota.reached}
                             target={dashboardData.todayQuota.target}
@@ -438,7 +457,7 @@ const DashboardOM = () => {
                         />
                         <QuotaCard 
                             title="Weekly Quota"
-                            subtitle={`End Quota to be reached by the end of the week: ${dashboardData.weeklyQuota.target}`}
+                            subtitle={`Target for this week: ${dashboardData.weeklyQuota.target} units`}
                             percentage={dashboardData.weeklyQuota.percentage}
                             reached={dashboardData.weeklyQuota.reached}
                             target={dashboardData.weeklyQuota.target}
