@@ -2,8 +2,34 @@ import express from "express";
 import supabase from "../supabaseClient.js";
 import multer from "multer";
 import path from "path";
+import nodemailer from "nodemailer";
+import { emailTemplates } from "../utils/emailTemplates.js";
 
 const router = express.Router();
+
+// Configure email transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+// Helper function to send email
+const sendEmail = async (to, subject, html) => {
+  try {
+    await transporter.sendMail({
+      from: `"GatsisHub" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`Email sent to ${to}`);
+  } catch (error) {
+    console.error('Email send error:', error);
+  }
+};
 
 // Configure multer for memory storage (Vercel compatible)
 const storage = multer.memoryStorage();
@@ -88,6 +114,21 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
 
       return res.status(400).json({ error: insertError.message });
     }
+
+    // Log to payment history
+    await supabase.from("payment_history").insert([{
+      orderid: payment.orderid,
+      customerid: payment.customerid,
+      paymentid: payment.paymentid,
+      paymentmethod: payment.paymentmethod,
+      proofofpayment: payment.proofofpayment,
+      amountpaid: payment.amountpaid,
+      transactionreference: payment.transactionreference,
+      notes: payment.notes,
+      paymentstatus: 'Pending Verification',
+      datesubmitted: payment.datesubmitted,
+      action: 'submitted'
+    }]);
 
     // Update order status if orderid is provided
     if (orderid) {
@@ -203,6 +244,35 @@ router.get("/order/:orderid", async (req, res) => {
   }
 });
 
+// 📜 GET /payments/history/:orderid - Get payment history for an order
+router.get("/history/:orderid", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+
+    const { data: history, error } = await supabase
+      .from("payment_history")
+      .select(`
+        *,
+        employees:verifiedby (
+          employeeid,
+          employeename
+        )
+      `)
+      .eq("orderid", orderid)
+      .order('datesubmitted', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(200).json({ history: history || [] });
+
+  } catch (err) {
+    console.error('Error fetching payment history:', err);
+    res.status(500).json({ error: "Failed to fetch payment history" });
+  }
+});
+
 // 🔍 GET /payments/:paymentid - Get single payment
 router.get("/:paymentid", async (req, res) => {
   try {
@@ -269,13 +339,39 @@ router.patch("/:paymentid/verify", async (req, res) => {
       .from("payments")
       .update(updateData)
       .eq("paymentid", paymentid)
-      .select()
+      .select(`
+        *,
+        customers:customerid (
+          companyname,
+          emailaddress
+        ),
+        orders:orderid (
+          orderid
+        )
+      `)
       .single();
 
     if (updateError) {
 
       return res.status(400).json({ error: updateError.message });
     }
+
+    // Log to payment history
+    await supabase.from("payment_history").insert([{
+      orderid: payment.orderid,
+      customerid: payment.customerid,
+      paymentid: payment.paymentid,
+      paymentmethod: payment.paymentmethod,
+      proofofpayment: payment.proofofpayment,
+      amountpaid: payment.amountpaid,
+      transactionreference: payment.transactionreference,
+      notes: payment.notes,
+      paymentstatus: status,
+      verifiedby: verifiedby ? parseInt(verifiedby) : null,
+      datesubmitted: payment.datesubmitted,
+      dateverified: new Date().toISOString(),
+      action: status === 'Verified' ? 'approved' : 'rejected'
+    }]);
 
     // Update order status based on payment status
     if (payment.orderid) {
@@ -303,6 +399,46 @@ router.patch("/:paymentid/verify", async (req, res) => {
       }
     }
 
+    // Send email notification to customer
+    if (payment.customers && payment.customers.emailaddress) {
+      const customerEmail = payment.customers.emailaddress;
+      const companyName = payment.customers.companyname || 'Valued Customer';
+      const orderNumber = payment.orders?.orderid || payment.orderid;
+      const dateVerified = new Date().toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+
+      if (status === 'Verified') {
+        const emailHtml = emailTemplates.paymentApproved(
+          companyName,
+          orderNumber,
+          payment.paymentmethod,
+          payment.amountpaid || 'N/A',
+          dateVerified
+        );
+        await sendEmail(
+          customerEmail,
+          `Payment Approved - Order ${orderNumber}`,
+          emailHtml
+        );
+      } else if (status === 'Rejected') {
+        const emailHtml = emailTemplates.paymentRejected(
+          companyName,
+          orderNumber,
+          payment.paymentmethod,
+          notes || 'Please resubmit with clearer payment details',
+          dateVerified
+        );
+        await sendEmail(
+          customerEmail,
+          `Payment Resubmission Required - Order ${orderNumber}`,
+          emailHtml
+        );
+      }
+    }
+
     res.status(200).json(payment);
 
   } catch (err) {
@@ -311,15 +447,25 @@ router.patch("/:paymentid/verify", async (req, res) => {
   }
 });
 
-// ❌ DELETE /payments/:paymentid - Delete/reject payment (admin)
+// ❌ DELETE /payments/:paymentid - Reject payment and archive to history (admin)
 router.delete("/:paymentid", async (req, res) => {
   try {
     const { paymentid } = req.params;
+    const { verifiedby, notes } = req.body;
 
-    // First get the payment to retrieve the orderid
+    // First get the payment details
     const { data: payment, error: fetchError } = await supabase
       .from("payments")
-      .select("orderid")
+      .select(`
+        *,
+        customers:customerid (
+          companyname,
+          emailaddress
+        ),
+        orders:orderid (
+          orderid
+        )
+      `)
       .eq("paymentid", paymentid)
       .single();
 
@@ -327,7 +473,49 @@ router.delete("/:paymentid", async (req, res) => {
       return res.status(404).json({ error: "Payment not found" });
     }
 
-    // Delete the payment record
+    // Archive to payment history before deleting
+    await supabase.from("payment_history").insert([{
+      orderid: payment.orderid,
+      customerid: payment.customerid,
+      paymentid: payment.paymentid,
+      paymentmethod: payment.paymentmethod,
+      proofofpayment: payment.proofofpayment,
+      amountpaid: payment.amountpaid,
+      transactionreference: payment.transactionreference,
+      notes: notes || payment.notes || 'Payment rejected by admin',
+      paymentstatus: 'Rejected',
+      verifiedby: verifiedby ? parseInt(verifiedby) : null,
+      datesubmitted: payment.datesubmitted,
+      dateverified: new Date().toISOString(),
+      action: 'rejected'
+    }]);
+
+    // Send email notification to customer
+    if (payment.customers && payment.customers.emailaddress) {
+      const customerEmail = payment.customers.emailaddress;
+      const companyName = payment.customers.companyname || 'Valued Customer';
+      const orderNumber = payment.orders?.orderid || payment.orderid;
+      const dateRejected = new Date().toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+
+      const emailHtml = emailTemplates.paymentRejected(
+        companyName,
+        orderNumber,
+        payment.paymentmethod,
+        notes || 'Please resubmit with clearer payment details',
+        dateRejected
+      );
+      await sendEmail(
+        customerEmail,
+        `Payment Resubmission Required - Order ${orderNumber}`,
+        emailHtml
+      );
+    }
+
+    // Delete the payment record from main table
     const { error: deleteError } = await supabase
       .from("payments")
       .delete()
@@ -355,11 +543,11 @@ router.delete("/:paymentid", async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: "Payment rejected. Customer can resubmit." });
+    res.status(200).json({ message: "Payment rejected and archived. Customer can resubmit." });
 
   } catch (err) {
 
-    res.status(500).json({ error: "Failed to delete payment" });
+    res.status(500).json({ error: "Failed to reject payment" });
   }
 });
 

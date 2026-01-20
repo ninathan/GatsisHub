@@ -46,6 +46,8 @@ const OrderDetail = () => {
     // Payment proof states
     const [paymentInfo, setPaymentInfo] = useState(null);
     const [showProofModal, setShowProofModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
+    const [paymentHistory, setPaymentHistory] = useState([]);
 
     // Fetch order details
     useEffect(() => {
@@ -101,6 +103,25 @@ const OrderDetail = () => {
 
         fetchPaymentInfo();
     }, [orderid]);
+
+    // Fetch payment history for this order
+    useEffect(() => {
+        const fetchPaymentHistory = async () => {
+            if (!orderid) return;
+
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        };
+
+        fetchPaymentHistory();
+    }, [orderid, showProofModal]); // Refetch when modal closes
 
     // Helper functions
     const formatDate = (dateString) => {
@@ -625,22 +646,32 @@ const OrderDetail = () => {
             return;
         }
 
-        const confirmed = window.confirm(
-            'Are you sure you want to reject this payment? The customer will need to submit a new proof of payment.'
+        const reason = prompt(
+            'Please provide a reason for rejection (this will be sent to the customer):',
+            'Unable to verify payment details. Please resubmit with clearer information.'
         );
 
-        if (!confirmed) return;
+        if (reason === null) return; // User cancelled
 
         try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
             const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    verifiedby: employee?.employeeid,
+                    notes: reason
+                })
             });
 
             if (!response.ok) {
                 throw new Error('Failed to reject payment');
             }
 
-            showNotificationMessage('Payment rejected. Customer can now resubmit proof of payment.', 'success');
+            showNotificationMessage('Payment rejected and archived. Customer has been notified via email.', 'success');
             setShowProofModal(false);
             setPaymentInfo(null);
             
@@ -1063,96 +1094,258 @@ const OrderDetail = () => {
             {/* Proof of Payment Modal */}
             {showProofModal && paymentInfo && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
                         <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
                             <div>
-                                <h2 className="text-white text-2xl font-semibold">Proof of Payment</h2>
+                                <h2 className="text-white text-2xl font-semibold">Payment Information</h2>
                                 <p className="text-indigo-200 text-sm mt-1">
                                     Payment Method: {paymentInfo.paymentmethod} | Status: {paymentInfo.paymentstatus}
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShowProofModal(false)}
+                                onClick={() => {
+                                    setShowProofModal(false);
+                                    setActiveTab('current');
+                                }}
                                 className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
                             >
                                 ×
                             </button>
                         </div>
 
-                        {/* Proof Content - Scrollable */}
+                        {/* Tab Navigation */}
+                        <div className="bg-white border-b border-gray-200 flex-shrink-0">
+                            <div className="flex px-6">
+                                <button
+                                    onClick={() => setActiveTab('current')}
+                                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+                                        activeTab === 'current'
+                                            ? 'border-indigo-600 text-indigo-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    Current Payment
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('history')}
+                                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+                                        activeTab === 'history'
+                                            ? 'border-indigo-600 text-indigo-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    Transaction History ({paymentHistory.length})
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tab Content - Scrollable */}
                         <div className="bg-white p-6 overflow-auto flex-1">
-                            {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
-                                <div className="flex flex-col items-center gap-4 py-8">
-                                    <FileText size={64} className="text-indigo-600" />
-                                    <p className="text-gray-700 font-semibold text-lg">PDF Payment Proof</p>
-                                    <a 
-                                        href={paymentInfo.proofofpayment} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold flex items-center gap-2"
-                                    >
-                                        <Eye size={20} />
-                                        Open PDF
-                                    </a>
-                                </div>
+                            {activeTab === 'current' ? (
+                                // Current Payment Tab
+                                <>
+                                    {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
+                                        <div className="flex flex-col items-center gap-4 py-8">
+                                            <FileText size={64} className="text-indigo-600" />
+                                            <p className="text-gray-700 font-semibold text-lg">PDF Payment Proof</p>
+                                            <a 
+                                                href={paymentInfo.proofofpayment} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                                            >
+                                                <Eye size={20} />
+                                                Open PDF
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                                            <img
+                                                src={paymentInfo.proofofpayment}
+                                                alt="Proof of Payment"
+                                                className="w-full h-auto max-h-[60vh] object-contain"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Current Payment Details */}
+                                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                                        <h3 className="font-semibold text-gray-800 mb-3">Payment Details</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Submitted:</span>
+                                                <span className="font-medium">{formatDate(paymentInfo.datesubmitted)}</span>
+                                            </div>
+                                            {paymentInfo.amountpaid && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Amount:</span>
+                                                    <span className="font-medium">PHP {paymentInfo.amountpaid}</span>
+                                                </div>
+                                            )}
+                                            {paymentInfo.transactionreference && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Reference:</span>
+                                                    <span className="font-medium">{paymentInfo.transactionreference}</span>
+                                                </div>
+                                            )}
+                                            {paymentInfo.notes && (
+                                                <div className="pt-2 border-t">
+                                                    <span className="text-gray-600">Notes:</span>
+                                                    <p className="text-gray-800 mt-1">{paymentInfo.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
                             ) : (
-                                <div className="w-full bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
-                                    <img
-                                        src={paymentInfo.proofofpayment}
-                                        alt="Proof of Payment"
-                                        className="w-full h-auto max-h-[60vh] object-contain"
-                                    />
+                                // Transaction History Tab
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-gray-800 text-lg mb-4">Payment Transaction History</h3>
+                                    {paymentHistory.length === 0 ? (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <FileText size={48} className="mx-auto mb-3 text-gray-400" />
+                                            <p>No transaction history available</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {paymentHistory.map((transaction, index) => (
+                                                <div 
+                                                    key={transaction.historyid || index} 
+                                                    className={`border rounded-lg p-4 ${
+                                                        transaction.action === 'approved' ? 'bg-green-50 border-green-200' :
+                                                        transaction.action === 'rejected' ? 'bg-red-50 border-red-200' :
+                                                        'bg-gray-50 border-gray-200'
+                                                    }`}
+                                                >
+                                                    {/* Transaction Header */}
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                                    transaction.action === 'approved' ? 'bg-green-600 text-white' :
+                                                                    transaction.action === 'rejected' ? 'bg-red-600 text-white' :
+                                                                    'bg-gray-600 text-white'
+                                                                }`}>
+                                                                    {transaction.action.toUpperCase()}
+                                                                </span>
+                                                                <span className={`text-sm font-medium ${
+                                                                    transaction.paymentstatus === 'Verified' ? 'text-green-700' :
+                                                                    transaction.paymentstatus === 'Rejected' ? 'text-red-700' :
+                                                                    'text-yellow-700'
+                                                                }`}>
+                                                                    {transaction.paymentstatus}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {formatDate(transaction.datesubmitted)}
+                                                            </p>
+                                                        </div>
+                                                        {transaction.proofofpayment && (
+                                                            <a
+                                                                href={transaction.proofofpayment}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
+                                                            >
+                                                                <Eye size={16} />
+                                                                View Proof
+                                                            </a>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Transaction Details */}
+                                                    <div className="space-y-2 text-sm">
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <span className="text-gray-600">Method:</span>
+                                                                <p className="font-medium">{transaction.paymentmethod}</p>
+                                                            </div>
+                                                            {transaction.amountpaid && (
+                                                                <div>
+                                                                    <span className="text-gray-600">Amount:</span>
+                                                                    <p className="font-medium">PHP {transaction.amountpaid}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {transaction.transactionreference && (
+                                                            <div>
+                                                                <span className="text-gray-600">Reference:</span>
+                                                                <p className="font-medium">{transaction.transactionreference}</p>
+                                                            </div>
+                                                        )}
+                                                        {transaction.notes && (
+                                                            <div className="pt-2 border-t border-gray-300">
+                                                                <span className="text-gray-600">Notes:</span>
+                                                                <p className="text-gray-800 mt-1">{transaction.notes}</p>
+                                                            </div>
+                                                        )}
+                                                        {transaction.dateverified && (
+                                                            <div className="pt-2 border-t border-gray-300">
+                                                                <span className="text-gray-600">Verified:</span>
+                                                                <p className="text-gray-800">{formatDate(transaction.dateverified)}</p>
+                                                                {transaction.employees && (
+                                                                    <p className="text-xs text-gray-500">
+                                                                        by {transaction.employees.employeename}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Payment Details */}
-                        {paymentInfo.datesubmitted && (
-                            <div className="bg-gray-50 px-6 py-4 border-t flex-shrink-0">
-                                <p className="text-sm text-gray-600">
-                                    Submitted: {formatDate(paymentInfo.datesubmitted)}
-                                </p>
-                                {paymentInfo.paymentstatus && (
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Status: <span className={`font-semibold ${
-                                            paymentInfo.paymentstatus === 'Verified' ? 'text-green-600' :
-                                            paymentInfo.paymentstatus === 'Rejected' ? 'text-red-600' :
-                                            'text-yellow-600'
-                                        }`}>{paymentInfo.paymentstatus}</span>
-                                    </p>
-                                )}
+                        {/* Footer - Action Buttons (only show for current payment tab) */}
+                        {activeTab === 'current' && (
+                            <div className="bg-gray-100 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
+                                <div className="flex gap-3">
+                                    {paymentInfo.paymentstatus !== 'Verified' && (
+                                        <button
+                                            onClick={handleApprovePayment}
+                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                        >
+                                            <Check size={18} />
+                                            Approve Payment
+                                        </button>
+                                    )}
+                                    {paymentInfo.paymentstatus !== 'Rejected' && (
+                                        <button
+                                            onClick={handleRejectPayment}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                        >
+                                            ✕ Reject Payment
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowProofModal(false);
+                                        setActiveTab('current');
+                                    }}
+                                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                                >
+                                    Close
+                                </button>
                             </div>
                         )}
-
-                        {/* Footer - Action Buttons */}
-                        <div className="bg-gray-100 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
-                            <div className="flex gap-3">
-                                {paymentInfo.paymentstatus !== 'Verified' && (
-                                    <button
-                                        onClick={handleApprovePayment}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
-                                    >
-                                        <Check size={18} />
-                                        Approve Payment
-                                    </button>
-                                )}
-                                {paymentInfo.paymentstatus !== 'Rejected' && (
-                                    <button
-                                        onClick={handleRejectPayment}
-                                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
-                                    >
-                                        ✕ Reject Payment
-                                    </button>
-                                )}
+                        {activeTab === 'history' && (
+                            <div className="bg-gray-100 px-6 py-4 flex justify-end flex-shrink-0">
+                                <button
+                                    onClick={() => {
+                                        setShowProofModal(false);
+                                        setActiveTab('current');
+                                    }}
+                                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                                >
+                                    Close
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setShowProofModal(false)}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
-                            >
-                                Close
-                            </button>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}

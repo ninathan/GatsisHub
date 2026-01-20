@@ -343,6 +343,71 @@ export const emailTemplates = {
       footer();
       
     return baseTemplate(content, `Order #${orderNumber} status updated`);
+  },
+
+  // Payment approved template
+  paymentApproved: (companyName, orderNumber, paymentMethod, amountPaid, dateVerified) => {
+    const content = header() +
+      contentSection(
+        'Payment Approved! ✓',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>Great news! Your payment has been verified and approved by our team.</p>
+         <p style="color: ${colors.success}; font-weight: 600; font-size: 18px; margin-top: 20px;">✓ Payment Confirmed</p>`,
+        colors.success
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Payment Method': paymentMethod,
+        'Amount Paid': `PHP ${amountPaid}`,
+        'Date Verified': dateVerified,
+        'Status': '✓ Verified and Approved'
+      }) +
+      infoBox(
+        `<strong>🎉 What's Next?</strong><br><br>
+         Your order has been moved to production! Our manufacturing team will begin working on your custom hangers. 
+         You'll receive updates as your order progresses through each stage.`,
+        'success'
+      ) +
+      button('Track Order Progress', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Payment approved for order ${orderNumber}`);
+  },
+
+  // Payment rejected template
+  paymentRejected: (companyName, orderNumber, paymentMethod, reason, dateRejected) => {
+    const content = header() +
+      contentSection(
+        'Payment Needs Resubmission',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>We've reviewed your payment proof for order <strong>${orderNumber}</strong>, but unfortunately we need you to resubmit it.</p>`,
+        colors.warning
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Payment Method': paymentMethod,
+        'Date Reviewed': dateRejected,
+        'Reason': reason || 'Unable to verify payment details'
+      }) +
+      infoBox(
+        `<strong>⚠️ Action Required:</strong><br><br>
+         Please submit a new proof of payment with clear, readable transaction details. Make sure all information is visible including:
+         <ul style="margin: 10px 0; padding-left: 20px;">
+           <li>Transaction reference number</li>
+           <li>Amount paid</li>
+           <li>Date and time of transaction</li>
+           <li>Recipient details (GatsisHub)</li>
+         </ul>`,
+        'warning'
+      ) +
+      infoBox(
+        `💡 <strong>Tip:</strong> Take a clear photo or screenshot of your payment receipt. Ensure there's no glare and all text is legible.`,
+        'info'
+      ) +
+      button('Submit New Proof', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/payment`) +
+      footer();
+      
+    return baseTemplate(content, `Payment resubmission needed for order ${orderNumber}`);
   }
 };
 

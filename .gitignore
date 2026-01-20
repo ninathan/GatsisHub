@@ -46,3 +46,6 @@ EMAIL_TEMPLATES_UPDATED.md
 ARCHIVE_SYSTEM_IMPLEMENTATION.md
 .gitignore
 add_archive_fields.sql
+create_payment_history_table.sql
+.gitignore
+PAYMENT_HISTORY_FEATURE.md
