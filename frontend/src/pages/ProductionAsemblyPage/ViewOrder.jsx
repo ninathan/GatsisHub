@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import HangerScene from "../../components/Checkout/HangerScene";
+import { useRealtimeSingleOrder } from "../../hooks/useRealtimeSingleOrder";
 
 const ViewOrder = () => {
     const location = useLocation();
@@ -16,6 +17,28 @@ const ViewOrder = () => {
     const [loading, setLoading] = useState(true);
     const [show3DModal, setShow3DModal] = useState(false);
     const [designData, setDesignData] = useState(null);
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        if (payload.eventType === 'UPDATE' && payload.new) {
+            setOrder(payload.new);
+            
+            // Parse 3D design data if available
+            if (payload.new.threeddesigndata) {
+                try {
+                    const parsed = typeof payload.new.threeddesigndata === 'string' 
+                        ? JSON.parse(payload.new.threeddesigndata)
+                        : payload.new.threeddesigndata;
+                    setDesignData(parsed);
+                } catch (error) {
+                    console.error('Error parsing 3D design data:', error);
+                }
+            }
+        }
+    }, []);
+
+    // Subscribe to real-time order updates
+    useRealtimeSingleOrder(order?.orderid, handleOrderUpdate);
 
     useEffect(() => {
         if (orderFromState) {

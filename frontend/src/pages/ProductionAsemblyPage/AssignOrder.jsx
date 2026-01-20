@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter, MoreVertical, ChevronDown } from 'lucide-react'
+import { useRealtimeProductionOrders } from '../../hooks/useRealtimeProductionOrders'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -12,6 +13,31 @@ const AssignOrder = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [employee, setEmployee] = useState(null);
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        if (payload.eventType === 'INSERT') {
+            // New order added - refetch to ensure team assignment
+            if (employee?.employeeid) {
+                fetchEmployeeOrders(employee.employeeid);
+            }
+        } else if (payload.eventType === 'UPDATE') {
+            // Order updated
+            setOrders(prev => 
+                prev.map(order => 
+                    order.orderid === payload.new.orderid ? payload.new : order
+                )
+            );
+        } else if (payload.eventType === 'DELETE') {
+            // Order deleted
+            setOrders(prev => 
+                prev.filter(order => order.orderid !== payload.old.orderid)
+            );
+        }
+    }, [employee]);
+
+    // Subscribe to real-time order updates
+    const { isSubscribed } = useRealtimeProductionOrders(employee?.employeeid, handleOrderUpdate);
 
     useEffect(() => {
         // Get employee data from localStorage
