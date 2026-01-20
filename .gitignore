@@ -49,3 +49,4 @@ add_archive_fields.sql
 create_payment_history_table.sql
 .gitignore
 PAYMENT_HISTORY_FEATURE.md
+create_admin_notifications_table.sql

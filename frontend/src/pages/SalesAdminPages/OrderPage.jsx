@@ -90,14 +90,14 @@ const OrderPage = () => {
 
         // Apply status filter
         if (selectedFilter === 'New Orders') {
-            // New orders: For Evaluation, Pending Approval, Pending Payment
+            // New orders: Only For Evaluation (not yet acknowledged)
             filtered = filtered.filter(order =>
-                ['For Evaluation', 'Pending Approval', 'Pending Payment'].includes(order.orderstatus)
+                order.orderstatus === 'For Evaluation'
             );
         } else if (selectedFilter === 'Ongoing Orders') {
-            // Ongoing orders: Approved, In Production, Waiting for Shipment, In Transit
+            // Ongoing orders: Everything except For Evaluation and Completed (acknowledged by sales admin)
             filtered = filtered.filter(order =>
-                ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
+                order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Completed'
             );
         } else if (selectedFilter === 'Completed Orders') {
             // Completed orders
