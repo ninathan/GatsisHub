@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
+import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 
@@ -61,6 +62,8 @@ const Order = () => {
         if (payload.eventType === 'INSERT') {
             // New order added
             setOrders(prev => [payload.new, ...prev]);
+            // Fetch payment info for new order
+            fetchPaymentInfo([payload.new]);
         } else if (payload.eventType === 'UPDATE') {
             // Order updated
             setOrders(prev => 
@@ -68,6 +71,8 @@ const Order = () => {
                     order.orderid === payload.new.orderid ? payload.new : order
                 )
             );
+            // Refetch payment info when order updates (status might have changed)
+            fetchPaymentInfo([payload.new]);
         } else if (payload.eventType === 'DELETE') {
             // Order deleted
             setOrders(prev => 
@@ -76,8 +81,30 @@ const Order = () => {
         }
     }, []);
 
+    // Real-time payment update handler
+    const handlePaymentUpdate = useCallback((payload) => {
+
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Payment added or updated
+            setOrderPayments(prev => ({
+                ...prev,
+                [payload.new.orderid]: payload.new
+            }));
+        } else if (payload.eventType === 'DELETE') {
+            // Payment deleted
+            setOrderPayments(prev => {
+                const updated = { ...prev };
+                delete updated[payload.old.orderid];
+                return updated;
+            });
+        }
+    }, []);
+
     // Subscribe to real-time order updates
     const { isSubscribed } = useRealtimeOrders(user?.userid, handleOrderUpdate);
+    
+    // Subscribe to real-time payment updates (all payments for this user's orders)
+    const { isSubscribed: isPaymentsSubscribed } = useRealtimePayments(null, handlePaymentUpdate);
 
     // Fetch orders when component mounts
     useEffect(() => {
