@@ -56,8 +56,14 @@ const OrderPageOM = () => {
 
                 const data = await response.json();
 
+                // Filter to only show orders that are Approved or beyond (exclude For Evaluation and Waiting for Payment)
+                const allowedStatuses = ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed', 'Cancelled'];
+                const filteredData = (data.orders || []).filter(order => 
+                    allowedStatuses.includes(order.orderstatus)
+                );
+
                 // Sort orders oldest to newest (first come, first priority)
-                const sortedOrders = (data.orders || []).sort((a, b) => 
+                const sortedOrders = filteredData.sort((a, b) => 
                     new Date(a.datecreated) - new Date(b.datecreated)
                 );
 

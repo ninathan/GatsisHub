@@ -1108,20 +1108,24 @@ const OrderDetail = () => {
 
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                            <button
-                                onClick={handleApproveOrder}
-                                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
-                            >
-                                <Check size={18} />
-                                Approve Order
-                            </button>
-                            <button
-                                onClick={handlePaymentConfirm}
-                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
-                            >
-                                <CreditCard size={18} />
-                                Payment Confirm
-                            </button>
+                            {orderStatus !== 'Approved' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
+                                <>
+                                    <button
+                                        onClick={handleApproveOrder}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                    >
+                                        <Check size={18} />
+                                        Approve Order
+                                    </button>
+                                    <button
+                                        onClick={handlePaymentConfirm}
+                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                    >
+                                        <CreditCard size={18} />
+                                        Payment Confirm
+                                    </button>
+                                </>
+                            )}
                             <button
                                 onClick={handleViewProof}
                                 disabled={!paymentInfo}
