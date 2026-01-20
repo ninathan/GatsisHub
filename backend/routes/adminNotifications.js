@@ -45,7 +45,10 @@ router.get('/:role', async (req, res) => {
 
     const { data: notifications, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
 
     res.json({ 
       success: true, 
@@ -57,7 +60,11 @@ router.get('/:role', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to fetch notifications',
-      details: error.message 
+      details: error.message,
+      hint: error.hint || 'Check if admin_notifications table exists in database'
+    });
+  }
+}); 
     });
   }
 });

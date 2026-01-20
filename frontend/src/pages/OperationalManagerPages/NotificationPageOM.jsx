@@ -41,7 +41,11 @@ const NotificationPageOM = () => {
             const unreadOnly = filter === 'unread' ? '?unreadOnly=true' : '';
             const response = await fetch(`https://gatsis-hub.vercel.app/admin-notifications/operational_manager${unreadOnly}`);
             
-            if (!response.ok) throw new Error('Failed to fetch notifications');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Server error:', errorData);
+                throw new Error(errorData.hint || errorData.details || 'Failed to fetch notifications');
+            }
             
             const data = await response.json();
             setNotifications(data.notifications || []);
