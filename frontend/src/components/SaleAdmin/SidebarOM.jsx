@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard, ClipboardClock } from 'lucide-react'
+import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard, ClipboardClock, Bell} from 'lucide-react'
 
 
 const SidebarOM = () => {

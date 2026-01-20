@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LayoutDashboard, ShoppingCart, Package, Calendar, Mail, LogOut, ClipboardClock } from 'lucide-react'
+import { EllipsisVertical, LayoutDashboard, ShoppingCart, Package, Calendar, Mail, LogOut, ClipboardClock, Bell } from 'lucide-react'
 
 
 const Sidebar = () => {
@@ -76,6 +76,12 @@ const Sidebar = () => {
                             <NavLink to="/orderpage" className="block">
                                 <ShoppingCart size={20} className="mr-2 inline" />
                                 Orders
+                            </NavLink>
+                        </li>
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
+                            <NavLink to="/notificationsSA" className="block">
+                                <Bell size={20} className="mr-2 inline" />
+                                Notifications
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">

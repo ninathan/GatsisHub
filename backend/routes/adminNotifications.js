@@ -20,12 +20,6 @@ router.get('/:role', async (req, res) => {
           orderstatus,
           totalprice,
           quantity
-        ),
-        customers (
-          customerid,
-          firstname,
-          lastname,
-          email
         )
       `)
       .or(`targetrole.eq.${role},targetrole.eq.both`)
