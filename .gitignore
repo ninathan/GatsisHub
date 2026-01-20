@@ -43,3 +43,6 @@ create_payment_storage_bucket.sql
 create_system_admin.sql
 create_signup_verification_table.sql
 EMAIL_TEMPLATES_UPDATED.md
+ARCHIVE_SYSTEM_IMPLEMENTATION.md
+.gitignore
+add_archive_fields.sql
