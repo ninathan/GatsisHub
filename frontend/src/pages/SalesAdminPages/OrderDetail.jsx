@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import {
     Home,
     Package,
@@ -19,6 +19,8 @@ import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useRealtimePayments } from '../../hooks/useRealtimePayments';
+import { useRealtimeSingleOrder } from '../../hooks/useRealtimeSingleOrder';
 
 
 const OrderDetail = () => {
@@ -48,6 +50,75 @@ const OrderDetail = () => {
     const [showProofModal, setShowProofModal] = useState(false);
     const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
     const [paymentHistory, setPaymentHistory] = useState([]);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState('Unable to verify payment details. Please resubmit with clearer information.');
+
+    // Real-time payment update handler
+    const handlePaymentUpdate = useCallback(async (payload) => {
+        console.log('Payment realtime update:', payload);
+        
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Payment added or updated - refresh payment info
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    setPaymentInfo(payment);
+                }
+            } catch (error) {
+                console.error('Error fetching updated payment:', error);
+            }
+            
+            // Also refresh payment history
+            try {
+                const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (historyResponse.ok) {
+                    const data = await historyResponse.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        } else if (payload.eventType === 'DELETE') {
+            // Payment deleted (rejected) - clear payment info
+            setPaymentInfo(null);
+            
+            // Refresh payment history to show the rejection
+            try {
+                const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (historyResponse.ok) {
+                    const data = await historyResponse.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        }
+    }, [orderid]);
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        console.log('Order realtime update:', payload);
+        
+        if (payload.new) {
+            // Update order state with new data
+            setOrder(payload.new);
+            setOrderStatus(payload.new.orderstatus);
+            setValidatedPrice(payload.new.totalprice || '');
+            setDeadline(payload.new.deadline || '');
+            
+            // Show notification for status changes
+            if (payload.old && payload.old.orderstatus !== payload.new.orderstatus) {
+                showNotificationMessage(`Order status updated to: ${payload.new.orderstatus}`, 'success');
+            }
+        }
+    }, []);
+
+    // Subscribe to real-time payment updates for this order
+    const { isSubscribed: isPaymentSubscribed } = useRealtimePayments(orderid, handlePaymentUpdate);
+    
+    // Subscribe to real-time order updates
+    const { isSubscribed: isOrderSubscribed } = useRealtimeSingleOrder(orderid, handleOrderUpdate);
 
     // Fetch order details
     useEffect(() => {
@@ -646,12 +717,14 @@ const OrderDetail = () => {
             return;
         }
 
-        const reason = prompt(
-            'Please provide a reason for rejection (this will be sent to the customer):',
-            'Unable to verify payment details. Please resubmit with clearer information.'
-        );
+        setShowRejectModal(true);
+    };
 
-        if (reason === null) return; // User cancelled
+    const confirmRejectPayment = async () => {
+        if (!rejectionReason.trim()) {
+            showNotificationMessage('Please provide a reason for rejection', 'error');
+            return;
+        }
 
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
@@ -663,7 +736,7 @@ const OrderDetail = () => {
                 },
                 body: JSON.stringify({
                     verifiedby: employee?.employeeid,
-                    notes: reason
+                    notes: rejectionReason
                 })
             });
 
@@ -673,7 +746,9 @@ const OrderDetail = () => {
 
             showNotificationMessage('Payment rejected and archived. Customer has been notified via email.', 'success');
             setShowProofModal(false);
+            setShowRejectModal(false);
             setPaymentInfo(null);
+            setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
             
             // Refresh order data
             const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
@@ -1434,6 +1509,67 @@ const OrderDetail = () => {
                                 }`}
                             >
                                 OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reject Payment Reason Modal */}
+            {showRejectModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-xl font-semibold">Reject Payment</h2>
+                                <p className="text-red-100 text-sm mt-1">Provide a reason for the customer</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowRejectModal(false);
+                                    setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
+                                }}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Rejection Reason <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={rejectionReason}
+                                onChange={(e) => setRejectionReason(e.target.value)}
+                                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                rows="5"
+                                placeholder="Enter the reason why this payment is being rejected..."
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                💡 This reason will be sent to the customer via email to help them understand what needs to be corrected.
+                            </p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowRejectModal(false);
+                                    setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
+                                }}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmRejectPayment}
+                                disabled={!rejectionReason.trim()}
+                                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                ✕ Reject & Notify Customer
                             </button>
                         </div>
                     </div>
