@@ -21,11 +21,11 @@ router.post("/send-signup-verification", async (req, res) => {
     // Check if email already exists
     const { data: existingUser, error: findError } = await supabase
       .from("customers")
-      .select("emailaddress")
+      .select("emailaddress, is_archived")
       .eq("emailaddress", emailAddress)
       .maybeSingle();
 
-    if (existingUser) {
+    if (existingUser && !existingUser.is_archived) {
       return res.status(400).json({ error: "Email is already registered" });
     }
 
@@ -172,6 +172,50 @@ router.post("/verify-signup-code", async (req, res) => {
       return res.status(500).json({ error: "User creation failed" });
     }
 
+    // Check if this user was previously archived
+    const { data: archivedCustomer, error: checkArchivedError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("userid", userId)
+      .eq("is_archived", true)
+      .maybeSingle();
+
+    if (archivedCustomer) {
+      // Restore the archived account
+      const { error: restoreError } = await supabase
+        .from("customers")
+        .update({
+          is_archived: false,
+          archived_at: null,
+          companyname: `${firstName} ${lastName}`,
+          password: hashedPassword,
+          companynumber: companyNumber || null,
+          addresses: addresses || [],
+          accountstatus: 'Active',
+          emailnotifications: true,
+          gender: gender,
+          dateofbirth: dateOfBirth,
+          datecreated: new Date().toISOString()
+        })
+        .eq("userid", userId);
+
+      if (restoreError) {
+        return res.status(500).json({ error: "Failed to restore account: " + restoreError.message });
+      }
+
+      // Fetch restored data
+      const { data: restoredData } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("userid", userId)
+        .single();
+
+      return res.status(201).json({
+        message: "Account restored successfully!",
+        customer: restoredData
+      });
+    }
+
     // Insert into customers table
     const { data: customerData, error: dbError } = await supabase
       .from("customers")
@@ -260,7 +304,7 @@ router.post("/signup", async (req, res) => {
 
     const { data: existingUser, error: findError } = await supabase
       .from("customers")
-      .select("emailaddress")
+      .select("emailaddress, userid, is_archived")
       .eq("emailaddress", emailAddress)
       .maybeSingle();
 
@@ -269,9 +313,76 @@ router.post("/signup", async (req, res) => {
       return res.status(500).json({ error: "Database error: " + findError.message });
     }
 
-    if (existingUser) {
+    if (existingUser && !existingUser.is_archived) {
 
       return res.status(400).json({ error: "Email is already registered in our system." });
+    }
+
+    // If user was archived, restore their account
+    if (existingUser && existingUser.is_archived) {
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const { error: restoreError } = await supabase
+        .from("customers")
+        .update({
+          is_archived: false,
+          archived_at: null,
+          companyname: `${firstName} ${lastName}`,
+          password: hashedPassword,
+          companynumber: companyNumber || null,
+          addresses: addresses || [],
+          accountstatus: 'Active',
+          emailnotifications: true,
+          gender: gender,
+          dateofbirth: dateOfBirth,
+          datecreated: new Date().toISOString()
+        })
+        .eq("userid", existingUser.userid);
+
+      if (restoreError) {
+
+        return res.status(500).json({ error: "Failed to restore account: " + restoreError.message });
+      }
+
+      // Fetch the restored customer data
+      const { data: restoredCustomer, error: fetchError } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("userid", existingUser.userid)
+        .single();
+
+      if (fetchError) {
+        return res.status(500).json({ error: "Failed to fetch restored account" });
+      }
+
+      // Send welcome back email
+      try {
+        const resendApiKey = process.env.RESEND_API_KEY;
+        
+        if (resendApiKey) {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: 'GatsisHub <noreply@gatsishub.com>',
+              to: [emailAddress],
+              subject: 'Welcome Back to GatsisHub! 🎉',
+              html: emailTemplates.welcome(`${firstName} ${lastName}`, emailAddress, `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/login`)
+            })
+          });
+        }
+      } catch (emailError) {
+        // Don't fail if email fails
+      }
+
+      return res.status(201).json({
+        message: "Account restored successfully!",
+        customer: restoredCustomer
+      });
     }
 
     // 2️⃣ Hash the password before storing
@@ -438,11 +549,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find user by email
+    // Find user by email (excluding archived)
     const { data: user, error: userError } = await supabase
       .from("customers")
       .select("*")
       .eq("emailaddress", emailAddress)
+      .eq('is_archived', false)
       .maybeSingle();
 
     if (userError || !user) {
@@ -590,11 +702,12 @@ router.post("/verify-login-code", async (req, res) => {
       .update({ used: true })
       .eq("id", verificationRecord.id);
 
-    // Get user data
+    // Get user data (excluding archived)
     const { data: user, error: userError } = await supabase
       .from("customers")
       .select("*")
       .eq("emailaddress", emailAddress)
+      .eq('is_archived', false)
       .maybeSingle();
 
     if (userError || !user) {
@@ -639,7 +752,7 @@ router.post('/google', async (req, res) => {
     const payload = ticket.getPayload();
     const { sub, email, name, picture } = payload;
 
-    // Check if customer already exists
+    // Check if customer already exists (including archived)
     let { data: customer, error: fetchError } = await supabase
       .from('customers')
       .select('*')
@@ -647,6 +760,40 @@ router.post('/google', async (req, res) => {
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+    // If customer was archived, restore it
+    if (customer && customer.is_archived) {
+
+      const { error: restoreError } = await supabase
+        .from('customers')
+        .update({
+          is_archived: false,
+          archived_at: null,
+          companyname: name || customer.companyname,
+          profilePicture: picture || customer.profilePicture,
+          accountstatus: 'Active',
+          datecreated: new Date().toISOString()
+        })
+        .eq('userid', customer.userid);
+
+      if (restoreError) {
+        throw restoreError;
+      }
+
+      // Fetch updated customer
+      const { data: restoredCustomer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('userid', customer.userid)
+        .single();
+
+      customer = restoredCustomer;
+
+      return res.status(200).json({
+        success: true,
+        user: customer,
+      });
+    }
 
     // If not found, create customer record with Supabase Auth user
     if (!customer) {
@@ -817,7 +964,7 @@ router.post("/change-password", async (req, res) => {
   }
 });
 
-// 🗑️ Delete Account route
+// 🗑️ Archive Account route (soft delete)
 router.delete("/delete-account", async (req, res) => {
   try {
     const { userid } = req.body;
@@ -826,56 +973,29 @@ router.delete("/delete-account", async (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    // Delete user's designs first (foreign key constraint)
-    const { error: designsError } = await supabase
-      .from("designs")
-      .delete()
-      .eq("userid", userid);
-
-    if (designsError) {
-
-      // Continue anyway, might not have any designs
-    }
-
-    // Delete user's orders (if any)
-    const { error: ordersError } = await supabase
-      .from("orders")
-      .delete()
-      .eq("userid", userid);
-
-    if (ordersError) {
-
-      // Continue anyway, might not have any orders
-    }
-
-    // Delete customer record from database
+    // Archive customer account instead of deleting
     const { error: customerError } = await supabase
       .from("customers")
-      .delete()
+      .update({
+        is_archived: true,
+        archived_at: new Date().toISOString()
+      })
       .eq("userid", userid);
 
     if (customerError) {
 
-      return res.status(500).json({ error: "Failed to delete account" });
+      return res.status(500).json({ error: "Failed to archive account" });
     }
 
-    // Delete user from Supabase Auth
-    const { error: authError } = await supabase.auth.admin.deleteUser(userid);
-
-    if (authError) {
-
-      // Continue anyway since the main customer record is deleted
-    }
-
-    res.status(200).json({ message: "Account deleted successfully" });
+    res.status(200).json({ message: "Account archived successfully" });
 
   } catch (err) {
 
-    res.status(500).json({ error: "Server error while deleting account" });
+    res.status(500).json({ error: "Server error while archiving account" });
   }
 });
 
-// 🔍 Get customer by userid
+// 🔍 Get customer by userid (excluding archived)
 router.get("/customer/:userid", async (req, res) => {
   try {
     const { userid } = req.params;
@@ -884,6 +1004,7 @@ router.get("/customer/:userid", async (req, res) => {
       .from("customers")
       .select("customerid, userid, companyname, emailaddress")
       .eq("userid", userid)
+      .eq('is_archived', false)
       .single();
 
     if (error || !customer) {

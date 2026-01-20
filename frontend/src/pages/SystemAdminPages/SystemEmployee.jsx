@@ -242,9 +242,9 @@ const SystemEmployee = () => {
         }
     };
 
-    // Handle Delete Employee
+    // Handle Delete Employee (Archive)
     const handleDeleteEmployee = async (employeeid) => {
-        if (!window.confirm('Are you sure you want to delete this employee?')) {
+        if (!window.confirm('Are you sure you want to archive this employee? They can be restored later if needed.')) {
             return;
         }
 
@@ -256,17 +256,17 @@ const SystemEmployee = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to delete employee');
+                throw new Error(data.error || 'Failed to archive employee');
             }
 
-            alert('Employee deleted successfully');
+            alert('Employee archived successfully');
             fetchEmployees(); // Refresh the list
             setShowViewModal(false);
             setShowEditModal(false);
 
         } catch (err) {
 
-            alert(err.message || 'Failed to delete employee');
+            alert(err.message || 'Failed to archive employee');
         }
     };
 
@@ -506,7 +506,7 @@ const SystemEmployee = () => {
                                 onClick={() => handleDeleteEmployee(selectedEmployee.employeeid)}
                                 className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
-                                Delete Employee
+                                Archive Employee
                             </button>
                             <div className="flex gap-2">
                                 <button

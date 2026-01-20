@@ -585,7 +585,7 @@ const ProfileComponent = () => {
     const handleDeleteAccount = () => {
         setModalConfig({
             type: 'confirm',
-            message: 'Are you sure you want to delete your account? This action cannot be undone. All your designs and data will be permanently deleted.',
+            message: 'Are you sure you want to delete your account? Your account will be archived and you can sign up again anytime with the same email. All your designs will be preserved.',
             onConfirm: async () => {
                 try {
                     // Call backend API to delete account
@@ -608,7 +608,7 @@ const ProfileComponent = () => {
                     // Show success message
                     setModalConfig({
                         type: 'success',
-                        message: 'Your account has been deleted successfully. You will be redirected to the home page.',
+                        message: 'Your account has been archived successfully. You can sign up again anytime. You will be redirected to the home page.',
                         onConfirm: null
                     });
                     setShowModal(true);

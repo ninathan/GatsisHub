@@ -54,11 +54,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find employee by email
+    // Find employee by email (excluding archived)
     const { data: employee, error } = await supabase
       .from("employees")
       .select("*")
       .eq("email", email.toLowerCase())
+      .eq('is_archived', false)
       .single();
 
     if (error || !employee) {
@@ -147,6 +148,7 @@ router.get("/profile/:employeeid", async (req, res) => {
       .from("employees")
       .select("employeeid, employeename, email, assigneddepartment, role, accountstatus, contactdetails, shifthours, ispresent")
       .eq("employeeid", employeeid)
+      .eq('is_archived', false)
       .single();
 
     if (error || !employee) {
@@ -170,11 +172,12 @@ router.post("/change-password", async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Get current employee
+    // Get current employee (excluding archived)
     const { data: employee, error: fetchError } = await supabase
       .from("employees")
       .select("password")
       .eq("employeeid", employeeid)
+      .eq('is_archived', false)
       .single();
 
     if (fetchError || !employee) {
@@ -268,7 +271,7 @@ router.patch("/:employeeid", async (req, res) => {
   }
 });
 
-// 🗑️ Delete employee
+// 🗑️ Archive employee (soft delete)
 router.delete("/:employeeid", async (req, res) => {
   try {
     const { employeeid } = req.params;
@@ -284,10 +287,13 @@ router.delete("/:employeeid", async (req, res) => {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    // Delete employee
+    // Archive employee instead of deleting
     const { error } = await supabase
       .from("employees")
-      .delete()
+      .update({
+        is_archived: true,
+        archived_at: new Date().toISOString()
+      })
       .eq("employeeid", employeeid);
 
     if (error) {
@@ -296,8 +302,8 @@ router.delete("/:employeeid", async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Employee deleted successfully",
-      deletedEmployee: {
+      message: "Employee archived successfully",
+      archivedEmployee: {
         employeeid,
         employeename: existingEmployee.employeename,
         role: existingEmployee.role
@@ -305,7 +311,7 @@ router.delete("/:employeeid", async (req, res) => {
     });
   } catch (err) {
 
-    res.status(500).json({ error: err.message || "Failed to delete employee" });
+    res.status(500).json({ error: err.message || "Failed to archive employee" });
   }
 });
 

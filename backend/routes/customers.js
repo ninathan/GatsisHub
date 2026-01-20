@@ -4,7 +4,7 @@ import supabase from "../supabaseClient.js";
 
 const router = express.Router();
 
-// 📋 GET /customers - Get all customers
+// 📋 GET /customers - Get all customers (excluding archived)
 router.get("/", async (req, res) => {
   try {
     const { status, limit } = req.query;
@@ -12,6 +12,7 @@ router.get("/", async (req, res) => {
     let query = supabase
       .from("customers")
       .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, two_factor_enabled, google_id, profilePicture, gender, dateofbirth")
+      .eq('is_archived', false)
       .order('datecreated', { ascending: false });
 
     // Apply filters if provided
@@ -36,7 +37,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 🔍 GET /customers/:customerid - Get single customer
+// 🔍 GET /customers/:customerid - Get single customer (excluding archived)
 router.get("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
@@ -45,6 +46,7 @@ router.get("/:customerid", async (req, res) => {
       .from("customers")
       .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, accountstatus, emailnotifications, two_factor_enabled, google_id, profilePicture, gender, dateofbirth")
       .eq("customerid", customerid)
+      .eq('is_archived', false)
       .single();
 
     if (error || !customer) {
@@ -107,7 +109,7 @@ router.patch("/:customerid", async (req, res) => {
   }
 });
 
-// 🗑️ DELETE /customers/:customerid - Delete customer account
+// 🗑️ Archive customer account (soft delete)
 router.delete("/:customerid", async (req, res) => {
   try {
     const { customerid } = req.params;
@@ -123,76 +125,13 @@ router.delete("/:customerid", async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    // Delete customer's feedback first (if any)
-    const { error: feedbackError } = await supabase
-      .from("feedback")
-      .delete()
-      .eq("customerid", customerid);
-
-    if (feedbackError) {
-      console.error("Error deleting feedback:", feedbackError);
-      // Continue anyway
-    }
-
-    // Delete customer's payments (if any)
-    const { error: paymentsError } = await supabase
-      .from("payments")
-      .delete()
-      .eq("customerid", customerid);
-
-    if (paymentsError) {
-      console.error("Error deleting payments:", paymentsError);
-      // Continue anyway
-    }
-
-    // Delete customer's messages (if any)
-    const { error: messagesError } = await supabase
-      .from("messages")
-      .delete()
-      .eq("customerid", customerid);
-
-    if (messagesError) {
-      console.error("Error deleting messages:", messagesError);
-      // Continue anyway
-    }
-
-    // Delete customer's notifications (if any)
-    const { error: notificationsError } = await supabase
-      .from("notifications")
-      .delete()
-      .eq("customerid", customerid);
-
-    if (notificationsError) {
-      console.error("Error deleting notifications:", notificationsError);
-      // Continue anyway
-    }
-
-    // Delete customer's orders (if any)
-    const { error: ordersError } = await supabase
-      .from("orders")
-      .delete()
-      .eq("customerid", customerid);
-
-    if (ordersError) {
-      console.error("Error deleting orders:", ordersError);
-      // Continue anyway
-    }
-
-    // Delete customer's designs (if any)
-    const { error: designsError } = await supabase
-      .from("designs")
-      .delete()
-      .eq("userid", existingCustomer.userid);
-
-    if (designsError) {
-      console.error("Error deleting designs:", designsError);
-      // Continue anyway
-    }
-
-    // Delete customer
+    // Archive customer instead of deleting
     const { error } = await supabase
       .from("customers")
-      .delete()
+      .update({
+        is_archived: true,
+        archived_at: new Date().toISOString()
+      })
       .eq("customerid", customerid);
 
     if (error) {
@@ -200,26 +139,16 @@ router.delete("/:customerid", async (req, res) => {
       throw error;
     }
 
-    // Try to delete from Supabase Auth if userid exists
-    if (existingCustomer.userid) {
-      try {
-        await supabase.auth.admin.deleteUser(existingCustomer.userid);
-      } catch (authError) {
-
-        // Continue anyway since customer is deleted from database
-      }
-    }
-
     res.status(200).json({
-      message: "Customer deleted successfully",
-      deletedCustomer: {
+      message: "Customer archived successfully",
+      archivedCustomer: {
         customerid,
         companyname: existingCustomer.companyname
       }
     });
   } catch (err) {
 
-    res.status(500).json({ error: err.message || "Failed to delete customer" });
+    res.status(500).json({ error: err.message || "Failed to archive customer" });
   }
 });
 

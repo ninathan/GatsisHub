@@ -143,9 +143,9 @@ const SystemAccounts = () => {
         }
     };
 
-    // Handle Delete Customer
+    // Handle Delete Customer (Archive)
     const handleDeleteCustomer = async (customerid) => {
-        if (!window.confirm('Are you sure you want to delete this customer account? This will also delete all their orders and designs.')) {
+        if (!window.confirm('Are you sure you want to archive this customer account? The customer can sign up again with the same email.')) {
             return;
         }
 
@@ -157,17 +157,17 @@ const SystemAccounts = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to delete customer');
+                throw new Error(data.error || 'Failed to archive customer');
             }
 
-            alert('Customer deleted successfully');
+            alert('Customer archived successfully');
             fetchCustomers(); // Refresh the list
             setShowViewModal(false);
             setShowEditModal(false);
 
         } catch (err) {
 
-            alert(err.message || 'Failed to delete customer');
+            alert(err.message || 'Failed to archive customer');
         }
     };
 
@@ -416,7 +416,7 @@ const SystemAccounts = () => {
                                 onClick={() => handleDeleteCustomer(selectedCustomer.customerid)}
                                 className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
-                                Delete Account
+                                Archive Account
                             </button>
                             <div className="flex gap-2">
                                 <button
