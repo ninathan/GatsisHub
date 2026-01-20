@@ -12,15 +12,7 @@ router.get('/:role', async (req, res) => {
     let query = supabase
       .from('admin_notifications')
       .select(`
-        notificationid,
-        title,
-        message,
-        type,
-        isread,
-        datecreated,
-        targetrole,
-        orderid,
-        customerid,
+        *,
         orders (
           orderid,
           companyname,
