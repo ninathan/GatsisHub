@@ -21,7 +21,7 @@ const sendEmail = async (to, subject, html) => {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'GatsisHub <onboarding@resend.dev>',
+        from: 'GatsisHub <noreply@gatsishub.com>',
         to: [to],
         subject: subject,
         html: html
@@ -351,7 +351,8 @@ router.patch("/:paymentid/verify", async (req, res) => {
         *,
         customers:customerid (
           companyname,
-          emailaddress
+          emailaddress,
+          emailnotifications
         ),
         orders:orderid (
           orderid
@@ -407,8 +408,8 @@ router.patch("/:paymentid/verify", async (req, res) => {
       }
     }
 
-    // Send email notification to customer
-    if (payment.customers && payment.customers.emailaddress) {
+    // Send email notification to customer (only if they have notifications enabled)
+    if (payment.customers && payment.customers.emailaddress && payment.customers.emailnotifications === true) {
       const customerEmail = payment.customers.emailaddress;
       const companyName = payment.customers.companyname || 'Valued Customer';
       const orderNumber = payment.orders?.orderid || payment.orderid;
@@ -468,7 +469,8 @@ router.delete("/:paymentid", async (req, res) => {
         *,
         customers:customerid (
           companyname,
-          emailaddress
+          emailaddress,
+          emailnotifications
         ),
         orders:orderid (
           orderid
@@ -498,8 +500,8 @@ router.delete("/:paymentid", async (req, res) => {
       action: 'rejected'
     }]);
 
-    // Send email notification to customer
-    if (payment.customers && payment.customers.emailaddress) {
+    // Send email notification to customer (only if they have notifications enabled)
+    if (payment.customers && payment.customers.emailaddress && payment.customers.emailnotifications === true) {
       const customerEmail = payment.customers.emailaddress;
       const companyName = payment.customers.companyname || 'Valued Customer';
       const orderNumber = payment.orders?.orderid || payment.orderid;
