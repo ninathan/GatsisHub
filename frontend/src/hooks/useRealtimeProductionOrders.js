@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import supabase from '../../supabaseClient';
+import { supabase } from '../../supabaseClient';
 
 /**
  * Custom hook to subscribe to real-time updates for production employee orders

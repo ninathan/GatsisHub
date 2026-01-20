@@ -2,7 +2,7 @@ import express from "express";
 import supabase from "../supabaseClient.js";
 import multer from "multer";
 import path from "path";
-import { emailTemplates } from "../utils/emailTemplates.js";
+ import { emailTemplates } from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
