@@ -56,9 +56,6 @@ router.get('/:role', async (req, res) => {
       hint: error.hint || 'Check if admin_notifications table exists in database'
     });
   }
-}); 
-    });
-  }
 });
 
 // Mark notification as read
