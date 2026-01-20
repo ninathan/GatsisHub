@@ -2,30 +2,38 @@ import express from "express";
 import supabase from "../supabaseClient.js";
 import multer from "multer";
 import path from "path";
-import nodemailer from "nodemailer";
 import { emailTemplates } from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
-
-// Helper function to send email
+// Helper function to send email using Resend API
 const sendEmail = async (to, subject, html) => {
   try {
-    await transporter.sendMail({
-      from: `"GatsisHub" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not configured');
+      return;
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'GatsisHub <onboarding@resend.dev>',
+        to: [to],
+        subject: subject,
+        html: html
+      })
     });
-    console.log(`Email sent to ${to}`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Email send error:', errorData);
+    } else {
+      console.log(`Email sent to ${to}`);
+    }
   } catch (error) {
     console.error('Email send error:', error);
   }
