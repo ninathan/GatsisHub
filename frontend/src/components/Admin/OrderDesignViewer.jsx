@@ -37,8 +37,7 @@ const OrderDesignViewer = ({ designData }) => {
                     <Suspense fallback={
                         <div className='w-full h-full flex items-center justify-center bg-gray-50'>
                             <div className='text-center'>
-                                <LoadingSpinner> </LoadingSpinner>
-                                <p className='text-lg text-gray-600'>Loading 3D Design...</p>
+                                <LoadingSpinner size="lg" text="Loading 3D Design..." />
                             </div>
                         </div>
                     }>

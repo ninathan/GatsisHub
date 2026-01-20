@@ -396,8 +396,7 @@ const DashboardOM = () => {
             {loading && (
                 <div className='flex-1 flex items-center justify-center p-8'>
                     <div className='text-center'>
-                        <LoadingSpinner> </LoadingSpinner>
-                        <p className='text-gray-600'>Loading dashboard data...</p>
+                        <LoadingSpinner size="lg" text="Loading dashboard data..." />
                     </div>
                 </div>
             )}

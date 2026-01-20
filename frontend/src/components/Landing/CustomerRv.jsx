@@ -227,8 +227,7 @@ const CustomerRv = () => {
                 
                 {loading ? (
                     <div className="text-center py-12">
-                        <LoadingSpinner> </LoadingSpinner>
-                        <p className="mt-4 text-gray-600">Loading reviews...</p>
+                        <LoadingSpinner size="lg" text="Loading reviews..." />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

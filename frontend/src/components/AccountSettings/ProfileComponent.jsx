@@ -1028,7 +1028,7 @@ const ProfileComponent = () => {
                                                         </div>
                                                     </div>
                                                     {isSavingNotifications && (
-                                                        <LoadingSpinner size="sm" />
+                                                        <LoadingSpinner size="lg" />
                                                     )}
                                                 </label>
                                             </div>

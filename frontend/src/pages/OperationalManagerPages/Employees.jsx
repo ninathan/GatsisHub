@@ -660,8 +660,7 @@ const Employees = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         {loading ? (
                             <div className="p-8 text-center text-gray-500">
-                                <LoadingSpinner> </LoadingSpinner>
-                                Loading employees...
+                                <LoadingSpinner size="lg" text="Loading employees..." />
                             </div>
                         ) : filteredEmployees.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">

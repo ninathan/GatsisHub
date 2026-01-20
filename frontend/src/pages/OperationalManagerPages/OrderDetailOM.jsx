@@ -645,7 +645,7 @@ const OrderDetailOM = () => {
                                     >
                                         {isApprovingOrder ? (
                                             <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                <LoadingSpinner size="sm" color="white" />
                                                 <span>Approving...</span>
                                             </>
                                         ) : (
@@ -662,7 +662,7 @@ const OrderDetailOM = () => {
                                     >
                                         {isConfirmingPayment ? (
                                             <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                <LoadingSpinner size="sm" color="white" />
                                                 <span>Confirming...</span>
                                             </>
                                         ) : (

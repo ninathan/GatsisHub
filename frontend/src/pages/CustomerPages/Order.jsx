@@ -1198,8 +1198,7 @@ const Order = () => {
                                 <Suspense fallback={
                                     <div className='w-full h-full flex items-center justify-center'>
                                         <div className='text-center'>
-                                            <LoadingSpinner> </LoadingSpinner>
-                                            <p className='text-lg text-gray-600'>Loading 3D Design...</p>
+                                            <LoadingSpinner size="lg" text="Loading 3D Design..." />
                                         </div>
                                     </div>
                                 }>
