@@ -93,13 +93,41 @@ const SystemEmployee = () => {
         setShowAddModal(true);
     };
 
+    // Get available roles based on department
+    const getRolesByDepartment = (department) => {
+        switch(department) {
+            case 'Admin':
+                return ['Sales Admin'];
+            case 'Production':
+            case 'Assembly':
+                return ['Employee', 'Supervisor', 'Team Leader'];
+            case 'Operational Manager':
+                return ['Operational Manager'];
+            case 'System Administration':
+                return ['System Admin'];
+            default:
+                return [];
+        }
+    };
+
     // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        // If department changes, reset role to ensure compatibility
+        if (name === 'assigneddepartment') {
+            const availableRoles = getRolesByDepartment(value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                role: availableRoles.length === 1 ? availableRoles[0] : '' // Auto-select if only one role
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     // Handle Add Employee Submit
@@ -603,13 +631,14 @@ const SystemEmployee = () => {
                                         onChange={handleInputChange}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         required
+                                        disabled={!formData.assigneddepartment}
                                     >
-                                        <option value="">Select Role</option>
-                                        <option value="System Admin">System Admin</option>
-                                        <option value="Sales Admin">Sales Admin</option>
-                                        <option value="Operational Manager">Operational Manager</option>
-                                        <option value="Production">Production</option>
-                                        <option value="Assembly">Assembly</option>
+                                        <option value="">
+                                            {formData.assigneddepartment ? 'Select Role' : 'Select Department First'}
+                                        </option>
+                                        {formData.assigneddepartment && getRolesByDepartment(formData.assigneddepartment).map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -782,14 +811,14 @@ const SystemEmployee = () => {
                                         onChange={handleInputChange}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                         required
+                                        disabled={!formData.assigneddepartment}
                                     >
-                                        <option value="">Select Role</option>
-                                        <option value="System Admin">System Admin</option>
-                                        <option value="Sales Admin">Sales Admin</option>
-                                        <option value="Operational Manager">Operational Manager</option>
-                                        <option value="Employee">Employee</option>
-                                        <option value="Team Leader">Team Leader</option>
-                                        <option value="Supervisor">Supervisor</option>
+                                        <option value="">
+                                            {formData.assigneddepartment ? 'Select Role' : 'Select Department First'}
+                                        </option>
+                                        {formData.assigneddepartment && getRolesByDepartment(formData.assigneddepartment).map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
                                     </select>
                                 </div>
 

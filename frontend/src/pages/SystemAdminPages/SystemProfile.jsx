@@ -113,20 +113,21 @@ const SystemProfile = () => {
 
         if (passwordData.newpassword.length < 8 ) {
             setError('New password must be at least 8 characters long.')
+            return
         }
 
         setIsSaving(true)
 
         try {
-            const response = await fetch('https://gatsis-hub.vercel.app/api/employees/change-password', {
+            const response = await fetch('https://gatsis-hub.vercel.app/employees/change-password', {
                 method: 'POST',
-                header: {
+                headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     employeeid: employees.employeeid,
                     currentPassword: passwordData.currentPassword,
-                    newpassword: passwordData.newpassword
+                    newPassword: passwordData.newpassword
                 })
             })
 
@@ -336,7 +337,7 @@ const SystemProfile = () => {
                                                 type= {showNewPassword ?
                                                     "text" : "password"
                                                 }
-                                                name="newPassword"
+                                                name="newpassword"
                                                 value={passwordData.newpassword}
                                                 onChange={handlePasswordChange}
                                                 className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 md:pr-12"
@@ -398,7 +399,7 @@ const SystemProfile = () => {
 
                             {/* Logout Button */}
                             <button
-                                onClick=""
+                                onClick={handleLogout}
                                 className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm md:text-base"
                             >
                                 <LogOut size={18} className="md:w-5 md:h-5" />
