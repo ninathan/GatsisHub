@@ -48,7 +48,7 @@ const ProductsPage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <LoadingSpinner> </LoadingSpinner>
+                    <LoadingSpinner size="lg" />
                     <p className="mt-4 text-gray-600">Loading products...</p>
                 </div>
             </div>
