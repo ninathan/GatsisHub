@@ -5,6 +5,7 @@ import pr1 from '../../images/pr1.png';
 import pr2 from '../../images/pr2.png';
 import pr3 from '../../images/pr3.png';
 import pr4 from '../../images/pr4.png';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ProductsPage = () => {
     const [products, setProducts] = useState([]);
@@ -47,8 +48,8 @@ const ProductsPage = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-900 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading products...</p>
+                    <LoadingSpinner> </LoadingSpinner>
+                    <p className="mt-4 text-gray-600">Loading products...</p>
                 </div>
             </div>
         );

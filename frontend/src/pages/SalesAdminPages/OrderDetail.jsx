@@ -52,6 +52,7 @@ const OrderDetail = () => {
     const [paymentHistory, setPaymentHistory] = useState([]);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('Unable to verify payment details. Please resubmit with clearer information.');
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     // Real-time payment update handler
     const handlePaymentUpdate = useCallback(async (payload) => {
@@ -726,6 +727,7 @@ const OrderDetail = () => {
             return;
         }
 
+        setIsProcessingPayment(true);
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
             
@@ -760,6 +762,8 @@ const OrderDetail = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to reject payment', 'error');
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
@@ -769,6 +773,7 @@ const OrderDetail = () => {
             return;
         }
 
+        setIsProcessingPayment(true);
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
             
@@ -820,6 +825,8 @@ const OrderDetail = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to approve payment', 'error');
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
@@ -1382,16 +1389,27 @@ const OrderDetail = () => {
                                     {paymentInfo.paymentstatus !== 'Verified' && (
                                         <button
                                             onClick={handleApprovePayment}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                            disabled={isProcessingPayment}
+                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                         >
-                                            <Check size={18} />
-                                            Approve Payment
+                                            {isProcessingPayment ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Check size={18} />
+                                                    Approve Payment
+                                                </>
+                                            )}
                                         </button>
                                     )}
                                     {paymentInfo.paymentstatus !== 'Rejected' && (
                                         <button
                                             onClick={handleRejectPayment}
-                                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                                            disabled={isProcessingPayment}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                         >
                                             ✕ Reject Payment
                                         </button>
@@ -1560,16 +1578,26 @@ const OrderDetail = () => {
                                     setShowRejectModal(false);
                                     setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
                                 }}
-                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
+                                disabled={isProcessingPayment}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmRejectPayment}
-                                disabled={!rejectionReason.trim()}
+                                disabled={!rejectionReason.trim() || isProcessingPayment}
                                 className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
-                                ✕ Reject & Notify Customer
+                                {isProcessingPayment ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        ✕ Reject & Notify Customer
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

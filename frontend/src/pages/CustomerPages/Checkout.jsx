@@ -30,6 +30,7 @@ const Checkout = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [sceneLoaded, setSceneLoaded] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [notificationModal, setNotificationModal] = useState({ show: false, type: '', message: '' });
     const [showColorLimitationModal, setShowColorLimitationModal] = useState(false);
     const [capturedThumbnail, setCapturedThumbnail] = useState(null);
@@ -307,6 +308,8 @@ const Checkout = () => {
             return;
         }
 
+        setIsSubmitting(true);
+
         // Get user data from localStorage (assuming user is logged in)
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         const userId = userData.userid || null;
@@ -444,6 +447,8 @@ const Checkout = () => {
         } catch (error) {
 
             showNotification(`Failed to create order: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -1674,10 +1679,18 @@ const Checkout = () => {
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <button
-                                className="cursor-pointer bg-[#e6af2e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c8971e] transition-colors w-full"
+                                className="cursor-pointer bg-[#e6af2e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c8971e] transition-colors w-full disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 onClick={handleSubmitOrder}
+                                disabled={isSubmitting}
                             >
-                                Send for Evaluation
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                        <span>Submitting Order...</span>
+                                    </>
+                                ) : (
+                                    'Send for Evaluation'
+                                )}
                             </button>
                         </div>
                     </div>
