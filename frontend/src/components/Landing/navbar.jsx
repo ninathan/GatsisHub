@@ -7,7 +7,6 @@ import { LogOut } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import { ShoppingCart } from 'lucide-react';
-import DarkModeToggle from '../DarkModeToggle';
 
 
 
@@ -117,7 +116,6 @@ const Navbar = () => {
             <NavLink to="/products" className={linkClass}>Products</NavLink>
             <NavLink to="/create-design" className={linkClass} onClick={handleDesignClick}>Design</NavLink>
             <NavLink to="/orders" className={linkClass}>Orders</NavLink>
-            <DarkModeToggle />
 
             {!user ? (
               <NavLink to="/login" className={linkClass}>Login</NavLink>
@@ -260,12 +258,6 @@ const Navbar = () => {
           <NavLink to="/products" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Products</NavLink>
           <NavLink to="/create-design" className={mobileLinkClass} onClick={handleDesignClick}>Design</NavLink>
           <NavLink to="/orders" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Orders</NavLink>
-          
-          {/* Dark Mode Toggle for Mobile */}
-          <div className="px-1 py-2 flex items-center justify-between">
-            <span className="text-white text-lg">Dark Mode</span>
-            <DarkModeToggle />
-          </div>
 
           {!user ? (
             <NavLink to="/login" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Login</NavLink>
