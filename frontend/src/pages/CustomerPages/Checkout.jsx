@@ -13,7 +13,119 @@ import { useAuth } from '../../context/AuthContext'
 import Stepper from '../../components/Checkout/CheckoutSteps/Stepper'
 import StepNavigation from '../../components/Checkout/CheckoutSteps/StepNavigation'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import styled from 'styled-components';
 
+
+const ColorPickerWrapper = styled.div`
+  .comic-panel {
+    background: #ffffff;
+    border: 4px solid #000;
+    padding: 1.2rem;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
+  }
+
+  .container-items {
+    display: flex;
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .item-color {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    height: 48px;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    transition: 300ms ease-out;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .item-color::after {
+    position: absolute;
+    content: "";
+    inset: 0;
+    width: 40px;
+    height: 40px;
+    background-color: var(--color);
+    border-radius: 6px;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0 0 #000;
+    pointer-events: none;
+    transition: 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .item-color::before {
+    position: absolute;
+    content: attr(aria-color);
+    left: 50%;
+    bottom: 60px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    line-height: 1;
+    padding: 6px 10px;
+    background-color: #fef3c7;
+    color: #000;
+    border: 3px solid #000;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform-origin: bottom center;
+    transition:
+      all 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
+      opacity 300ms ease-out,
+      visibility 300ms ease-out;
+    transform: translateX(-50%) scale(0.5) translateY(10px);
+    white-space: nowrap;
+  }
+
+  .item-color:hover {
+    transform: scale(1.5) translateY(-5px);
+    z-index: 99999;
+  }
+
+  .item-color:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+
+  .item-color:active::after {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 0 #000;
+  }
+
+  .item-color.selected::after {
+    box-shadow: 0 0 0 3px #fbbf24, 4px 4px 0 0 #000;
+  }
+
+  .item-color:hover + * {
+    transform: scale(1.3) translateY(-3px);
+    z-index: 9999;
+  }
+
+  .item-color:hover + * + * {
+    transform: scale(1.15);
+    z-index: 999;
+  }
+
+  .item-color:has(+ *:hover) {
+    transform: scale(1.3) translateY(-3px);
+    z-index: 9999;
+  }
+
+  .item-color:has(+ * + *:hover) {
+    transform: scale(1.15);
+    z-index: 999;
+  }
+`;
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -1221,42 +1333,73 @@ const Checkout = () => {
                                     />
                                 </div>
 
-                                {/* Preset Colors Grid */}
-                                <div>
-                                    <label className="text-sm font-medium mb-2 block">
-                                        Quick Select:
-                                    </label>
-                                    <div className="grid grid-cols-6 gap-2">
-                                        {colors.map((c) => (
-                                            <button
-                                                key={c}
-                                                onClick={() => updateThreeJsColor(c)}
-                                                className={`relative w-full aspect-square rounded-lg border-2 shadow-sm transition-all hover:scale-110 hover:shadow-md ${color === c
-                                                        ? "border-indigo-600 ring-2 ring-indigo-300 scale-105"
-                                                        : "border-gray-300 hover:border-indigo-400"
-                                                    }`}
-                                                style={{ backgroundColor: c }}
-                                                title={c}
-                                            >
-                                                {color === c && (
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <svg
-                                                            className="w-4 h-4 text-white drop-shadow-lg"
-                                                            fill="currentColor"
-                                                            viewBox="0 0 20 20"
-                                                        >
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                                clipRule="evenodd"
-                                                            />
-                                                        </svg>
-                                                    </div>
-                                                )}
-                                            </button>
-                                        ))}
+                                {/* Comic Style Color Picker */}
+                                <ColorPickerWrapper>
+                                    <div className="comic-panel">
+                                        <div className="container-items">
+                                            <button 
+                                                className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
+                                                style={{'--color': '#e11d48'}} 
+                                                aria-color="#e11d48"
+                                                onClick={() => updateThreeJsColor('#e11d48')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
+                                                style={{'--color': '#f472b6'}} 
+                                                aria-color="#f472b6"
+                                                onClick={() => updateThreeJsColor('#f472b6')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
+                                                style={{'--color': '#fb923c'}} 
+                                                aria-color="#fb923c"
+                                                onClick={() => updateThreeJsColor('#fb923c')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
+                                                style={{'--color': '#facc15'}} 
+                                                aria-color="#facc15"
+                                                onClick={() => updateThreeJsColor('#facc15')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
+                                                style={{'--color': '#84cc16'}} 
+                                                aria-color="#84cc16"
+                                                onClick={() => updateThreeJsColor('#84cc16')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
+                                                style={{'--color': '#10b981'}} 
+                                                aria-color="#10b981"
+                                                onClick={() => updateThreeJsColor('#10b981')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
+                                                style={{'--color': '#0ea5e9'}} 
+                                                aria-color="#0ea5e9"
+                                                onClick={() => updateThreeJsColor('#0ea5e9')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
+                                                style={{'--color': '#3b82f6'}} 
+                                                aria-color="#3b82f6"
+                                                onClick={() => updateThreeJsColor('#3b82f6')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
+                                                style={{'--color': '#8b5cf6'}} 
+                                                aria-color="#8b5cf6"
+                                                onClick={() => updateThreeJsColor('#8b5cf6')}
+                                            />
+                                            <button 
+                                                className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
+                                                style={{'--color': '#a78bfa'}} 
+                                                aria-color="#a78bfa"
+                                                onClick={() => updateThreeJsColor('#a78bfa')}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                </ColorPickerWrapper>
                             </div>
                         </div>
 
@@ -1997,18 +2140,73 @@ const Checkout = () => {
                                             placeholder="#4F46E5"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-6 gap-1.5 md:gap-2">
-                                        {['#FF6B6B', '#FF8E8E', '#FFA07A', '#FFB347', '#9B59B6', '#E91E63', 
-                                        '#3B82F6', '#10B981', '#06B6D4', '#14B8A6', '#84CC16', '#EAB308'].map((c) => (
-                                            <button
-                                                key={c}
-                                                onClick={() => updateThreeJsColor(c)}
-                                                className="w-full aspect-square rounded border-2 border-[#0056b3] hover:border-[#DC3545] transition-colors"
-                                                style={{ backgroundColor: c }}
-                                                title={c}
-                                            />
-                                        ))}
-                                    </div>
+                                    {/* Comic Style Color Picker */}
+                                    <ColorPickerWrapper>
+                                        <div className="comic-panel" style={{background: '#191716', borderColor: '#E6AF2E'}}>
+                                            <div className="container-items">
+                                                <button 
+                                                    className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
+                                                    style={{'--color': '#e11d48'}} 
+                                                    aria-color="#e11d48"
+                                                    onClick={() => updateThreeJsColor('#e11d48')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
+                                                    style={{'--color': '#f472b6'}} 
+                                                    aria-color="#f472b6"
+                                                    onClick={() => updateThreeJsColor('#f472b6')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
+                                                    style={{'--color': '#fb923c'}} 
+                                                    aria-color="#fb923c"
+                                                    onClick={() => updateThreeJsColor('#fb923c')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
+                                                    style={{'--color': '#facc15'}} 
+                                                    aria-color="#facc15"
+                                                    onClick={() => updateThreeJsColor('#facc15')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
+                                                    style={{'--color': '#84cc16'}} 
+                                                    aria-color="#84cc16"
+                                                    onClick={() => updateThreeJsColor('#84cc16')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
+                                                    style={{'--color': '#10b981'}} 
+                                                    aria-color="#10b981"
+                                                    onClick={() => updateThreeJsColor('#10b981')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
+                                                    style={{'--color': '#0ea5e9'}} 
+                                                    aria-color="#0ea5e9"
+                                                    onClick={() => updateThreeJsColor('#0ea5e9')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
+                                                    style={{'--color': '#3b82f6'}} 
+                                                    aria-color="#3b82f6"
+                                                    onClick={() => updateThreeJsColor('#3b82f6')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
+                                                    style={{'--color': '#8b5cf6'}} 
+                                                    aria-color="#8b5cf6"
+                                                    onClick={() => updateThreeJsColor('#8b5cf6')}
+                                                />
+                                                <button 
+                                                    className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
+                                                    style={{'--color': '#a78bfa'}} 
+                                                    aria-color="#a78bfa"
+                                                    onClick={() => updateThreeJsColor('#a78bfa')}
+                                                />
+                                            </div>
+                                        </div>
+                                    </ColorPickerWrapper>
                                 </div>
                             </div>
 

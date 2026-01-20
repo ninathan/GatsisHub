@@ -7,6 +7,7 @@ import { LogOut } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { MessageCircle } from 'lucide-react';
 import { ShoppingCart } from 'lucide-react';
+import DarkModeToggle from '../DarkModeToggle';
 
 
 
@@ -99,7 +100,7 @@ const Navbar = () => {
 
 
   return (
-    <nav className="bg-[#191716] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#e6af2e] sticky top-0 z-50">
+    <nav className="bg-[#191716] dark:bg-slate-900 px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#e6af2e] dark:border-yellow-500 sticky top-0 z-50 transition-colors duration-300">
       <div className="flex items-center justify-between max-w-full">
         {/* logo and title */}
         <div className="flex items-center space-x-2 md:space-x-3">
@@ -116,6 +117,7 @@ const Navbar = () => {
             <NavLink to="/products" className={linkClass}>Products</NavLink>
             <NavLink to="/create-design" className={linkClass} onClick={handleDesignClick}>Design</NavLink>
             <NavLink to="/orders" className={linkClass}>Orders</NavLink>
+            <DarkModeToggle />
 
             {!user ? (
               <NavLink to="/login" className={linkClass}>Login</NavLink>
@@ -250,7 +252,7 @@ const Navbar = () => {
       {/* Mobile menu */}
       <div
         ref={mobileMenuRef}
-        className={`md:hidden bg-[#353f94] transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+        className={`md:hidden bg-[#353f94] dark:bg-slate-800 transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
       >
         <div className="mt-3 border-t-2 border-white pt-3 pb-2">
@@ -258,6 +260,12 @@ const Navbar = () => {
           <NavLink to="/products" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Products</NavLink>
           <NavLink to="/create-design" className={mobileLinkClass} onClick={handleDesignClick}>Design</NavLink>
           <NavLink to="/orders" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Orders</NavLink>
+          
+          {/* Dark Mode Toggle for Mobile */}
+          <div className="px-1 py-2 flex items-center justify-between">
+            <span className="text-white text-lg">Dark Mode</span>
+            <DarkModeToggle />
+          </div>
 
           {!user ? (
             <NavLink to="/login" className={mobileLinkClass} onClick={() => setIsMenuOpen(false)}>Login</NavLink>

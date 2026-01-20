@@ -9,6 +9,7 @@ import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
 import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import StarRating from '../../components/StarRating';
 
 
 const Order = () => {
@@ -1370,32 +1371,13 @@ const Order = () => {
                                 <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">
                                     How would you rate your experience?
                                 </label>
-                                <div className="flex gap-1 md:gap-2 justify-center">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setRating(star)}
-                                            className="focus:outline-none transition-transform hover:scale-110"
-                                        >
-                                            <svg
-                                                className={`w-10 h-10 md:w-12 md:h-12 ${star <= rating
-                                                        ? 'text-yellow-400 fill-current'
-                                                        : 'text-gray-300'
-                                                    }`}
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                                strokeWidth="1"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                                />
-                                            </svg>
-                                        </button>
-                                    ))}
+                                <div className="flex justify-center">
+                                    <StarRating 
+                                        rating={rating} 
+                                        readOnly={false} 
+                                        size={48}
+                                        onChange={setRating}
+                                    />
                                 </div>
                                 <p className="text-center text-sm text-gray-600 mt-2">
                                     {rating === 1 && 'Poor'}
