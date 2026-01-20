@@ -77,6 +77,12 @@ const sidebarSytemA = () => {
                                 Accounts
                             </NavLink>
                         </li>
+                        <li className="hover:bg-[#E6AF2E] text-white hover:text-[#191916]  p-2 rounded">
+                            <NavLink to="/archivedaccounts" className="block">
+                                <ShoppingCart size={20} className='mr-2 inline' />
+                                Archived Accounts
+                            </NavLink>
+                        </li>
                         <li className='hover:bg-[#E6AF2E] text-white hover:text-[#191916] p-2 rounded'>
                             <NavLink to="/authSystemA" onClick="" className="block w-full text-left">
                                 <LogOut size={20} className='mr-2 inline' />

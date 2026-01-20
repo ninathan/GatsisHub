@@ -183,20 +183,20 @@ const Employees = () => {
             );
 
             if (response.ok) {
-                setSuccessMessage(`${employeeToDelete.employeename} has been deleted successfully!`);
+                setSuccessMessage(`${employeeToDelete.employeename} has been archived successfully!`);
                 setShowSuccessModal(true);
                 setShowDeleteConfirm(false);
                 setEmployeeToDelete(null);
                 fetchEmployees(); // Refresh the list
             } else {
                 const error = await response.json();
-                setErrorMessage(error.error || 'Failed to delete employee');
+                setErrorMessage(error.error || 'Failed to archive employee');
                 setShowErrorModal(true);
                 setShowDeleteConfirm(false);
             }
         } catch (error) {
 
-            setErrorMessage('Failed to delete employee. Please try again.');
+            setErrorMessage('Failed to archive employee. Please try again.');
             setShowErrorModal(true);
             setShowDeleteConfirm(false);
         }
@@ -1950,10 +1950,10 @@ const Employees = () => {
                             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
                                 <FaTrash className="text-red-600 text-xl" />
                             </div>
-                            <h3 className="text-xl font-bold text-center mb-2">Delete Employee</h3>
+                            <h3 className="text-xl font-bold text-center mb-2">Archive Employee</h3>
                             <p className="text-gray-600 text-center mb-6">
-                                Are you sure you want to delete <span className="font-semibold">{employeeToDelete.employeename}</span>? 
-                                This action cannot be undone.
+                                Are you sure you want to archive <span className="font-semibold">{employeeToDelete.employeename}</span>? 
+                                They can be restored later by the System Admin if needed.
                             </p>
                             <div className="flex gap-3 justify-end">
                                 <button
@@ -1966,7 +1966,7 @@ const Employees = () => {
                                     onClick={handleConfirmDelete}
                                     className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
                                 >
-                                    Delete
+                                    Archive
                                 </button>
                             </div>
                         </div>

@@ -394,4 +394,70 @@ router.post("/create", async (req, res) => {
   }
 });
 
+// 📋 GET /employees/archived - Get all archived employees
+router.get("/archived", async (req, res) => {
+  try {
+    const { data: employees, error } = await supabase
+      .from("employees")
+      .select("employeeid, employeename, email, assigneddepartment, role, contactdetails, archived_at")
+      .eq('is_archived', true)
+      .order('archived_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({ employees });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch archived employees" });
+  }
+});
+
+// 🔄 POST /employees/:employeeid/restore - Restore archived employee
+router.post("/:employeeid/restore", async (req, res) => {
+  try {
+    const { employeeid } = req.params;
+
+    // Check if employee exists and is archived
+    const { data: existingEmployee, error: fetchError } = await supabase
+      .from("employees")
+      .select("employeename, is_archived")
+      .eq("employeeid", employeeid)
+      .single();
+
+    if (fetchError || !existingEmployee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    if (!existingEmployee.is_archived) {
+      return res.status(400).json({ error: "Employee is not archived" });
+    }
+
+    // Restore employee
+    const { error } = await supabase
+      .from("employees")
+      .update({
+        is_archived: false,
+        archived_at: null,
+        accountstatus: 'Active',
+        ispresent: false
+      })
+      .eq("employeeid", employeeid);
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({
+      message: "Employee restored successfully",
+      restoredEmployee: {
+        employeeid,
+        employeename: existingEmployee.employeename
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to restore employee" });
+  }
+});
+
 export default router;

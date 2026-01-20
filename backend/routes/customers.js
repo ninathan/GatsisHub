@@ -152,4 +152,69 @@ router.delete("/:customerid", async (req, res) => {
   }
 });
 
+// 📋 GET /customers/archived - Get all archived customers
+router.get("/archived", async (req, res) => {
+  try {
+    const { data: customers, error } = await supabase
+      .from("customers")
+      .select("customerid, userid, companyname, emailaddress, companynumber, addresses, datecreated, archived_at, google_id")
+      .eq('is_archived', true)
+      .order('archived_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({ customers });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch archived customers" });
+  }
+});
+
+// 🔄 POST /customers/:customerid/restore - Restore archived customer
+router.post("/:customerid/restore", async (req, res) => {
+  try {
+    const { customerid } = req.params;
+
+    // Check if customer exists and is archived
+    const { data: existingCustomer, error: fetchError } = await supabase
+      .from("customers")
+      .select("companyname, is_archived")
+      .eq("customerid", customerid)
+      .single();
+
+    if (fetchError || !existingCustomer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    if (!existingCustomer.is_archived) {
+      return res.status(400).json({ error: "Customer is not archived" });
+    }
+
+    // Restore customer
+    const { error } = await supabase
+      .from("customers")
+      .update({
+        is_archived: false,
+        archived_at: null,
+        accountstatus: 'Active'
+      })
+      .eq("customerid", customerid);
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({
+      message: "Customer restored successfully",
+      restoredCustomer: {
+        customerid,
+        companyname: existingCustomer.companyname
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to restore customer" });
+  }
+});
+
 export default router;

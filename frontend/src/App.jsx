@@ -48,6 +48,7 @@ import SystemAdminLayout from './layouts/SystemAdminLayout';
 import AuthSystemA from './pages/SystemAdminPages/AuthSystemA';
 import SystemEmployee from './pages/SystemAdminPages/SystemEmployee';
 import SystemAccounts from './pages/SystemAdminPages/SystemAccounts';
+import ArchivedAccounts from './pages/SystemAdminPages/ArchivedAccounts';
 import SystemProfile from './pages/SystemAdminPages/SystemProfile';
 
 import AuthPA from './pages/ProductionAsemblyPage/AuthPA';
@@ -191,6 +192,7 @@ const router = createBrowserRouter(
       <Route element={<SystemAdminLayout />}>
         <Route path="/systememployees" element={<SystemEmployee />} />
         <Route path="/systemaccounts" element={<SystemAccounts />} />
+        <Route path="/archivedaccounts" element={<ArchivedAccounts />} />
         <Route path="/systemprofile" element={<SystemProfile />} />
       </Route>
 
