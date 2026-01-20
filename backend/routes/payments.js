@@ -138,6 +138,16 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       action: 'submitted'
     }]);
 
+    // Create admin notification for Sales Admin
+    await supabase.from("admin_notifications").insert([{
+      orderid: payment.orderid,
+      customerid: payment.customerid,
+      title: 'New Payment Submitted',
+      message: `Customer has submitted a payment proof for order ${orderid ? orderid.slice(0, 8).toUpperCase() : 'N/A'} using ${paymentMethod}. Please review and verify.`,
+      type: 'payment_submitted',
+      targetrole: 'sales_admin'
+    }]);
+
     // Update order status if orderid is provided
     if (orderid) {
       const { error: updateError } = await supabase

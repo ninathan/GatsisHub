@@ -239,6 +239,22 @@ router.post('/send', async (req, res) => {
       throw error;
     }
 
+    // Create admin notification if message was sent by customer
+    if (senderType === 'customer') {
+      try {
+        await supabase.from("admin_notifications").insert([{
+          customerid: customerid,
+          title: 'New Message Received',
+          message: message.length > 80 ? message.substring(0, 80) + '...' : message,
+          type: 'message_received',
+          targetrole: 'sales_admin'
+        }]);
+      } catch (notifError) {
+        console.error('Failed to create notification:', notifError);
+        // Don't fail the request if notification creation fails
+      }
+    }
+
     res.status(201).json({ 
       message: 'Message sent successfully',
       data 

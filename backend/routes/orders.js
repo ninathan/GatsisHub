@@ -229,6 +229,21 @@ router.post("/create", async (req, res) => {
       // Don't fail the order creation if email fails
     }
 
+    // Create admin notification for new order
+    try {
+      await supabase.from("admin_notifications").insert([{
+        orderid: order[0].orderid,
+        customerid: userid || null,
+        title: 'New Order Created',
+        message: `New order for ${quantity} ${hangerType} hangers has been placed by ${companyName}.`,
+        type: 'order_created',
+        targetrole: 'sales_admin'
+      }]);
+    } catch (notifError) {
+      console.error('Failed to create notification:', notifError);
+      // Don't fail the request if notification creation fails
+    }
+
     res.status(201).json({
       message: "Order created successfully!",
       order: order[0]
@@ -450,6 +465,21 @@ router.delete("/:orderid", async (req, res) => {
 
     if (deleteError) {
       throw deleteError;
+    }
+
+    // Create admin notification for order cancellation
+    try {
+      await supabase.from("admin_notifications").insert([{
+        orderid: orderid,
+        customerid: existingOrder.userid || null,
+        title: 'Order Cancelled',
+        message: `Order ${orderid.slice(0, 8).toUpperCase()} has been cancelled by the customer. Reason: ${reason || 'Not specified'}`,
+        type: 'order_cancelled',
+        targetrole: 'both' // Both Sales Admin and OM should see
+      }]);
+    } catch (notifError) {
+      console.error('Failed to create notification:', notifError);
+      // Don't fail the request if notification creation fails
     }
 
     res.status(200).json({ 
