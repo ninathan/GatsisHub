@@ -53,6 +53,8 @@ const OrderDetail = () => {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('Unable to verify payment details. Please resubmit with clearer information.');
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [isApprovingOrder, setIsApprovingOrder] = useState(false);
+    const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
     // Real-time payment update handler
     const handlePaymentUpdate = useCallback(async (payload) => {
@@ -358,6 +360,7 @@ const OrderDetail = () => {
     };
 
     const handleApproveOrder = async () => {
+        setIsApprovingOrder(true);
         try {
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
@@ -376,10 +379,13 @@ const OrderDetail = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to approve order', 'error');
+        } finally {
+            setIsApprovingOrder(false);
         }
     };
 
     const handlePaymentConfirm = async () => {
+        setIsConfirmingPayment(true);
         try {
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
@@ -398,6 +404,8 @@ const OrderDetail = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to confirm payment', 'error');
+        } finally {
+            setIsConfirmingPayment(false);
         }
     };
 
@@ -1112,17 +1120,37 @@ const OrderDetail = () => {
                                 <>
                                     <button
                                         onClick={handleApproveOrder}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                        disabled={isApprovingOrder || isConfirmingPayment}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        <Check size={18} />
-                                        Approve Order
+                                        {isApprovingOrder ? (
+                                            <>
+                                                <LoadingSpinner size="sm" color="white" />
+                                                <span>Approving...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check size={18} />
+                                                Approve Order
+                                            </>
+                                        )}
                                     </button>
                                     <button
                                         onClick={handlePaymentConfirm}
-                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                        disabled={isApprovingOrder || isConfirmingPayment}
+                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        <CreditCard size={18} />
-                                        Payment Confirm
+                                        {isConfirmingPayment ? (
+                                            <>
+                                                <LoadingSpinner size="sm" color="white" />
+                                                <span>Confirming...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CreditCard size={18} />
+                                                Payment Confirm
+                                            </>
+                                        )}
                                     </button>
                                 </>
                             )}
@@ -1398,7 +1426,7 @@ const OrderDetail = () => {
                                         >
                                             {isProcessingPayment ? (
                                                 <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                    <LoadingSpinner size="sm" color="white" />
                                                     Processing...
                                                 </>
                                             ) : (
@@ -1594,7 +1622,7 @@ const OrderDetail = () => {
                             >
                                 {isProcessingPayment ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        <LoadingSpinner size="sm" color="white" />
                                         Processing...
                                     </>
                                 ) : (

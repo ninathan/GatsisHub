@@ -42,6 +42,8 @@ const OrderDetailOM = () => {
     const [notificationType, setNotificationType] = useState('success');
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
+    const [isApprovingOrder, setIsApprovingOrder] = useState(false);
+    const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
     // Real-time order update handler
     const handleOrderUpdate = useCallback((payload) => {
@@ -231,6 +233,7 @@ const OrderDetailOM = () => {
     };
 
     const handleApproveOrder = async () => {
+        setIsApprovingOrder(true);
         try {
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
@@ -249,10 +252,13 @@ const OrderDetailOM = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to approve order', 'error');
+        } finally {
+            setIsApprovingOrder(false);
         }
     };
 
     const handlePaymentConfirm = async () => {
+        setIsConfirmingPayment(true);
         try {
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
@@ -271,6 +277,8 @@ const OrderDetailOM = () => {
         } catch (err) {
 
             showNotificationMessage('Failed to confirm payment', 'error');
+        } finally {
+            setIsConfirmingPayment(false);
         }
     };
 
@@ -632,17 +640,37 @@ const OrderDetailOM = () => {
                                 <>
                                     <button
                                         onClick={handleApproveOrder}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                        disabled={isApprovingOrder || isConfirmingPayment}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        <Check size={18} />
-                                        Approve Order
+                                        {isApprovingOrder ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                <span>Approving...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check size={18} />
+                                                Approve Order
+                                            </>
+                                        )}
                                     </button>
                                     <button
                                         onClick={handlePaymentConfirm}
-                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                        disabled={isApprovingOrder || isConfirmingPayment}
+                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        <CreditCard size={18} />
-                                        Payment Confirm
+                                        {isConfirmingPayment ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                <span>Confirming...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CreditCard size={18} />
+                                                Payment Confirm
+                                            </>
+                                        )}
                                     </button>
                                 </>
                             )}

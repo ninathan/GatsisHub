@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaTimes, FaEye, FaUndo, FaUserSlash, FaUser } from 'react-icons/fa';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ArchivedAccounts = () => {
     const [archivedCustomers, setArchivedCustomers] = useState([]);
@@ -179,7 +180,7 @@ const ArchivedAccounts = () => {
                 {/* Content */}
                 {loading ? (
                     <div className="bg-white rounded-lg shadow p-8 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E6AF2E] mx-auto mb-4"></div>
+                        <LoadingSpinner size="lg" />
                         <p className="text-gray-500">Loading archived accounts...</p>
                     </div>
                 ) : error ? (

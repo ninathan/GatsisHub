@@ -4,6 +4,7 @@ import userav from '../../images/user-alt.png'
 import key from '../../images/key.png'
 import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 const AuthSA = () => {
     const navigate = useNavigate();
@@ -149,7 +150,7 @@ const AuthSA = () => {
                         >
                             {loading ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-2 border-white border-t-transparent"></div>
+                                    <LoadingSpinner size="sm" color="white" />
                                     Signing In...
                                 </>
                             ) : 'Sign In'}

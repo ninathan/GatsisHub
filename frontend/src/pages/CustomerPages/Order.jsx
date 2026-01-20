@@ -1331,7 +1331,7 @@ const Order = () => {
                             >
                                 {isCancelling ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        <LoadingSpinner size="sm" color="white" />
                                         Cancelling...
                                     </>
                                 ) : (
@@ -1444,7 +1444,7 @@ const Order = () => {
                             >
                                 {isSubmittingReview ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        <LoadingSpinner size="sm" color="white" />
                                         Submitting...
                                     </>
                                 ) : (

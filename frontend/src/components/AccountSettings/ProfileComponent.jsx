@@ -1028,7 +1028,7 @@ const ProfileComponent = () => {
                                                         </div>
                                                     </div>
                                                     {isSavingNotifications && (
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                                                        <LoadingSpinner size="sm" />
                                                     )}
                                                 </label>
                                             </div>
@@ -1053,7 +1053,7 @@ const ProfileComponent = () => {
                                                         </div>
                                                     </div>
                                                     {isToggling2FA && (
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                                                        <LoadingSpinner size="sm" />
                                                     )}
                                                 </label>
                                             </div>

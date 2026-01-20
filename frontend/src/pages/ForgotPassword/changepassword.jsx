@@ -5,6 +5,7 @@ import userav from '../../images/user-alt.png'
 import key from '../../images/key.png'
 import { Eye, EyeOff, Check, X } from 'lucide-react'
 import check from '../../images/Check.png'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 const changepassword = () => {
     const navigate = useNavigate();
@@ -170,7 +171,7 @@ const changepassword = () => {
                     >
                         {isLoading ? (
                             <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                                <LoadingSpinner size="sm" color="black" />
                                 Updating...
                             </>
                         ) : (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react'
 import ProductCards from '../../components/Checkout/productcard'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 const ProductSA = () => {
     const [products, setProducts] = useState([])
@@ -266,7 +267,7 @@ const ProductSA = () => {
         return (
             <div className="flex-1 flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <LoadingSpinner size="lg" />
                     <p className="text-gray-600">Loading products and materials...</p>
                 </div>
             </div>

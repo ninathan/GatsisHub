@@ -1162,7 +1162,7 @@ const Checkout = () => {
                             >
                                 {isDownloading ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent"></div>
+                                        <LoadingSpinner size="sm" color="black" />
                                         Downloading...
                                     </>
                                 ) : (
@@ -1685,7 +1685,7 @@ const Checkout = () => {
                             >
                                 {isSubmitting ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                        <LoadingSpinner size="sm" color="white" />
                                         <span>Submitting Order...</span>
                                     </>
                                 ) : (

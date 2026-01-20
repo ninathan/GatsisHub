@@ -304,9 +304,8 @@ const PaymentPage = () => {
                         >
                             {uploading ? (
                                 <>
-                                    <span className="animate-spin">⏳</span>
+                                    <LoadingSpinner size="sm" color="white" />
                                     Uploading...
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent ml-2"></div>
                                 </>
                             ) : (
                                 <>
