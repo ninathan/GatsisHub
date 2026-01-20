@@ -3,6 +3,7 @@ import ReviewCard from "./Reviewcard";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import useScrollAnimation from "../../hooks/useScrollAnimation";
+import LoadingSpinner from "../LoadingSpinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -226,7 +227,7 @@ const CustomerRv = () => {
                 
                 {loading ? (
                     <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-[#353f94]"></div>
+                        <LoadingSpinner> </LoadingSpinner>
                         <p className="mt-4 text-gray-600">Loading reviews...</p>
                     </div>
                 ) : (

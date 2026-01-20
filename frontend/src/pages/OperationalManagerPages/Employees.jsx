@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaFilter, FaEllipsisV, FaTrash, FaEdit, FaPlus, FaUsers, FaClipboardList, FaBullseye, FaTrophy, FaChartLine } from "react-icons/fa";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const Employees = () => {
     const [employees, setEmployees] = useState([]);
@@ -659,7 +660,7 @@ const Employees = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         {loading ? (
                             <div className="p-8 text-center text-gray-500">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E6AF2E] mx-auto mb-4"></div>
+                                <LoadingSpinner> </LoadingSpinner>
                                 Loading employees...
                             </div>
                         ) : filteredEmployees.length === 0 ? (

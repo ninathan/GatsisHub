@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown } from 'lucide-react';
 import { div } from 'framer-motion/client';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const DashboardOM = () => {
 
@@ -395,7 +396,7 @@ const DashboardOM = () => {
             {loading && (
                 <div className='flex-1 flex items-center justify-center p-8'>
                     <div className='text-center'>
-                        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#E6AF2E] mx-auto mb-4'></div>
+                        <LoadingSpinner> </LoadingSpinner>
                         <p className='text-gray-600'>Loading dashboard data...</p>
                     </div>
                 </div>

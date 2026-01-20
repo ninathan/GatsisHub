@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import HangerScene from '../Checkout/HangerScene';
+import LoadingSpinner from '../LoadingSpinner';
 
 /**
  * OrderDesignViewer Component
@@ -36,7 +37,7 @@ const OrderDesignViewer = ({ designData }) => {
                     <Suspense fallback={
                         <div className='w-full h-full flex items-center justify-center bg-gray-50'>
                             <div className='text-center'>
-                                <div className='text-6xl mb-4'>⏳</div>
+                                <LoadingSpinner> </LoadingSpinner>
                                 <p className='text-lg text-gray-600'>Loading 3D Design...</p>
                             </div>
                         </div>
