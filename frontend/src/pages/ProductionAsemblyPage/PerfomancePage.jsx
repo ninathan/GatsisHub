@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Users, Package, TrendingUp, Award, AlertCircle } from 'lucide-react';
+import { Users, Package, TrendingUp, Award, AlertCircle, Edit2, Save, X, CheckCircle } from 'lucide-react';
 
 const PerformancePage = () => {
     const [selectedTeam, setSelectedTeam] = useState('All');
+    const [editingOrder, setEditingOrder] = useState(null);
+    const [editValues, setEditValues] = useState({});
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     
-    // Hard-coded team performance data
-    const teams = [
+    // Hard-coded team performance data (now using state to allow updates)
+    const [teams, setTeams] = useState([
         {
             teamId: "team-001",
             teamName: "Assembly Line A",
@@ -45,8 +48,8 @@ const PerformancePage = () => {
             teamId: "team-002",
             teamName: "Assembly Line B",
             teamLeader: "Maria Santos",
-            memberCount: 10,
-            assignedOrders: [
+            memberCount:  10,
+            assignedOrders:  [
                 {
                     orderId: "d4e5f6a7-b8c9-0123-def1-234567890123",
                     productName: "Electric Motorcycle Frame",
@@ -54,12 +57,12 @@ const PerformancePage = () => {
                     completedUnits: 195,
                     deadline: "2026-01-20T00:00:00Z",
                     status: "On Track",
-                    notes: "Almost complete - final inspection pending"
+                    notes:  "Almost complete - final inspection pending"
                 },
                 {
                     orderId: "e5f6a7b8-c9d0-1234-ef12-345678901234",
                     productName: "Racing Frame - Pro Series",
-                    targetQuota: 50,
+                    targetQuota:  50,
                     completedUnits: 25,
                     deadline: "2026-02-10T00:00:00Z",
                     status: "At Risk",
@@ -67,7 +70,7 @@ const PerformancePage = () => {
                 }
             ]
         }
-    ];
+    ]);
 
     const getProgressColor = (percentage) => {
         if (percentage >= 90) return 'bg-green-500';
@@ -79,7 +82,7 @@ const PerformancePage = () => {
     const getStatusBadge = (status) => {
         const statusStyles = {
             'On Track': 'bg-green-100 text-green-700 border-green-500',
-            'At Risk': 'bg-yellow-100 text-yellow-700 border-yellow-500',
+            'At Risk':  'bg-yellow-100 text-yellow-700 border-yellow-500',
             'Delayed': 'bg-red-100 text-red-700 border-red-500',
             'Completed': 'bg-blue-100 text-blue-700 border-blue-500'
         };
@@ -95,15 +98,89 @@ const PerformancePage = () => {
         });
     };
 
+    const calculateStatus = (completedUnits, targetQuota, deadline) => {
+        const percentage = (completedUnits / targetQuota) * 100;
+        const daysUntilDeadline = Math. ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
+        
+        if (percentage >= 100) return 'Completed';
+        if (percentage >= 80 || daysUntilDeadline > 7) return 'On Track';
+        if (percentage >= 50 && daysUntilDeadline > 3) return 'At Risk';
+        return 'Delayed';
+    };
+
+    const handleEditClick = (teamId, orderId, currentQuota, currentCompleted) => {
+        const editKey = `${teamId}-${orderId}`;
+        setEditingOrder(editKey);
+        setEditValues({
+            targetQuota: currentQuota,
+            completedUnits: currentCompleted
+        });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingOrder(null);
+        setEditValues({});
+    };
+
+    const handleSaveEdit = (teamId, orderId) => {
+        setTeams(prevTeams => 
+            prevTeams.map(team => {
+                if (team.teamId === teamId) {
+                    return {
+                        ...team,
+                        assignedOrders: team.assignedOrders.map(order => {
+                            if (order.orderId === orderId) {
+                                const newQuota = parseInt(editValues.targetQuota) || order.targetQuota;
+                                const newCompleted = parseInt(editValues.completedUnits) || order.completedUnits;
+                                const newStatus = calculateStatus(newCompleted, newQuota, order.deadline);
+                                
+                                return {
+                                    ...order,
+                                    targetQuota: newQuota,
+                                    completedUnits:  newCompleted,
+                                    status: newStatus
+                                };
+                            }
+                            return order;
+                        })
+                    };
+                }
+                return team;
+            })
+        );
+
+        setEditingOrder(null);
+        setEditValues({});
+        
+        // Show success message
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+    };
+
+    const handleInputChange = (field, value) => {
+        setEditValues(prev => ({
+            ...prev,
+            [field]:  value
+        }));
+    };
+
     const filteredTeams = selectedTeam === 'All' 
-        ? teams 
+        ?  teams 
         : teams.filter(team => team.teamName === selectedTeam);
 
-    const uniqueTeamNames = ['All', ...new Set(teams.map(team => team.teamName))];
+    const uniqueTeamNames = ['All', ...new Set(teams. map(team => team.teamName))];
 
     return (
         <div className="flex w-full bg-gray-100">
             <main className="flex-1 p-3 md:p-6">
+                {/* Success Message */}
+                {showSuccessMessage && (
+                    <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
+                        <CheckCircle size={20} />
+                        <span className="font-medium">Performance updated successfully!</span>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="mb-6">
                     <h1 className="text-2xl md:text-4xl font-bold text-[#191716] mb-2">
@@ -115,13 +192,13 @@ const PerformancePage = () => {
                 {/* Team Filter */}
                 <div className="mb-6">
                     <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2">
-                        {uniqueTeamNames.map((teamName) => (
+                        {uniqueTeamNames. map((teamName) => (
                             <button
                                 key={teamName}
                                 onClick={() => setSelectedTeam(teamName)}
-                                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
+                                className={`cursor-pointer px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
                                     selectedTeam === teamName 
-                                        ? 'bg-[#E6AF2E] text-white' 
+                                        ?  'bg-[#E6AF2E] text-white' 
                                         : 'bg-white hover:bg-gray-50 border border-gray-300'
                                 }`}
                             >
@@ -163,7 +240,7 @@ const PerformancePage = () => {
                                 <p className="text-sm text-gray-600">Total Units</p>
                                 <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
                                     {teams.reduce((sum, team) => 
-                                        sum + team.assignedOrders.reduce((orderSum, order) => 
+                                        sum + team. assignedOrders.reduce((orderSum, order) => 
                                             orderSum + order.targetQuota, 0), 0
                                     ).toLocaleString()}
                                 </p>
@@ -180,7 +257,7 @@ const PerformancePage = () => {
                                     {teams.length > 0 
                                         ? Math.round(
                                             teams.reduce((sum, team) => 
-                                                sum + team.assignedOrders.reduce((orderSum, order) => 
+                                                sum + team. assignedOrders.reduce((orderSum, order) => 
                                                     orderSum + ((order.completedUnits / order.targetQuota) * 100), 0
                                                 ) / Math.max(team.assignedOrders.length, 1), 0
                                             ) / teams.length
@@ -202,7 +279,7 @@ const PerformancePage = () => {
                         </div>
                     ) : (
                         filteredTeams.map((team) => (
-                            <div key={team.teamId} className="bg-white rounded-lg shadow">
+                            <div key={team. teamId} className="bg-white rounded-lg shadow">
                                 {/* Team Header */}
                                 <div className="p-4 md:p-6 border-b border-gray-200">
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -241,17 +318,22 @@ const PerformancePage = () => {
                                         <div className="space-y-4">
                                             {team.assignedOrders.map((order) => {
                                                 const percentage = Math.round((order.completedUnits / order.targetQuota) * 100);
+                                                const isEditing = editingOrder === `${team.teamId}-${order.orderId}`;
                                                 
                                                 return (
                                                     <div 
                                                         key={order.orderId}
-                                                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                                                        className={`border rounded-lg p-4 transition-all ${
+                                                            isEditing 
+                                                                ? 'border-[#E6AF2E] shadow-lg bg-yellow-50' 
+                                                                : 'border-gray-200 hover:shadow-md'
+                                                        }`}
                                                     >
                                                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
                                                             <div className="flex-1">
                                                                 <div className="flex items-center gap-2 mb-2">
                                                                     <h4 className="font-semibold text-gray-900">
-                                                                        ORD-{order.orderId.slice(0, 8).toUpperCase()}
+                                                                        ORD-{order.orderId. slice(0, 8).toUpperCase()}
                                                                     </h4>
                                                                     <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.status)}`}>
                                                                         {order.status}
@@ -260,52 +342,121 @@ const PerformancePage = () => {
                                                                 <p className="text-sm text-gray-600">{order.productName}</p>
                                                             </div>
 
-                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                                                <div>
-                                                                    <p className="text-gray-600">Target Quota</p>
-                                                                    <p className="font-semibold">{order.targetQuota.toLocaleString()} units</p>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-gray-600">Completed</p>
-                                                                    <p className="font-semibold text-green-600">
-                                                                        {order.completedUnits.toLocaleString()} units
-                                                                    </p>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-gray-600">Remaining</p>
-                                                                    <p className="font-semibold text-orange-600">
-                                                                        {(order.targetQuota - order.completedUnits).toLocaleString()} units
-                                                                    </p>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-gray-600">Deadline</p>
-                                                                    <p className="font-semibold">{formatDate(order.deadline)}</p>
-                                                                </div>
-                                                            </div>
+                                                            {/* Edit Button */}
+                                                            {! isEditing && (
+                                                                <button
+                                                                    onClick={() => handleEditClick(
+                                                                        team.teamId, 
+                                                                        order.orderId, 
+                                                                        order.targetQuota, 
+                                                                        order.completedUnits
+                                                                    )}
+                                                                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#d19d1f] transition-colors"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                    <span className="text-sm font-medium">Edit Performance</span>
+                                                                </button>
+                                                            )}
                                                         </div>
 
-                                                        {/* Progress Bar */}
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <span className="text-sm font-medium text-gray-700">Progress</span>
-                                                                <span className="text-sm font-bold text-gray-900">{percentage}%</span>
-                                                            </div>
-                                                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                                                <div 
-                                                                    className={`h-3 rounded-full transition-all ${getProgressColor(percentage)}`}
-                                                                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                        {isEditing ?  (
+                                                            // Edit Mode
+                                                            <div className="space-y-4 bg-white p-4 rounded-lg border-2 border-[#E6AF2E]">
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Target Quota (units)
+                                                                        </label>
+                                                                        <input
+                                                                            type="number"
+                                                                            value={editValues.targetQuota}
+                                                                            onChange={(e) => handleInputChange('targetQuota', e. target.value)}
+                                                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
+                                                                            min="1"
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                            Completed Units
+                                                                        </label>
+                                                                        <input
+                                                                            type="number"
+                                                                            value={editValues.completedUnits}
+                                                                            onChange={(e) => handleInputChange('completedUnits', e. target.value)}
+                                                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
+                                                                            min="0"
+                                                                            max={editValues.targetQuota}
+                                                                        />
+                                                                    </div>
+                                                                </div>
 
-                                                        {/* Additional Info */}
-                                                        {order.notes && (
-                                                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                                                <div className="flex items-start gap-2">
-                                                                    <AlertCircle size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                                                                    <p className="text-sm text-blue-800">{order.notes}</p>
+                                                                <div className="flex gap-3 justify-end">
+                                                                    <button
+                                                                        onClick={handleCancelEdit}
+                                                                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                                                    >
+                                                                        <X size={16} />
+                                                                        <span className="text-sm font-medium">Cancel</span>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleSaveEdit(team.teamId, order.orderId)}
+                                                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                                                    >
+                                                                        <Save size={16} />
+                                                                        <span className="text-sm font-medium">Save Changes</span>
+                                                                    </button>
                                                                 </div>
                                                             </div>
+                                                        ) : (
+                                                            // View Mode
+                                                            <>
+                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                                                    <div>
+                                                                        <p className="text-gray-600">Target Quota</p>
+                                                                        <p className="font-semibold">{order.targetQuota. toLocaleString()} units</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-gray-600">Completed</p>
+                                                                        <p className="font-semibold text-green-600">
+                                                                            {order.completedUnits.toLocaleString()} units
+                                                                        </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-gray-600">Remaining</p>
+                                                                        <p className="font-semibold text-orange-600">
+                                                                            {(order.targetQuota - order.completedUnits).toLocaleString()} units
+                                                                        </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-gray-600">Deadline</p>
+                                                                        <p className="font-semibold">{formatDate(order.deadline)}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Progress Bar */}
+                                                                <div>
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <span className="text-sm font-medium text-gray-700">Progress</span>
+                                                                        <span className="text-sm font-bold text-gray-900">{percentage}%</span>
+                                                                    </div>
+                                                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                                                        <div 
+                                                                            className={`h-3 rounded-full transition-all ${getProgressColor(percentage)}`}
+                                                                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Additional Info */}
+                                                                {order.notes && (
+                                                                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                                                        <div className="flex items-start gap-2">
+                                                                            <AlertCircle size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                                                                            <p className="text-sm text-blue-800">{order.notes}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 );
@@ -318,6 +469,22 @@ const PerformancePage = () => {
                     )}
                 </div>
             </main>
+
+            <style jsx>{`
+                @keyframes slide-in {
+                    from {
+                        transform: translateX(100%);
+                        opacity:  0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                . animate-slide-in {
+                    animation: slide-in 0.3s ease-out;
+                }
+            `}</style>
         </div>
     );
 };

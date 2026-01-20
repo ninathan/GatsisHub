@@ -63,6 +63,8 @@ import PerfomancePage from './pages/ProductionAsemblyPage/PerfomancePage';
 import NotificationPage from './pages/SalesAdminPages/NotificationPage';
 import NotificationPageOM from './pages/OperationalManagerPages/NotificationPageOM';
 
+import VerificationPage from './pages/OperationalManagerPages/VerificationPage';
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -185,6 +187,7 @@ const router = createBrowserRouter(
         <Route path="/orderpageOM" element={<ProtectedOMRoute element={<OrderPageOM />} />} />
         <Route path="/calendarOM" element={<ProtectedOMRoute element={<CalendarOM />} />} />
         <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
+        <Route path="/verification" element={<ProtectedOMRoute element={<VerificationPage />} />} />
         <Route path="/employeeDetail" element={<ProtectedOMRoute element={<EmployeeDetail />} />} />
         <Route path="/profileOM" element={<ProtectedOMRoute element={<ProfileOM />} />} />
         <Route path="/notificationsOM" element={<ProtectedOMRoute element={<NotificationPageOM />} />} />

@@ -1141,7 +1141,7 @@ const ProfileComponent = () => {
 
             {/* Add Address Modal */}
             {showAddAddressModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
                         <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">Add New Address</h3>
                         
@@ -1153,7 +1153,7 @@ const ProfileComponent = () => {
                                     value={newAddress.name}
                                     onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
                                     placeholder="e.g., Home, Office, Warehouse"
-                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                 />
                             </div>
 
@@ -1164,7 +1164,7 @@ const ProfileComponent = () => {
                                     value={newAddress.phone}
                                     onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
                                     placeholder="Contact number for this address"
-                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                 />
                             </div>
 
@@ -1175,7 +1175,7 @@ const ProfileComponent = () => {
                                     onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
                                     placeholder="Street, City, State, Postal Code"
                                     rows={4}
-                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#35408E]"
+                                    className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                 />
                             </div>
                         </div>
@@ -1183,14 +1183,14 @@ const ProfileComponent = () => {
                         <div className="flex gap-2 md:gap-3 mt-4 md:mt-6">
                             <button
                                 onClick={() => setShowAddAddressModal(false)}
-                                className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                                className="cursor-pointer flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveNewAddress}
                                 disabled={isSavingAddress}
-                                className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base bg-[#35408E] text-white rounded hover:bg-[#2c3e50] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="cursor-pointer flex-1 px-3 md:px-4 py-2 text-sm md:text-base bg-[#E6AF2E] text-white rounded hover:bg-[#d19c1f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSavingAddress ? 'Saving...' : 'Save Address'}
                             </button>
