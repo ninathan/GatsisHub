@@ -60,6 +60,8 @@ import ProfilePA from './pages/ProductionAsemblyPage/profilePA';
 import LogPageSA from './pages/SalesAdminPages/LogPageSA';
 import LogPageOM from './pages/OperationalManagerPages/LogPageOM';
 import PerfomancePage from './pages/ProductionAsemblyPage/PerfomancePage';
+import NotificationPage from './pages/SalesAdminPages/NotificationPage';
+import NotificationPageOM from './pages/OperationalManagerPages/NotificationPageOM';
 
 
 // ✅ Protect logged-in customer routes
@@ -173,6 +175,7 @@ const router = createBrowserRouter(
         <Route path="/dashboardSA" element={<ProtectedAdminRoute element={<DashboardSA />} />} />
         <Route path="/productSA" element={<ProtectedAdminRoute element={<ProductSA />} />} />
         <Route path="/profileSA" element={<ProtectedAdminRoute element={<ProfileSA />} />} />
+        <Route path="/notificationsSA" element={<ProtectedAdminRoute element={<NotificationPage />} />} />
         <Route path="/logpageSA/:orderId" element={<ProtectedAdminRoute element={<LogPageSA />} />} />
       </Route>
 
@@ -184,6 +187,7 @@ const router = createBrowserRouter(
         <Route path="/employees" element={<ProtectedOMRoute element={<Employees />} />} />
         <Route path="/employeeDetail" element={<ProtectedOMRoute element={<EmployeeDetail />} />} />
         <Route path="/profileOM" element={<ProtectedOMRoute element={<ProfileOM />} />} />
+        <Route path="/notificationsOM" element={<ProtectedOMRoute element={<NotificationPageOM />} />} />
         <Route path="/orderdetailOM/:orderid" element={<ProtectedOMRoute element={<OrderDetailOM />} />} />
         <Route path="/logpageOM/:orderId" element={<ProtectedOMRoute element={<LogPageOM />} />} />
       </Route>
