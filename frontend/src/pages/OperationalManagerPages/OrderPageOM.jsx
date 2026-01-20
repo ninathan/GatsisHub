@@ -1,11 +1,12 @@
 import React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Filter, SearchCode } from "lucide-react";
 import { Link } from 'react-router-dom'
 import logo from '../../images/logo.png'
 import { useParams } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRealtimeOrdersAdmin } from '../../hooks/useRealtimeOrdersAdmin';
 
 const OrderPageOM = () => {
     const [orders, setOrders] = useState([])
@@ -19,6 +20,26 @@ const OrderPageOM = () => {
     //pagination  state
     const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 10;
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        if (payload.eventType === 'INSERT') {
+            setOrders(prev => [payload.new, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+            setOrders(prev => 
+                prev.map(order => 
+                    order.orderid === payload.new.orderid ? payload.new : order
+                )
+            );
+        } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => 
+                prev.filter(order => order.orderid !== payload.old.orderid)
+            );
+        }
+    }, []);
+
+    // Subscribe to real-time order updates
+    const { isSubscribed } = useRealtimeOrdersAdmin(handleOrderUpdate);
 
     // fetch all order on a component mount
     useEffect (() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import {
     Home,
     Package,
@@ -19,6 +19,7 @@ import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { useRealtimeSingleOrder } from '../../hooks/useRealtimeSingleOrder';
 
 const OrderDetailOM = () => {
     const { orderid } = useParams();
@@ -41,6 +42,19 @@ const OrderDetailOM = () => {
     const [notificationType, setNotificationType] = useState('success');
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        if (payload.eventType === 'UPDATE' && payload.new) {
+            setOrder(payload.new);
+            setOrderStatus(payload.new.orderstatus);
+            setValidatedPrice(payload.new.totalprice || '');
+            setDeadline(payload.new.deadline || '');
+        }
+    }, []);
+
+    // Subscribe to real-time order updates
+    useRealtimeSingleOrder(orderid, handleOrderUpdate);
 
     // Fetch order details
     useEffect(() => {

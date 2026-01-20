@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useNavigate } from 'react-router-dom'
+import { useRealtimeOrdersAdmin } from '../../hooks/useRealtimeOrdersAdmin'
 
 const CalendarOM = () => {
     const navigate = useNavigate();
@@ -12,6 +13,22 @@ const CalendarOM = () => {
     const [quotas, setQuotas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Real-time order update handler
+    const handleOrderUpdate = useCallback((payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Refetch orders to update calendar events
+            fetchOrdersWithDeadlines();
+        } else if (payload.eventType === 'DELETE') {
+            // Remove event from calendar
+            setEvents(prev => 
+                prev.filter(event => event.orderId !== payload.old.orderid)
+            );
+        }
+    }, []);
+
+    // Subscribe to real-time order updates
+    const { isSubscribed } = useRealtimeOrdersAdmin(handleOrderUpdate);
 
     // Fetch orders with deadlines and quotas from backend
     useEffect(() => {
