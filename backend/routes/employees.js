@@ -4,7 +4,7 @@ import supabase from '../supabaseClient.js';
 
 const router = express.Router();
 
-// � Get all employees (optionally filter by role and status)
+// 📋 Get all employees (excluding archived, optionally filter by role and status)
 router.get("/", async (req, res) => {
   try {
     const { role, status, ispresent, limit } = req.query;
@@ -12,6 +12,7 @@ router.get("/", async (req, res) => {
     let query = supabase
       .from("employees")
       .select("employeeid, employeename, email, assigneddepartment, role, accountstatus, contactdetails, shifthours, ispresent")
+      .eq('is_archived', false)
       .order('employeename', { ascending: true });
 
     // Apply filters if provided
