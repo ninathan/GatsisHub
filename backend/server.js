@@ -16,6 +16,7 @@ import quotasRoutes from "./routes/quotas.js";
 import productsRoutes from "./routes/products.js";
 import materialsRoutes from "./routes/materials.js";
 import orderLogsRoutes from "./routes/orderLogs.js";
+import submissionsRoutes from "./routes/submissions.js";
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use("/quotas", quotasRoutes);
 app.use("/products", productsRoutes);
 app.use("/materials", materialsRoutes);
 app.use("/order-logs", orderLogsRoutes);
+app.use("/submissions", submissionsRoutes);
 
 // Health check
 app.get("/", (req, res) => {

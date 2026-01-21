@@ -1,76 +1,83 @@
-import React, { useState } from 'react';
-import { Users, Package, TrendingUp, Award, AlertCircle, Edit2, Save, X, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Package, TrendingUp, Award, AlertCircle, Send, X, CheckCircle, Loader } from 'lucide-react';
 
 const PerformancePage = () => {
-    const [selectedTeam, setSelectedTeam] = useState('All');
-    const [editingOrder, setEditingOrder] = useState(null);
-    const [editValues, setEditValues] = useState({});
+    const [selectedQuota, setSelectedQuota] = useState('All');
+    const [quotas, setQuotas] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [submitValues, setSubmitValues] = useState({
+        reported_completed: '',
+        submission_notes: '',
+        priority: 'Medium'
+    });
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-    
-    // Hard-coded team performance data (now using state to allow updates)
-    const [teams, setTeams] = useState([
-        {
-            teamId: "team-001",
-            teamName: "Assembly Line A",
-            teamLeader: "Juan Dela Cruz",
-            memberCount: 8,
-            assignedOrders: [
-                {
-                    orderId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                    productName: "Custom Motorcycle Frame - Sport Edition",
-                    targetQuota: 100,
-                    completedUnits: 85,
-                    deadline: "2026-01-25T00:00:00Z",
-                    status: "On Track",
-                    notes: "Priority order - customer requested early delivery"
-                },
-                {
-                    orderId: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                    productName: "Standard Motorcycle Frame - Classic",
-                    targetQuota: 150,
-                    completedUnits: 120,
-                    deadline: "2026-02-01T00:00:00Z",
-                    status: "On Track",
-                    notes: null
-                },
-                {
-                    orderId: "c3d4e5f6-a7b8-9012-cdef-123456789012",
-                    productName: "Heavy Duty Frame - Touring",
-                    targetQuota: 75,
-                    completedUnits: 45,
-                    deadline: "2026-01-30T00:00:00Z",
-                    status: "At Risk",
-                    notes: "Material delay - supplier issue resolved"
-                }
-            ]
-        },
-        {
-            teamId: "team-002",
-            teamName: "Assembly Line B",
-            teamLeader: "Maria Santos",
-            memberCount:  10,
-            assignedOrders:  [
-                {
-                    orderId: "d4e5f6a7-b8c9-0123-def1-234567890123",
-                    productName: "Electric Motorcycle Frame",
-                    targetQuota: 200,
-                    completedUnits: 195,
-                    deadline: "2026-01-20T00:00:00Z",
-                    status: "On Track",
-                    notes:  "Almost complete - final inspection pending"
-                },
-                {
-                    orderId: "e5f6a7b8-c9d0-1234-ef12-345678901234",
-                    productName: "Racing Frame - Pro Series",
-                    targetQuota:  50,
-                    completedUnits: 25,
-                    deadline: "2026-02-10T00:00:00Z",
-                    status: "At Risk",
-                    notes: "Complex welding required - slower than expected"
-                }
-            ]
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [employeeId, setEmployeeId] = useState(null);
+    const [teamId, setTeamId] = useState(null);
+
+    useEffect(() => {
+        // Get employee ID from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.employeeid) {
+            setEmployeeId(user.employeeid);
+            fetchEmployeeTeam(user.employeeid);
         }
-    ]);
+        fetchQuotas();
+    }, []);
+
+    const fetchEmployeeTeam = async (empId) => {
+        try {
+            const response = await fetch(`https://gatsis-hub.vercel.app/employees/${empId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setTeamId(data.teamid || null);
+            }
+        } catch (error) {
+            console.error('Error fetching employee team:', error);
+        }
+    };
+
+    const fetchQuotas = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('https://gatsis-hub.vercel.app/quotas?status=Active');
+            if (!response.ok) throw new Error('Failed to fetch quotas');
+            
+            const data = await response.json();
+            const quotasData = data.quotas || [];
+
+            // Fetch assigned orders for each quota
+            const quotasWithOrders = await Promise.all(
+                quotasData.map(async (quota) => {
+                    if (quota.assignedorders && quota.assignedorders.length > 0) {
+                        const ordersResponse = await fetch(`https://gatsis-hub.vercel.app/orders/all`);
+                        const ordersData = await ordersResponse.json();
+                        const allOrders = ordersData.orders || [];
+                        
+                        const assignedOrdersList = allOrders.filter(order => 
+                            quota.assignedorders.includes(order.orderid)
+                        );
+
+                        return {
+                            ...quota,
+                            orders: assignedOrdersList
+                        };
+                    }
+                    return { ...quota, orders: [] };
+                })
+            );
+
+            setQuotas(quotasWithOrders);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching quotas:', error);
+            setErrorMessage('Failed to load quotas');
+            setLoading(false);
+        }
+    };
 
     const getProgressColor = (percentage) => {
         if (percentage >= 90) return 'bg-green-500';
@@ -79,17 +86,19 @@ const PerformancePage = () => {
         return 'bg-red-500';
     };
 
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (orderstatus) => {
         const statusStyles = {
-            'On Track': 'bg-green-100 text-green-700 border-green-500',
-            'At Risk':  'bg-yellow-100 text-yellow-700 border-yellow-500',
-            'Delayed': 'bg-red-100 text-red-700 border-red-500',
-            'Completed': 'bg-blue-100 text-blue-700 border-blue-500'
+            'Pending': 'bg-yellow-100 text-yellow-700 border-yellow-500',
+            'Confirmed': 'bg-blue-100 text-blue-700 border-blue-500',
+            'In Progress': 'bg-purple-100 text-purple-700 border-purple-500',
+            'Completed': 'bg-green-100 text-green-700 border-green-500',
+            'Cancelled': 'bg-red-100 text-red-700 border-red-500'
         };
-        return statusStyles[status] || 'bg-gray-100 text-gray-700 border-gray-500';
+        return statusStyles[orderstatus] || 'bg-gray-100 text-gray-700 border-gray-500';
     };
 
     const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { 
             year: 'numeric', 
@@ -98,77 +107,90 @@ const PerformancePage = () => {
         });
     };
 
-    const calculateStatus = (completedUnits, targetQuota, deadline) => {
-        const percentage = (completedUnits / targetQuota) * 100;
-        const daysUntilDeadline = Math. ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
-        
-        if (percentage >= 100) return 'Completed';
-        if (percentage >= 80 || daysUntilDeadline > 7) return 'On Track';
-        if (percentage >= 50 && daysUntilDeadline > 3) return 'At Risk';
-        return 'Delayed';
+    const handleSubmitClick = (quota, order) => {
+        setSelectedOrder({ quota, order });
+        setSubmitValues({
+            reported_completed: '',
+            submission_notes: '',
+            priority: 'Medium'
+        });
+        setShowSubmitModal(true);
     };
 
-    const handleEditClick = (teamId, orderId, currentQuota, currentCompleted) => {
-        const editKey = `${teamId}-${orderId}`;
-        setEditingOrder(editKey);
-        setEditValues({
-            targetQuota: currentQuota,
-            completedUnits: currentCompleted
+    const handleCancelSubmit = () => {
+        setShowSubmitModal(false);
+        setSelectedOrder(null);
+        setSubmitValues({
+            reported_completed: '',
+            submission_notes: '',
+            priority: 'Medium'
         });
     };
 
-    const handleCancelEdit = () => {
-        setEditingOrder(null);
-        setEditValues({});
-    };
+    const handleSubmitProduction = async () => {
+        if (!employeeId) {
+            setErrorMessage('Employee ID not found. Please log in again.');
+            return;
+        }
 
-    const handleSaveEdit = (teamId, orderId) => {
-        setTeams(prevTeams => 
-            prevTeams.map(team => {
-                if (team.teamId === teamId) {
-                    return {
-                        ...team,
-                        assignedOrders: team.assignedOrders.map(order => {
-                            if (order.orderId === orderId) {
-                                const newQuota = parseInt(editValues.targetQuota) || order.targetQuota;
-                                const newCompleted = parseInt(editValues.completedUnits) || order.completedUnits;
-                                const newStatus = calculateStatus(newCompleted, newQuota, order.deadline);
-                                
-                                return {
-                                    ...order,
-                                    targetQuota: newQuota,
-                                    completedUnits:  newCompleted,
-                                    status: newStatus
-                                };
-                            }
-                            return order;
-                        })
-                    };
-                }
-                return team;
-            })
-        );
+        if (!submitValues.reported_completed || parseInt(submitValues.reported_completed) <= 0) {
+            setErrorMessage('Please enter a valid number of completed units');
+            return;
+        }
 
-        setEditingOrder(null);
-        setEditValues({});
-        
-        // Show success message
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
+        try {
+            const submissionData = {
+                quotaid: selectedOrder.quota.quotaid,
+                orderid: selectedOrder.order.orderid,
+                employeeid: employeeId,
+                teamid: teamId,
+                reported_completed: parseInt(submitValues.reported_completed),
+                submission_notes: submitValues.submission_notes || null,
+                priority: submitValues.priority
+            };
+
+            const response = await fetch('https://gatsis-hub.vercel.app/submissions/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(submissionData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to submit production');
+            }
+
+            setSuccessMessage('Production submitted successfully! Awaiting verification.');
+            setShowSuccessMessage(true);
+            setTimeout(() => setShowSuccessMessage(false), 3000);
+            handleCancelSubmit();
+            fetchQuotas(); // Refresh data
+        } catch (error) {
+            console.error('Error submitting production:', error);
+            setErrorMessage(error.message || 'Failed to submit production');
+            setTimeout(() => setErrorMessage(''), 5000);
+        }
     };
 
     const handleInputChange = (field, value) => {
-        setEditValues(prev => ({
+        setSubmitValues(prev => ({
             ...prev,
-            [field]:  value
+            [field]: value
         }));
     };
 
-    const filteredTeams = selectedTeam === 'All' 
-        ?  teams 
-        : teams.filter(team => team.teamName === selectedTeam);
+    const filteredQuotas = selectedQuota === 'All' 
+        ? quotas 
+        : quotas.filter(quota => quota.quotaid === parseInt(selectedQuota));
 
-    const uniqueTeamNames = ['All', ...new Set(teams. map(team => team.teamName))];
+    const uniqueQuotaOptions = ['All', ...quotas.map(q => ({ id: q.quotaid, name: q.quotaname }))];
+
+    const totalOrders = quotas.reduce((sum, quota) => sum + (quota.orders?.length || 0), 0);
+    const totalTarget = quotas.reduce((sum, quota) => sum + (quota.targetquota || 0), 0);
+    const totalFinished = quotas.reduce((sum, quota) => sum + (quota.finishedquota || 0), 0);
+    const avgCompletion = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
 
     return (
         <div className="flex w-full bg-gray-100">
@@ -177,316 +199,344 @@ const PerformancePage = () => {
                 {showSuccessMessage && (
                     <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
                         <CheckCircle size={20} />
-                        <span className="font-medium">Performance updated successfully!</span>
+                        <span className="font-medium">{successMessage}</span>
+                    </div>
+                )}
+
+                {/* Error Message */}
+                {errorMessage && (
+                    <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
+                        <AlertCircle size={20} />
+                        <span className="font-medium">{errorMessage}</span>
                     </div>
                 )}
 
                 {/* Header */}
                 <div className="mb-6">
                     <h1 className="text-2xl md:text-4xl font-bold text-[#191716] mb-2">
-                        Assembly Team Performance
+                        Production Performance
                     </h1>
-                    <p className="text-gray-600">Track team productivity and order quotas</p>
+                    <p className="text-gray-600">Submit your production and track quota progress</p>
                 </div>
 
-                {/* Team Filter */}
-                <div className="mb-6">
-                    <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2">
-                        {uniqueTeamNames. map((teamName) => (
-                            <button
-                                key={teamName}
-                                onClick={() => setSelectedTeam(teamName)}
-                                className={`cursor-pointer px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
-                                    selectedTeam === teamName 
-                                        ?  'bg-[#E6AF2E] text-white' 
-                                        : 'bg-white hover:bg-gray-50 border border-gray-300'
-                                }`}
-                            >
-                                {teamName}
-                            </button>
-                        ))}
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader className="animate-spin text-[#E6AF2E]" size={48} />
                     </div>
-                </div>
-
-                {/* Performance Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Total Teams</p>
-                                <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
-                                    {uniqueTeamNames.length - 1}
-                                </p>
+                ) : (
+                    <>
+                        {/* Quota Filter */}
+                        <div className="mb-6">
+                            <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2">
+                                {uniqueQuotaOptions.map((option) => (
+                                    <button
+                                        key={typeof option === 'string' ? option : option.id}
+                                        onClick={() => setSelectedQuota(typeof option === 'string' ? option : option.id)}
+                                        className={`cursor-pointer px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
+                                            selectedQuota === (typeof option === 'string' ? option : option.id)
+                                                ? 'bg-[#E6AF2E] text-white' 
+                                                : 'bg-white hover:bg-gray-50 border border-gray-300'
+                                        }`}
+                                    >
+                                        {typeof option === 'string' ? option : option.name}
+                                    </button>
+                                ))}
                             </div>
-                            <Users size={40} className="text-blue-500" />
                         </div>
-                    </div>
 
-                    <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Active Orders</p>
-                                <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
-                                    {teams.reduce((sum, team) => sum + team.assignedOrders.length, 0)}
-                                </p>
+                        {/* Performance Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Active Quotas</p>
+                                        <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
+                                            {quotas.length}
+                                        </p>
+                                    </div>
+                                    <Users size={40} className="text-blue-500" />
+                                </div>
                             </div>
-                            <Package size={40} className="text-green-500" />
-                        </div>
-                    </div>
 
-                    <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Total Units</p>
-                                <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
-                                    {teams.reduce((sum, team) => 
-                                        sum + team. assignedOrders.reduce((orderSum, order) => 
-                                            orderSum + order.targetQuota, 0), 0
-                                    ).toLocaleString()}
-                                </p>
+                            <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Total Orders</p>
+                                        <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
+                                            {totalOrders}
+                                        </p>
+                                    </div>
+                                    <Package size={40} className="text-green-500" />
+                                </div>
                             </div>
-                            <TrendingUp size={40} className="text-purple-500" />
-                        </div>
-                    </div>
 
-                    <div className="bg-white p-4 md:p-6 rounded-lg shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-600">Avg Completion</p>
-                                <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
-                                    {teams.length > 0 
-                                        ? Math.round(
-                                            teams.reduce((sum, team) => 
-                                                sum + team. assignedOrders.reduce((orderSum, order) => 
-                                                    orderSum + ((order.completedUnits / order.targetQuota) * 100), 0
-                                                ) / Math.max(team.assignedOrders.length, 1), 0
-                                            ) / teams.length
-                                        )
-                                        : 0
-                                    }%
-                                </p>
+                            <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Target Units</p>
+                                        <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
+                                            {totalTarget.toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <TrendingUp size={40} className="text-purple-500" />
+                                </div>
                             </div>
-                            <Award size={40} className="text-yellow-500" />
-                        </div>
-                    </div>
-                </div>
 
-                {/* Team Performance Cards */}
-                <div className="space-y-6">
-                    {filteredTeams.length === 0 ? (
-                        <div className="bg-white rounded-lg shadow p-8 text-center">
-                            <p className="text-gray-500">No team data available</p>
+                            <div className="bg-white p-4 md:p-6 rounded-lg shadow">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Avg Completion</p>
+                                        <p className="text-2xl md:text-3xl font-bold text-[#191716] mt-1">
+                                            {avgCompletion}%
+                                        </p>
+                                    </div>
+                                    <Award size={40} className="text-yellow-500" />
+                                </div>
+                            </div>
                         </div>
-                    ) : (
-                        filteredTeams.map((team) => (
-                            <div key={team. teamId} className="bg-white rounded-lg shadow">
-                                {/* Team Header */}
-                                <div className="p-4 md:p-6 border-b border-gray-200">
-                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                        <div>
-                                            <h2 className="text-xl font-bold text-[#191716]">{team.teamName}</h2>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                Team Leader: {team.teamLeader} • {team.memberCount} Members
-                                            </p>
+
+                        {/* Quota Cards */}
+                        <div className="space-y-6">
+                            {filteredQuotas.length === 0 ? (
+                                <div className="bg-white rounded-lg shadow p-8 text-center">
+                                    <p className="text-gray-500">No quotas available</p>
+                                </div>
+                            ) : (
+                                filteredQuotas.map((quota) => {
+                                    const quotaPercentage = quota.targetquota > 0 
+                                        ? Math.round((quota.finishedquota / quota.targetquota) * 100) 
+                                        : 0;
+
+                                    return (
+                                        <div key={quota.quotaid} className="bg-white rounded-lg shadow">
+                                            {/* Quota Header */}
+                                            <div className="p-4 md:p-6 border-b border-gray-200">
+                                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                                    <div>
+                                                        <h2 className="text-xl font-bold text-[#191716]">{quota.quotaname}</h2>
+                                                        <p className="text-sm text-gray-600 mt-1">
+                                                            {formatDate(quota.startdate)} - {formatDate(quota.enddate)}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-gray-600">Progress</p>
+                                                            <p className="text-lg font-bold text-green-600">
+                                                                {quota.finishedquota?.toLocaleString() || 0} / {quota.targetquota?.toLocaleString() || 0}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500">{quotaPercentage}% Complete</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Assigned Orders */}
+                                            <div className="p-4 md:p-6">
+                                                <h3 className="text-lg font-semibold mb-4 text-[#191716]">
+                                                    Assigned Orders ({quota.orders?.length || 0})
+                                                </h3>
+
+                                                {(!quota.orders || quota.orders.length === 0) ? (
+                                                    <div className="text-center py-8 text-gray-500">
+                                                        No orders assigned to this quota
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {quota.orders.map((order) => {
+                                                            const orderProgress = order.quantity > 0 
+                                                                ? Math.round(((order.quantity - (order.quantity || 0)) / order.quantity) * 100)
+                                                                : 0;
+
+                                                            return (
+                                                                <div 
+                                                                    key={order.orderid}
+                                                                    className="border rounded-lg p-4 hover:shadow-md transition-all"
+                                                                >
+                                                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center gap-2 mb-2">
+                                                                                <h4 className="font-semibold text-gray-900">
+                                                                                    {order.ordername || `Order #${order.orderid.slice(0, 8)}`}
+                                                                                </h4>
+                                                                                <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.orderstatus)}`}>
+                                                                                    {order.orderstatus}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="text-sm text-gray-600">
+                                                                                Customer: {order.customername || 'N/A'}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Submit Button */}
+                                                                        <button
+                                                                            onClick={() => handleSubmitClick(quota, order)}
+                                                                            className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#d19d1f] transition-colors"
+                                                                        >
+                                                                            <Send size={16} />
+                                                                            <span className="text-sm font-medium">Submit Production</span>
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                                                        <div>
+                                                                            <p className="text-gray-600">Quantity</p>
+                                                                            <p className="font-semibold">{order.quantity?.toLocaleString() || 0} units</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-gray-600">Deadline</p>
+                                                                            <p className="font-semibold">{formatDate(order.deadline)}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-gray-600">Total Price</p>
+                                                                            <p className="font-semibold">₱{order.totalprice?.toLocaleString() || 0}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-gray-600">Order Status</p>
+                                                                            <p className="font-semibold">{order.orderstatus}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-600">Total Productivity</p>
-                                                <p className="text-lg font-bold text-green-600">
-                                                    {Math.round(
-                                                        team.assignedOrders.reduce((sum, order) => 
-                                                            sum + ((order.completedUnits / order.targetQuota) * 100), 0
-                                                        ) / Math.max(team.assignedOrders.length, 1)
-                                                    )}%
-                                                </p>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </>
+                )}
+
+                {/* Submit Production Modal */}
+                {showSubmitModal && selectedOrder && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-bold text-[#191716]">Submit Production</h2>
+                                    <button
+                                        onClick={handleCancelSubmit}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <h3 className="font-semibold text-gray-900 mb-2">Order Details</h3>
+                                        <div className="grid grid-cols-2 gap-3 text-sm">
+                                            <div>
+                                                <p className="text-gray-600">Order Name</p>
+                                                <p className="font-medium">{selectedOrder.order.ordername || 'N/A'}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600">Quota</p>
+                                                <p className="font-medium">{selectedOrder.quota.quotaname}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600">Target Quantity</p>
+                                                <p className="font-medium">{selectedOrder.order.quantity?.toLocaleString() || 0} units</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600">Deadline</p>
+                                                <p className="font-medium">{formatDate(selectedOrder.order.deadline)}</p>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Assigned Orders */}
-                                <div className="p-4 md:p-6">
-                                    <h3 className="text-lg font-semibold mb-4 text-[#191716]">
-                                        Assigned Orders ({team.assignedOrders.length})
-                                    </h3>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Completed Units <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={submitValues.reported_completed}
+                                            onChange={(e) => handleInputChange('reported_completed', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
+                                            min="1"
+                                            placeholder="Enter number of units completed"
+                                        />
+                                    </div>
 
-                                    {team.assignedOrders.length === 0 ? (
-                                        <div className="text-center py-8 text-gray-500">
-                                            No orders assigned to this team
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {team.assignedOrders.map((order) => {
-                                                const percentage = Math.round((order.completedUnits / order.targetQuota) * 100);
-                                                const isEditing = editingOrder === `${team.teamId}-${order.orderId}`;
-                                                
-                                                return (
-                                                    <div 
-                                                        key={order.orderId}
-                                                        className={`border rounded-lg p-4 transition-all ${
-                                                            isEditing 
-                                                                ? 'border-[#E6AF2E] shadow-lg bg-yellow-50' 
-                                                                : 'border-gray-200 hover:shadow-md'
-                                                        }`}
-                                                    >
-                                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <h4 className="font-semibold text-gray-900">
-                                                                        ORD-{order.orderId. slice(0, 8).toUpperCase()}
-                                                                    </h4>
-                                                                    <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.status)}`}>
-                                                                        {order.status}
-                                                                    </span>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600">{order.productName}</p>
-                                                            </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Priority
+                                        </label>
+                                        <select
+                                            value={submitValues.priority}
+                                            onChange={(e) => handleInputChange('priority', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
+                                        >
+                                            <option value="Low">Low</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="High">High</option>
+                                        </select>
+                                    </div>
 
-                                                            {/* Edit Button */}
-                                                            {! isEditing && (
-                                                                <button
-                                                                    onClick={() => handleEditClick(
-                                                                        team.teamId, 
-                                                                        order.orderId, 
-                                                                        order.targetQuota, 
-                                                                        order.completedUnits
-                                                                    )}
-                                                                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#d19d1f] transition-colors"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                    <span className="text-sm font-medium">Edit Performance</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Notes (Optional)
+                                        </label>
+                                        <textarea
+                                            value={submitValues.submission_notes}
+                                            onChange={(e) => handleInputChange('submission_notes', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
+                                            rows="3"
+                                            placeholder="Add any additional notes about this submission..."
+                                        />
+                                    </div>
 
-                                                        {isEditing ?  (
-                                                            // Edit Mode
-                                                            <div className="space-y-4 bg-white p-4 rounded-lg border-2 border-[#E6AF2E]">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Target Quota (units)
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            value={editValues.targetQuota}
-                                                                            onChange={(e) => handleInputChange('targetQuota', e. target.value)}
-                                                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
-                                                                            min="1"
-                                                                        />
-                                                                    </div>
-                                                                    <div>
-                                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                            Completed Units
-                                                                        </label>
-                                                                        <input
-                                                                            type="number"
-                                                                            value={editValues.completedUnits}
-                                                                            onChange={(e) => handleInputChange('completedUnits', e. target.value)}
-                                                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent"
-                                                                            min="0"
-                                                                            max={editValues.targetQuota}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex gap-3 justify-end">
-                                                                    <button
-                                                                        onClick={handleCancelEdit}
-                                                                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                                                                    >
-                                                                        <X size={16} />
-                                                                        <span className="text-sm font-medium">Cancel</span>
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleSaveEdit(team.teamId, order.orderId)}
-                                                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                                                    >
-                                                                        <Save size={16} />
-                                                                        <span className="text-sm font-medium">Save Changes</span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            // View Mode
-                                                            <>
-                                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-                                                                    <div>
-                                                                        <p className="text-gray-600">Target Quota</p>
-                                                                        <p className="font-semibold">{order.targetQuota. toLocaleString()} units</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-gray-600">Completed</p>
-                                                                        <p className="font-semibold text-green-600">
-                                                                            {order.completedUnits.toLocaleString()} units
-                                                                        </p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-gray-600">Remaining</p>
-                                                                        <p className="font-semibold text-orange-600">
-                                                                            {(order.targetQuota - order.completedUnits).toLocaleString()} units
-                                                                        </p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-gray-600">Deadline</p>
-                                                                        <p className="font-semibold">{formatDate(order.deadline)}</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Progress Bar */}
-                                                                <div>
-                                                                    <div className="flex items-center justify-between mb-2">
-                                                                        <span className="text-sm font-medium text-gray-700">Progress</span>
-                                                                        <span className="text-sm font-bold text-gray-900">{percentage}%</span>
-                                                                    </div>
-                                                                    <div className="w-full bg-gray-200 rounded-full h-3">
-                                                                        <div 
-                                                                            className={`h-3 rounded-full transition-all ${getProgressColor(percentage)}`}
-                                                                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Additional Info */}
-                                                                {order.notes && (
-                                                                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                                                        <div className="flex items-start gap-2">
-                                                                            <AlertCircle size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                                                                            <p className="text-sm text-blue-800">{order.notes}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                    <div className="flex gap-3 justify-end pt-4">
+                                        <button
+                                            onClick={handleCancelSubmit}
+                                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSubmitProduction}
+                                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                                        >
+                                            <Send size={16} />
+                                            Submit
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-                </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             <style jsx>{`
                 @keyframes slide-in {
                     from {
                         transform: translateX(100%);
-                        opacity:  0;
+                        opacity: 0;
                     }
                     to {
                         transform: translateX(0);
                         opacity: 1;
                     }
                 }
-                . animate-slide-in {
+                .animate-slide-in {
                     animation: slide-in 0.3s ease-out;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .animate-spin {
+                    animation: spin 1s linear infinite;
                 }
             `}</style>
         </div>
     );
+
+
 };
 
 export default PerformancePage;

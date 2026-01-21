@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CheckCircle, XCircle, Clock, Filter, Search, AlertTriangle, Eye, FileText, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, XCircle, Clock, Filter, Search, AlertTriangle, Eye, FileText, User, Loader } from 'lucide-react';
 
 const VerificationPage = () => {
     const [selectedFilter, setSelectedFilter] = useState('All');
@@ -9,123 +9,35 @@ const VerificationPage = () => {
     const [verificationNotes, setVerificationNotes] = useState('');
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [successMessageText, setSuccessMessageText] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [submissions, setSubmissions] = useState([]);
+    const [managerId, setManagerId] = useState(null);
 
-    // Hard-coded submission data
-    const [submissions, setSubmissions] = useState([
-        {
-            submissionId: "sub-001",
-            orderId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-            productName: "Order A",
-            teamName: "Assembly Line A",
-            teamLeader: "Juan Dela Cruz",
-            submittedBy: "Pedro Garcia",
-            submittedDate:  "2026-01-19T14:30:00Z",
-            targetQuota: 100,
-            reportedCompleted: 85,
-            deadline: "2026-01-25T00:00:00Z",
-            status: "Pending",
-            priority: "High",
-            notes:  "Priority order - requesting early verification",
-            evidence: [
-                { type: "Photo", count: 5 },
-                { type: "Quality Report", count: 1 }
-            ],
-            verificationHistory: []
-        },
-        {
-            submissionId: "sub-002",
-            orderId: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-            productName: "Order B",
-            teamName: "Assembly Line A",
-            teamLeader: "Juan Dela Cruz",
-            submittedBy: "Maria Lopez",
-            submittedDate:  "2026-01-19T10:15:00Z",
-            targetQuota: 150,
-            reportedCompleted:  120,
-            deadline: "2026-02-01T00:00:00Z",
-            status: "Pending",
-            priority: "Medium",
-            notes: null,
-            evidence: [
-                { type: "Photo", count:  3 }
-            ],
-            verificationHistory: []
-        },
-        {
-            submissionId: "sub-003",
-            orderId:  "d4e5f6a7-b8c9-0123-def1-234567890123",
-            productName: "Order C",
-            teamName: "Assembly Line B",
-            teamLeader: "Maria Santos",
-            submittedBy:  "Carlos Reyes",
-            submittedDate: "2026-01-18T16:45:00Z",
-            targetQuota: 200,
-            reportedCompleted:  195,
-            deadline: "2026-01-20T00:00:00Z",
-            status: "Verified",
-            priority: "High",
-            notes: "Final batch completed - ready for inspection",
-            evidence: [
-                { type: "Photo", count:  8 },
-                { type: "Quality Report", count: 2 },
-                { type: "Inspection Checklist", count: 1 }
-            ],
-            verificationHistory: [
-                {
-                    verifiedBy: "Manager Admin",
-                    verifiedDate:  "2026-01-19T09:00:00Z",
-                    decision: "Approved",
-                    notes: "All units verified.  Quality excellent."
-                }
-            ]
-        },
-        {
-            submissionId: "sub-004",
-            orderId: "c3d4e5f6-a7b8-9012-cdef-123456789012",
-            productName: "Order D",
-            teamName: "Assembly Line A",
-            teamLeader: "Juan Dela Cruz",
-            submittedBy: "Ana Santos",
-            submittedDate:  "2026-01-18T11:20:00Z",
-            targetQuota: 75,
-            reportedCompleted:  45,
-            deadline: "2026-01-30T00:00:00Z",
-            status: "Rejected",
-            priority: "Medium",
-            notes: "Completed 45 units for verification",
-            evidence: [
-                { type: "Photo", count:  2 }
-            ],
-            verificationHistory: [
-                {
-                    verifiedBy: "Manager Admin",
-                    verifiedDate: "2026-01-19T08:30:00Z",
-                    decision: "Rejected",
-                    notes: "Count mismatch - only 42 units found.  Please recount and resubmit."
-                }
-            ]
-        },
-        {
-            submissionId: "sub-005",
-            orderId: "e5f6a7b8-c9d0-1234-ef12-345678901234",
-            productName: "Order E",
-            teamName: "Assembly Line B",
-            teamLeader: "Maria Santos",
-            submittedBy: "Roberto Cruz",
-            submittedDate:  "2026-01-19T15:00:00Z",
-            targetQuota: 50,
-            reportedCompleted:  25,
-            deadline: "2026-02-10T00:00:00Z",
-            status: "Pending",
-            priority: "Low",
-            notes: "First batch of complex welding completed",
-            evidence: [
-                { type: "Photo", count:  4 },
-                { type: "Quality Report", count: 1 }
-            ],
-            verificationHistory:  []
+    useEffect(() => {
+        // Get manager ID from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.employeeid) {
+            setManagerId(user.employeeid);
         }
-    ]);
+        fetchSubmissions();
+    }, []);
+
+    const fetchSubmissions = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('https://gatsis-hub.vercel.app/submissions');
+            if (!response.ok) throw new Error('Failed to fetch submissions');
+            
+            const data = await response.json();
+            setSubmissions(data.submissions || []);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching submissions:', error);
+            setErrorMessage('Failed to load submissions');
+            setLoading(false);
+        }
+    };
 
     const getStatusBadge = (status) => {
         const styles = {
@@ -166,8 +78,9 @@ const VerificationPage = () => {
     };
 
     const formatDateShort = (dateString) => {
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date. toLocaleDateString('en-US', { 
+        return date.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric',
             year: 'numeric'
@@ -180,24 +93,48 @@ const VerificationPage = () => {
         setShowVerifyModal(true);
     };
 
-    const handleVerificationSubmit = (decision) => {
-        if (! selectedSubmission) return;
+    const handleVerificationSubmit = async (decision) => {
+        if (!selectedSubmission || !managerId) {
+            setErrorMessage('Manager ID not found. Please log in again.');
+            return;
+        }
 
-        const newStatus = decision === 'approve' ? 'Verified' :  'Rejected';
-        
-        setSubmissions(prevSubmissions =>
-            prevSubmissions.map(sub => {
-                if (sub.submissionId === selectedSubmission.submissionId) {
-                    return {
-                        ...sub,
-                        status: newStatus,
-                        verificationHistory:  [
-                            ...sub.verificationHistory,
-                            {
-                                verifiedBy: "Operational Manager", // In real app, get from auth
-                                verifiedDate: new Date().toISOString(),
-                                decision: decision === 'approve' ? 'Approved' : 'Rejected',
-                                notes: verificationNotes || 'No additional notes'
+        try {
+            const approved = decision === 'approve';
+            
+            const response = await fetch(`https://gatsis-hub.vercel.app/submissions/${selectedSubmission.submissionid}/verify`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verified_by: managerId,
+                    verification_notes: verificationNotes || null,
+                    approved
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to verify submission');
+            }
+
+            setSuccessMessageText(`Submission ${approved ? 'approved' : 'rejected'} successfully${approved ? ' and quota updated' : ''}!`);
+            setShowSuccessMessage(true);
+            setTimeout(() => setShowSuccessMessage(false), 3000);
+            
+            setShowVerifyModal(false);
+            setSelectedSubmission(null);
+            setVerificationNotes('');
+            
+            // Refresh submissions
+            fetchSubmissions();
+        } catch (error) {
+            console.error('Error verifying submission:', error);
+            setErrorMessage(error.message || 'Failed to verify submission');
+            setTimeout(() => setErrorMessage(''), 5000);
+        }
+    };
                             }
                         ]
                     };
@@ -220,13 +157,22 @@ const VerificationPage = () => {
     };
 
     const filteredSubmissions = submissions
-        .filter(sub => selectedFilter === 'All' || sub. status === selectedFilter)
-        .filter(sub => 
-            searchTerm === '' ||
-            sub.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sub.orderId.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        .filter(sub => selectedFilter === 'All' || sub.status === selectedFilter)
+        .filter(sub => {
+            if (searchTerm === '') return true;
+            
+            const searchLower = searchTerm.toLowerCase();
+            const orderName = sub.order?.ordername?.toLowerCase() || '';
+            const teamName = sub.team?.teamname?.toLowerCase() || '';
+            const employeeName = `${sub.employee?.firstname || ''} ${sub.employee?.lastname || ''}`.toLowerCase();
+            const quotaName = sub.quota?.quotaname?.toLowerCase() || '';
+            
+            return orderName.includes(searchLower) ||
+                teamName.includes(searchLower) ||
+                employeeName.includes(searchLower) ||
+                quotaName.includes(searchLower) ||
+                sub.submissionid?.toLowerCase().includes(searchLower);
+        });
 
     const stats = {
         total: submissions.length,
@@ -243,6 +189,14 @@ const VerificationPage = () => {
                     <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
                         <CheckCircle size={20} />
                         <span className="font-medium">{successMessageText}</span>
+                    </div>
+                )}
+
+                {/* Error Message */}
+                {errorMessage && (
+                    <div className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-slide-in">
+                        <AlertTriangle size={20} />
+                        <span className="font-medium">{errorMessage}</span>
                     </div>
                 )}
 
@@ -343,6 +297,11 @@ const VerificationPage = () => {
                 </div>
 
                 {/* Submissions List */}
+                {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <Loader className="animate-spin text-[#E6AF2E]" size={48} />
+                    </div>
+                ) : (
                 <div className="space-y-4">
                     {filteredSubmissions.length === 0 ? (
                         <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -350,9 +309,10 @@ const VerificationPage = () => {
                         </div>
                     ) : (
                         filteredSubmissions.map((submission) => {
-                            const completionPercentage = Math.round(
-                                (submission.reportedCompleted / submission.targetQuota) * 100
-                            );
+                            const targetQuota = submission.quota?.targetquota || submission.order?.quantity || 0;
+                            const completionPercentage = targetQuota > 0
+                                ? Math.round((submission.reported_completed / targetQuota) * 100)
+                                : 0;
 
                             return (
                                 <div
@@ -365,7 +325,7 @@ const VerificationPage = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                                     <h3 className="text-lg font-bold text-gray-900">
-                                                        {submission.productName}
+                                                        {submission.order?.ordername || submission.quota?.quotaname || 'N/A'}
                                                     </h3>
                                                     <span className={`text-xs px-2 py-1 rounded-full border font-semibold flex items-center gap-1 ${getStatusBadge(submission. status)}`}>
                                                         {getStatusIcon(submission.status)}
@@ -376,7 +336,7 @@ const VerificationPage = () => {
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-gray-600">
-                                                    Order ID: ORD-{submission.orderId.slice(0, 8).toUpperCase()}
+                                                    Submission ID: {submission.submissionid?.slice(0, 8).toUpperCase() || 'N/A'}
                                                 </p>
                                             </div>
 
@@ -395,25 +355,25 @@ const VerificationPage = () => {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-gray-50 p-4 rounded-lg">
                                             <div>
                                                 <p className="text-xs text-gray-600 mb-1">Team</p>
-                                                <p className="font-semibold text-sm">{submission.teamName}</p>
-                                                <p className="text-xs text-gray-500">{submission.teamLeader}</p>
+                                                <p className="font-semibold text-sm">{submission.team?.teamname || 'N/A'}</p>
+                                                <p className="text-xs text-gray-500">Quota: {submission.quota?.quotaname || 'N/A'}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-600 mb-1">Submitted By</p>
                                                 <p className="font-semibold text-sm flex items-center gap-1">
                                                     <User size={14} />
-                                                    {submission.submittedBy}
+                                                    {`${submission.employee?.firstname || ''} ${submission.employee?.lastname || ''}`}
                                                 </p>
-                                                <p className="text-xs text-gray-500">{formatDateShort(submission.submittedDate)}</p>
+                                                <p className="text-xs text-gray-500">{formatDateShort(submission.submitted_at)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-600 mb-1">Target Quota</p>
-                                                <p className="font-semibold text-sm">{submission.targetQuota. toLocaleString()} units</p>
+                                                <p className="font-semibold text-sm">{targetQuota.toLocaleString()} units</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-600 mb-1">Reported Completed</p>
                                                 <p className="font-semibold text-sm text-green-600">
-                                                    {submission.reportedCompleted.toLocaleString()} units
+                                                    {submission.reported_completed?.toLocaleString() || 0} units
                                                 </p>
                                             </div>
                                         </div>
@@ -446,44 +406,41 @@ const VerificationPage = () => {
                                                         className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200"
                                                     >
                                                         {ev. type} ({ev.count})
-                                                    </span>
-                                                ))}
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Notes */}
-                                        {submission.notes && (
+                                        {submission.submission_notes && (
                                             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                                                 <p className="text-xs font-medium text-blue-900 mb-1">Submission Notes:</p>
-                                                <p className="text-sm text-blue-800">{submission. notes}</p>
+                                                <p className="text-sm text-blue-800">{submission.submission_notes}</p>
                                             </div>
                                         )}
 
                                         {/* Verification History */}
-                                        {submission.verificationHistory. length > 0 && (
+                                        {submission.verifier && (
                                             <div className="border-t pt-4">
                                                 <p className="text-sm font-medium text-gray-700 mb-3">Verification History:</p>
                                                 <div className="space-y-2">
-                                                    {submission.verificationHistory.map((history, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className={`p-3 rounded border-l-4 ${
-                                                                history.decision === 'Approved'
-                                                                    ? 'bg-green-50 border-green-500'
-                                                                    :  'bg-red-50 border-red-500'
-                                                            }`}
-                                                        >
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <span className="text-sm font-semibold">
-                                                                    {history.decision} by {history.verifiedBy}
-                                                                </span>
-                                                                <span className="text-xs text-gray-600">
-                                                                    {formatDate(history.verifiedDate)}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-sm text-gray-700">{history.notes}</p>
+                                                    <div
+                                                        className={`p-3 rounded border-l-4 ${
+                                                            submission.status === 'Verified'
+                                                                ? 'bg-green-50 border-green-500'
+                                                                : 'bg-red-50 border-red-500'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-sm font-semibold">
+                                                                {submission.status === 'Verified' ? 'Approved' : 'Rejected'} by {`${submission.verifier?.firstname || ''} ${submission.verifier?.lastname || ''}`}
+                                                            </span>
+                                                            <span className="text-xs text-gray-600">
+                                                                {formatDate(submission.verified_at)}
+                                                            </span>
                                                         </div>
-                                                    ))}
+                                                        <p className="text-sm text-gray-700">{submission.verification_notes || 'No notes'}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
@@ -493,6 +450,7 @@ const VerificationPage = () => {
                         })
                     )}
                 </div>
+                )}
 
                 {/* Verification Modal */}
                 {showVerifyModal && selectedSubmission && (
@@ -512,39 +470,39 @@ const VerificationPage = () => {
 
                                 {/* Submission Summary */}
                                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                                    <h3 className="font-semibold text-lg mb-3">{selectedSubmission.productName}</h3>
+                                    <h3 className="font-semibold text-lg mb-3">{selectedSubmission.order?.ordername || selectedSubmission.quota?.quotaname || 'N/A'}</h3>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
-                                            <p className="text-gray-600">Order ID</p>
-                                            <p className="font-medium">ORD-{selectedSubmission.orderId.slice(0, 8).toUpperCase()}</p>
+                                            <p className="text-gray-600">Submission ID</p>
+                                            <p className="font-medium">{selectedSubmission.submissionid?.slice(0, 8).toUpperCase() || 'N/A'}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Team</p>
-                                            <p className="font-medium">{selectedSubmission.teamName}</p>
+                                            <p className="font-medium">{selectedSubmission.team?.teamname || 'N/A'}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Submitted By</p>
-                                            <p className="font-medium">{selectedSubmission.submittedBy}</p>
+                                            <p className="font-medium">{`${selectedSubmission.employee?.firstname || ''} ${selectedSubmission.employee?.lastname || ''}`}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Submission Date</p>
-                                            <p className="font-medium">{formatDateShort(selectedSubmission.submittedDate)}</p>
+                                            <p className="font-medium">{formatDateShort(selectedSubmission.submitted_at)}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Target Quota</p>
-                                            <p className="font-medium text-lg">{selectedSubmission.targetQuota.toLocaleString()} units</p>
+                                            <p className="font-medium text-lg">{(selectedSubmission.quota?.targetquota || selectedSubmission.order?.quantity || 0).toLocaleString()} units</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Reported Completed</p>
                                             <p className="font-medium text-lg text-green-600">
-                                                {selectedSubmission.reportedCompleted.toLocaleString()} units
+                                                {selectedSubmission.reported_completed?.toLocaleString() || 0} units
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Warning for discrepancies */}
-                                {selectedSubmission.reportedCompleted > selectedSubmission.targetQuota && (
+                                {selectedSubmission.reported_completed > (selectedSubmission.quota?.targetquota || selectedSubmission.order?.quantity || 0) && (
                                     <div className="bg-yellow-50 border border-yellow-300 p-4 rounded-lg mb-4 flex items-start gap-2">
                                         <AlertTriangle size={20} className="text-yellow-600 mt-0.5 flex-shrink-0" />
                                         <div>
