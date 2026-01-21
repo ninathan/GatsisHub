@@ -1,8 +1,8 @@
 import about from '../../about.json'
 import Autoslider from './Autoslider'
-import img1 from '../../images/img1.png'
-import img2 from '../../images/img2.png'
-import img3 from '../../images/img3.png'
+import img1 from '../../images/DJI_0272.jpg'
+import img2 from '../../images/DJI_0257.jpg'
+import img3 from '../../images/DJI_0259.jpg'
 import useScrollAnimation from '../../hooks/useScrollAnimation'
 
 const AboutUs = () => {
