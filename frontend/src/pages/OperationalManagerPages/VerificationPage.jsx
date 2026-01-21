@@ -149,7 +149,7 @@ const VerificationPage = () => {
             const searchLower = searchTerm.toLowerCase();
             const orderName = sub.order?.ordername?.toLowerCase() || '';
             const teamName = sub.team?.teamname?.toLowerCase() || '';
-            const employeeName = `${sub.employee?.firstname || ''} ${sub.employee?.lastname || ''}`.toLowerCase();
+            const employeeName = (sub.employee?.employeename || '').toLowerCase();
             const quotaName = sub.quota?.quotaname?.toLowerCase() || '';
             
             return orderName.includes(searchLower) ||
@@ -345,7 +345,7 @@ const VerificationPage = () => {
                                                 <p className="text-xs text-gray-600 mb-1">Submitted By</p>
                                                 <p className="font-semibold text-sm flex items-center gap-1">
                                                     <User size={14} />
-                                                    {`${submission.employee?.firstname || ''} ${submission.employee?.lastname || ''}`}
+                                                    {submission.employee?.employeename || 'N/A'}
                                                 </p>
                                                 <p className="text-xs text-gray-500">{formatDateShort(submission.submitted_at)}</p>
                                             </div>
@@ -416,7 +416,7 @@ const VerificationPage = () => {
                                                     >
                                                         <div className="flex items-center justify-between mb-1">
                                                             <span className="text-sm font-semibold">
-                                                                {submission.status === 'Verified' ? 'Approved' : 'Rejected'} by {`${submission.verifier?.firstname || ''} ${submission.verifier?.lastname || ''}`}
+                                                                {submission.status === 'Verified' ? 'Approved' : 'Rejected'} by {submission.verifier?.employeename || 'N/A'}
                                                             </span>
                                                             <span className="text-xs text-gray-600">
                                                                 {formatDate(submission.verified_at)}
@@ -465,7 +465,7 @@ const VerificationPage = () => {
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Submitted By</p>
-                                            <p className="font-medium">{`${selectedSubmission.employee?.firstname || ''} ${selectedSubmission.employee?.lastname || ''}`}</p>
+                                            <p className="font-medium">{selectedSubmission.employee?.employeename || 'N/A'}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600">Submission Date</p>
