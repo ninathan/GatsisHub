@@ -10,14 +10,7 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("production_submissions")
-      .select(`
-        *,
-        quota:quotas(quotaid, quotaname, targetquota, finishedquota),
-        order:orders(orderid, ordername, quantity, deadline),
-        employee:employees!production_submissions_employeeid_fkey(employeeid, firstname, lastname),
-        team:teams(teamid, teamname),
-        verifier:employees!production_submissions_verified_by_fkey(employeeid, firstname, lastname)
-      `)
+      .select("*")
       .order('submitted_at', { ascending: false });
 
     // Apply filters
@@ -55,14 +48,7 @@ router.get("/:submissionid", async (req, res) => {
 
     const { data: submission, error } = await supabase
       .from("production_submissions")
-      .select(`
-        *,
-        quota:quotas(quotaid, quotaname, targetquota, finishedquota, startdate, enddate),
-        order:orders(orderid, ordername, quantity, deadline, orderstatus),
-        employee:employees!production_submissions_employeeid_fkey(employeeid, firstname, lastname, email),
-        team:teams(teamid, teamname, members),
-        verifier:employees!production_submissions_verified_by_fkey(employeeid, firstname, lastname)
-      `)
+      .select("*")
       .eq("submissionid", submissionid)
       .single();
 
@@ -142,12 +128,7 @@ router.post("/create", async (req, res) => {
     const { data: submission, error: insertError } = await supabase
       .from("production_submissions")
       .insert([submissionData])
-      .select(`
-        *,
-        quota:quotas(quotaid, quotaname, targetquota),
-        order:orders(orderid, ordername, quantity),
-        employee:employees!production_submissions_employeeid_fkey(employeeid, firstname, lastname)
-      `)
+      .select()
       .single();
 
     if (insertError) {
@@ -185,7 +166,7 @@ router.patch("/:submissionid/verify", async (req, res) => {
     // Get the submission
     const { data: submission, error: fetchError } = await supabase
       .from("production_submissions")
-      .select("*, quota:quotas(quotaid, finishedquota, targetquota)")
+      .select("*")
       .eq("submissionid", submissionid)
       .single();
 
@@ -195,6 +176,17 @@ router.patch("/:submissionid/verify", async (req, res) => {
 
     if (submission.status !== 'Pending') {
       return res.status(400).json({ error: "Submission has already been processed" });
+    }
+
+    // Get the quota to update it later
+    const { data: quota, error: quotaError } = await supabase
+      .from("quotas")
+      .select("finishedquota")
+      .eq("quotaid", submission.quotaid)
+      .single();
+
+    if (quotaError) {
+      console.error('Error fetching quota:', quotaError);
     }
 
     const newStatus = approved ? 'Verified' : 'Rejected';
@@ -220,8 +212,8 @@ router.patch("/:submissionid/verify", async (req, res) => {
     }
 
     // If approved, update the quota's finishedquota
-    if (approved) {
-      const currentFinished = submission.quota.finishedquota || 0;
+    if (approved && quota) {
+      const currentFinished = quota.finishedquota || 0;
       const newFinished = currentFinished + submission.reported_completed;
 
       const { error: quotaUpdateError } = await supabase

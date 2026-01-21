@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Filter, Search, AlertTriangle, Eye, FileText, User, Loader } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Filter, Search, AlertTriangle, Eye, FileText, User } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const VerificationPage = () => {
     const [selectedFilter, setSelectedFilter] = useState('All');
@@ -16,10 +17,14 @@ const VerificationPage = () => {
 
     useEffect(() => {
         // Get manager ID from localStorage
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        if (user.employeeid) {
-            setManagerId(user.employeeid);
+        const employee = JSON.parse(localStorage.getItem('employee') || '{}');
+        
+        if (employee && employee.employeeid) {
+            setManagerId(employee.employeeid);
+        } else {
+            setErrorMessage('Please log in as an employee to access this page');
         }
+        
         fetchSubmissions();
     }, []);
 
@@ -134,26 +139,6 @@ const VerificationPage = () => {
             setErrorMessage(error.message || 'Failed to verify submission');
             setTimeout(() => setErrorMessage(''), 5000);
         }
-    };
-                            }
-                        ]
-                    };
-                }
-                return sub;
-            })
-        );
-
-        setSuccessMessageText(
-            decision === 'approve' 
-                ? 'Submission verified successfully!' 
-                : 'Submission rejected and returned to team.'
-        );
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
-
-        setShowVerifyModal(false);
-        setSelectedSubmission(null);
-        setVerificationNotes('');
     };
 
     const filteredSubmissions = submissions
@@ -298,9 +283,7 @@ const VerificationPage = () => {
 
                 {/* Submissions List */}
                 {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <Loader className="animate-spin text-[#E6AF2E]" size={48} />
-                    </div>
+                    <LoadingSpinner />
                 ) : (
                 <div className="space-y-4">
                     {filteredSubmissions.length === 0 ? (
@@ -400,14 +383,14 @@ const VerificationPage = () => {
                                         <div className="mb-4">
                                             <p className="text-sm font-medium text-gray-700 mb-2">Evidence Submitted:</p>
                                             <div className="flex gap-2 flex-wrap">
-                                                {submission.evidence.map((ev, idx) => (
+                                                {submission.evidence && submission.evidence.map((ev, idx) => (
                                                     <span
                                                         key={idx}
                                                         className="text-xs px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200"
                                                     >
-                                                        {ev. type} ({ev.count})
-                                                    )}
-                                                </div>
+                                                        {ev.type} ({ev.count})
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
 

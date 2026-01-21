@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Package, TrendingUp, Award, AlertCircle, Send, X, CheckCircle, Loader } from 'lucide-react';
+import { Users, Package, TrendingUp, Award, AlertCircle, Send, X, CheckCircle } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const PerformancePage = () => {
     const [selectedQuota, setSelectedQuota] = useState('All');
@@ -19,26 +20,18 @@ const PerformancePage = () => {
     const [teamId, setTeamId] = useState(null);
 
     useEffect(() => {
-        // Get employee ID from localStorage
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        if (user.employeeid) {
-            setEmployeeId(user.employeeid);
-            fetchEmployeeTeam(user.employeeid);
+        // Get employee data from localStorage
+        const employee = JSON.parse(localStorage.getItem('employee') || '{}');
+        
+        if (employee && employee.employeeid) {
+            setEmployeeId(employee.employeeid);
+            setTeamId(employee.teamid || null);
+        } else {
+            setErrorMessage('Please log in as an employee to access this page');
         }
+        
         fetchQuotas();
     }, []);
-
-    const fetchEmployeeTeam = async (empId) => {
-        try {
-            const response = await fetch(`https://gatsis-hub.vercel.app/employees/${empId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setTeamId(data.teamid || null);
-            }
-        } catch (error) {
-            console.error('Error fetching employee team:', error);
-        }
-    };
 
     const fetchQuotas = async () => {
         try {
@@ -220,9 +213,7 @@ const PerformancePage = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <Loader className="animate-spin text-[#E6AF2E]" size={48} />
-                    </div>
+                    <LoadingSpinner />
                 ) : (
                     <>
                         {/* Quota Filter */}
@@ -336,7 +327,9 @@ const PerformancePage = () => {
                                                     Assigned Orders ({quota.orders?.length || 0})
                                                 </h3>
 
-                                                {(!quota.orders || quota.orders.length === 0) ? (
+                                                {loading ? (
+                                                    <LoadingSpinner />
+                                                ) : (!quota.orders || quota.orders.length === 0) ? (
                                                     <div className="text-center py-8 text-gray-500">
                                                         No orders assigned to this quota
                                                     </div>
@@ -511,7 +504,7 @@ const PerformancePage = () => {
                 )}
             </main>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes slide-in {
                     from {
                         transform: translateX(100%);
