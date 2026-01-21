@@ -33,7 +33,64 @@ router.get("/", async (req, res) => {
       throw error;
     }
 
-    res.status(200).json({ submissions: submissions || [] });
+    // Fetch related data for each submission
+    const enrichedSubmissions = await Promise.all(
+      (submissions || []).map(async (submission) => {
+        // Fetch quota
+        const { data: quota } = await supabase
+          .from("quotas")
+          .select("quotaid, quotaname, targetquota, finishedquota")
+          .eq("quotaid", submission.quotaid)
+          .single();
+
+        // Fetch order
+        const { data: order } = await supabase
+          .from("orders")
+          .select("orderid, ordername, quantity, deadline")
+          .eq("orderid", submission.orderid)
+          .single();
+
+        // Fetch employee
+        const { data: employee } = await supabase
+          .from("employees")
+          .select("employeeid, employeename")
+          .eq("employeeid", submission.employeeid)
+          .single();
+
+        // Fetch team if teamid exists
+        let team = null;
+        if (submission.teamid) {
+          const { data: teamData } = await supabase
+            .from("teams")
+            .select("teamid, teamname")
+            .eq("teamid", submission.teamid)
+            .single();
+          team = teamData;
+        }
+
+        // Fetch verifier if verified_by exists
+        let verifier = null;
+        if (submission.verified_by) {
+          const { data: verifierData } = await supabase
+            .from("employees")
+            .select("employeeid, employeename")
+            .eq("employeeid", submission.verified_by)
+            .single();
+          verifier = verifierData;
+        }
+
+        return {
+          ...submission,
+          quota,
+          order,
+          employee,
+          team,
+          verifier
+        };
+      })
+    );
+
+    res.status(200).json({ submissions: enrichedSubmissions });
 
   } catch (err) {
     console.error('Error fetching submissions:', err);

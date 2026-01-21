@@ -299,7 +299,7 @@ const VerificationPage = () => {
 
                             return (
                                 <div
-                                    key={submission.submissionId}
+                                    key={submission.submissionid}
                                     className="bg-white rounded-lg shadow hover:shadow-md transition-shadow"
                                 >
                                     <div className="p-4 md:p-6">
@@ -534,7 +534,7 @@ const VerificationPage = () => {
                 )}
             </main>
 
-            <style jsx>{`
+            <style>{`
                 @keyframes slide-in {
                     from {
                         transform: translateX(100%);
@@ -545,7 +545,7 @@ const VerificationPage = () => {
                         opacity: 1;
                     }
                 }
-                . animate-slide-in {
+                .animate-slide-in {
                     animation: slide-in 0.3s ease-out;
                 }
             `}</style>
