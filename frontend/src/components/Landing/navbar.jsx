@@ -99,7 +99,7 @@ const Navbar = () => {
 
 
   return (
-    <nav className="bg-[#191716] dark:bg-slate-900 px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#e6af2e] dark:border-yellow-500 sticky top-0 z-50 transition-colors duration-300">
+    <nav className="bg-[#191716] px-3 md:px-4 lg:px-6 py-3 md:py-4 border-b-5 border-[#e6af2e] sticky top-0 z-50">
       <div className="flex items-center justify-between max-w-full">
         {/* logo and title */}
         <div className="flex items-center space-x-2 md:space-x-3">
@@ -250,7 +250,7 @@ const Navbar = () => {
       {/* Mobile menu */}
       <div
         ref={mobileMenuRef}
-        className={`md:hidden bg-[#353f94] dark:bg-slate-800 transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+        className={`md:hidden bg-[#353f94] transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
       >
         <div className="mt-3 border-t-2 border-white pt-3 pb-2">

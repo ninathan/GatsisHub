@@ -213,7 +213,10 @@ const PerformancePage = () => {
                 </div>
 
                 {loading ? (
-                    <LoadingSpinner />
+                    <div className="min-h-screen w-full flex flex-col items-center justify-center">
+                        <LoadingSpinner size='md' />
+                        <p className="mt-4 text-gray-600">Loading performance data...</p>
+                    </div>
                 ) : (
                     <>
                         {/* Quota Filter */}
@@ -349,14 +352,14 @@ const PerformancePage = () => {
                                                                         <div className="flex-1">
                                                                             <div className="flex items-center gap-2 mb-2">
                                                                                 <h4 className="font-semibold text-gray-900">
-                                                                                    {order.ordername || `Order #${order.orderid.slice(0, 8)}`}
+                                                                                    {'ORD-' + order.orderid.slice(0, 8).toUpperCase() || `Order #${order.orderid.slice(0, 8)}`}
                                                                                 </h4>
                                                                                 <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.orderstatus)}`}>
                                                                                     {order.orderstatus}
                                                                                 </span>
                                                                             </div>
                                                                             <p className="text-sm text-gray-600">
-                                                                                Customer: {order.customername || 'N/A'}
+                                                                                Customer: {order.companyname || 'N/A'}
                                                                             </p>
                                                                         </div>
 

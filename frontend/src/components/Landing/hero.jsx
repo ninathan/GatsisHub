@@ -75,12 +75,12 @@ const Hero = () => {
                     <img src={herobg} alt="Suits" className="w-full h-full object-cover transition-transform duration-700" />
                 </div>
                 {/* Right Text Content */}
-                <div className="md:w-1/2 flex flex-col justify-center items-start p-6 md:p-8 lg:p-10 xl:p-12 bg-white dark:bg-slate-900 transition-colors duration-300">
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-gray-800 dark:text-gray-100 leading-tight md:leading-normal mb-4 animate-fadeInUp">
+                <div className="md:w-1/2 flex flex-col justify-center items-start p-6 md:p-8 lg:p-10 xl:p-12 bg-white">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-gray-800 leading-tight md:leading-normal mb-4 animate-fadeInUp">
                         Not Just Hangers.<br />
                         A Better Way to Care for Your Clothes.
                     </h1>
-                    <p className="text-black dark:text-gray-300 text-base md:text-lg lg:text-xl xl:text-2xl font-light mb-6 md:mb-8 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
+                    <p className="text-black text-base md:text-lg lg:text-xl xl:text-2xl font-light mb-6 md:mb-8 animate-fadeInUp" style={{ animationDelay: '200ms' }}>
                         A beautiful dress may turn heads, but a quality hanger<br className="hidden lg:block" />
                         holds the story behind its grace.
                     </p>

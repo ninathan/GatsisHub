@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter, MoreVertical, ChevronDown } from 'lucide-react'
 import { useRealtimeProductionOrders } from '../../hooks/useRealtimeProductionOrders'
+import LoadingSpinner from '../../components/LoadingSpinner'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -136,7 +137,7 @@ const AssignOrder = () => {
         return (
             <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-6xl mb-4">⏳</div>
+                    <LoadingSpinner size="lg" />
                     <p className="text-xl text-gray-600">Loading orders...</p>
                 </div>
             </div>

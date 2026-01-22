@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import styled from 'styled-components'
 import logo from '../../images/logo.png'
 import userav from '../../images/user-alt.png'
 import googlelogo from '../../images/googlelogo.png'
@@ -162,51 +163,54 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
 
-            <label className='block text-base md:text-lg font-medium mb-2'>Email Address</label>
-            <div className='relative mb-5 md:mb-6'>
-              <User className='absolute left-4 top-3.5 md:top-4 w-5 h-5 md:w-6 md:h-6 text-[#E6AF2E]' />
-              <input
-                type='email'
-                placeholder='you@example.com'
-                value={emailAddress}
-                onChange={(e) => setEmailAddress(e.target.value)}
-                className={IntputField}
-                required
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-2 mb-2'>
-              <label className='text-base md:text-lg font-medium'>Password</label>
-              <p className='text-[#35408E] text-xs md:text-sm underline text-right'>
-                <Link to='/forgotpassword'>Forgot password?</Link>
-              </p>
-            </div>
-
-            <div className='relative mb-5 md:mb-6'>
-              <Lock className='absolute left-4 top-3.5 md:top-4 w-5 h-5 md:w-6 md:h-6 text-[#E6AF2E]' />
-              <input
-                type='password'
-                placeholder='Enter your Password'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={IntputField}
-                required
-              />
-            </div>
+            <StyledInputWrapper className="mb-4 md:mb-5">
+              <div className="input__container email-input">
+                <div className="shadow__input" />
+                <button type="button" className="input__button__shadow">
+                  <User size={18} />
+                </button>
+                <input
+                  type='email'
+                  placeholder='you@example.com'
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                  className="input__search"
+                  required
+                />
+              </div>
+            </StyledInputWrapper>
+            <StyledInputWrapper className="mb-5 md:mb-6">
+              <div className="input__container password-input">
+                <div className="shadow__input" />
+                <button type="button" className="input__button__shadow">
+                  <Lock size={18} />
+                </button>
+                <input
+                  type='password'
+                  placeholder='Enter your password'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input__search"
+                  required
+                />
+              </div>
+            </StyledInputWrapper>
 
             {error && <p className='text-red-600 text-sm md:text-base text-center mb-4'>{error}</p>}
 
-            <button
+            <StyledButton
               type='submit'
               disabled={loading}
-              className={`bg-[#E6AF2E] text-white w-full py-3 md:py-3.5 text-lg md:text-xl lg:text-2xl rounded-2xl transition-colors cursor-pointer ${
-                loading ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
+              className="sign-in-btn"
             >
               {loading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
+            </StyledButton>
 
+            <p className='text-[#35408E] text-xs md:text-sm underline text-center mt-3'>
+              <Link to='/forgotpassword'>Forgot password?</Link>
+            </p>
+          </form>
+        
           <p className='text-black text-sm md:text-base lg:text-lg mt-4 md:mt-5 opacity-50'>or</p>
 
           {/* ✅ GOOGLE LOGIN BUTTON */}
@@ -224,5 +228,174 @@ const Login = () => {
     </PageTransition>
   )
 }
+
+const StyledButton = styled.button`
+  width: 100%;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  background: #e9b50b;
+  color: #f0f0f0;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border-bottom: 2px solid #e9b50b;
+  border-right: 2px solid #e9b50b;
+  border-top: 2px solid white;
+  border-left: 2px solid white;
+  transition-duration: 1s;
+  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
+
+  &:hover {
+    border-top: 2px solid #e9b50b;
+    border-left: 2px solid #e9b50b;
+    border-bottom: 2px solid #000;
+    border-right: 2px solid #000;
+    box-shadow: rgba(233, 181, 11, 0.4) 5px 5px, 
+                rgba(233, 181, 11, 0.3) 10px 10px,
+                rgba(233, 181, 11, 0.2) 15px 15px;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 1.5rem;
+    padding: 1rem 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    font-size: 1.75rem;
+  }
+`;
+
+const StyledInputWrapper = styled.div`
+  .input__container {
+    position: relative;
+    background: #f0f0f0;
+    padding: 12px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    border: 3px solid #000;
+    width: 100%;
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    transform: rotateX(10deg) rotateY(-10deg);
+    perspective: 1000px;
+    box-shadow: 8px 8px 0 #000;
+  }
+
+  .input__container:hover {
+    transform: rotateX(5deg) rotateY(-5deg) scale(1.05);
+    box-shadow: 18px 18px 0 -3px #e9b50b, 18px 18px 0 0 #000;
+  }
+
+  .shadow__input {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    bottom: 0;
+    z-index: -1;
+    transform: translateZ(-50px);
+    background: linear-gradient(
+      45deg,
+      rgba(255, 107, 107, 0.4) 0%,
+      rgba(255, 107, 107, 0.1) 100%
+    );
+    filter: blur(20px);
+  }
+
+  .input__button__shadow {
+    cursor: pointer;
+    border: 2px solid #000;
+    background: #e9b50b;
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    transform: translateZ(20px);
+    position: relative;
+    z-index: 3;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .input__button__shadow:hover {
+    background: #e9b50b;
+    transform: translateZ(10px) translateX(-5px) translateY(-5px);
+    box-shadow: 5px 5px 0 0 #000;
+  }
+
+  .input__button__shadow svg {
+    fill: #000;
+    width: 20px;
+    height: 20px;
+  }
+
+  .input__search {
+    width: 100%;
+    outline: none;
+    border: 2px solid #000;
+    padding: 10px 12px;
+    font-size: 15px;
+    background: #fff;
+    color: #000;
+    transform: translateZ(10px);
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    z-index: 3;
+    font-family: "Roboto", Arial, sans-serif;
+    letter-spacing: -0.5px;
+  }
+
+  .input__search::placeholder {
+    color: #666;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .input__search:hover,
+  .input__search:focus {
+    background: #f0f0f0;
+    transform: translateZ(20px) translateX(-5px) translateY(-5px);
+    box-shadow: 5px 5px 0 0 #000;
+  }
+
+  .email-input::before {
+    content: "EMAIL ADDRESS";
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: #e9b50b;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 12px;
+    transform: translateZ(50px);
+    z-index: 4;
+    border: 2px solid #000;
+  }
+
+  .password-input::before {
+    content: "PASSWORD";
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: #e9b50b;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 12px;
+    transform: translateZ(50px);
+    z-index: 4;
+    border: 2px solid #000;
+  }
+`;
 
 export default Login

@@ -6,7 +6,7 @@ import ContanctUs from '../../components/Landing/ContanctUs'
 
 const Home = () => {
     return (
-        <div className="bg-white dark:bg-slate-900 transition-colors duration-300">
+        <div className="bg-white">
             <Hero />
             <SampleCard />
             <AboutUs />
