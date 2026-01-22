@@ -248,11 +248,11 @@ const StyledButton = styled.button`
   &:hover {
     border-top: 2px solid #e9b50b;
     border-left: 2px solid #e9b50b;
-    border-bottom: 2px solid #000;
-    border-right: 2px solid #000;
-    box-shadow: rgba(233, 181, 11, 0.4) 5px 5px, 
-                rgba(233, 181, 11, 0.3) 10px 10px,
-                rgba(233, 181, 11, 0.2) 15px 15px;
+    border-bottom: 5px solid #000;
+    border-right: 5px solid #000;
+    box-shadow: rgba(233, 181, 11, 0.4) 8px 8px, 
+                rgba(233, 181, 11, 0.3) 12px 12px,
+                rgba(233, 181, 11, 0.2) 17px 17px;
   }
 
   &:disabled {
