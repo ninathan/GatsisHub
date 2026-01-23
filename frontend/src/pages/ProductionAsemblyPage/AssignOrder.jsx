@@ -98,7 +98,7 @@ const AssignOrder = () => {
     const filteredOrders = orders.filter(order => {
         // Filter by status
         if (filterStatus === 'Assign Orders') {
-            return order.orderstatus === 'In Production' || order.orderstatus === 'Approved';
+            return order.orderstatus === 'In Production' || order.orderstatus === 'Verifying Payment';
         }
         
         // Search filter

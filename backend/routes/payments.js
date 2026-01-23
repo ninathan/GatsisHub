@@ -153,7 +153,7 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
       const { error: updateError } = await supabase
         .from("orders")
         .update({ 
-          orderstatus: 'Payment Submitted',
+          orderstatus: 'Verifying Payment',
           updatedat: new Date().toISOString()
         })
         .eq("orderid", orderid);

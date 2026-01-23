@@ -102,7 +102,7 @@ const AdminOrderDetailExample = () => {
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                     order.orderstatus === 'For Evaluation' ? 'bg-yellow-100 text-yellow-800' :
                                     order.orderstatus === 'Waiting for Payment' ? 'bg-orange-100 text-orange-800' :
-                                    order.orderstatus === 'Approved' ? 'bg-green-100 text-green-800' :
+                                    order.orderstatus === 'Verifying Payment' ? 'bg-green-100 text-green-800' :
                                     order.orderstatus === 'In Production' ? 'bg-blue-100 text-blue-800' :
                                     order.orderstatus === 'Waiting for Shipment' ? 'bg-indigo-100 text-indigo-800' :
                                     order.orderstatus === 'In Transit' ? 'bg-purple-100 text-purple-800' :

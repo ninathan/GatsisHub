@@ -98,7 +98,6 @@ const SystemEmployee = () => {
         switch(department) {
             case 'Admin':
                 return ['Sales Admin'];
-            case 'Production':
             case 'Assembly':
                 return ['Employee', 'Supervisor', 'Team Leader'];
             case 'Operational Manager':
@@ -614,7 +613,6 @@ const SystemEmployee = () => {
                                     >
                                         <option value="">Select Department</option>
                                         <option value="Admin">Admin</option>
-                                        <option value="Production">Production</option>
                                         <option value="Assembly">Assembly</option>
                                         <option value="Operational Manager">Operational Manager</option>
                                         <option value="System Administration">System Administration</option>

@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 import { FaTimes, FaUpload, FaCheckCircle } from 'react-icons/fa';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const PaymentPage = () => {
   const navigate = useNavigate();

@@ -50,7 +50,7 @@ const Order = () => {
     const getStatusesForTab = (tab) => {
         const statusMap = {
             'Pending': ['For Evaluation', 'Waiting for Payment'],
-            'Processing': ['Approved', 'In Production', 'Waiting for Shipment'],
+            'Processing': ['Verifying Payment', 'In Production', 'Waiting for Shipment'],
             'Shipped': ['In Transit'],
             'Completed': ['Completed']
         };
@@ -176,7 +176,7 @@ const Order = () => {
         const statusColors = {
             'For Evaluation': '#fbbf24',
             'Waiting for Payment': '#fb923c',
-            'Approved': '#22c55e',
+            'Verifying Payment': '#10b981',
             'In Production': '#60a5fa',
             'Waiting for Shipment': '#818cf8',
             'In Transit': '#a78bfa',
@@ -1034,8 +1034,8 @@ const Order = () => {
 
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2 md:gap-3 mt-4 md:mt-6 flex-wrap">
-                                                    {/* Download Invoice - Only show in Processing phase (Approved, In Production, Waiting for Shipment, In Transit, Completed) */}
-                                                    {['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
+                                                    {/* Download Invoice - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
+                                                    {['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
                                                         <button 
                                                             onClick={() => handleDownloadInvoice(order)}
                                                             className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"

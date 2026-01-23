@@ -115,7 +115,7 @@ const AuthPA = () => {
                 {/* right */}
                 <div className='flex flex-col items-center justify-center py-8 md:py-10 lg:py-20 px-4 order-1 lg:order-2'>
                     <h1 className='text-[#191716] text-xl md:text-3xl lg:text-4xl xl:text-6xl font-semibold tracking-wide flex flex-col items-center mt-3 md:mt-5 lg:mt-10 text-center max-w-md lg:max-w-none'>
-                        Sign In as Production/Assembly</h1>
+                        Sign In as Employee</h1>
 
                     {error && (
                         <div className='mt-4 md:mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md lg:max-w-lg w-full'>

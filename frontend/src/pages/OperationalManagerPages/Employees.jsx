@@ -37,8 +37,6 @@ const Employees = () => {
         teamname: "",
         description: "",
         selectedEmployees: [],
-        quota: "",
-        dailyquota: "",
         assignedOrders: []
     });
 
@@ -314,8 +312,6 @@ const Employees = () => {
                 teamname: teamFormData.teamname,
                 description: teamFormData.description,
                 members: teamFormData.selectedEmployees,
-                quota: teamFormData.quota,
-                dailyquota: teamFormData.dailyquota,
                 assignedOrders: teamFormData.assignedOrders
             };
 
@@ -957,15 +953,6 @@ const Employees = () => {
                                                 </span>
                                             </div>
 
-                                            {team.quota && (
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <FaBullseye className="text-gray-500" />
-                                                    <span className="text-gray-600">
-                                                        Quota: {team.quota}
-                                                    </span>
-                                                </div>
-                                            )}
-
                                             {team.assignedOrders && team.assignedOrders.length > 0 && (
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <FaClipboardList className="text-gray-500" />
@@ -1022,30 +1009,6 @@ const Employees = () => {
                                                 className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
                                                 placeholder="Enter team description"
                                                 rows="3"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-gray-700 font-semibold mb-2">Monthly Quota</label>
-                                            <input
-                                                type="number"
-                                                name="quota"
-                                                value={teamFormData.quota}
-                                                onChange={handleTeamInputChange}
-                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                                placeholder="e.g., 1000 units"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-gray-700 font-semibold mb-2">Daily Quota</label>
-                                            <input
-                                                type="number"
-                                                name="dailyquota"
-                                                value={teamFormData.dailyquota}
-                                                onChange={handleTeamInputChange}
-                                                className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                                placeholder="e.g., 50 units per day"
                                             />
                                         </div>
 
@@ -1187,18 +1150,6 @@ const Employees = () => {
                                             </div>
 
                                             <div>
-                                                <label className="block text-gray-700 font-semibold mb-2">Monthly Quota</label>
-                                                <input
-                                                    type="number"
-                                                    name="quota"
-                                                    value={teamFormData.quota}
-                                                    onChange={handleTeamInputChange}
-                                                    className="w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#35408E]"
-                                                    placeholder="e.g., 1000 units"
-                                                />
-                                            </div>
-
-                                            <div>
                                                 <label className="block text-gray-700 font-semibold mb-2">Assign Employees</label>
                                                 <div className="border rounded p-4 max-h-48 overflow-y-auto">
                                                     {employees.length === 0 ? (
@@ -1281,33 +1232,6 @@ const Employees = () => {
                                                     </div>
                                                     <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.members?.length || 0}</p>
                                                 </div>
-
-                                                {selectedTeam.quota && (
-                                                    <div className="bg-gray-50 rounded-lg p-4">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <FaBullseye className="text-gray-500" />
-                                                            <span className="font-semibold">Monthly Quota</span>
-                                                        </div>
-                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.quota || 'Not Set'}</p>
-                                                        {selectedTeam.linkedquotaid && (
-                                                            <div className="mt-2">
-                                                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                                                    Linked to Quota
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {selectedTeam.dailyquota && (
-                                                    <div className="bg-gray-50 rounded-lg p-4">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <FaChartLine className="text-gray-500" />
-                                                            <span className="font-semibold">Daily Quota</span>
-                                                        </div>
-                                                        <p className="text-2xl font-bold text-[#35408E]">{selectedTeam.dailyquota || 'Not Set'}</p>
-                                                    </div>
-                                                )}
 
                                                 <div className="bg-gray-50 rounded-lg p-4">
                                                     <div className="flex items-center gap-2 mb-2">

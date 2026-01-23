@@ -240,15 +240,15 @@ const OrderDetailOM = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Approved' })
+                body: JSON.stringify({ status: 'In Production' })
             });
 
             if (!response.ok) {
                 throw new Error('Failed to approve order');
             }
 
-            setOrderStatus('Approved');
-            showNotificationMessage('Order approved successfully', 'success');
+            setOrderStatus('In Production');
+            showNotificationMessage('Order approved and moved to production', 'success');
         } catch (err) {
 
             showNotificationMessage('Failed to approve order', 'error');
@@ -265,15 +265,15 @@ const OrderDetailOM = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Approved' })
+                body: JSON.stringify({ status: 'In Production' })
             });
 
             if (!response.ok) {
                 throw new Error('Failed to confirm payment');
             }
 
-            setOrderStatus('Approved');
-            showNotificationMessage('Payment confirmed and order approved', 'success');
+            setOrderStatus('In Production');
+            showNotificationMessage('Payment confirmed and order moved to production', 'success');
         } catch (err) {
 
             showNotificationMessage('Failed to confirm payment', 'error');
@@ -420,7 +420,7 @@ const OrderDetailOM = () => {
                             >
                                 <option>For Evaluation</option>
                                 <option>Waiting for Payment</option>
-                                <option>Approved</option>
+                                <option>Verifying Payment</option>
                                 <option>In Production</option>
                                 <option>Waiting for Shipment</option>
                                 <option>In Transit</option>
@@ -636,7 +636,7 @@ const OrderDetailOM = () => {
 
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                            {orderStatus !== 'Approved' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
+                            {orderStatus !== 'Verifying Payment' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
                                 <>
                                     <button
                                         onClick={handleApproveOrder}

@@ -129,7 +129,7 @@ const OrderPage = () => {
 
     // Helper function to get payment status
     const getPaymentStatus = (orderStatus) => {
-        const paidStatuses = ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'];
+        const paidStatuses = ['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'];
         return paidStatuses.includes(orderStatus) ? 'Paid' : 'Pending';
     };
 

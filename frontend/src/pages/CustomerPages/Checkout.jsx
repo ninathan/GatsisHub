@@ -1113,7 +1113,7 @@ const Checkout = () => {
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Sticky Stepper - Right Side for Large Screens */}
             <div className="hidden lg:block fixed top-1/2 -translate-y-1/2 right-0 z-40 transition-transform duration-500 ease-out">
-                <div className="px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                <div className="px-2 py-2">
                     <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
                 </div>
             </div>
@@ -1612,7 +1612,7 @@ const Checkout = () => {
             </section>
 
             {/* Stepper for Small/Medium Screens - Stationary */}
-            <div className="lg:hidden mt-8 mb-8">
+            <div className="lg:hidden mt-6 mb-6">
                 <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
             </div>
 

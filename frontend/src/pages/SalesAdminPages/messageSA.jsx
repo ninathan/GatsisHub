@@ -477,7 +477,7 @@ const Messages = () => {
                                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                                             order.orderstatus === 'Completed' 
                                                                 ? 'bg-green-100 text-green-700 border border-green-500'
-                                                                : ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
+                                                                : ['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit'].includes(order.orderstatus)
                                                                 ? 'bg-orange-100 text-orange-700 border border-orange-500'
                                                                 : 'bg-blue-100 text-blue-700 border border-blue-500'
                                                         }`}>

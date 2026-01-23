@@ -367,15 +367,15 @@ const OrderDetail = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Approved' })
+                body: JSON.stringify({ status: 'In Production' })
             });
 
             if (!response.ok) {
                 throw new Error('Failed to approve order');
             }
 
-            setOrderStatus('Approved');
-            showNotificationMessage('Order approved successfully', 'success');
+            setOrderStatus('In Production');
+            showNotificationMessage('Order approved and moved to production', 'success');
         } catch (err) {
 
             showNotificationMessage('Failed to approve order', 'error');
@@ -392,15 +392,15 @@ const OrderDetail = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: 'Approved' })
+                body: JSON.stringify({ status: 'In Production' })
             });
 
             if (!response.ok) {
                 throw new Error('Failed to confirm payment');
             }
 
-            setOrderStatus('Approved');
-            showNotificationMessage('Payment confirmed and order approved', 'success');
+            setOrderStatus('In Production');
+            showNotificationMessage('Payment confirmed and order moved to production', 'success');
         } catch (err) {
 
             showNotificationMessage('Failed to confirm payment', 'error');
@@ -801,20 +801,10 @@ const OrderDetail = () => {
                 throw new Error('Failed to approve payment');
             }
 
-            // Update order status to Approved
-            const orderStatusResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ status: 'Approved' })
-            });
+            // Payment verification already updates order status to 'In Production' in backend
+            // No need to manually update order status here anymore
 
-            if (!orderStatusResponse.ok) {
-                throw new Error('Failed to update order status');
-            }
-
-            showNotificationMessage('Payment approved and order status updated to Approved', 'success');
+            showNotificationMessage('Payment approved and order moved to production', 'success');
             setShowProofModal(false);
             
             // Refresh payment and order data
@@ -900,7 +890,7 @@ const OrderDetail = () => {
                             >
                                 <option>For Evaluation</option>
                                 <option>Waiting for Payment</option>
-                                <option>Approved</option>
+                                <option>Verifying Payment</option>
                                 <option>In Production</option>
                                 <option>Waiting for Shipment</option>
                                 <option>In Transit</option>
@@ -1116,7 +1106,7 @@ const OrderDetail = () => {
 
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                            {orderStatus !== 'Approved' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
+                            {orderStatus !== 'Verifying Payment' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
                                 <>
                                     <button
                                         onClick={handleApproveOrder}

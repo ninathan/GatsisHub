@@ -56,8 +56,8 @@ const OrderPageOM = () => {
 
                 const data = await response.json();
 
-                // Filter to only show orders that are Approved or beyond (exclude For Evaluation and Waiting for Payment)
-                const allowedStatuses = ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed', 'Cancelled'];
+                // Filter to only show orders with payment verification or beyond (exclude For Evaluation and Waiting for Payment)
+                const allowedStatuses = ['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed', 'Cancelled'];
                 const filteredData = (data.orders || []).filter(order => 
                     allowedStatuses.includes(order.orderstatus)
                 );
@@ -136,7 +136,7 @@ const OrderPageOM = () => {
 
     // Helper function to get payment status
     const getPaymentStatus = (orderStatus) => {
-        const paidStatuses = ['Approved', 'In Production', 'Waiting for Shipment', 'In Transit', 'Delivered'];
+        const paidStatuses = ['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Delivered'];
         return paidStatuses.includes(orderStatus) ? 'Paid' : 'Pending';
     };
 
