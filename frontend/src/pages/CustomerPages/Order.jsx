@@ -3,7 +3,7 @@ import { ChevronDown, MessageCircle, Eye } from 'lucide-react';
 import { FileText } from 'lucide-react';
 import { Download, CreditCard } from 'lucide-react';
 import logo from '../../images/logo.png'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
 import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
@@ -15,6 +15,7 @@ import StarRating from '../../components/StarRating';
 const Order = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('All Orders');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [orders, setOrders] = useState([]);
@@ -107,7 +108,7 @@ const Order = () => {
     // Subscribe to real-time payment updates (all payments for this user's orders)
     const { isSubscribed: isPaymentsSubscribed } = useRealtimePayments(null, handlePaymentUpdate);
 
-    // Fetch orders when component mounts
+    // Fetch orders when component mounts or when returning from payment page
     useEffect(() => {
         const fetchOrders = async () => {
             if (!user || !user.userid) {
@@ -118,7 +119,9 @@ const Order = () => {
 
             try {
                 setLoading(true);
-                const response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}`);
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}?_t=${timestamp}`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch orders');
@@ -126,7 +129,7 @@ const Order = () => {
 
                 const data = await response.json();
 
-
+                console.log('Fetched orders:', data.orders?.length, 'orders');
 
                 setOrders(data.orders || []);
                 
@@ -137,7 +140,7 @@ const Order = () => {
                 
                 setError(null);
             } catch (err) {
-
+                console.error('Error fetching orders:', err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -145,19 +148,21 @@ const Order = () => {
         };
 
         fetchOrders();
-    }, [user]);
+    }, [user, location.state?.refresh]); // Add location.state?.refresh as dependency
 
     // Fetch payment information for orders
     const fetchPaymentInfo = async (orders) => {
         const paymentPromises = orders.map(async (order) => {
             try {
-                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${order.orderid}`);
+                const timestamp = new Date().getTime();
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${order.orderid}?_t=${timestamp}`);
                 if (response.ok) {
                     const payment = await response.json();
+                    console.log(`Payment info for order ${order.orderid}:`, payment?.paymentstatus);
                     return { orderid: order.orderid, payment };
                 }
             } catch (error) {
-
+                console.error(`Error fetching payment for order ${order.orderid}:`, error);
             }
             return { orderid: order.orderid, payment: null };
         });
@@ -168,6 +173,7 @@ const Order = () => {
             paymentsMap[orderid] = payment;
         });
         setOrderPayments(paymentsMap);
+        console.log('Payment statuses loaded:', Object.keys(paymentsMap).length, 'payments');
 
     };
 
@@ -698,7 +704,21 @@ const Order = () => {
         <div className="min-h-screen bg-gray-100">
             <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-12">
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-6 md:mb-12">My Orders</h1>
+                <div className="flex items-center justify-center gap-4 mb-6 md:mb-12">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center">My Orders</h1>
+                    <button
+                        onClick={() => {
+                            console.log('Manual refresh triggered');
+                            fetchOrders();
+                        }}
+                        className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200"
+                        title="Refresh orders"
+                    >
+                        <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
 
                 {/* Tabs */}
                 <div className="flex justify-center gap-3 md:gap-6 lg:gap-8 mb-6 md:mb-8 overflow-x-auto pb-2 scrollbar-thin">
@@ -1056,6 +1076,15 @@ const Order = () => {
                                                             <span className="hidden sm:inline">View Proof</span>
                                                             <span className="sm:hidden">Proof</span>
                                                         </button>
+                                                    )}
+
+                                                    {/* Payment Pending Verification Notice */}
+                                                    {orderPayments[order.orderid]?.paymentstatus === 'Pending Verification' && (
+                                                        <div className="bg-blue-50 border border-blue-300 rounded px-3 py-2 flex items-center gap-2">
+                                                            <span className="text-blue-600 text-xs md:text-sm font-semibold">
+                                                                ⏳ Payment Submitted - Awaiting Verification
+                                                            </span>
+                                                        </div>
                                                     )}
 
                                                     {/* Payment Rejected Notice */}

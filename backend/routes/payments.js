@@ -150,18 +150,20 @@ router.post("/submit", upload.single('proofOfPayment'), async (req, res) => {
 
     // Update order status if orderid is provided
     if (orderid) {
-      const { error: updateError } = await supabase
+      const { data: updatedOrder, error: updateError } = await supabase
         .from("orders")
         .update({ 
           orderstatus: 'Verifying Payment',
           updatedat: new Date().toISOString()
         })
-        .eq("orderid", orderid);
+        .eq("orderid", orderid)
+        .select()
+        .single();
 
       if (updateError) {
-
+        console.error('Failed to update order status:', updateError);
       } else {
-
+        console.log(`Order ${orderid} status updated to: Verifying Payment`);
       }
     }
 

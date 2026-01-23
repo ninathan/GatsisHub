@@ -1,6 +1,6 @@
 import React from 'react'
 import Bank from '../../images/bank.png'
-import Cheque from '../../images/cheque.png'
+import GCashIcon from '../../images/cheque.png' // Temporary: reusing cheque image until GCash icon is added
 import { Link } from 'react-router-dom'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
@@ -25,9 +25,9 @@ const PaymentPage = () => {
   // Scroll animations
   const titleAnim = useScrollAnimation({ threshold: 0.3 });
   const bankAnim = useScrollAnimation({ threshold: 0.2 });
-  const chequeAnim = useScrollAnimation({ threshold: 0.2 });
+  const gcashAnim = useScrollAnimation({ threshold: 0.2 });
   const bankInfoAnim = useScrollAnimation({ threshold: 0.2 });
-  const chequeInfoAnim = useScrollAnimation({ threshold: 0.2 });
+  const gcashInfoAnim = useScrollAnimation({ threshold: 0.2 });
 
     const handleConfirm = (method) => {
         setPaymentMethod(method);
@@ -67,15 +67,21 @@ const PaymentPage = () => {
             formData.append('proofOfPayment', selectedFile);
             formData.append('paymentMethod', paymentMethod);
             
+            // Get customer info from localStorage
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
             // Add order details if available
             if (orderDetails?.orderid) {
                 formData.append('orderid', orderDetails.orderid);
+                console.log('Submitting payment for order:', orderDetails.orderid);
+            } else {
+                console.warn('No orderid provided - order status may not update');
             }
 
-            // Get customer info from localStorage
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (user.customerid) {
                 formData.append('customerid', user.customerid);
+            } else {
+                console.warn('No customerid found in localStorage');
             }
 
             const response = await fetch('https://gatsis-hub.vercel.app/payments/submit', {
@@ -89,13 +95,14 @@ const PaymentPage = () => {
                 throw new Error(data.error || 'Failed to submit payment');
             }
 
+            console.log('Payment submitted successfully:', data);
             setUploadSuccess(true);
             setTimeout(() => {
                 setShowUploadModal(false);
                 setShowModal(true);
                 // Navigate back to orders page after 2 seconds
                 setTimeout(() => {
-                    navigate('/orders');
+                    navigate('/orders', { replace: true, state: { refresh: true } });
                 }, 2000);
             }, 1500);
         } catch (error) {
@@ -113,8 +120,8 @@ const PaymentPage = () => {
   const bankInfo = [
     "The bank transfer payment method allows customers to transfer funds directly from their bank account to the merchant's bank account. This method is typically initiated through the customer's online banking platform or mobile app."
   ]
-  const chequeInfo = [
-    "A cheque payment allows customers to pay by writing a cheque to the merchant. The merchant then deposits the cheque into their bank account, and the funds are transferred once the cheque clears."
+  const gcashInfo = [
+    "GCash is a mobile wallet that allows you to make instant payments using your smartphone. Simply scan the QR code provided, enter the payment amount, and upload your proof of payment."
   ]
   return (
     <div className='p-5'>
@@ -144,17 +151,17 @@ const PaymentPage = () => {
                     <h2 className='text-2xl font-semibold text-white'>Bank Transfer</h2>
                 </div>
             </div>
-            {/* Cheque Payment */}
+            {/* GCash Payment */}
             <div 
-                ref={chequeAnim.ref}
+                ref={gcashAnim.ref}
                 className={`h-75 w-75 bg-[#191716] m-10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl ${
-                    chequeAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
+                    gcashAnim.isVisible ? 'scroll-slide-up' : 'scroll-hidden'
                 }`}
-                onClick={() => handleConfirm('Cheque Payment')}
+                onClick={() => handleConfirm('GCash')}
             >
                 <div className='flex flex-col items-center p-6'>
-                    <img src={Cheque} alt="Cheque" className='w-20 h-20 mb-5 transition-transform duration-300 hover:scale-110' />
-                    <h2 className='text-2xl font-semibold text-white'>Cheque Payment</h2>
+                    <img src={GCashIcon} alt="GCash" className='w-20 h-20 mb-5 transition-transform duration-300 hover:scale-110' />
+                    <h2 className='text-2xl font-semibold text-white'>GCash</h2>
                 </div>
             </div>
         </div>
@@ -171,13 +178,13 @@ const PaymentPage = () => {
               <p className='p-5'>{bankInfo[0]}</p>
             </div>
             <div 
-                ref={chequeInfoAnim.ref}
+                ref={gcashInfoAnim.ref}
                 className={`h-60 w-75 border border-gray-300 rounded-lg hover:shadow-lg transition-shadow duration-300 ${
-                    chequeInfoAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
+                    gcashInfoAnim.isVisible ? 'scroll-fade-in' : 'scroll-hidden'
                 }`}
             >
-              <h3 className='font-semibold text-2xl flex flex-col items-center mt-2'>Cheque Payment</h3>
-              <p className='p-5'>{chequeInfo[0]}</p>
+              <h3 className='font-semibold text-2xl flex flex-col items-center mt-2'>GCash</h3>
+              <p className='p-5'>{gcashInfo[0]}</p>
             </div>
         </div>
 
@@ -225,6 +232,27 @@ const PaymentPage = () => {
                                 <p><strong>Account Name:</strong> GatsisHub Corporation</p>
                                 <p><strong>Account Number:</strong> 1234-5678-9012</p>
                                 <p><strong>Branch:</strong> Makati City</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* GCash QR Code (if GCash) */}
+                    {paymentMethod === 'GCash' && (
+                        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 className="font-semibold text-gray-800 mb-3 text-center">Scan QR Code to Pay</h4>
+                            <div className="flex flex-col items-center">
+                                <div className="bg-white p-4 rounded-lg shadow-md mb-3">
+                                    <img 
+                                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" 
+                                        alt="GCash QR Code" 
+                                        className="w-48 h-48"
+                                    />
+                                </div>
+                                <div className="text-center space-y-1">
+                                    <p className="text-sm text-gray-700"><strong>GCash Name:</strong> GatsisHub Corporation</p>
+                                    <p className="text-sm text-gray-700"><strong>Mobile Number:</strong> 0912-345-6789</p>
+                                    <p className="text-xs text-gray-500 mt-2">After payment, take a screenshot and upload as proof</p>
+                                </div>
                             </div>
                         </div>
                     )}

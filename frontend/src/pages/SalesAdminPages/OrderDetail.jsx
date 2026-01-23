@@ -1203,8 +1203,16 @@ const OrderDetail = () => {
                         <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
                             <div>
                                 <h2 className="text-white text-2xl font-semibold">Payment Information</h2>
-                                <p className="text-indigo-200 text-sm mt-1">
-                                    Payment Method: {paymentInfo.paymentmethod} | Status: {paymentInfo.paymentstatus}
+                                <p className="text-indigo-200 text-sm mt-1 flex items-center gap-2">
+                                    Payment Method: {paymentInfo.paymentmethod} | Status: 
+                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                        paymentInfo.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
+                                        paymentInfo.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
+                                        paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-yellow-500 text-black' :
+                                        'bg-gray-300 text-gray-700'
+                                    }`}>
+                                        {paymentInfo.paymentstatus}
+                                    </span>
                                 </p>
                             </div>
                             <button

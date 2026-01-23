@@ -1235,7 +1235,8 @@ const Checkout = () => {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => handleQuantityChange(-10)}
-                                    className="bg-white border rounded p-2 hover:bg-gray-100"
+                                    disabled={quantity <= 100}
+                                    className="bg-white border rounded p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
                                 >
                                     <Minus size={18} className="md:w-5 md:h-5" />
                                 </button>
