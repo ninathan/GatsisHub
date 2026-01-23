@@ -637,7 +637,7 @@ router.patch("/:orderid/status", async (req, res) => {
     const validStatuses = [
       'For Evaluation',
       'Waiting for Payment',
-      'Approved',
+      'Verifying Payment',
       'In Production',
       'Waiting for Shipment',
       'In Transit',
