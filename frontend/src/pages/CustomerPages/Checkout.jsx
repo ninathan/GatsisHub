@@ -7,6 +7,11 @@ import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
 import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
+import MB3ProductPage from '../../images/MB3ProductPage.png'
+import Product9712 from '../../images/97-12ProductPage.png'
+import ProductCQ807 from '../../images/CQ-807ProductPage.png'
+import Product9711 from '../../images/97-11ProductPage.png'
+import Product9708 from '../../images/97-08ProductPage.png'
 import { supabase } from '../../../supabaseClient'
 import HangerScene from '../../components/Checkout/HangerScene'
 import { useAuth } from '../../context/AuthContext'
@@ -132,6 +137,15 @@ const Checkout = () => {
     const location = useLocation();
     const threeCanvasRef = useRef(null);
     const { user } = useAuth();
+
+    // Hanger image mapping
+    const hangerImages = {
+        'MB3': MB3ProductPage,
+        '97-12': Product9712,
+        'CQ-807': ProductCQ807,
+        '97-11': Product9711,
+        '97-08': Product9708
+    };
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
@@ -1190,9 +1204,11 @@ const Checkout = () => {
                                         }`}
                                     >
                                         <div className="bg-white p-2 flex items-center justify-center aspect-square">
-                                            <div className="text-2xl">
-                                                <ProductCard />
-                                            </div>
+                                            <img 
+                                                src={hangerImages[hanger.id]}
+                                                alt={hanger.name}
+                                                className="w-full h-full object-contain"
+                                            />
                                         </div>
                                         <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
                                             {hanger.name}
@@ -1766,14 +1782,15 @@ const Checkout = () => {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handleQuantityChange(-10)}
-                                    className="border rounded p-1"
+                                    disabled={quantity <= 100}
+                                    className="border rounded p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
                                 >
                                     <Minus size={16}></Minus>
                                 </button>
                                 <span className="w-12 text-center">{quantity}</span>
                                 <button
                                     onClick={() => handleQuantityChange(10)}
-                                    className="border rounded p-1"
+                                    className="border rounded p-1 hover:bg-gray-100"
                                 >
                                     <Plus size={16}></Plus>
                                 </button>
@@ -1942,8 +1959,8 @@ const Checkout = () => {
 
             {/* Instructions Modal */}
             {showInstructionsModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] pt-24 md:pt-28">
-                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto mx-4 relative z-[10000] mt-4">
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-[9999] p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 max-w-2xl max-h-[80vh] overflow-y-auto relative animate-scaleIn">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <Info className="text-[#007BFF]" size={24} />

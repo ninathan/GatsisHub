@@ -192,6 +192,28 @@ router.post("/create", async (req, res) => {
       throw insertError;
     }
 
+    // Create admin notification for OM about new submission requiring verification
+    try {
+      // Get employee name for the notification
+      const { data: employee } = await supabase
+        .from("employees")
+        .select("employeename")
+        .eq("employeeid", employeeid)
+        .single();
+
+      await supabase.from("admin_notifications").insert([{
+        orderid: orderid,
+        customerid: null,
+        title: 'Verification Required',
+        message: `${employee?.employeename || 'An employee'} has submitted ${reported_completed} completed units for verification. Order ID: ${orderid.slice(0, 8).toUpperCase()}`,
+        type: 'verification_required',
+        targetrole: 'operational_manager'
+      }]);
+    } catch (notifError) {
+      console.error('Failed to create notification:', notifError);
+      // Don't fail the request if notification creation fails
+    }
+
     res.status(201).json({
       message: "Submission created successfully",
       submission

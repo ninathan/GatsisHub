@@ -688,6 +688,23 @@ router.patch("/:orderid/status", async (req, res) => {
       `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"`
     );
 
+    // Notify OM for important status changes
+    const omNotificationStatuses = ['In Production', 'Quality Check', 'Ready for Pickup', 'Completed'];
+    if (omNotificationStatuses.includes(status)) {
+      try {
+        await supabase.from("admin_notifications").insert([{
+          orderid: orderid,
+          customerid: order[0].userid || null,
+          title: 'Order Status Updated',
+          message: `Order ${orderid.slice(0, 8).toUpperCase()} status changed to "${status}" by ${employeename || 'system'}.`,
+          type: 'order_updated',
+          targetrole: 'operational_manager'
+        }]);
+      } catch (notifError) {
+        console.error('Failed to create OM notification:', notifError);
+      }
+    }
+
     // Create notification and send email for customer about order status change
     try {
       // Get customer data including email and preferences

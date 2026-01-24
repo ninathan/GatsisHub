@@ -6,6 +6,11 @@ import { Download, Save, ArrowLeft, Maximize2, Minimize2, Info, Upload, Type, Im
 import ProductCard from '../../components/Checkout/productcard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import logo from '../../images/logo.png';
+import MB3ProductPage from '../../images/MB3ProductPage.png';
+import Product9712 from '../../images/97-12ProductPage.png';
+import ProductCQ807 from '../../images/CQ-807ProductPage.png';
+import Product9711 from '../../images/97-11ProductPage.png';
+import Product9708 from '../../images/97-08ProductPage.png';
 import styled from 'styled-components';
 
 const ColorPickerWrapper = styled.div`
@@ -123,6 +128,15 @@ const CreateDesign = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const threeCanvasRef = useRef(null);
+
+    // Hanger image mapping
+    const hangerImages = {
+        'MB3': MB3ProductPage,
+        '97-12': Product9712,
+        'CQ-807': ProductCQ807,
+        '97-11': Product9711,
+        '97-08': Product9708
+    };
 
     // 3D Design state
     const [selectedHanger, setSelectedHanger] = useState(null);
@@ -927,9 +941,11 @@ const CreateDesign = () => {
                                                     }`}
                                                 >
                                                     <div className="bg-white p-2 flex items-center justify-center aspect-square">
-                                                        <div className="text-2xl">
-                                                            <ProductCard />
-                                                        </div>
+                                                        <img 
+                                                            src={hangerImages[hanger.id]}
+                                                            alt={hanger.name}
+                                                            className="w-full h-full object-contain"
+                                                        />
                                                     </div>
                                                     <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
                                                         {hanger.name}

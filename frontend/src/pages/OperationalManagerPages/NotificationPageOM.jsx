@@ -135,6 +135,10 @@ const NotificationPageOM = () => {
                 return <XCircle className="text-red-600" size={24} />;
             case 'order_created':
                 return <ShoppingCart className="text-purple-600" size={24} />;
+            case 'verification_required':
+                return <CheckCheck className="text-orange-600" size={24} />;
+            case 'order_updated':
+                return <Bell className="text-blue-600" size={24} />;
             default:
                 return <Bell className="text-gray-600" size={24} />;
         }
