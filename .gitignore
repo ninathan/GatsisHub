@@ -52,3 +52,5 @@ PAYMENT_HISTORY_FEATURE.md
 create_admin_notifications_table.sql
 create_production_submissions_table.sql
 add_last_successful_login_column.sql
+add_verification_security.sql
+VERIFICATION_SECURITY.md

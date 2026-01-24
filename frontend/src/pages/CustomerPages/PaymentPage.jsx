@@ -1,6 +1,7 @@
 import React from 'react'
 import Bank from '../../images/bank.png'
 import GCashIcon from '../../images/cheque.png' // Temporary: reusing cheque image until GCash icon is added
+import GCashQR from '../../images/gcash_qr.jpg'
 import { Link } from 'react-router-dom'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
@@ -239,7 +240,7 @@ const PaymentPage = () => {
                             <div className="flex flex-col items-center">
                                 <div className="bg-white p-3 md:p-4 rounded-lg shadow-md mb-3">
                                     <img 
-                                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" 
+                                        src={GCashQR}
                                         alt="GCash QR Code" 
                                         className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
                                     />

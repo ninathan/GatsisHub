@@ -132,7 +132,29 @@ const OrderPage = () => {
         const paidStatuses = ['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'];
         return paidStatuses.includes(orderStatus) ? 'Paid' : 'Pending';
     };
-
+    // Helper function to get status color
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'For Evaluation':
+                return 'bg-gray-100 text-gray-700';
+            case 'Waiting for Payment':
+                return 'bg-yellow-100 text-yellow-700';
+            case 'Verifying Payment':
+                return 'bg-orange-100 text-orange-700';
+            case 'In Production':
+                return 'bg-blue-100 text-blue-700';
+            case 'Quality Check':
+                return 'bg-purple-100 text-purple-700';
+            case 'Ready for Pickup':
+                return 'bg-green-100 text-green-700';
+            case 'Completed':
+                return 'bg-green-200 text-green-800';
+            case 'Cancelled':
+                return 'bg-red-100 text-red-700';
+            default:
+                return 'bg-gray-100 text-gray-700';
+        }
+    };
     // Helper function to format date
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -354,7 +376,7 @@ const OrderPage = () => {
                                                 }
                                             </td>
                                             <td className="px-2 md:px-4 py-3">
-                                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                <span className={`text-xs px-2 py-1 rounded ${getStatusColor(order.orderstatus)}`}>
                                                     {order.orderstatus}
                                                 </span>
                                             </td>
@@ -418,7 +440,7 @@ const OrderPage = () => {
                                                 }
                                             </td>
                                             <td className="px-2 md:px-4 py-3">
-                                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                <span className={`text-xs px-2 py-1 rounded ${getStatusColor(order.orderstatus)}`}>
                                                     {order.orderstatus}
                                                 </span>
                                             </td>

@@ -31,16 +31,20 @@ router.post("/send-signup-verification", async (req, res) => {
 
     // Generate 6-digit verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry (reduced from 15)
 
-    // Store verification code
+    // Hash the verification code before storing
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
+
+    // Store HASHED verification code
     const { error: insertError } = await supabase
       .from("signup_verification_codes")
       .insert([{
         email: emailAddress,
-        code: verificationCode,
+        code: hashedCode,
         expires_at: expiresAt.toISOString(),
-        used: false
+        used: false,
+        attempts: 0
       }]);
 
     if (insertError) {
@@ -103,32 +107,56 @@ router.post("/verify-signup-code", async (req, res) => {
       return res.status(400).json({ error: "Email and code are required" });
     }
 
-    // Find valid code
-    const { data: verificationRecord, error: findError } = await supabase
+    // Find all valid codes for this email
+    const { data: verificationRecords, error: findError } = await supabase
       .from("signup_verification_codes")
       .select("*")
       .eq("email", emailAddress)
-      .eq("code", code)
       .eq("used", false)
-      .single();
+      .order('created_at', { ascending: false });
 
-    if (findError || !verificationRecord) {
-      return res.status(400).json({ error: "Invalid or expired verification code" });
+    if (findError || !verificationRecords || verificationRecords.length === 0) {
+      return res.status(400).json({ error: "No valid verification code found. Please request a new one." });
     }
 
-    // Check if code is expired
-    const now = new Date();
-    const expiresAt = new Date(verificationRecord.expires_at);
-    
-    if (now > expiresAt) {
-      return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+    // Check each record to find matching hashed code
+    let validRecord = null;
+    for (const record of verificationRecords) {
+      // Check rate limiting
+      if (record.attempts >= 5) {
+        continue; // Skip records that have too many attempts
+      }
+
+      // Check if code is expired
+      const now = new Date();
+      const expiresAt = new Date(record.expires_at);
+      if (now > expiresAt) {
+        continue; // Skip expired codes
+      }
+
+      // Compare hashed code
+      const isMatch = await bcrypt.compare(code, record.code);
+      if (isMatch) {
+        validRecord = record;
+        break;
+      } else {
+        // Increment failed attempts
+        await supabase
+          .from("signup_verification_codes")
+          .update({ attempts: record.attempts + 1 })
+          .eq("id", record.id);
+      }
+    }
+
+    if (!validRecord) {
+      return res.status(400).json({ error: "Invalid or expired verification code. Please check your code or request a new one." });
     }
 
     // Mark code as used
     await supabase
       .from("signup_verification_codes")
       .update({ used: true })
-      .eq("id", verificationRecord.id);
+      .eq("id", validRecord.id);
 
     // Now proceed with account creation (original signup logic)
     if (!firstName || !lastName || !password || !gender || !dateOfBirth) {
@@ -1060,16 +1088,20 @@ router.post("/forgot-password", async (req, res) => {
 
     // Generate 6-digit verification code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry (reduced from 15)
 
-    // Store verification code in database
+    // Hash the verification code before storing
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
+
+    // Store HASHED verification code in database
     const { error: insertError } = await supabase
       .from("password_reset_codes")
       .insert([{
         email: emailAddress,
-        code: verificationCode,
+        code: hashedCode,
         expires_at: expiresAt.toISOString(),
-        used: false
+        used: false,
+        attempts: 0
       }]);
 
     if (insertError) {
@@ -1143,33 +1175,56 @@ router.post("/verify-reset-code", async (req, res) => {
       return res.status(400).json({ error: "Email and code are required" });
     }
 
-    // Find valid code
-    const { data: resetCode, error: findError } = await supabase
+    // Find all valid codes for this email
+    const { data: resetCodes, error: findError } = await supabase
       .from("password_reset_codes")
       .select("*")
       .eq("email", emailAddress)
-      .eq("code", code)
       .eq("used", false)
-      .single();
+      .order('created_at', { ascending: false });
 
-    if (findError || !resetCode) {
-      return res.status(400).json({ error: "Invalid verification code" });
+    if (findError || !resetCodes || resetCodes.length === 0) {
+      return res.status(400).json({ error: "No valid verification code found. Please request a new one." });
     }
 
-    // Check if code is expired
-    const now = new Date();
-    const expiresAt = new Date(resetCode.expires_at);
+    // Check each record to find matching hashed code
+    let validCode = null;
+    for (const record of resetCodes) {
+      // Check rate limiting
+      if (record.attempts >= 5) {
+        continue; // Skip records that have too many attempts
+      }
 
-    if (now > expiresAt) {
-      return res.status(400).json({ error: "Verification code has expired" });
+      // Check if code is expired
+      const now = new Date();
+      const expiresAt = new Date(record.expires_at);
+      if (now > expiresAt) {
+        continue; // Skip expired codes
+      }
+
+      // Compare hashed code
+      const isMatch = await bcrypt.compare(code, record.code);
+      if (isMatch) {
+        validCode = record;
+        break;
+      } else {
+        // Increment failed attempts
+        await supabase
+          .from("password_reset_codes")
+          .update({ attempts: record.attempts + 1 })
+          .eq("id", record.id);
+      }
+    }
+
+    if (!validCode) {
+      return res.status(400).json({ error: "Invalid or expired verification code. Please check your code or request a new one." });
     }
 
     // Mark code as used
     await supabase
       .from("password_reset_codes")
       .update({ used: true })
-      .eq("email", emailAddress)
-      .eq("code", code);
+      .eq("id", validCode.id);
 
     res.status(200).json({ 
       message: "Code verified successfully",
