@@ -403,18 +403,21 @@ router.patch("/:paymentid/verify", async (req, res) => {
       }
 
       if (newOrderStatus) {
-        const { error: orderError } = await supabase
+        console.log(`Updating order ${payment.orderid} status from current to ${newOrderStatus}`);
+        const { data: updatedOrder, error: orderError } = await supabase
           .from("orders")
           .update({ 
             orderstatus: newOrderStatus,
             updatedat: new Date().toISOString()
           })
-          .eq("orderid", payment.orderid);
+          .eq("orderid", payment.orderid)
+          .select()
+          .single();
 
         if (orderError) {
-
+          console.error('Failed to update order status:', orderError);
         } else {
-
+          console.log(`Order ${payment.orderid} status successfully updated to: ${newOrderStatus}`);
         }
       }
     }
@@ -549,18 +552,21 @@ router.delete("/:paymentid", async (req, res) => {
 
     // Update order status back to "Waiting for Payment"
     if (payment.orderid) {
-      const { error: orderError } = await supabase
+      console.log(`Updating order ${payment.orderid} status back to 'Waiting for Payment' after payment rejection`);
+      const { data: updatedOrder, error: orderError } = await supabase
         .from("orders")
         .update({ 
           orderstatus: 'Waiting for Payment',
           updatedat: new Date().toISOString()
         })
-        .eq("orderid", payment.orderid);
+        .eq("orderid", payment.orderid)
+        .select()
+        .single();
 
       if (orderError) {
-
+        console.error('Failed to update order status:', orderError);
       } else {
-
+        console.log(`Order ${payment.orderid} status successfully updated to: Waiting for Payment`);
       }
     }
 
