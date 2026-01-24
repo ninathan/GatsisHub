@@ -104,7 +104,7 @@ const Sidebar = () => {
                             </NavLink>
                         </li>
                         <li className='hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer'>
-                            <button onClick={handleLogout} className="block w-full text-left">
+                            <button onClick={handleLogout} className="block w-full text-left cursor-pointer">
                                 <LogOut size={20} className='mr-2 inline' />
                                 Logout
                             </button>

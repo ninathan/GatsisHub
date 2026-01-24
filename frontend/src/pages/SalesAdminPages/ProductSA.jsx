@@ -384,7 +384,7 @@ const ProductSA = () => {
             
             {/* Material Modal */}
             {showMaterialModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold mb-4">
                             {editingMaterial ? 'Edit Material' : 'Add New Material'}
