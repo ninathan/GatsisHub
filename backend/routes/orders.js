@@ -457,14 +457,20 @@ router.delete("/:orderid", async (req, res) => {
       });
     }
 
-    // Delete the order
-    const { error: deleteError } = await supabase
+    // Update order status to "Cancelled" instead of deleting
+    const { data: cancelledOrder, error: updateError } = await supabase
       .from("orders")
-      .delete()
-      .eq("orderid", orderid);
+      .update({ 
+        orderstatus: 'Cancelled',
+        cancellationreason: reason || 'Not specified',
+        cancelledat: new Date().toISOString()
+      })
+      .eq("orderid", orderid)
+      .select()
+      .single();
 
-    if (deleteError) {
-      throw deleteError;
+    if (updateError) {
+      throw updateError;
     }
 
     // Create admin notification for order cancellation
@@ -484,6 +490,7 @@ router.delete("/:orderid", async (req, res) => {
 
     res.status(200).json({ 
       message: "Order cancelled successfully",
+      order: cancelledOrder,
       orderid: orderid,
       reason: reason || 'No reason provided'
     });
