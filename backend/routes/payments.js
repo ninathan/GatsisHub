@@ -476,6 +476,8 @@ router.delete("/:paymentid", async (req, res) => {
     const { paymentid } = req.params;
     const { verifiedby, notes } = req.body;
 
+    console.log(`Attempting to reject payment ${paymentid}`);
+
     // First get the payment details
     const { data: payment, error: fetchError } = await supabase
       .from("payments")
@@ -493,50 +495,70 @@ router.delete("/:paymentid", async (req, res) => {
       .eq("paymentid", paymentid)
       .single();
 
-    if (fetchError || !payment) {
+    if (fetchError) {
+      console.error('Error fetching payment:', fetchError);
+      return res.status(404).json({ error: "Payment not found", details: fetchError.message });
+    }
+
+    if (!payment) {
+      console.error('Payment not found');
       return res.status(404).json({ error: "Payment not found" });
     }
 
+    console.log(`Payment found. OrderID: ${payment.orderid}`);
+
     // Archive to payment history before deleting
-    await supabase.from("payment_history").insert([{
-      orderid: payment.orderid,
-      customerid: payment.customerid,
-      paymentid: payment.paymentid,
-      paymentmethod: payment.paymentmethod,
-      proofofpayment: payment.proofofpayment,
-      amountpaid: payment.amountpaid,
-      transactionreference: payment.transactionreference,
-      notes: notes || payment.notes || 'Payment rejected by admin',
-      paymentstatus: 'Rejected',
-      verifiedby: verifiedby ? parseInt(verifiedby) : null,
-      datesubmitted: payment.datesubmitted,
-      dateverified: new Date().toISOString(),
-      action: 'rejected'
-    }]);
+    try {
+      await supabase.from("payment_history").insert([{
+        orderid: payment.orderid,
+        customerid: payment.customerid,
+        paymentid: payment.paymentid,
+        paymentmethod: payment.paymentmethod,
+        proofofpayment: payment.proofofpayment,
+        amountpaid: payment.amountpaid,
+        transactionreference: payment.transactionreference,
+        notes: notes || payment.notes || 'Payment rejected by admin',
+        paymentstatus: 'Rejected',
+        verifiedby: verifiedby ? parseInt(verifiedby) : null,
+        datesubmitted: payment.datesubmitted,
+        dateverified: new Date().toISOString(),
+        action: 'rejected'
+      }]);
+      console.log('Payment archived to history');
+    } catch (archiveError) {
+      console.error('Error archiving payment:', archiveError);
+      // Continue even if archiving fails
+    }
 
     // Send email notification to customer (only if they have notifications enabled)
-    if (payment.customers && payment.customers.emailaddress && payment.customers.emailnotifications === true) {
-      const customerEmail = payment.customers.emailaddress;
-      const companyName = payment.customers.companyname || 'Valued Customer';
-      const orderNumber = payment.orders?.orderid || payment.orderid;
-      const dateRejected = new Date().toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
+    try {
+      if (payment.customers && payment.customers.emailaddress && payment.customers.emailnotifications === true) {
+        const customerEmail = payment.customers.emailaddress;
+        const companyName = payment.customers.companyname || 'Valued Customer';
+        const orderNumber = payment.orders?.orderid || payment.orderid;
+        const dateRejected = new Date().toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric' 
+        });
 
-      const emailHtml = emailTemplates.paymentRejected(
-        companyName,
-        orderNumber,
-        payment.paymentmethod,
-        notes || 'Please resubmit with clearer payment details',
-        dateRejected
-      );
-      await sendEmail(
-        customerEmail,
-        `Payment Resubmission Required - Order ${orderNumber}`,
-        emailHtml
-      );
+        const emailHtml = emailTemplates.paymentRejected(
+          companyName,
+          orderNumber,
+          payment.paymentmethod,
+          notes || 'Please resubmit with clearer payment details',
+          dateRejected
+        );
+        await sendEmail(
+          customerEmail,
+          `Payment Resubmission Required - Order ${orderNumber}`,
+          emailHtml
+        );
+        console.log('Email notification sent to customer');
+      }
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+      // Continue even if email fails
     }
 
     // Delete the payment record from main table
