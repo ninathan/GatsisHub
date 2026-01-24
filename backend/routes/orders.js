@@ -399,6 +399,11 @@ router.get("/:orderid", async (req, res) => {
       materials: Object.keys(materialsObj).length > 0 ? materialsObj : order.materials // fallback to JSONB if no junction data
     };
 
+    // Prevent caching to ensure fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     res.status(200).json({ order: orderWithMaterials });
   } catch (err) {
 

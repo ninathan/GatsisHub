@@ -565,12 +565,16 @@ router.delete("/:paymentid", async (req, res) => {
 
       if (orderError) {
         console.error('Failed to update order status:', orderError);
+        // Don't fail the whole request, but log the error
       } else {
         console.log(`Order ${payment.orderid} status successfully updated to: Waiting for Payment`);
       }
     }
 
-    res.status(200).json({ message: "Payment rejected and archived. Customer can resubmit." });
+    res.status(200).json({ 
+      message: "Payment rejected and archived. Customer can resubmit.",
+      orderUpdated: !!payment.orderid
+    });
 
   } catch (err) {
 
