@@ -10,6 +10,7 @@ import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
 import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import StarRating from '../../components/StarRating';
+import styled from 'styled-components';
 
 
 const Order = () => {
@@ -1082,7 +1083,7 @@ const Order = () => {
                                                     {orderPayments[order.orderid]?.paymentstatus === 'Pending Verification' && (
                                                         <div className="bg-blue-50 border border-blue-300 rounded px-3 py-2 flex items-center gap-2">
                                                             <span className="text-blue-600 text-xs md:text-sm font-semibold">
-                                                                ⏳ Payment Submitted - Awaiting Verification
+                                                                Payment Submitted - Awaiting Verification
                                                             </span>
                                                         </div>
                                                     )}
@@ -1102,10 +1103,31 @@ const Order = () => {
                                                         <Link 
                                                             to="/payment" 
                                                             state={{ orderDetails: order }}
-                                                            className="bg-yellow-500 text-white px-3 md:px-6 py-2 rounded hover:bg-yellow-600 transition-all duration-300 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-xs md:text-sm font-semibold"
+                                                            style={{ textDecoration: 'none' }}
                                                         >
-                                                            <CreditCard size={16} className="md:w-[18px] md:h-[18px]" />
-                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit Payment' : 'Payment'}
+                                                            <StyledWrapper>
+                                                                <div className="container">
+                                                                    <div className="left-side">
+                                                                        <div className="card">
+                                                                            <div className="card-line" />
+                                                                            <div className="buttons" />
+                                                                        </div>
+                                                                        <div className="post">
+                                                                            <div className="post-line" />
+                                                                            <div className="screen">
+                                                                                <div className="dollar">₱</div>
+                                                                            </div>
+                                                                            <div className="numbers" />
+                                                                            <div className="numbers-line2" />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="right-side">
+                                                                        <div className="new">
+                                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit' : 'Checkout'}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </StyledWrapper>
                                                         </Link>
                                                     )}
 
@@ -1150,24 +1172,18 @@ const Order = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#007BFF] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-center py-4 relative">
-                            <div className="w-12 h-12  rounded-full flex items-center justify-center">
-                                <div className="flex items-center justify-center">
-                                    <img src={logo} alt="Logo" className="w-20 h-12" />
-                                </div>
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3">
+                            <div className="flex items-center gap-3">
+                                <img src={logo} alt="Logo" className="w-16 h-10" />
+                                <h2 className="text-black text-xl md:text-2xl font-black">Proof of Payment</h2>
                             </div>
                         </div>
 
-                        {/* Modal Title */}
-                        <div className="text-center pb-4 md:pb-6">
-                            <h2 className="text-white text-xl md:text-2xl font-semibold">Proof of Payment</h2>
-                        </div>
-
                         {/* Content Container - Scrollable */}
-                        <div className="bg-white mx-4 md:mx-8 rounded-lg p-3 md:p-4 mb-4 md:mb-6 overflow-auto max-h-[60vh]">
+                        <div className="bg-white mx-4 md:mx-6 my-4 border-[3px] border-black p-3 md:p-4 overflow-auto max-h-[60vh]">
                             {proofImage && proofImage.toLowerCase().endsWith('.pdf') ? (
                                 <div className="flex flex-col items-center gap-4 py-4">
                                     <FileText size={48} className="text-indigo-600" />
@@ -1192,10 +1208,10 @@ const Order = () => {
                         </div>
 
                         {/* Back Button */}
-                        <div className="flex justify-center pb-6 md:pb-8">
+                        <div className="flex justify-center pb-6 md:pb-8 px-4">
                             <button
                                 onClick={closeProofModal}
-                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 md:px-12 py-2 rounded transition-all duration-300 hover:scale-105 text-sm md:text-base"
+                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 md:px-12 py-2 transition-all text-sm md:text-base cursor-pointer"
                             >
                                 Back
                             </button>
@@ -1206,17 +1222,17 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#191716] px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-white text-lg md:text-2xl font-semibold">3D Design Preview</h2>
-                                <p className="text-white text-xs md:text-sm mt-1">Interactive view of your customized hanger</p>
+                                <h2 className="text-black text-lg md:text-2xl font-black">3D Design Preview</h2>
+                                <p className="text-black text-xs md:text-sm mt-1 font-semibold">Interactive view of your customized hanger</p>
                             </div>
                             <button
                                 onClick={close3DModal}
-                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold cursor-pointer"
+                                className="text-black hover:text-gray-700 transition-colors text-3xl font-black cursor-pointer"
                             >
                                 ×
                             </button>
@@ -1224,7 +1240,7 @@ const Order = () => {
 
                         {/* 3D Viewer */}
                         <div className="bg-white p-3 md:p-6">
-                            <div className="w-full h-[300px] md:h-[400px] lg:h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                            <div className="w-full h-[300px] md:h-[400px] lg:h-[500px] bg-gray-50 border-[3px] border-black overflow-hidden">
                                 <Suspense fallback={
                                     <div className='w-full h-full flex items-center justify-center'>
                                         <div className='text-center'>
@@ -1284,13 +1300,13 @@ const Order = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="bg-gray-100 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <p className="text-xs md:text-sm text-gray-600 text-center sm:text-left">
-                                💡 Drag to rotate • Scroll to zoom • Right-click to pan
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <p className="text-xs md:text-sm text-black font-semibold text-center sm:text-left">
+                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                             <button
                                 onClick={close3DModal}
-                                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 md:px-8 py-2 rounded transition-all duration-300 hover:scale-105 text-sm md:text-base w-full sm:w-auto"
+                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-6 md:px-8 py-2 transition-all text-sm md:text-base w-full sm:w-auto cursor-pointer"
                             >
                                 Close
                             </button>
@@ -1301,11 +1317,11 @@ const Order = () => {
 
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#ff6b6b] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-red-600 px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-white text-xl md:text-2xl font-semibold">Cancel Order</h2>
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-black text-xl md:text-2xl font-black">Cancel Order</h2>
                         </div>
 
                         {/* Modal Body */}
@@ -1345,18 +1361,18 @@ const Order = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
                             <button
                                 onClick={closeCancelModal}
                                 disabled={isCancelling}
-                                className="px-4 md:px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
+                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
                             >
                                 Keep Order
                             </button>
                             <button
                                 onClick={handleCancelOrder}
                                 disabled={isCancelling}
-                                className="px-4 md:px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2"
+                                className="px-4 md:px-6 py-2 bg-[#ff6b6b] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
                             >
                                 {isCancelling ? (
                                     <>
@@ -1374,11 +1390,11 @@ const Order = () => {
 
             {/* Rating Modal */}
             {showRatingModal && orderToRate && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#ffd93d] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-[#007BFF] px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-white text-xl md:text-2xl font-semibold">Rate Your Order</h2>
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-black text-xl md:text-2xl font-black">Rate Your Order</h2>
                         </div>
 
                         {/* Modal Body */}
@@ -1439,18 +1455,18 @@ const Order = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
                             <button
                                 onClick={closeRatingModal}
                                 disabled={isSubmittingReview}
-                                className="px-4 md:px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
+                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmitReview}
                                 disabled={isSubmittingReview}
-                                className="px-4 md:px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2"
+                                className="px-4 md:px-6 py-2 bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
                             >
                                 {isSubmittingReview ? (
                                     <>
@@ -1468,11 +1484,11 @@ const Order = () => {
 
             {/* Notification Modal */}
             {showNotificationModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
                         {/* Modal Header */}
-                        <div className={`px-4 md:px-6 py-3 md:py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                            <h2 className="text-white text-lg md:text-xl font-semibold">
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-black text-lg md:text-xl font-black">
                                 {notificationType === 'success' ? '✓ Success' : '✕ Error'}
                             </h2>
                         </div>
@@ -1483,13 +1499,10 @@ const Order = () => {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex justify-end">
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
                             <button
                                 onClick={closeNotificationModal}
-                                className={`px-4 md:px-6 py-2 rounded-lg font-semibold transition-colors text-sm md:text-base ${notificationType === 'success'
-                                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                                        : 'bg-red-600 hover:bg-red-700 text-white'
-                                    }`}
+                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
                             >
                                 OK
                             </button>
@@ -1500,5 +1513,241 @@ const Order = () => {
         </div>
     )
 }
+
+const StyledWrapper = styled.div`
+  .container {
+    display: flex;
+    width: 270px;
+    height: 120px;
+    position: relative;
+    border-radius: 6px;
+    transition: 0.3s ease-in-out;
+  }
+
+  .container:hover {
+    transform: scale(1.03);
+  }
+
+  .container:hover .left-side {
+    width: 100%;
+  }
+
+  .left-side {
+    background-color: #5de2a3;
+    width: 130px;
+    height: 120px;
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .right-side {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    cursor: pointer;
+    justify-content: space-between;
+    white-space: nowrap;
+    transition: 0.3s;
+  }
+
+  .right-side:hover {
+    background-color: #f9f7f9;
+  }
+
+  .new {
+    font-size: 23px;
+    font-family: "Lexend Deca", sans-serif;
+    margin-left: 20px;
+  }
+
+  .card {
+    width: 70px;
+    height: 46px;
+    background-color: #c7ffbc;
+    border-radius: 6px;
+    position: absolute;
+    display: flex;
+    z-index: 10;
+    flex-direction: column;
+    align-items: center;
+    -webkit-box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
+    -moz-box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
+    box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
+  }
+
+  .card-line {
+    width: 65px;
+    height: 13px;
+    background-color: #80ea69;
+    border-radius: 2px;
+    margin-top: 7px;
+  }
+
+  @media only screen and (max-width: 480px) {
+    .container {
+      transform: scale(0.7);
+    }
+
+    .container:hover {
+      transform: scale(0.74);
+    }
+
+    .new {
+      font-size: 18px;
+    }
+  }
+
+  .buttons {
+    width: 8px;
+    height: 8px;
+    background-color: #379e1f;
+    box-shadow: 0 -10px 0 0 #26850e, 0 10px 0 0 #56be3e;
+    border-radius: 50%;
+    margin-top: 5px;
+    transform: rotate(90deg);
+    margin: 10px 0 0 -30px;
+  }
+
+  .container:hover .card {
+    animation: slide-top 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) both;
+  }
+
+  .container:hover .post {
+    animation: slide-post 1s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  }
+
+  @keyframes slide-top {
+    0% {
+      -webkit-transform: translateY(0);
+      transform: translateY(0);
+    }
+
+    50% {
+      -webkit-transform: translateY(-70px) rotate(90deg);
+      transform: translateY(-70px) rotate(90deg);
+    }
+
+    60% {
+      -webkit-transform: translateY(-70px) rotate(90deg);
+      transform: translateY(-70px) rotate(90deg);
+    }
+
+    100% {
+      -webkit-transform: translateY(-8px) rotate(90deg);
+      transform: translateY(-8px) rotate(90deg);
+    }
+  }
+
+  .post {
+    width: 63px;
+    height: 75px;
+    background-color: #dddde0;
+    position: absolute;
+    z-index: 11;
+    bottom: 10px;
+    top: 120px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .post-line {
+    width: 47px;
+    height: 9px;
+    background-color: #545354;
+    position: absolute;
+    border-radius: 0px 0px 3px 3px;
+    right: 8px;
+    top: 8px;
+  }
+
+  .post-line:before {
+    content: "";
+    position: absolute;
+    width: 47px;
+    height: 9px;
+    background-color: #757375;
+    top: -8px;
+  }
+
+  .screen {
+    width: 47px;
+    height: 23px;
+    background-color: #ffffff;
+    position: absolute;
+    top: 22px;
+    right: 8px;
+    border-radius: 3px;
+  }
+
+  .numbers {
+    width: 12px;
+    height: 12px;
+    background-color: #838183;
+    box-shadow: 0 -18px 0 0 #838183, 0 18px 0 0 #838183;
+    border-radius: 2px;
+    position: absolute;
+    transform: rotate(90deg);
+    left: 25px;
+    top: 52px;
+  }
+
+  .numbers-line2 {
+    width: 12px;
+    height: 12px;
+    background-color: #aaa9ab;
+    box-shadow: 0 -18px 0 0 #aaa9ab, 0 18px 0 0 #aaa9ab;
+    border-radius: 2px;
+    position: absolute;
+    transform: rotate(90deg);
+    left: 25px;
+    top: 68px;
+  }
+
+  @keyframes slide-post {
+    50% {
+      -webkit-transform: translateY(0);
+      transform: translateY(0);
+    }
+
+    100% {
+      -webkit-transform: translateY(-70px);
+      transform: translateY(-70px);
+    }
+  }
+
+  .dollar {
+    position: absolute;
+    font-size: 16px;
+    font-family: "Lexend Deca", sans-serif;
+    width: 100%;
+    left: 0;
+    top: 0;
+    color: #4b953b;
+    text-align: center;
+  }
+
+  .container:hover .dollar {
+    animation: fade-in-fwd 0.3s 1s backwards;
+  }
+
+  @keyframes fade-in-fwd {
+    0% {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
 
 export default Order

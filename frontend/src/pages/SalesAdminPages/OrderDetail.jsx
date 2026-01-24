@@ -1159,19 +1159,19 @@ const OrderDetail = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && paymentInfo && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between flex-shrink-0">
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
                             <div>
-                                <h2 className="text-white text-2xl font-semibold">Payment Information</h2>
-                                <p className="text-indigo-200 text-sm mt-1 flex items-center gap-2">
+                                <h2 className="text-black text-xl md:text-2xl font-black">Payment Information</h2>
+                                <p className="text-black text-xs md:text-sm mt-1 flex items-center gap-2 font-semibold">
                                     Payment Method: {paymentInfo.paymentmethod} | Status: 
-                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                        paymentInfo.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
-                                        paymentInfo.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
-                                        paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-yellow-500 text-black' :
-                                        'bg-gray-300 text-gray-700'
+                                    <span className={`px-2 py-0.5 border-[2px] border-black text-xs font-black ${
+                                        paymentInfo.paymentstatus === 'Verified' ? 'bg-[#4ade80]' :
+                                        paymentInfo.paymentstatus === 'Rejected' ? 'bg-[#ff6b6b]' :
+                                        paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-[#ffd93d]' :
+                                        'bg-gray-300'
                                     }`}>
                                         {paymentInfo.paymentstatus}
                                     </span>
@@ -1182,31 +1182,31 @@ const OrderDetail = () => {
                                     setShowProofModal(false);
                                     setActiveTab('current');
                                 }}
-                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                className="text-black hover:text-gray-700 transition-colors text-3xl font-black"
                             >
                                 ×
                             </button>
                         </div>
 
                         {/* Tab Navigation */}
-                        <div className="bg-white border-b border-gray-200 flex-shrink-0">
+                        <div className="bg-white border-b-[3px] border-black flex-shrink-0">
                             <div className="flex px-6">
                                 <button
                                     onClick={() => setActiveTab('current')}
-                                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+                                    className={`px-4 md:px-6 py-3 font-black text-xs md:text-sm border-b-[3px] transition-colors ${
                                         activeTab === 'current'
-                                            ? 'border-indigo-600 text-indigo-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                            ? 'border-black text-black bg-[#ffd93d]'
+                                            : 'border-transparent text-gray-600 hover:text-black'
                                     }`}
                                 >
                                     Current Payment
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('history')}
-                                    className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+                                    className={`px-4 md:px-6 py-3 font-black text-xs md:text-sm border-b-[3px] transition-colors ${
                                         activeTab === 'history'
-                                            ? 'border-indigo-600 text-indigo-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                            ? 'border-black text-black bg-[#ffd93d]'
+                                            : 'border-transparent text-gray-600 hover:text-black'
                                     }`}
                                 >
                                     Transaction History ({paymentHistory.length})
@@ -1215,7 +1215,7 @@ const OrderDetail = () => {
                         </div>
 
                         {/* Tab Content - Scrollable */}
-                        <div className="bg-white p-6 overflow-auto flex-1">
+                        <div className="bg-white p-4 md:p-6 overflow-auto flex-1">
                             {activeTab === 'current' ? (
                                 // Current Payment Tab
                                 <>
@@ -1376,13 +1376,13 @@ const OrderDetail = () => {
 
                         {/* Footer - Action Buttons (only show for current payment tab) */}
                         {activeTab === 'current' && (
-                            <div className="bg-gray-100 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
-                                <div className="flex gap-3">
+                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
+                                <div className="flex gap-3 w-full sm:w-auto">
                                     {paymentInfo.paymentstatus !== 'Verified' && (
                                         <button
                                             onClick={handleApprovePayment}
                                             disabled={isProcessingPayment}
-                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            className="flex-1 sm:flex-none bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                         >
                                             {isProcessingPayment ? (
                                                 <>
@@ -1392,7 +1392,7 @@ const OrderDetail = () => {
                                             ) : (
                                                 <>
                                                     <Check size={18} />
-                                                    Approve Payment
+                                                    Approve
                                                 </>
                                             )}
                                         </button>
@@ -1401,9 +1401,9 @@ const OrderDetail = () => {
                                         <button
                                             onClick={handleRejectPayment}
                                             disabled={isProcessingPayment}
-                                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            className="flex-1 sm:flex-none bg-[#ff6b6b] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                                         >
-                                            ✕ Reject Payment
+                                            ✕ Reject
                                         </button>
                                     )}
                                 </div>
@@ -1412,20 +1412,20 @@ const OrderDetail = () => {
                                         setShowProofModal(false);
                                         setActiveTab('current');
                                     }}
-                                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                                    className="w-full sm:w-auto bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all text-sm md:text-base"
                                 >
                                     Close
                                 </button>
                             </div>
                         )}
                         {activeTab === 'history' && (
-                            <div className="bg-gray-100 px-6 py-4 flex justify-end flex-shrink-0">
+                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end flex-shrink-0">
                                 <button
                                     onClick={() => {
                                         setShowProofModal(false);
                                         setActiveTab('current');
                                     }}
-                                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                                    className="bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all text-sm md:text-base"
                                 >
                                     Close
                                 </button>
@@ -1479,7 +1479,7 @@ const OrderDetail = () => {
                         {/* Footer */}
                         <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
                             <p className="text-sm text-gray-600">
-                                💡 Drag to rotate • Scroll to zoom • Right-click to pan
+                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                             <button
                                 onClick={close3DModal}

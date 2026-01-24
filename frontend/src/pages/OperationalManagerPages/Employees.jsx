@@ -1756,28 +1756,39 @@ const Employees = () => {
 
                         {/* Delete Confirmation Modal */}
                         {showDeleteQuotaConfirm && selectedQuota && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50">
-                                <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
-                                    <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                                        <FaTrash className="text-red-600 text-xl" />
+                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 p-3 md:p-4 animate-fadeIn">
+                                <div className="bg-[#ff6b6b] border-[3px] border-black shadow-[12px_12px_0_#000000] w-full max-w-md overflow-hidden animate-scaleIn">
+                                    {/* Modal Header */}
+                                    <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                                        <h3 className="text-black text-xl md:text-2xl font-black">Delete Quota</h3>
                                     </div>
-                                    <h3 className="text-xl font-bold text-center mb-2">Delete Quota</h3>
-                                    <p className="text-gray-600 text-center mb-6">
-                                        Are you sure you want to delete <span className="font-semibold">"{selectedQuota.quotaname}"</span>? 
-                                        This will unlink it from the assigned team but won't delete the team or orders.
-                                    </p>
-                                    <div className="flex gap-3 justify-end">
+
+                                    {/* Modal Body */}
+                                    <div className="p-4 md:p-6">
+                                        <div className="flex justify-center mb-4">
+                                            <div className="w-12 h-12 bg-white border-[3px] border-black flex items-center justify-center">
+                                                <FaTrash className="text-[#ff6b6b] text-xl" />
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700 text-center mb-4 text-sm md:text-base">
+                                            Are you sure you want to delete <span className="font-black">"{selectedQuota.quotaname}"</span>? 
+                                            This will unlink it from the assigned team but won't delete the team or orders.
+                                        </p>
+                                    </div>
+
+                                    {/* Modal Footer */}
+                                    <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex gap-3 justify-end">
                                         <button
                                             onClick={handleCancelDeleteQuota}
-                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                            className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleConfirmDeleteQuota}
-                                            className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                                            className="px-4 md:px-6 py-2 bg-[#ff6b6b] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base"
                                         >
-                                            Delete Quota
+                                            Delete
                                         </button>
                                     </div>
                                 </div>

@@ -1328,71 +1328,82 @@ const CreateDesign = () => {
 
             {/* Color Limitation Modal */}
             {showColorLimitationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200]">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                        <div className="flex justify-center mb-4">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Info className="w-8 h-8 text-blue-600" />
-                            </div>
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                        {/* Modal Header */}
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
                         </div>
 
-                        <h3 className="text-xl font-bold text-center mb-4">Color Customization Notice</h3>
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <div className="flex justify-center mb-4">
+                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
+                                    <Info className="w-8 h-8 text-black" />
+                                </div>
+                            </div>
 
-                        <p className="text-center text-gray-700 mb-6">
-                            For Model <span className="font-semibold">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
-                            Color changes will only apply on the main body and clips.
-                        </p>
+                            <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
+                                For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
+                                Color changes will only apply on the main body and clips.
+                            </p>
+                        </div>
 
-                        <button
-                            onClick={() => setShowColorLimitationModal(false)}
-                            className="w-full px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors cursor-pointer"
-                        >
-                            Got it
-                        </button>
+                        {/* Modal Footer */}
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                            <button
+                                onClick={() => setShowColorLimitationModal(false)}
+                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                            >
+                                Got it
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
-                        <div className="flex justify-center mb-4">
-                            {notificationModal.type === 'success' && (
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span className="text-2xl md:text-3xl">✓</span>
-                                </div>
-                            )}
-                            {notificationModal.type === 'error' && (
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center">
-                                    <span className="text-2xl md:text-3xl">✕</span>
-                                </div>
-                            )}
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                        {/* Modal Header */}
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-black text-lg md:text-xl font-black">
+                                {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
+                            </h2>
                         </div>
-                        <p className="text-center text-gray-700 mb-6 text-sm md:text-base">{notificationModal.message}</p>
-                        {notificationModal.message.includes('log in') ? (
-                            <div className="flex gap-3">
+
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <p className="text-gray-700 text-base md:text-lg text-center">{notificationModal.message}</p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            {notificationModal.message.includes('log in') ? (
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                                        className="flex-1 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/login')}
+                                        className="flex-1 bg-[#ffd93d] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
+                                    >
+                                        Login
+                                    </button>
+                                </div>
+                            ) : (
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base cursor-pointer"
+                                    className="w-full bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
                                 >
-                                    Cancel
+                                    Close
                                 </button>
-                                <button
-                                    onClick={() => navigate('/login')}
-                                    className="flex-1 bg-[#E6AF2E] text-[#191716] hover:bg-[#191716] hover:text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base cursor-pointer"
-                                >
-                                    Login
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                className="w-full bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors text-sm md:text-base cursor-pointer"
-                            >
-                                Close
-                            </button>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

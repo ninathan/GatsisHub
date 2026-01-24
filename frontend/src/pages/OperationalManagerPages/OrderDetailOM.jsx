@@ -767,7 +767,7 @@ const OrderDetailOM = () => {
                         {/* Footer */}
                         <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
                             <p className="text-sm text-gray-600">
-                                💡 Drag to rotate • Scroll to zoom • Right-click to pan
+                                 Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                             <button
                                 onClick={close3DModal}

@@ -290,30 +290,30 @@ const ViewOrder = () => {
 
                 {/* 3D Modal */}
                 {show3DModal && designData && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                        <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-4xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                             {/* Modal Header */}
-                            <div className="bg-[#007BFF] px-6 py-4 flex items-center justify-between">
+                            <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-white text-2xl font-semibold">3D Design Preview</h2>
-                                    <p className="text-white text-sm mt-1">Order: ORD-{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                    <h2 className="text-black text-xl md:text-2xl font-black">3D Design Preview</h2>
+                                    <p className="text-black text-xs md:text-sm mt-1 font-semibold">Order: ORD-{order.orderid.slice(0, 8).toUpperCase()}</p>
                                 </div>
                                 <button
                                     onClick={() => setShow3DModal(false)}
-                                    className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                    className="text-black hover:text-gray-700 transition-colors text-3xl font-black"
                                 >
                                     ×
                                 </button>
                             </div>
 
                             {/* 3D Viewer */}
-                            <div className="bg-white p-6">
-                                <div className="w-full h-[500px] bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
+                            <div className="bg-white p-4 md:p-6">
+                                <div className="w-full h-[300px] md:h-[500px] bg-gray-50 border-[3px] border-black overflow-hidden">
                                     <Suspense fallback={
                                         <div className='w-full h-full flex items-center justify-center'>
                                             <div className='text-center'>
-                                                <div className='text-6xl mb-4'>⏳</div>
-                                                <p className='text-lg text-gray-600'>Loading 3D Design...</p>
+                                                <div className='text-4xl md:text-6xl mb-4'>⏳</div>
+                                                <p className='text-base md:text-lg text-gray-700 font-semibold'>Loading 3D Design...</p>
                                             </div>
                                         </div>
                                     }>
@@ -333,13 +333,13 @@ const ViewOrder = () => {
                             </div>
 
                             {/* Footer */}
-                            <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
-                                <p className="text-sm text-gray-600">
-                                    💡 Drag to rotate • Scroll to zoom • Right-click to pan
+                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                                <p className="text-xs md:text-sm text-black font-semibold text-center sm:text-left">
+                                     Drag to rotate • Scroll to zoom • Right-click to pan
                                 </p>
                                 <button
                                     onClick={() => setShow3DModal(false)}
-                                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-all duration-300 hover:scale-105"
+                                    className="bg-[#ffd93d] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-6 md:px-8 py-2 transition-all text-sm md:text-base w-full sm:w-auto"
                                 >
                                     Close
                                 </button>

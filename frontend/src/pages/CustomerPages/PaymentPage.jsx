@@ -346,22 +346,35 @@ const PaymentPage = () => {
 
             {/* Success Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-50 animate-fadeIn">
-                    <div className="bg-[#191716] rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-scaleIn">
-                        <div className="mb-4">
-                            <FaCheckCircle className="text-6xl text-green-400 mx-auto" />
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#4ade80] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                        {/* Modal Header */}
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h3 className="text-black text-xl md:text-2xl font-black">✓ Payment Submitted!</h3>
                         </div>
-                        <h3 className="text-xl font-semibold mb-4 text-white">Payment Submitted Successfully!</h3>
-                        <p className="mb-6 text-white">Thank you for submitting your payment proof. We'll verify and update your order status shortly.</p>
-                        <button
-                            onClick={() => {
-                                setShowModal(false);
-                                navigate('/orders'); // redirect to orders page
-                            }}
-                            className="bg-[#FFD41C] text-black px-6 py-2 rounded font-semibold transition-all duration-300 hover:scale-105 hover:bg-[#e6c41a]"
-                        >
-                            View My Orders
-                        </button>
+
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6 text-center">
+                            <div className="mb-4 flex justify-center">
+                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
+                                    <FaCheckCircle className="text-4xl text-[#4ade80]" />
+                                </div>
+                            </div>
+                            <p className="text-gray-700 text-base md:text-lg">Thank you for submitting your payment proof. We'll verify and update your order status shortly.</p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                            <button
+                                onClick={() => {
+                                    setShowModal(false);
+                                    navigate('/orders');
+                                }}
+                                className="bg-[#ffd93d] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                            >
+                                View My Orders
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

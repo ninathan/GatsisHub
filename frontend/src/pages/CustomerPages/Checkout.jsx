@@ -2486,63 +2486,65 @@ const Checkout = () => {
 
             {/* Color Limitation Modal for 97-12 and 97-11 */}
             {showColorLimitationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200]">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                        {/* Modal Icon */}
-                        <div className="flex justify-center mb-4">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Info className="w-8 h-8 text-blue-600" />
-                            </div>
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                        {/* Modal Header */}
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
                         </div>
 
-                        {/* Modal Title */}
-                        <h3 className="text-xl font-bold text-center mb-4">Color Customization Notice</h3>
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <div className="flex justify-center mb-4">
+                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
+                                    <Info className="w-8 h-8 text-black" />
+                                </div>
+                            </div>
 
-                        {/* Modal Message */}
-                        <p className="text-center text-gray-700 mb-6">
-                            For Model <span className="font-semibold">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
-                            Color changes will only apply on the main body and clips.
-                        </p>
+                            <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
+                                For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
+                                Color changes will only apply on the main body and clips.
+                            </p>
+                        </div>
 
-                        {/* Modal Button */}
-                        <button
-                            onClick={() => setShowColorLimitationModal(false)}
-                            className="w-full px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors"
-                        >
-                            Got it
-                        </button>
+                        {/* Modal Footer */}
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                            <button
+                                onClick={() => setShowColorLimitationModal(false)}
+                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                            >
+                                Got it
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-[200]">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-                        {/* Modal Icon */}
-                        <div className="flex justify-center mb-4">
-                            {notificationModal.type === 'success' && (
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span className="text-3xl text-green-600">✓</span>
-                                </div>
-                            )}
-                            {notificationModal.type === 'error' && (
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                                    <span className="text-3xl text-red-600">✕</span>
-                                </div>
-                            )}
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
+                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                        {/* Modal Header */}
+                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-black text-lg md:text-xl font-black">
+                                {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
+                            </h2>
                         </div>
 
-                        {/* Modal Message */}
-                        <p className="text-center text-gray-700 mb-6">{notificationModal.message}</p>
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <p className="text-gray-700 text-base md:text-lg">{notificationModal.message}</p>
+                        </div>
 
-                        {/* Modal Button */}
-                        <button
-                            onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                            className="w-full px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors"
-                        >
-                            OK
-                        </button>
+                        {/* Modal Footer */}
+                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
+                            <button
+                                onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
+                            >
+                                OK
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
