@@ -94,12 +94,30 @@ const Order = () => {
                 [payload.new.orderid]: payload.new
             }));
         } else if (payload.eventType === 'DELETE') {
-            // Payment deleted
+            // Payment deleted (rejected) - clear payment info and refetch order to get updated status
+            const deletedOrderId = payload.old.orderid;
             setOrderPayments(prev => {
                 const updated = { ...prev };
-                delete updated[payload.old.orderid];
+                delete updated[deletedOrderId];
                 return updated;
             });
+            
+            // Refetch the specific order to get the updated status (should be 'Waiting for Payment')
+            if (deletedOrderId) {
+                const timestamp = new Date().getTime();
+                fetch(`https://gatsis-hub.vercel.app/orders/${deletedOrderId}?_t=${timestamp}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.order) {
+                            setOrders(prev => 
+                                prev.map(order => 
+                                    order.orderid === deletedOrderId ? data.order : order
+                                )
+                            );
+                        }
+                    })
+                    .catch(err => console.error('Error refetching order after payment deletion:', err));
+            }
         }
     }, []);
 
@@ -1123,7 +1141,7 @@ const Order = () => {
                                                                     </div>
                                                                     <div className="right-side">
                                                                         <div className="new">
-                                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit' : 'Checkout'}
+                                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit' : 'Payment'}
                                                                         </div>
                                                                     </div>
                                                                 </div>
