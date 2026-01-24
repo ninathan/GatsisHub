@@ -582,18 +582,24 @@ router.delete("/:paymentid", async (req, res) => {
           updatedat: new Date().toISOString()
         })
         .eq("orderid", payment.orderid)
-        .select()
-        .single();
+        .select();
 
       if (orderError) {
         console.error('CRITICAL: Failed to update order status:', orderError);
         // This is critical - if order status doesn't update, payment can't be resubmitted
         return res.status(500).json({ 
           error: 'Payment was deleted but failed to update order status. Please contact support.',
-          details: orderError.message
+          details: orderError.message,
+          orderid: payment.orderid
+        });
+      } else if (!updatedOrder || updatedOrder.length === 0) {
+        console.error('CRITICAL: Order not found for update:', payment.orderid);
+        return res.status(500).json({ 
+          error: 'Payment was deleted but order not found for status update.',
+          orderid: payment.orderid
         });
       } else {
-        console.log(`SUCCESS: Order ${payment.orderid} status updated to: ${updatedOrder.orderstatus}`);
+        console.log(`SUCCESS: Order ${payment.orderid} status updated to: ${updatedOrder[0].orderstatus}`);
       }
     }
 
@@ -603,8 +609,13 @@ router.delete("/:paymentid", async (req, res) => {
     });
 
   } catch (err) {
-
-    res.status(500).json({ error: "Failed to reject payment" });
+    console.error('CRITICAL ERROR in payment rejection:', err);
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ 
+      error: "Failed to reject payment",
+      message: err.message,
+      details: err.stack
+    });
   }
 });
 
