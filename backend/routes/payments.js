@@ -546,13 +546,13 @@ router.delete("/:paymentid", async (req, res) => {
       .eq("paymentid", paymentid);
 
     if (deleteError) {
-
+      console.error('Failed to delete payment:', deleteError);
       return res.status(400).json({ error: deleteError.message });
     }
 
-    // Update order status back to "Waiting for Payment"
+    // Update order status back to "Waiting for Payment" - CRITICAL: Must succeed
     if (payment.orderid) {
-      console.log(`Updating order ${payment.orderid} status back to 'Waiting for Payment' after payment rejection`);
+      console.log(`Attempting to update order ${payment.orderid} status to 'Waiting for Payment'`);
       const { data: updatedOrder, error: orderError } = await supabase
         .from("orders")
         .update({ 
@@ -564,16 +564,20 @@ router.delete("/:paymentid", async (req, res) => {
         .single();
 
       if (orderError) {
-        console.error('Failed to update order status:', orderError);
-        // Don't fail the whole request, but log the error
+        console.error('CRITICAL: Failed to update order status:', orderError);
+        // This is critical - if order status doesn't update, payment can't be resubmitted
+        return res.status(500).json({ 
+          error: 'Payment was deleted but failed to update order status. Please contact support.',
+          details: orderError.message
+        });
       } else {
-        console.log(`Order ${payment.orderid} status successfully updated to: Waiting for Payment`);
+        console.log(`SUCCESS: Order ${payment.orderid} status updated to: ${updatedOrder.orderstatus}`);
       }
     }
 
     res.status(200).json({ 
       message: "Payment rejected and archived. Customer can resubmit.",
-      orderUpdated: !!payment.orderid
+      orderUpdated: true
     });
 
   } catch (err) {
