@@ -466,15 +466,14 @@ router.delete("/:orderid", async (req, res) => {
     const { data: cancelledOrder, error: updateError } = await supabase
       .from("orders")
       .update({ 
-        orderstatus: 'Cancelled',
-        cancellationreason: reason || 'Not specified',
-        cancelledat: new Date().toISOString()
+        orderstatus: 'Cancelled'
       })
       .eq("orderid", orderid)
       .select()
       .single();
 
     if (updateError) {
+      console.error('Failed to cancel order:', updateError);
       throw updateError;
     }
 

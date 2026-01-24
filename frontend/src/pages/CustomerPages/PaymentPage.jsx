@@ -234,19 +234,19 @@ const PaymentPage = () => {
 
                     {/* GCash QR Code (if GCash) */}
                     {paymentMethod === 'GCash' && (
-                        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h4 className="font-semibold text-gray-800 mb-3 text-center">Scan QR Code to Pay</h4>
+                        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                            <h4 className="font-semibold text-gray-800 mb-3 text-center text-sm md:text-base">Scan QR Code to Pay</h4>
                             <div className="flex flex-col items-center">
-                                <div className="bg-white p-4 rounded-lg shadow-md mb-3">
+                                <div className="bg-white p-3 md:p-4 rounded-lg shadow-md mb-3">
                                     <img 
                                         src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" 
                                         alt="GCash QR Code" 
-                                        className="w-48 h-48"
+                                        className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
                                     />
                                 </div>
-                                <div className="text-center space-y-1">
-                                    <p className="text-sm text-gray-700"><strong>GCash Name:</strong> GatsisHub Corporation</p>
-                                    <p className="text-sm text-gray-700"><strong>Mobile Number:</strong> 0912-345-6789</p>
+                                <div className="text-center space-y-1 px-2">
+                                    <p className="text-xs md:text-sm text-gray-700"><strong>GCash Name:</strong> GatsisHub Corporation</p>
+                                    <p className="text-xs md:text-sm text-gray-700"><strong>Mobile Number:</strong> 0912-345-6789</p>
                                     <p className="text-xs text-gray-500 mt-2">After payment, take a screenshot and upload as proof</p>
                                 </div>
                             </div>
