@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import pr1 from '../../images/pr1.png';
-import pr2 from '../../images/pr2.png';
-import pr3 from '../../images/pr3.png';
-import pr4 from '../../images/pr4.png';
+import pr1 from '../../images/MB3ProductPage.png';
+import pr2 from '../../images/97-12ProductPage.png';
+import pr3 from '../../images/CQ-807ProductPage.png';
+import pr4 from '../../images/97-08ProductPage.png';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ProductsPage = () => {

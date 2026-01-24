@@ -60,7 +60,15 @@ const Login = () => {
   const handleTwoFactorVerified = (user) => {
     login(user)
     localStorage.setItem('user', JSON.stringify(user))
-    navigate('/logged')
+    
+    // Check if there's a pending design save
+    const pendingDesign = localStorage.getItem('pendingDesignSave');
+    if (pendingDesign) {
+      navigate('/create-design');
+    } else {
+      navigate('/logged');
+    }
+    
     window.dispatchEvent(new Event('user-updated'))
   }
 
@@ -101,12 +109,18 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(data.user || decoded))
       login(data.user)
 
-      // Check if user needs to complete profile (new Google users without addresses)
-      if (!data.user.addresses || data.user.addresses.length === 0) {
-
-        navigate('/complete-profile')
+      // Check if there's a pending design save
+      const pendingDesign = localStorage.getItem('pendingDesignSave');
+      if (pendingDesign) {
+        navigate('/create-design');
       } else {
-        navigate('/logged')
+        // Check if user needs to complete profile (new Google users without addresses)
+        if (!data.user.addresses || data.user.addresses.length === 0) {
+
+          navigate('/complete-profile')
+        } else {
+          navigate('/logged')
+        }
       }
       
       window.dispatchEvent(new Event('user-updated'))

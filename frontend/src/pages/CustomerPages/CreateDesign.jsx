@@ -44,6 +44,46 @@ const CreateDesign = () => {
         fetchProductsAndMaterials();
     }, []);
 
+    // Check for pending design save after login
+    useEffect(() => {
+        if (user && user.userid) {
+            const pendingDesign = localStorage.getItem('pendingDesignSave');
+            if (pendingDesign) {
+                try {
+                    const designData = JSON.parse(pendingDesign);
+                    
+                    // Restore the design state
+                    setSelectedHanger(designData.hangerType);
+                    setColor(designData.color);
+                    setCustomText(designData.customText);
+                    setTextColor(designData.textColor);
+                    setTextPosition(designData.textPosition);
+                    setTextSize(designData.textSize);
+                    setLogoPreview(designData.logoPreview);
+                    setLogoPosition(designData.logoPosition);
+                    setLogoSize(designData.logoSize);
+                    setSelectedMaterials(designData.materials);
+                    
+                    // Clear pending design from localStorage
+                    localStorage.removeItem('pendingDesignSave');
+                    
+                    // Show save modal automatically
+                    setTimeout(() => {
+                        setSaveDesignModal(true);
+                        setNotificationModal({
+                            show: true,
+                            type: 'success',
+                            message: 'Your design has been restored! Please enter a name to save it.'
+                        });
+                    }, 1000);
+                } catch (error) {
+                    console.error('Failed to restore pending design:', error);
+                    localStorage.removeItem('pendingDesignSave');
+                }
+            }
+        }
+    }, [user]);
+
     const fetchProductsAndMaterials = async () => {
         try {
             const [productsRes, materialsRes] = await Promise.all([
@@ -142,11 +182,31 @@ const CreateDesign = () => {
 
     const handleSaveDesign = async () => {
         if (!user || !user.userid) {
+            // Store current design in localStorage before redirecting to login
+            const tempDesign = {
+                hangerType: selectedHanger,
+                color: color,
+                customText: customText || '',
+                textColor: textColor,
+                textPosition: textPosition,
+                textSize: textSize,
+                logoPreview: logoPreview || null,
+                logoPosition: logoPosition,
+                logoSize: logoSize,
+                materials: selectedMaterials
+            };
+            localStorage.setItem('pendingDesignSave', JSON.stringify(tempDesign));
+            
             setNotificationModal({
                 show: true,
                 type: 'error',
-                message: 'Please log in to save designs'
+                message: 'Please log in or register to save your design. Your current design will be saved after you log in.'
             });
+            
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
             return;
         }
 

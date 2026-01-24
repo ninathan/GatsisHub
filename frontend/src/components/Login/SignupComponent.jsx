@@ -213,12 +213,18 @@ const Signup = () => {
       localStorage.setItem('user', JSON.stringify(data.user))
       login(data.user)
 
-      // Check if user needs to complete profile (new Google users without addresses)
-      if (!data.user.addresses || data.user.addresses.length === 0) {
-
-        navigate('/complete-profile')
+      // Check if there's a pending design save
+      const pendingDesign = localStorage.getItem('pendingDesignSave');
+      if (pendingDesign) {
+        navigate('/create-design');
       } else {
-        navigate('/logged')
+        // Check if user needs to complete profile (new Google users without addresses)
+        if (!data.user.addresses || data.user.addresses.length === 0) {
+
+          navigate('/complete-profile')
+        } else {
+          navigate('/logged')
+        }
       }
 
       window.dispatchEvent(new Event('user-updated'))
@@ -918,7 +924,16 @@ const Signup = () => {
             {/* Modal Footer */}
             <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => {
+                  // Check if there's a pending design save
+                  const pendingDesign = localStorage.getItem('pendingDesignSave');
+                  if (pendingDesign) {
+                    // Inform user they should login to restore their design
+                    navigate('/login');
+                  } else {
+                    navigate('/login');
+                  }
+                }}
                 className="bg-[#35408E] hover:bg-[#2d3575] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
               >
                 Go to Login

@@ -1512,7 +1512,7 @@ const Employees = () => {
                                             )}
 
                                             <div>
-                                                <label className="block text-gray-700 font-semibold mb-2">Finished Quota</label>
+                                                <label className="block text-gray-700 font-semibold mb-2">Current Progress</label>
                                                 <input
                                                     type="number"
                                                     name="finishedquota"
