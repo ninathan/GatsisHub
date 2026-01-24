@@ -570,8 +570,19 @@ router.post("/login", async (req, res) => {
     // Check if 2FA is enabled for this user
     const twoFactorEnabled = user.two_factor_enabled !== undefined ? user.two_factor_enabled : true;
 
-    // If 2FA is disabled, log in directly
-    if (!twoFactorEnabled) {
+    // Check if user logged in recently (within 20 minutes)
+    const lastLogin = user.last_successful_login;
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    const recentlyLoggedIn = lastLogin && new Date(lastLogin) > twentyMinutesAgo;
+
+    // If 2FA is disabled OR user logged in recently, log in directly
+    if (!twoFactorEnabled || recentlyLoggedIn) {
+      // Update last login timestamp
+      await supabase
+        .from("customers")
+        .update({ last_successful_login: new Date().toISOString() })
+        .eq("userid", user.userid);
+
       return res.status(200).json({
         message: "Login successful!",
         requiresVerification: false,
@@ -713,6 +724,12 @@ router.post("/verify-login-code", async (req, res) => {
     if (userError || !user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    // Update last successful login timestamp
+    await supabase
+      .from("customers")
+      .update({ last_successful_login: new Date().toISOString() })
+      .eq("userid", user.userid);
 
     // Successful login - return user data
     res.status(200).json({
