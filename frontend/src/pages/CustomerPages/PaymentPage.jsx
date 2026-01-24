@@ -246,8 +246,8 @@ const PaymentPage = () => {
                                     />
                                 </div>
                                 <div className="text-center space-y-1 px-2">
-                                    <p className="text-xs md:text-sm text-gray-700"><strong>GCash Name:</strong> GatsisHub Corporation</p>
-                                    <p className="text-xs md:text-sm text-gray-700"><strong>Mobile Number:</strong> 0912-345-6789</p>
+                                    <p className="text-xs md:text-sm text-gray-700"><strong>GCash Name:</strong> EL**A R.</p>
+                                    <p className="text-xs md:text-sm text-gray-700"><strong>Mobile Number:</strong> 09665426313</p>
                                     <p className="text-xs text-gray-500 mt-2">After payment, take a screenshot and upload as proof</p>
                                 </div>
                             </div>
