@@ -407,8 +407,7 @@ router.patch("/:paymentid/verify", async (req, res) => {
         const { data: updatedOrder, error: orderError } = await supabase
           .from("orders")
           .update({ 
-            orderstatus: newOrderStatus,
-            updatedat: new Date().toISOString()
+            orderstatus: newOrderStatus
           })
           .eq("orderid", payment.orderid)
           .select()
@@ -578,8 +577,7 @@ router.delete("/:paymentid", async (req, res) => {
       const { data: updatedOrder, error: orderError } = await supabase
         .from("orders")
         .update({ 
-          orderstatus: 'Waiting for Payment',
-          updatedat: new Date().toISOString()
+          orderstatus: 'Waiting for Payment'
         })
         .eq("orderid", payment.orderid)
         .select();
