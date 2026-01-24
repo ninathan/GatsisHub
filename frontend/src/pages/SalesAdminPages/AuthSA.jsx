@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
+import styled from 'styled-components'
 import logo from '../../images/logo.png'
-import userav from '../../images/user-alt.png'
-import key from '../../images/key.png'
 import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import { Lock, User, Mail } from 'lucide-react'
 
 const AuthSA = () => {
     const navigate = useNavigate();
@@ -51,118 +51,108 @@ const AuthSA = () => {
             navigate('/orderpage');
 
         } catch (err) {
-
+            console.error('Login error:', err);
             setError(err.message || 'Invalid email or password');
         } finally {
             setLoading(false);
         }
     };
 
-    const IntputField =
-  'border border-gray-300 rounded-2xl pl-10 md:pl-12 pr-4 py-2 md:py-3 w-full text-sm md:text-lg lg:text-2xl focus:outline-none focus:ring-2 focus:ring-[#35408E]'
     return (
         <PageTransition direction='right'>
-
             <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
-                {/* left */}
-                <div className='bg-[#191716] w-full min-h-screen lg:min-h-screen order-2 lg:order-1'>
-                    <div className='flex flex-col items-center py-10 md:py-20 lg:mt-25 px-4'>
-                        <Link to="/">
-                            <img src={logo} alt="Logo" className='w-[120px] h-[120px] md:w-[170px] md:h-[170px] mx-auto mt-5 md:mt-10' />
+                {/* Left side */}
+                <div className='bg-[#191716] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1'>
+                    <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4'>
+                        <Link to='/'>
+                            <img src={logo} alt='Logo' className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto' />
                         </Link>
-                        <h1 className='text-white text-xl md:text-3xl lg:text-4xl xl:text-5xl flex flex-col font-light items-center mt-2 md:mt-3 lg:mt-5 text-center'>
-                            Welcome to</h1>
-                        <h1 className='text-white text-xl md:text-3xl lg:text-4xl xl:text-5xl font-semibold flex flex-col items-center mt-2 md:mt-3 lg:mt-5 text-center'>
-                            Gatsishub</h1>
-                        
+                        <h1 className='text-white text-2xl md:text-3xl lg:text-4xl font-semibold mt-4 md:mt-6 text-center'>Welcome to GatsisHub</h1>
+                        <p className='text-white text-sm md:text-base lg:text-xl text-center mt-3 md:mt-5 font-medium px-4 max-w-md'>
+                            Sales Admin Portal - Manage Orders & Customer Relations
+                        </p>
                     </div>
                 </div>
 
-                {/* right */}
-                <div className='flex flex-col items-center justify-center py-8 md:py-10 lg:py-20 px-4 order-1 lg:order-2'>
-                    <h1 className='text-[#191716] text-xl md:text-3xl lg:text-4xl xl:text-6xl font-semibold tracking-wide flex flex-col items-center mt-3 md:mt-5 lg:mt-10 text-center max-w-md lg:max-w-none'>
-                        Sign In as Sales Admin</h1>
+                {/* Right side */}
+                <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2'>
+                    <h1 className='text-[#191716] text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-center'>
+                        Sales Admin Sign In
+                    </h1>
 
-                    {error && (
-                        <div className='mt-4 md:mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md lg:max-w-lg w-full'>
-                            <p className='text-sm md:text-base'>{error}</p>
-                        </div>
-                    )}
+                    <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
 
-                    <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-10 lg:mt-20 w-full max-w-md lg:max-w-lg'>
-                        {/* Email */}
-                        <div className='relative mb-4 md:mb-6'>
-                            <label htmlFor="email" className='block text-base md:text-lg lg:text-2xl font-medium mb-2'>Email</label>
-                            <img src={userav} alt="" className='absolute left-3 md:left-4 top-11 md:top-12 lg:top-14.5 w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6' />
+                        <StyledInputWrapper className="mb-4 md:mb-5">
+                            <div className="input__container email-input">
+                                <div className="shadow__input" />
+                                <button type="button" className="input__button__shadow">
+                                    <User size={18} />
+                                </button>
+                                <input
+                                    type='email'
+                                    placeholder='admin@example.com'
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input__search"
+                                    required
+                                />
+                            </div>
+                        </StyledInputWrapper>
+
+                        <StyledInputWrapper className="mb-5 md:mb-6">
+                            <div className="input__container password-input">
+                                <div className="shadow__input" />
+                                <button type="button" className="input__button__shadow">
+                                    <Lock size={18} />
+                                </button>
+                                <input
+                                    type='password'
+                                    placeholder='Enter your password'
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input__search"
+                                    required
+                                />
+                            </div>
+                        </StyledInputWrapper>
+
+                        {/* Remember Me Checkbox */}
+                        <div className='flex items-center mb-4 md:mb-5'>
                             <input 
-                                type="email" 
-                                placeholder='Enter your email' 
-                                className={IntputField}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
+                                type="checkbox" 
+                                id="rememberMe"
+                                className='w-4 h-4 text-[#E6AF2E] bg-gray-100 border-gray-300 rounded focus:ring-[#E6AF2E] focus:ring-2 cursor-pointer'
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
                             />
+                            <label htmlFor="rememberMe" className='ml-2 text-sm md:text-base font-medium text-gray-700 cursor-pointer'>
+                                Remember me
+                            </label>
                         </div>
 
-                        {/* Password */}
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-2 mb-2'>
-                            <label htmlFor="password" className='text-black text-base md:text-lg lg:text-2xl font-medium'>Password</label>
-                            <button 
-                                type="button"
-                                onClick={() => setShowForgotPasswordModal(true)}
-                                className='text-[#35408E] text-xs md:text-sm lg:text-base font-medium underline hover:text-[#2d3575] text-left md:text-right'
-                            >
+                        {error && <p className='text-red-600 text-sm md:text-base text-center mb-4 bg-red-50 p-3 rounded-lg border border-red-200'>{error}</p>}
+
+                        <StyledButton
+                            type='submit'
+                            disabled={loading}
+                            className="sign-in-btn"
+                        >
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </StyledButton>
+
+                        <p className='text-[#35408E text-xs md:text-sm underline text-center mt-6 cursor-pointer hover:text-[#2d3575]'>
+                            <button type="button" onClick={() => setShowForgotPasswordModal(true)}>
                                 Forgot password?
                             </button>
-                        </div>
-
-                        {/* Password Input */}
-                        <div className='relative mb-4 md:mb-6'>
-                            <img src={key} alt="key" className='absolute left-3 md:left-4 top-3 md:top-4 lg:top-5 w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6' />
-                            <input 
-                                type="password" 
-                                placeholder='Enter your Password' 
-                                className={IntputField}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        {/* Remember Me */}
-                        <div className='flex w-full mb-4 md:mb-6'>
-                            <div className='flex items-center'>
-                                <input 
-                                    type="checkbox" 
-                                    className='mr-2 w-4 h-4 md:w-5 md:h-5'
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                />
-                                <span className='text-black text-sm md:text-base lg:text-xl font-medium'>Remember me</span>
-                            </div>
-                        </div>
-
-                        {/* Sign In Button */}
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className='bg-[#E6AF2E] text-white w-full py-2 md:py-3 lg:py-4 text-base md:text-xl lg:text-2xl xl:text-3xl rounded-2xl cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 hover:bg-[#d99c24]'
-                        >
-                            {loading ? (
-                                <>
-                                    <LoadingSpinner size="sm" color="white" />
-                                    Signing In...
-                                </>
-                            ) : 'Sign In'}
-                        </button>
+                        </p>
                     </form>
                 </div>
             </div>
 
             {/* Forgot Password Modal */}
             {showForgotPasswordModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-[#191716] px-4 md:px-6 py-3 md:py-4">
                             <h2 className="text-white text-lg md:text-2xl font-semibold">Password Reset</h2>
@@ -171,10 +161,8 @@ const AuthSA = () => {
                         {/* Modal Body */}
                         <div className="p-4 md:p-6">
                             <div className="flex flex-col items-center text-center">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-[#191716] rounded-full flex items-center justify-center mb-3 md:mb-4">
-                                    <svg className="w-6 h-6 md:w-8 md:h-8 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-[#E6AF2E] rounded-full flex items-center justify-center mb-3 md:mb-4">
+                                    <Lock className="w-6 h-6 md:w-8 md:h-8 text-[#191716]" />
                                 </div>
                                 <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">
                                     Contact System Administrator
@@ -202,8 +190,205 @@ const AuthSA = () => {
                     </div>
                 </div>
             )}
+
+            {/* Animation styles */}
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+                    to {
+                        opacity: 1;
+                    }
+                }
+                @keyframes scaleIn {
+                    from {
+                        transform: scale(0.9);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: scale(1);
+                        opacity: 1;
+                    }
+                }
+                .animate-fadeIn {
+                    animation: fadeIn 0.3s ease-out;
+                }
+                .animate-scaleIn {
+                    animation: scaleIn 0.3s ease-out;
+                }
+            `}</style>
         </PageTransition>
     )
 }
+
+const StyledButton = styled.button`
+  width: 100%;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  font-size: 1.25rem;
+  background: #e9b50b;
+  color: #f0f0f0;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border-bottom: 2px solid #e9b50b;
+  border-right: 2px solid #e9b50b;
+  border-top: 2px solid white;
+  border-left: 2px solid white;
+  transition-duration: 1s;
+  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
+
+  &:hover {
+    border-top: 2px solid #e9b50b;
+    border-left: 2px solid #e9b50b;
+    border-bottom: 5px solid #000;
+    border-right: 5px solid #000;
+    box-shadow: rgba(233, 181, 11, 0.4) 8px 8px, 
+                rgba(233, 181, 11, 0.3) 12px 12px,
+                rgba(233, 181, 11, 0.2) 17px 17px;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 1.5rem;
+    padding: 1rem 2rem;
+  }
+
+  @media (min-width: 1024px) {
+    font-size: 1.75rem;
+  }
+`;
+
+const StyledInputWrapper = styled.div`
+  .input__container {
+    position: relative;
+    background: #f0f0f0;
+    padding: 12px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    border: 3px solid #000;
+    width: 100%;
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    transform: rotateX(10deg) rotateY(-10deg);
+    perspective: 1000px;
+    box-shadow: 8px 8px 0 #000;
+  }
+
+  .input__container:hover {
+    transform: rotateX(5deg) rotateY(-5deg) scale(1.05);
+    box-shadow: 18px 18px 0 -3px #e9b50b, 18px 18px 0 0 #000;
+  }
+
+  .shadow__input {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    bottom: 0;
+    z-index: -1;
+    transform: translateZ(-50px);
+    background: linear-gradient(
+      45deg,
+      rgba(255, 107, 107, 0.4) 0%,
+      rgba(255, 107, 107, 0.1) 100%
+    );
+    filter: blur(20px);
+  }
+
+  .input__button__shadow {
+    cursor: pointer;
+    border: 2px solid #000;
+    background: #e9b50b;
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    transform: translateZ(20px);
+    position: relative;
+    z-index: 3;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .input__button__shadow:hover {
+    background: #e9b50b;
+    transform: translateZ(10px) translateX(-5px) translateY(-5px);
+    box-shadow: 5px 5px 0 0 #000;
+  }
+
+  .input__button__shadow svg {
+    fill: #000;
+    width: 20px;
+    height: 20px;
+  }
+
+  .input__search {
+    width: 100%;
+    outline: none;
+    border: 2px solid #000;
+    padding: 10px 12px;
+    font-size: 15px;
+    background: #fff;
+    color: #000;
+    transform: translateZ(10px);
+    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    z-index: 3;
+    font-family: "Roboto", Arial, sans-serif;
+    letter-spacing: -0.5px;
+  }
+
+  .input__search::placeholder {
+    color: #666;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .input__search:hover,
+  .input__search:focus {
+    background: #f0f0f0;
+    transform: translateZ(20px) translateX(-5px) translateY(-5px);
+    box-shadow: 5px 5px 0 0 #000;
+  }
+
+  .email-input::before {
+    content: "EMAIL ADDRESS";
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: #e9b50b;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 12px;
+    transform: translateZ(50px);
+    z-index: 4;
+    border: 2px solid #000;
+  }
+
+  .password-input::before {
+    content: "PASSWORD";
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: #e9b50b;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 12px;
+    transform: translateZ(50px);
+    z-index: 4;
+    border: 2px solid #000;
+  }
+`;
 
 export default AuthSA

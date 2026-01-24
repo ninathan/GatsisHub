@@ -871,7 +871,7 @@ const Order = () => {
                                                 <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
                                             </div>
 
-                                             
+                                            
                                     {/* Status */}
                                     <div className="flex-1 text-center">
                                         <span 
