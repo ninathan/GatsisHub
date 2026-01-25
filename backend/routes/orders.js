@@ -321,6 +321,9 @@ router.get("/user/:userid", async (req, res) => {
 router.get("/user/:userid/full", async (req, res) => {
   console.log('📋 Full orders endpoint called for userid:', req.params.userid);
   console.log('Query params:', req.query);
+  
+  const startTime = Date.now();
+  
   try {
     const { userid } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -334,23 +337,10 @@ router.get("/user/:userid/full", async (req, res) => {
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
-    // Get total count for pagination
-    const { count, error: countError } = await supabase
+    // Fetch orders with count in parallel
+    const { data: orders, error: ordersError, count } = await supabase
       .from("orders")
-      .select("orderid", { count: 'exact', head: true })
-      .eq("userid", userid);
-
-    if (countError) {
-      console.error('Count error:', countError);
-      throw countError;
-    }
-
-    console.log('Total orders count:', count);
-
-    // Fetch orders first without joins to ensure basic query works
-    const { data: orders, error: ordersError } = await supabase
-      .from("orders")
-      .select("*")
+      .select("*", { count: 'exact' })
       .eq("userid", userid)
       .order("datecreated", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -360,10 +350,11 @@ router.get("/user/:userid/full", async (req, res) => {
       throw ordersError;
     }
 
-    console.log('Fetched orders:', orders?.length);
+    console.log('Fetched orders:', orders?.length, 'Total count:', count);
 
     // If no orders, return early
     if (!orders || orders.length === 0) {
+      console.log('Query completed in', Date.now() - startTime, 'ms');
       return res.status(200).json({
         orders: [],
         pagination: {
@@ -375,34 +366,30 @@ router.get("/user/:userid/full", async (req, res) => {
       });
     }
 
-    // Batch fetch all materials for all orders in one query
+    // Batch fetch materials AND payments in parallel
     const orderIds = orders.map(o => o.orderid);
     
-    // Fetch materials
-    const { data: allOrderMaterials, error: materialsError } = await supabase
-      .from('order_materials')
-      .select(`
-        orderid,
-        percentage,
-        materials!inner(materialname)
-      `)
-      .in('orderid', orderIds);
+    const [materialsResult, paymentsResult] = await Promise.all([
+      supabase
+        .from('order_materials')
+        .select('orderid, percentage, materials!inner(materialname)')
+        .in('orderid', orderIds),
+      supabase
+        .from('payments')
+        .select('*')
+        .in('orderid', orderIds)
+        .order('datesubmitted', { ascending: false })
+    ]);
+    
+    const { data: allOrderMaterials, error: materialsError } = materialsResult;
+    const { data: allPayments, error: paymentsError } = paymentsResult;
     
     if (materialsError) {
       console.error('Materials fetch error:', materialsError);
-      // Don't throw, just log - materials are optional
     }
-
-    // Fetch payments separately in batch
-    const { data: allPayments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('*')
-      .in('orderid', orderIds)
-      .order('datesubmitted', { ascending: false });
     
     if (paymentsError) {
       console.error('Payments fetch error:', paymentsError);
-      // Don't throw, just log - payments might not exist
     }
 
     // Group materials by orderid
@@ -436,6 +423,7 @@ router.get("/user/:userid/full", async (req, res) => {
     });
 
     console.log('Sending response with', ordersWithMaterialsAndPayments.length, 'orders');
+    console.log('Query completed in', Date.now() - startTime, 'ms');
 
     res.status(200).json({
       orders: ordersWithMaterialsAndPayments || [],
@@ -448,6 +436,7 @@ router.get("/user/:userid/full", async (req, res) => {
     });
   } catch (err) {
     console.error('Error in /user/:userid/full endpoint:', err);
+    console.error('Query failed in', Date.now() - startTime, 'ms');
     res.status(500).json({ 
       error: err.message || 'Failed to fetch orders',
       details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
