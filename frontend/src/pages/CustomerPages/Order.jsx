@@ -149,15 +149,52 @@ const Order = () => {
             setLoading(true);
             // Add timestamp to prevent caching
             const timestamp = new Date().getTime();
-            // Use optimized endpoint that includes payments and materials
-            const response = await fetch(
+            
+            // Try the new optimized endpoint first
+            let response = await fetch(
                 `https://gatsis-hub.vercel.app/orders/user/${user.userid}/full?page=${currentPage}&limit=${ordersPerPage}&_t=${timestamp}`
             );
 
+            // If new endpoint fails, fallback to old endpoint (might not be deployed yet)
             if (!response.ok) {
-                throw new Error('Failed to fetch orders');
+                console.warn('New endpoint failed, trying fallback...');
+                response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}?_t=${timestamp}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch orders');
+                }
+
+                // Handle old endpoint response (without pagination)
+                const data = await response.json();
+                console.log('Fetched orders (fallback):', data.orders?.length, 'orders');
+                
+                setOrders(data.orders || []);
+                setTotalPages(1);
+                setTotalOrders(data.orders?.length || 0);
+                
+                // Need to fetch payments separately with old endpoint
+                if (data.orders && data.orders.length > 0) {
+                    const paymentsMap = {};
+                    await Promise.all(data.orders.map(async (order) => {
+                        try {
+                            const paymentRes = await fetch(`https://gatsis-hub.vercel.app/payments/order/${order.orderid}?_t=${timestamp}`);
+                            if (paymentRes.ok) {
+                                const payment = await paymentRes.json();
+                                paymentsMap[order.orderid] = payment;
+                            }
+                        } catch (error) {
+                            console.error(`Error fetching payment for order ${order.orderid}:`, error);
+                        }
+                    }));
+                    setOrderPayments(paymentsMap);
+                }
+                
+                setError(null);
+                setLoading(false);
+                return;
             }
 
+            // Handle new optimized endpoint response
             const data = await response.json();
 
             console.log('Fetched orders:', data.orders?.length, 'orders');
