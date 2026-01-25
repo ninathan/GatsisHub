@@ -29,7 +29,7 @@ const Order = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalOrders, setTotalOrders] = useState(0);
-    const ordersPerPage = 10;
+    const ordersPerPage = 5; // Reduced for faster loading
 
     const [showProofModal, setShowProofModal] = useState(false);
     const [proofImage, setProofImage] = useState(null);
