@@ -112,12 +112,15 @@ router.get("/customer/:customerid", async (req, res) => {
         feedbackid,
         orderid,
         message,
-        orders (
+        rating,
+        created_at,
+        orders!inner (
           orderstatus,
           hangertype
         )
       `)
       .eq("customerid", customerid)
+      .eq("orders.orderstatus", "Completed")
       .order("feedbackid", { ascending: false });
 
     if (error) {
@@ -126,6 +129,61 @@ router.get("/customer/:customerid", async (req, res) => {
     }
 
     res.status(200).json({ feedbacks: data });
+  } catch (error) {
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET completed orders available for feedback (orders without feedback)
+router.get("/available-orders/:customerid", async (req, res) => {
+  try {
+    const { customerid } = req.params;
+
+    // Get customer's userid first
+    const { data: customerData, error: customerError } = await supabase
+      .from("customers")
+      .select("userid")
+      .eq("customerid", customerid)
+      .single();
+
+    if (customerError || !customerData) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // Get all completed orders
+    const { data: completedOrders, error: ordersError } = await supabase
+      .from("orders")
+      .select("orderid, hangertype, quantity, datecreated, orderstatus")
+      .eq("userid", customerData.userid)
+      .eq("orderstatus", "Completed")
+      .order("datecreated", { ascending: false });
+
+    if (ordersError) {
+      return res.status(500).json({ error: "Failed to fetch orders" });
+    }
+
+    // Get feedbacks for this customer
+    const { data: existingFeedbacks, error: feedbackError } = await supabase
+      .from("feedback")
+      .select("orderid")
+      .eq("customerid", customerid)
+      .not("orderid", "is", null);
+
+    if (feedbackError) {
+      return res.status(500).json({ error: "Failed to fetch feedbacks" });
+    }
+
+    // Filter out orders that already have feedback
+    const reviewedOrderIds = new Set(
+      existingFeedbacks.map(f => f.orderid)
+    );
+    
+    const availableOrders = completedOrders.filter(
+      order => !reviewedOrderIds.has(order.orderid)
+    );
+
+    res.status(200).json({ orders: availableOrders });
   } catch (error) {
 
     res.status(500).json({ error: "Internal server error" });
