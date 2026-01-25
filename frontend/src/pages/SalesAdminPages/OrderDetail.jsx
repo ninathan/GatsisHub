@@ -1159,7 +1159,7 @@ const OrderDetail = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && paymentInfo && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
@@ -1527,7 +1527,7 @@ const OrderDetail = () => {
 
             {/* Reject Payment Reason Modal */}
             {showRejectModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
                         {/* Modal Header */}
                         <div className="bg-red-600 px-6 py-4 flex items-center justify-between">

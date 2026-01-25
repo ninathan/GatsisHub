@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LayoutDashboard, ShoppingCart, Package, Calendar, Mail, LogOut, ClipboardClock, Bell } from 'lucide-react'
-
+import { EllipsisVertical, LayoutDashboard, ShoppingCart, Package, Calendar, Mail, LogOut, ClipboardClock, Bell, User } from 'lucide-react'
+import MobileBottomNav from '../MobileBottomNav'
 
 const Sidebar = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [employee, setEmployee] = useState(null);
 
     useEffect(() => {
@@ -32,9 +33,8 @@ const Sidebar = () => {
                         employeeid: employee.employeeid
                     })
                 });
-
             } catch (error) {
-
+                console.error('Logout error:', error);
                 // Continue with logout even if presence update fails
             }
         }
@@ -54,10 +54,13 @@ const Sidebar = () => {
         return (names[0][0] + names[names.length - 1][0]).toUpperCase();
     };
 
+    // Check if route is active
+    const isActive = (path) => location.pathname === path;
+
     return (
-        <div>
-            {/* Sidebar */}
-            <aside className="w-64 bg-[#191716] text-white flex flex-col border-r-5 border-[#DAC325] h-full">
+        <>
+            {/* Desktop Sidebar - Hidden on mobile/tablet */}
+            <aside className="hidden lg:flex w-64 bg-[#191716] text-white flex-col border-r-5 border-[#DAC325]">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-600">
                     <div className="flex items-center gap-3">
                         <img src={logo} alt="Logo" className="w-20 h-20" />
@@ -97,7 +100,6 @@ const Sidebar = () => {
                             </NavLink>
                         </li>
                         <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded cursor-pointer">
-
                             <NavLink to="/messageSA" className="block">
                                 <Mail size={20} className='mr-2 inline' />
                                 Messages
@@ -122,7 +124,6 @@ const Sidebar = () => {
                     <div>
                         <p className="font-semibold">{employee?.employeename || 'Sales Admin'}</p>
                         <p className="text-sm text-gray-300">{employee?.role || 'Sales Admin'}</p>
-                        
                     </div>
 
                     <Link to="/profileSA">
@@ -130,7 +131,22 @@ const Sidebar = () => {
                     </Link>
                 </div>
             </aside>
-        </div>
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav
+                navItems={[
+                    { id: 'dashboard', path: '/dashboardSA', icon: LayoutDashboard },
+                    { id: 'orders', path: '/orderpage', icon: ShoppingCart },
+                    { id: 'notifications', path: '/notificationsSA', icon: Bell },
+                    { id: 'products', path: '/productSA', icon: Package },
+                    { id: 'calendar', path: '/calendar', icon: Calendar },
+                    { id: 'messages', path: '/messageSA', icon: Mail },
+                    { id: 'profile', path: '/profileSA', icon: User },
+                    { id: 'logout', path: '/authsaleadmin', icon: LogOut },
+                ]}
+                accentColor="#E6AF2E"
+            />
+            
+        </>
     )
 }
 

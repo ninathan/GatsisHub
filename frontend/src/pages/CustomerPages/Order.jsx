@@ -1190,7 +1190,7 @@ const Order = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3">
@@ -1240,7 +1240,7 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -1335,8 +1335,8 @@ const Order = () => {
 
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#ff6b6b] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className=" bg-white border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
                             <h2 className="text-black text-xl md:text-2xl font-black">Cancel Order</h2>
@@ -1408,8 +1408,8 @@ const Order = () => {
 
             {/* Rating Modal */}
             {showRatingModal && orderToRate && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#ffd93d] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
                             <h2 className="text-black text-xl md:text-2xl font-black">Rate Your Order</h2>
@@ -1502,7 +1502,7 @@ const Order = () => {
 
             {/* Notification Modal */}
             {showNotificationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
                     <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">

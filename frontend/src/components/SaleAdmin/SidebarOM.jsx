@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard, ClipboardClock, Bell, UserCheck} from 'lucide-react'
+import { EllipsisVertical, LogOut, Calendar, SquareUser, ShoppingCart, LayoutDashboard, ClipboardClock, Bell, UserCheck, User} from 'lucide-react'
+import MobileBottomNav from '../MobileBottomNav'
 
 
 const SidebarOM = () => {
@@ -57,7 +58,7 @@ const SidebarOM = () => {
   return (
     <div>
          {/* Sidebar */}
-            <aside className="w-64 bg-[#191716] text-white flex flex-col border-r-5 border-[#DAC325] h-full">
+            <aside className="hidden lg:flex w-64 bg-[#191716] text-white flex-col border-r-5 border-[#DAC325] h-full">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-600">
                     <div className="flex items-center gap-3">
                         <img src={logo} alt="Logo" className="w-20 h-20" />
@@ -127,6 +128,23 @@ const SidebarOM = () => {
                     </Link>
                 </div>
             </aside>
+
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav
+                navItems={[
+                    { id: 'dashboardOM', path: '/dashboardOM', icon: LayoutDashboard },
+                    { id: 'employees', path: '/employees', icon: SquareUser },
+                    { id: 'verification', path: '/verification', icon: UserCheck },
+                    { id: 'ordersOM', path: '/orderpageOM', icon: ShoppingCart },
+                    { id: 'notificationsOM', path: '/notificationsOM', icon: Bell },
+                    { id: 'calendarOM', path: '/calendarOM', icon: Calendar },
+                    { id: 'profileOM', path: '/profileOM', icon: User },
+                    { id: 'logout', path: '/authom', icon: LogOut },
+                ]}
+                accentColor="#E6AF2E"
+            />
+
+
     </div>
   )
 }
