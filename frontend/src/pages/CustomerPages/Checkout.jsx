@@ -168,35 +168,35 @@ const Checkout = () => {
     const [selectedAddress, setSelectedAddress] = useState(0);
 
     // 3D Customization state
-        const [customText, setCustomText] = useState("");
-        const [textColor, setTextColor] = useState("#FFFFFF");
-        const [customLogo, setCustomLogo] = useState(null);
-        const [logoPreview, setLogoPreview] = useState(null);
-        const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
-        const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
-        const [textSize, setTextSize] = useState(0.5);
-        const [logoSize, setLogoSize] = useState(1);
+    const [customText, setCustomText] = useState("");
+    const [textColor, setTextColor] = useState("#FFFFFF");
+    const [customLogo, setCustomLogo] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [textPosition, setTextPosition] = useState({ x: 0, y: 0, z: 0 });
+    const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
+    const [textSize, setTextSize] = useState(0.5);
+    const [logoSize, setLogoSize] = useState(1);
 
-        // Set default positions/sizes for 97-12 and 97-11
-        useEffect(() => {
-            if (selectedHanger === "97-11") {
-                setTextPosition({ x: 0, y: -0.045, z: 0.0537 });
-                setLogoPosition({ x: 0, y: -0.04, z: 0.0561 });
-                setTextSize(0.5);
-                setLogoSize(1);
-            } else if (selectedHanger === "97-12") {
-                setTextPosition({ x: 0, y: -0.15, z: 0.06 });
-                setLogoPosition({ x: 0, y: -0.17, z: 0.0611 });
-                setTextSize(0.4);
-                setLogoSize(0.6);
-            } else {
-                // Reset to default for MB3, CQ-807, and others
-                setTextPosition({ x: 0, y: 0, z: 0 });
-                setLogoPosition({ x: 0, y: 0, z: 0 });
-                setTextSize(0.5);
-                setLogoSize(1);
-            }
-        }, [selectedHanger]);
+    // Set default positions/sizes for 97-12 and 97-11
+    useEffect(() => {
+        if (selectedHanger === "97-11") {
+            setTextPosition({ x: 0, y: -0.045, z: 0.0537 });
+            setLogoPosition({ x: 0, y: -0.04, z: 0.0561 });
+            setTextSize(0.5);
+            setLogoSize(1);
+        } else if (selectedHanger === "97-12") {
+            setTextPosition({ x: 0, y: -0.15, z: 0.06 });
+            setLogoPosition({ x: 0, y: -0.17, z: 0.0611 });
+            setTextSize(0.4);
+            setLogoSize(0.6);
+        } else {
+            // Reset to default for MB3, CQ-807, and others
+            setTextPosition({ x: 0, y: 0, z: 0 });
+            setLogoPosition({ x: 0, y: 0, z: 0 });
+            setTextSize(0.5);
+            setLogoSize(1);
+        }
+    }, [selectedHanger]);
 
     // Scroll listener for stepper dropdown animation
     useEffect(() => {
@@ -623,10 +623,10 @@ const Checkout = () => {
                         link.click();
                         document.body.removeChild(link);
                         URL.revokeObjectURL(url);
-                        setNotificationModal({ 
-                            show: true, 
-                            type: 'success', 
-                            message: 'Design downloaded successfully! (PNG + JSON files)' 
+                        setNotificationModal({
+                            show: true,
+                            type: 'success',
+                            message: 'Design downloaded successfully! (PNG + JSON files)'
                         });
                     } else {
                         throw new Error('Failed to capture canvas');
@@ -642,19 +642,19 @@ const Checkout = () => {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                setNotificationModal({ 
-                    show: true, 
-                    type: 'success', 
-                    message: 'Design downloaded successfully! (PNG + JSON files)' 
+                setNotificationModal({
+                    show: true,
+                    type: 'success',
+                    message: 'Design downloaded successfully! (PNG + JSON files)'
                 });
             }
 
         } catch (error) {
 
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: `Failed to download design: ${error.message}` 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: `Failed to download design: ${error.message}`
             });
         } finally {
             setIsDownloading(false);
@@ -664,10 +664,10 @@ const Checkout = () => {
     // Save design to database
     const handleSaveDesign = async () => {
         if (!user || !user.userid) {
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: 'Please log in to save designs' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: 'Please log in to save designs'
             });
             return;
         }
@@ -678,10 +678,10 @@ const Checkout = () => {
 
     const confirmSaveDesign = async () => {
         if (!designName.trim()) {
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: 'Please enter a name for your design' 
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: 'Please enter a name for your design'
             });
             return;
         }
@@ -830,10 +830,10 @@ const Checkout = () => {
 
             setSaveDesignModal(false);
             setDesignName('');
-            setNotificationModal({ 
-                show: true, 
-                type: 'success', 
-                message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.` 
+            setNotificationModal({
+                show: true,
+                type: 'success',
+                message: `Design "${designName}" saved successfully! You can view it in Account Settings > Designs tab.`
             });
         } catch (error) {
 
@@ -844,11 +844,11 @@ const Checkout = () => {
             } else {
                 errorMessage = `Failed to save design: ${error.message}`;
             }
-            
-            setNotificationModal({ 
-                show: true, 
-                type: 'error', 
-                message: errorMessage 
+
+            setNotificationModal({
+                show: true,
+                type: 'error',
+                message: errorMessage
             });
         } finally {
             setIsSaving(false);
@@ -919,7 +919,7 @@ const Checkout = () => {
                 // Fetch products (hangers)
                 const productsResponse = await fetch('https://gatsis-hub.vercel.app/products?is_active=true');
                 const productsData = await productsResponse.json();
-                
+
                 if (productsData.products) {
                     const mappedHangers = productsData.products.map(product => ({
                         id: product.productname,
@@ -928,11 +928,11 @@ const Checkout = () => {
                     }));
                     setHangers(mappedHangers);
                 }
-                
+
                 // Fetch materials
                 const materialsResponse = await fetch('https://gatsis-hub.vercel.app/materials?is_active=true');
                 const materialsData = await materialsResponse.json();
-                
+
                 if (materialsData.materials) {
                     const mappedMaterials = materialsData.materials.map(material => ({
                         name: material.materialname,
@@ -966,22 +966,22 @@ const Checkout = () => {
                 if (designData.logoPosition) setLogoPosition(designData.logoPosition);
                 if (designData.logoSize) setLogoSize(designData.logoSize);
                 if (designData.materials) setSelectedMaterials(designData.materials);
-                
+
                 // Show success message (without setTimeout to avoid doubling)
-                setNotificationModal({ 
-                    show: true, 
-                    type: 'success', 
-                    message: `Design "${designData.designName || 'Untitled'}" loaded successfully! You can modify it and place an order.` 
+                setNotificationModal({
+                    show: true,
+                    type: 'success',
+                    message: `Design "${designData.designName || 'Untitled'}" loaded successfully! You can modify it and place an order.`
                 });
-                
+
                 // Clear the location state to prevent reloading on refresh
                 window.history.replaceState({}, document.title);
             } catch (error) {
 
-                setNotificationModal({ 
-                    show: true, 
-                    type: 'error', 
-                    message: 'Failed to load design data. Please try again.' 
+                setNotificationModal({
+                    show: true,
+                    type: 'error',
+                    message: 'Failed to load design data. Please try again.'
                 });
             }
         }
@@ -1000,7 +1000,7 @@ const Checkout = () => {
     }, [isFullscreen]);
 
     // Material percentage handling
-    
+
     // Function to capture thumbnail from 3D canvas
     const captureThumbnail = async () => {
         try {
@@ -1008,29 +1008,29 @@ const Checkout = () => {
             for (let attempt = 0; attempt < 5; attempt++) {
                 await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
                 const canvas = threeCanvasRef.current?.querySelector('canvas');
-                
+
                 if (canvas && canvas.width > 0 && canvas.height > 0) {
                     console.log('Capturing thumbnail from canvas (attempt', attempt + 1, '):', canvas.width, 'x', canvas.height);
-                    
+
                     const thumbnailCanvas = document.createElement('canvas');
                     const thumbnailSize = 400;
                     thumbnailCanvas.width = thumbnailSize;
                     thumbnailCanvas.height = thumbnailSize;
                     const ctx = thumbnailCanvas.getContext('2d');
-                    
+
                     // Simple center crop
                     const sourceSize = Math.min(canvas.width, canvas.height);
                     const cropSize = sourceSize * 0.7;
                     const sourceX = (canvas.width - cropSize) / 2;
                     const sourceY = (canvas.height - cropSize) / 2;
-                    
+
                     // White background
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, thumbnailSize, thumbnailSize);
-                    
+
                     // Draw the cropped canvas
                     ctx.drawImage(canvas, sourceX, sourceY, cropSize, cropSize, 0, 0, thumbnailSize, thumbnailSize);
-                    
+
                     // Convert to base64
                     const thumbnailBase64 = thumbnailCanvas.toDataURL('image/png', 0.8);
                     console.log('Thumbnail generated successfully, size:', thumbnailBase64.length);
@@ -1047,7 +1047,7 @@ const Checkout = () => {
             return null;
         }
     };
-    
+
     // Navigation
     const nextStep = async () => {
         if (validateCurrentStep()) {
@@ -1120,830 +1120,828 @@ const Checkout = () => {
 
             <div className="max-w-7xl mx-auto px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8 mt-20 md:mt-24">
 
+                {/* Stepper for Small/Medium Screens - Stationary */}
+                <div className="lg:hidden mt-6 mb-6">
+                    <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
+                </div>
+
                 {currentStep === 1 && (
                     <>
-            {/* product customization */}
-            <section className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
-                <h2 className="text-center text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
-                    Product Customization
-                </h2>
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
-                    <div className="flex flex-col gap-4 md:gap-6">
-                        {/* Three.js 3D Preview Container */}
-                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
-                            {/* Fullscreen Button */}
-                            <button
-                                onClick={toggleFullscreen}
-                                className="absolute top-4 right-4 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] p-2 rounded-lg transition-colors shadow-lg"
-                                title="Fullscreen"
-                            >
-                                <Maximize2 size={20} />
-                            </button>
+                        {/* product customization */}
+                        <section className="px-3 md:px-4 lg:px-6 py-4 md:py-6 lg:py-8">
+                            <h2 className="text-center text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
+                                Product Customization
+                            </h2>
+                            <div className="max-w-7xl mx-auto">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+                                    <div className="flex flex-col gap-4 md:gap-6">
+                                        {/* Three.js 3D Preview Container */}
+                                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+                                            {/* Fullscreen Button */}
+                                            <button
+                                                onClick={toggleFullscreen}
+                                                className="absolute top-4 right-4 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] p-2 rounded-lg transition-colors shadow-lg"
+                                                title="Fullscreen"
+                                            >
+                                                <Maximize2 size={20} />
+                                            </button>
 
-                            {/* Three.js Canvas */}
-                            <div ref={threeCanvasRef} className="w-full h-64 md:h-80 lg:h-96 rounded-lg">
-                                <Suspense
-                                    fallback={
-                                        <div className="w-full h-full flex items-center justify-center bg-[#007BFF] rounded-lg">
-                                            <LoadingSpinner size="lg" text="Loading 3D Model..." color="white" />
+                                            {/* Three.js Canvas */}
+                                            <div ref={threeCanvasRef} className="w-full h-64 md:h-80 lg:h-96 rounded-lg">
+                                                <Suspense
+                                                    fallback={
+                                                        <div className="w-full h-full flex items-center justify-center bg-[#007BFF] rounded-lg">
+                                                            <LoadingSpinner size="lg" text="Loading 3D Model..." color="white" />
+                                                        </div>
+                                                    }
+                                                >
+                                                    <HangerScene
+                                                        color={color}
+                                                        hangerType={selectedHanger}
+                                                        customText={customText}
+                                                        textColor={textColor}
+                                                        textPosition={textPosition}
+                                                        textSize={textSize}
+                                                        logoPreview={logoPreview}
+                                                        logoPosition={logoPosition}
+                                                        logoSize={logoSize}
+                                                        onSceneReady={() => setSceneLoaded(true)}
+                                                    />
+                                                </Suspense>
+                                            </div>
+
+                                            <p className="text-white text-xs md:text-sm mt-3 md:mt-4 text-center font-semibold">
+                                                Drag to rotate • Scroll to zoom • Right-click to pan
+                                            </p>
                                         </div>
-                                    }
-                                >
-                                    <HangerScene
-                                        color={color}
-                                        hangerType={selectedHanger}
-                                        customText={customText}
-                                        textColor={textColor}
-                                        textPosition={textPosition}
-                                        textSize={textSize}
-                                        logoPreview={logoPreview}
-                                        logoPosition={logoPosition}
-                                        logoSize={logoSize}
-                                        onSceneReady={() => setSceneLoaded(true)}
-                                    />
-                                </Suspense>
-                            </div>
 
-                            <p className="text-white text-xs md:text-sm mt-3 md:mt-4 text-center font-semibold">
-                                Drag to rotate • Scroll to zoom • Right-click to pan
+                                        {/* Hanger Selection - Compact Version */}
+                                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg border-2 border-gray-300 p-3">
+                                            <h3 className="font-semibold mb-3 text-sm text-white">Type of Hanger</h3>
+                                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                                {hangers.map((hanger) => (
+                                                    <button
+                                                        key={hanger.id}
+                                                        onClick={() => {
+                                                            setSelectedHanger(hanger.id);
+                                                            if (hanger.id === '97-12' || hanger.id === '97-11') {
+                                                                setShowColorLimitationModal(true);
+                                                            }
+                                                        }}
+                                                        className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 ${selectedHanger === hanger.id
+                                                            ? "border-[#007BFF] shadow-md"
+                                                            : "border-gray-300 hover:border-gray-400"
+                                                            }`}
+                                                    >
+                                                        <div className="bg-white p-2 flex items-center justify-center aspect-square">
+                                                            <div className="text-2xl">
+                                                                <ProductCard />
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
+                                                            {hanger.name}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Custom Design Upload */}
+                                            {selectedHanger === "own" && (
+                                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                    <h4 className="font-semibold mb-2 text-xs">Upload Your Custom Design</h4>
+                                                    <p className="text-xs text-gray-600 mb-2">
+                                                        Accepted formats: STL, OBJ, STEP, PDF
+                                                    </p>
+                                                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-3 cursor-pointer hover:border-[#007BFF] transition-colors">
+                                                        <Upload size={16} />
+                                                        <span className="text-xs">
+                                                            {customDesignFile
+                                                                ? customDesignFile.name
+                                                                : "Click to upload"}
+                                                        </span>
+                                                        <input
+                                                            type="file"
+                                                            accept=".stl,.obj,.step,.pdf"
+                                                            onChange={handleCustomDesignUpload}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* quantity selector */}
+                                        <div className="flex flex-col justify-center items-center">
+                                            <h3 className="font-semibold mb-3 text-sm md:text-base">Quantity of Hangers</h3>
+                                            <p className="text-xs text-gray-600 mb-2">
+                                                Minimum order quantity is 100 pieces
+                                            </p>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => handleQuantityChange(-10)}
+                                                    disabled={quantity <= 100}
+                                                    className="bg-white border rounded p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                                                >
+                                                    <Minus size={18} className="md:w-5 md:h-5" />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    value={quantity}
+                                                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                                                    className="border rounded px-3 md:px-4 py-2 text-center w-20 md:w-24 text-sm md:text-base"
+                                                />
+                                                <button
+                                                    onClick={() => handleQuantityChange(10)}
+                                                    className="bg-white border rounded p-2 hover:bg-gray-100"
+                                                >
+                                                    <Plus size={18} className="md:w-5 md:h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        {/* order instructions */}
+                                        <div className="flex flex-col justify-center">
+                                            <h3 className="font-semibold mb-3 text-sm md:text-base">
+                                                Order Instruction (optional)
+                                            </h3>
+                                            <textarea
+                                                value={orderInstructions}
+                                                onChange={(e) => setOrderInstructions(e.target.value)}
+                                                placeholder="Type your instructions here..."
+                                                className="w-full border rounded px-3 py-2 h-20 md:h-24 text-sm md:text-base"
+                                            ></textarea>
+                                        </div>
+                                        {/* action buttons */}
+                                        <div className="space-y-2 mt-4">
+                                            <button
+                                                onClick={handleDownloadDesign}
+                                                disabled={isDownloading}
+                                                className="w-full bg-[#F5F5F5] hover:bg-[#e0e0e0] text-[#333333] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base border border-gray-300"
+                                            >
+                                                {isDownloading ? (
+                                                    <>
+                                                        <LoadingSpinner size="sm" color="black" />
+                                                        Downloading...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Download size={18} className="md:w-5 md:h-5" />
+                                                        Download Preview
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={handleSaveDesign}
+                                                className="w-full bg-[#e6af2e] hover:bg-[#c8971e] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
+                                            >
+                                                <Save size={18} className="md:w-5 md:h-5" />
+                                                Save Design
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* customization options */}
+                                    <div className="space-y-6">
+                                        {/* color picker */}
+                                        <div>
+                                            <h3 className="font-semibold mb-3">Pick a Color</h3>
+                                            <div className="bg-white rounded-lg border p-4">
+                                                {/* Live Preview */}
+                                                <div
+                                                    className="relative h-32 rounded-lg mb-4 overflow-hidden border-2"
+                                                    style={{ backgroundColor: color }}
+                                                >
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+                                                            <span className="font-mono font-bold text-lg">
+                                                                {color.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Color Input Controls */}
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <label className="text-sm font-medium">Hex:</label>
+                                                    <input
+                                                        type="text"
+                                                        value={color}
+                                                        onChange={(e) => updateThreeJsColor(e.target.value)}
+                                                        className="flex-1 border-2 rounded-lg px-3 py-2 text-sm font-mono focus:border-indigo-600 focus:outline-none transition-colors"
+                                                        placeholder="#4F46E5"
+                                                    />
+                                                    <input
+                                                        type="color"
+                                                        value={color}
+                                                        onChange={(e) => updateThreeJsColor(e.target.value)}
+                                                        className="w-12 h-10 rounded-lg cursor-pointer border-2 border-gray-300 hover:border-indigo-600 transition-colors"
+                                                        title="Pick a color"
+                                                    />
+                                                </div>
+
+                                                {/* Comic Style Color Picker */}
+                                                <ColorPickerWrapper>
+                                                    <div className="comic-panel">
+                                                        <div className="container-items">
+                                                            <button
+                                                                className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#e11d48' }}
+                                                                aria-color="#e11d48"
+                                                                onClick={() => updateThreeJsColor('#e11d48')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#f472b6' }}
+                                                                aria-color="#f472b6"
+                                                                onClick={() => updateThreeJsColor('#f472b6')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#fb923c' }}
+                                                                aria-color="#fb923c"
+                                                                onClick={() => updateThreeJsColor('#fb923c')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#facc15' }}
+                                                                aria-color="#facc15"
+                                                                onClick={() => updateThreeJsColor('#facc15')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#84cc16' }}
+                                                                aria-color="#84cc16"
+                                                                onClick={() => updateThreeJsColor('#84cc16')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#10b981' }}
+                                                                aria-color="#10b981"
+                                                                onClick={() => updateThreeJsColor('#10b981')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#0ea5e9' }}
+                                                                aria-color="#0ea5e9"
+                                                                onClick={() => updateThreeJsColor('#0ea5e9')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#3b82f6' }}
+                                                                aria-color="#3b82f6"
+                                                                onClick={() => updateThreeJsColor('#3b82f6')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#8b5cf6' }}
+                                                                aria-color="#8b5cf6"
+                                                                onClick={() => updateThreeJsColor('#8b5cf6')}
+                                                            />
+                                                            <button
+                                                                className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
+                                                                style={{ '--color': '#a78bfa' }}
+                                                                aria-color="#a78bfa"
+                                                                onClick={() => updateThreeJsColor('#a78bfa')}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </ColorPickerWrapper>
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Text */}
+                                        <div>
+                                            <h3 className="font-semibold mb-3">Add Custom Text (Optional)</h3>
+                                            <div className="bg-white rounded-lg border p-4 space-y-3">
+                                                <input
+                                                    type="text"
+                                                    value={customText}
+                                                    onChange={(e) => setCustomText(e.target.value)}
+                                                    placeholder="Enter text to display on hanger"
+                                                    className="w-full border rounded px-3 py-2 text-sm"
+                                                    maxLength={50}
+                                                />
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1">
+                                                        <label className="text-xs text-gray-600">Text Size</label>
+                                                        <input
+                                                            type="range"
+                                                            min="0.01"
+                                                            max="3"
+                                                            step="0.01"
+                                                            value={textSize}
+                                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
+                                                            className="w-full"
+                                                        />
+                                                        <span className="text-xs">{textSize.toFixed(1)}x</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-gray-600 block mb-2">
+                                                        Text Color
+                                                    </label>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="color"
+                                                            value={textColor}
+                                                            onChange={(e) => setTextColor(e.target.value)}
+                                                            className="w-12 h-10 rounded cursor-pointer border"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={textColor}
+                                                            onChange={(e) => setTextColor(e.target.value)}
+                                                            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+                                                            placeholder="#000000"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                                    <div>
+                                                        <label className="text-gray-600">X Position</label>
+                                                        <input
+                                                            type="number"
+                                                            value={textPosition.x}
+                                                            onChange={(e) =>
+                                                                setTextPosition((prev) => ({
+                                                                    ...prev,
+                                                                    x: parseFloat(e.target.value) || 0,
+                                                                }))
+                                                            }
+                                                            className="w-full border rounded px-2 py-1"
+                                                            step="0.1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-gray-600">Y Position</label>
+                                                        <input
+                                                            type="number"
+                                                            value={textPosition.y}
+                                                            onChange={(e) =>
+                                                                setTextPosition((prev) => ({
+                                                                    ...prev,
+                                                                    y: parseFloat(e.target.value) || 0,
+                                                                }))
+                                                            }
+                                                            className="w-full border rounded px-2 py-1"
+                                                            step="0.1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-gray-600">Z Position</label>
+                                                        <input
+                                                            type="number"
+                                                            value={textPosition.z}
+                                                            onChange={(e) =>
+                                                                setTextPosition((prev) => ({
+                                                                    ...prev,
+                                                                    z: parseFloat(e.target.value) || 0,
+                                                                }))
+                                                            }
+                                                            className="w-full border rounded px-2 py-1"
+                                                            step="0.1"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Logo */}
+                                        <div>
+                                            <h3 className="font-semibold mb-3">Add Logo (Optional)</h3>
+                                            <div className="bg-white rounded-lg border p-4 space-y-3">
+                                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition-colors">
+                                                    <ImageIcon size={20} />
+                                                    <span className="text-sm">
+                                                        {customLogo
+                                                            ? customLogo.name
+                                                            : "Upload Logo (PNG, JPG, JPEG - Max 5MB)"}
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/png,image/jpg,image/jpeg"
+                                                        onChange={handleLogoUpload}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+
+                                                {logoPreview && (
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={logoPreview}
+                                                            alt="Logo preview"
+                                                            className="w-16 h-16 object-contain border rounded"
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                setCustomLogo(null);
+                                                                setLogoPreview(null);
+                                                            }}
+                                                            className="text-red-600 text-sm hover:underline"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {customLogo && (
+                                                    <>
+                                                        <div className="flex-1">
+                                                            <label className="text-xs text-gray-600">Logo Size</label>
+                                                            <input
+                                                                type="range"
+                                                                min="0.5"
+                                                                max="3"
+                                                                step="0.01"
+                                                                value={logoSize}
+                                                                onChange={(e) =>
+                                                                    setLogoSize(parseFloat(e.target.value))
+                                                                }
+                                                                className="w-full"
+                                                            />
+                                                            <span className="text-xs">{logoSize.toFixed(1)}x</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                                            <div>
+                                                                <label className="text-gray-600">X Position</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={logoPosition.x}
+                                                                    onChange={(e) =>
+                                                                        setLogoPosition((prev) => ({
+                                                                            ...prev,
+                                                                            x: parseFloat(e.target.value) || 0,
+                                                                        }))
+                                                                    }
+                                                                    className="w-full border rounded px-2 py-1"
+                                                                    step="0.1"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-gray-600">Y Position</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={logoPosition.y}
+                                                                    onChange={(e) =>
+                                                                        setLogoPosition((prev) => ({
+                                                                            ...prev,
+                                                                            y: parseFloat(e.target.value) || 0,
+                                                                        }))
+                                                                    }
+                                                                    className="w-full border rounded px-2 py-1"
+                                                                    step="0.1"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-gray-600">Z Position</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={logoPosition.z}
+                                                                    onChange={(e) =>
+                                                                        setLogoPosition((prev) => ({
+                                                                            ...prev,
+                                                                            z: parseFloat(e.target.value) || 0,
+                                                                        }))
+                                                                    }
+                                                                    className="w-full border rounded px-2 py-1"
+                                                                    step="0.1"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <StepNavigation
+                            currentStep={currentStep}
+                            totalSteps={totalSteps}
+                            onNext={nextStep}
+                            onPrev={prevStep}
+                            isLastStep={false}
+                        />
+                    </>
+                )}
+
+                {/* STEP 2: Material Selection */}
+                {currentStep === 2 && (
+                    <>
+                        <div className="flex flex-col items-center justify-center mt-10">
+                            <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
+                                Select the material you want
+                            </h3>
+                            <p className="text-black text-lg md:text-xl lg:text-2xl font-normal">
+                                you can select multiple materials and combined by percentage
                             </p>
                         </div>
 
-                        {/* Hanger Selection - Compact Version */}
-                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg border-2 border-gray-300 p-3">
-                            <h3 className="font-semibold mb-3 text-sm text-white">Type of Hanger</h3>
-                            <div className="flex gap-2 overflow-x-auto pb-2">
-                                {hangers.map((hanger) => (
+                        <section>
+                            {/* materials selection */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                                {materials.map((material) => (
                                     <button
-                                        key={hanger.id}
-                                        onClick={() => {
-                                            setSelectedHanger(hanger.id);
-                                            if (hanger.id === '97-12' || hanger.id === '97-11') {
-                                                setShowColorLimitationModal(true);
-                                            }
-                                        }}
-                                        className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 ${
-                                            selectedHanger === hanger.id
-                                                ? "border-[#007BFF] shadow-md"
-                                                : "border-gray-300 hover:border-gray-400"
-                                        }`}
+                                        key={material.name}
+                                        onClick={() => toggleMaterial(material.name)}
+                                        className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[material.name]
+                                            ? "border-yellow-500 bg-yellow-50"
+                                            : "border-gray-300"
+                                            }`}
                                     >
-                                        <div className="bg-white p-2 flex items-center justify-center aspect-square">
-                                            <div className="text-2xl">
-                                                <ProductCard />
-                                            </div>
-                                        </div>
-                                        <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
-                                            {hanger.name}
-                                        </div>
+                                        <h3 className="text-xl font-semibold mb-2">{material.name}</h3>
+                                        <ul className="list-disc list-inside">
+                                            {material.features.map((feature, i) => (
+                                                <li key={i} className="text-black text-base font-normal">
+                                                    {feature}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </button>
                                 ))}
-                            </div>
-                            
-                            {/* Custom Design Upload */}
-                            {selectedHanger === "own" && (
-                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <h4 className="font-semibold mb-2 text-xs">Upload Your Custom Design</h4>
-                                    <p className="text-xs text-gray-600 mb-2">
-                                        Accepted formats: STL, OBJ, STEP, PDF
+                                {/* materials percentage */}
+                                <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
+                                    <h3 className="font-semibold mb-3">Materials selected</h3>
+                                    <p className="text-xs text-gray-600 mb-3">
+                                        Note: You may adjust percentages to achieve 100% mixture
                                     </p>
-                                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-400 rounded-lg p-3 cursor-pointer hover:border-[#007BFF] transition-colors">
-                                        <Upload size={16} />
-                                        <span className="text-xs">
-                                            {customDesignFile
-                                                ? customDesignFile.name
-                                                : "Click to upload"}
-                                        </span>
-                                        <input
-                                            type="file"
-                                            accept=".stl,.obj,.step,.pdf"
-                                            onChange={handleCustomDesignUpload}
-                                            className="hidden"
-                                        />
-                                    </label>
+                                    <div className="space-y-2">
+                                        {Object.entries(selectedMaterials).map(([name, percentage]) => (
+                                            <div key={name} className="flex items-center justify-between">
+                                                <span className="text-sm">{name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        value={percentage}
+                                                        onChange={(e) =>
+                                                            updateMaterialPercentage(name, e.target.value)
+                                                        }
+                                                        className="w-16 px-2 py-1 border rounded text-sm"
+                                                        min="0"
+                                                        max="100"
+                                                    />
+                                                    <span className="text-sm">%</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-
-                        {/* quantity selector */}
-                        <div className="flex flex-col justify-center items-center">
-                            <h3 className="font-semibold mb-3 text-sm md:text-base">Quantity of Hangers</h3>
-                            <p className="text-xs text-gray-600 mb-2">
-                                Minimum order quantity is 100 pieces
-                            </p>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => handleQuantityChange(-10)}
-                                    disabled={quantity <= 100}
-                                    className="bg-white border rounded p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                                >
-                                    <Minus size={18} className="md:w-5 md:h-5" />
-                                </button>
-                                <input
-                                    type="number"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                                    className="border rounded px-3 md:px-4 py-2 text-center w-20 md:w-24 text-sm md:text-base"
-                                />
-                                <button
-                                    onClick={() => handleQuantityChange(10)}
-                                    className="bg-white border rounded p-2 hover:bg-gray-100"
-                                >
-                                    <Plus size={18} className="md:w-5 md:h-5" />
-                                </button>
                             </div>
-                        </div>
-                        {/* order instructions */}
-                        <div className="flex flex-col justify-center">
-                            <h3 className="font-semibold mb-3 text-sm md:text-base">
-                                Order Instruction (optional)
+                        </section>
+
+                        <StepNavigation
+                            currentStep={currentStep}
+                            totalSteps={totalSteps}
+                            onNext={nextStep}
+                            onPrev={prevStep}
+                            isLastStep={false}
+                        />
+                    </>
+                )}
+
+                {/* STEP 3: Review & Submit */}
+                {currentStep === 3 && (
+                    <>
+                        {/* Company Information */}
+                        <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-8">
+                            <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6">
+                                Company Information
                             </h3>
-                            <textarea
-                                value={orderInstructions}
-                                onChange={(e) => setOrderInstructions(e.target.value)}
-                                placeholder="Type your instructions here..."
-                                className="w-full border rounded px-3 py-2 h-20 md:h-24 text-sm md:text-base"
-                            ></textarea>
-                        </div>
-                        {/* action buttons */}
-                        <div className="space-y-2 mt-4">
-                            <button 
-                                onClick={handleDownloadDesign}
-                                disabled={isDownloading}
-                                className="w-full bg-[#F5F5F5] hover:bg-[#e0e0e0] text-[#333333] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base border border-gray-300"
-                            >
-                                {isDownloading ? (
-                                    <>
-                                        <LoadingSpinner size="sm" color="black" />
-                                        Downloading...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Download size={18} className="md:w-5 md:h-5" />
-                                        Download Preview
-                                    </>
-                                )}
-                            </button>
-                            <button 
-                                onClick={handleSaveDesign}
-                                className="w-full bg-[#e6af2e] hover:bg-[#c8971e] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
-                            >
-                                <Save size={18} className="md:w-5 md:h-5" />
-                                Save Design
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* customization options */}
-                    <div className="space-y-6">
-                        {/* color picker */}
-                        <div>
-                            <h3 className="font-semibold mb-3">Pick a Color</h3>
-                            <div className="bg-white rounded-lg border p-4">
-                                {/* Live Preview */}
-                                <div
-                                    className="relative h-32 rounded-lg mb-4 overflow-hidden border-2"
-                                    style={{ backgroundColor: color }}
-                                >
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-                                            <span className="font-mono font-bold text-lg">
-                                                {color.toUpperCase()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Color Input Controls */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <label className="text-sm font-medium">Hex:</label>
-                                    <input
-                                        type="text"
-                                        value={color}
-                                        onChange={(e) => updateThreeJsColor(e.target.value)}
-                                        className="flex-1 border-2 rounded-lg px-3 py-2 text-sm font-mono focus:border-indigo-600 focus:outline-none transition-colors"
-                                        placeholder="#4F46E5"
-                                    />
-                                    <input
-                                        type="color"
-                                        value={color}
-                                        onChange={(e) => updateThreeJsColor(e.target.value)}
-                                        className="w-12 h-10 rounded-lg cursor-pointer border-2 border-gray-300 hover:border-indigo-600 transition-colors"
-                                        title="Pick a color"
-                                    />
-                                </div>
-
-                                {/* Comic Style Color Picker */}
-                                <ColorPickerWrapper>
-                                    <div className="comic-panel">
-                                        <div className="container-items">
-                                            <button 
-                                                className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
-                                                style={{'--color': '#e11d48'}} 
-                                                aria-color="#e11d48"
-                                                onClick={() => updateThreeJsColor('#e11d48')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
-                                                style={{'--color': '#f472b6'}} 
-                                                aria-color="#f472b6"
-                                                onClick={() => updateThreeJsColor('#f472b6')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
-                                                style={{'--color': '#fb923c'}} 
-                                                aria-color="#fb923c"
-                                                onClick={() => updateThreeJsColor('#fb923c')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
-                                                style={{'--color': '#facc15'}} 
-                                                aria-color="#facc15"
-                                                onClick={() => updateThreeJsColor('#facc15')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
-                                                style={{'--color': '#84cc16'}} 
-                                                aria-color="#84cc16"
-                                                onClick={() => updateThreeJsColor('#84cc16')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
-                                                style={{'--color': '#10b981'}} 
-                                                aria-color="#10b981"
-                                                onClick={() => updateThreeJsColor('#10b981')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
-                                                style={{'--color': '#0ea5e9'}} 
-                                                aria-color="#0ea5e9"
-                                                onClick={() => updateThreeJsColor('#0ea5e9')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
-                                                style={{'--color': '#3b82f6'}} 
-                                                aria-color="#3b82f6"
-                                                onClick={() => updateThreeJsColor('#3b82f6')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
-                                                style={{'--color': '#8b5cf6'}} 
-                                                aria-color="#8b5cf6"
-                                                onClick={() => updateThreeJsColor('#8b5cf6')}
-                                            />
-                                            <button 
-                                                className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
-                                                style={{'--color': '#a78bfa'}} 
-                                                aria-color="#a78bfa"
-                                                onClick={() => updateThreeJsColor('#a78bfa')}
-                                            />
-                                        </div>
-                                    </div>
-                                </ColorPickerWrapper>
-                            </div>
-                        </div>
-
-                        {/* Custom Text */}
-                        <div>
-                            <h3 className="font-semibold mb-3">Add Custom Text (Optional)</h3>
-                            <div className="bg-white rounded-lg border p-4 space-y-3">
-                                <input
-                                    type="text"
-                                    value={customText}
-                                    onChange={(e) => setCustomText(e.target.value)}
-                                    placeholder="Enter text to display on hanger"
-                                    className="w-full border rounded px-3 py-2 text-sm"
-                                    maxLength={50}
-                                />
-                                <div className="flex gap-4">
-                                    <div className="flex-1">
-                                        <label className="text-xs text-gray-600">Text Size</label>
-                                        <input
-                                            type="range"
-                                            min="0.01"
-                                            max="3"
-                                            step="0.01"
-                                            value={textSize}
-                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
-                                            className="w-full"
-                                        />
-                                        <span className="text-xs">{textSize.toFixed(1)}x</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-gray-600 block mb-2">
-                                        Text Color
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="color"
-                                            value={textColor}
-                                            onChange={(e) => setTextColor(e.target.value)}
-                                            className="w-12 h-10 rounded cursor-pointer border"
-                                        />
+                            <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs md:text-sm font-semibold mb-2">
+                                            Customer Name *
+                                        </label>
                                         <input
                                             type="text"
-                                            value={textColor}
-                                            onChange={(e) => setTextColor(e.target.value)}
-                                            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
-                                            placeholder="#000000"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2 text-xs">
-                                    <div>
-                                        <label className="text-gray-600">X Position</label>
-                                        <input
-                                            type="number"
-                                            value={textPosition.x}
-                                            onChange={(e) =>
-                                                setTextPosition((prev) => ({
-                                                    ...prev,
-                                                    x: parseFloat(e.target.value) || 0,
-                                                }))
-                                            }
-                                            className="w-full border rounded px-2 py-1"
-                                            step="0.1"
+                                            value={companyName}
+                                            onChange={(e) => setCompanyName(e.target.value)}
+                                            placeholder="Enter customer name"
+                                            className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-gray-600">Y Position</label>
+                                        <label className="block text-xs md:text-sm font-semibold mb-2">
+                                            Contact Person *
+                                        </label>
                                         <input
-                                            type="number"
-                                            value={textPosition.y}
-                                            onChange={(e) =>
-                                                setTextPosition((prev) => ({
-                                                    ...prev,
-                                                    y: parseFloat(e.target.value) || 0,
-                                                }))
-                                            }
-                                            className="w-full border rounded px-2 py-1"
-                                            step="0.1"
+                                            type="text"
+                                            value={contactPerson}
+                                            onChange={(e) => setContactPerson(e.target.value)}
+                                            placeholder="Enter contact person name"
+                                            className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-gray-600">Z Position</label>
+                                        <label className="block text-xs md:text-sm font-semibold mb-2">
+                                            Contact Phone *
+                                        </label>
                                         <input
-                                            type="number"
-                                            value={textPosition.z}
-                                            onChange={(e) =>
-                                                setTextPosition((prev) => ({
-                                                    ...prev,
-                                                    z: parseFloat(e.target.value) || 0,
-                                                }))
-                                            }
-                                            className="w-full border rounded px-2 py-1"
-                                            step="0.1"
+                                            type="tel"
+                                            value={contactPhone}
+                                            onChange={(e) => setContactPhone(e.target.value)}
+                                            placeholder="(+63) 9XX XXX XXXX"
+                                            className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
+                                            required
                                         />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Custom Logo */}
-                        <div>
-                            <h3 className="font-semibold mb-3">Add Logo (Optional)</h3>
-                            <div className="bg-white rounded-lg border p-4 space-y-3">
-                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-indigo-600 transition-colors">
-                                    <ImageIcon size={20} />
-                                    <span className="text-sm">
-                                        {customLogo
-                                            ? customLogo.name
-                                            : "Upload Logo (PNG, JPG, JPEG - Max 5MB)"}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        accept="image/png,image/jpg,image/jpeg"
-                                        onChange={handleLogoUpload}
-                                        className="hidden"
-                                    />
-                                </label>
+                        {/* Order summary and address */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-5 ml-5 mr-5">
+                            {/* Order summary */}
+                            <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
+                                <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
 
-                                {logoPreview && (
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src={logoPreview}
-                                            alt="Logo preview"
-                                            className="w-16 h-16 object-contain border rounded"
-                                        />
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between pb-4 border-b">
+                                        <span className="font-semibold">Quantity</span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleQuantityChange(-10)}
+                                                className="border rounded p-1"
+                                            >
+                                                <Minus size={16}></Minus>
+                                            </button>
+                                            <span className="w-12 text-center">{quantity}</span>
+                                            <button
+                                                onClick={() => handleQuantityChange(10)}
+                                                className="border rounded p-1"
+                                            >
+                                                <Plus size={16}></Plus>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Product:</span>
+                                            <span className="font-semibold">{selectedHanger}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600"> Material:</span>
+                                            <div className="text-right">
+                                                {Object.entries(selectedMaterials).map(
+                                                    ([name, percentage]) => (
+                                                        <div key={name}>
+                                                            {percentage}% {name}
+                                                        </div>
+                                                    )
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between item-center">
+                                            <span className="text-gray-600">Color:</span>
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-6 h-6 rounded border"
+                                                    style={{ backgroundColor: color }}
+                                                ></div>
+                                                <span className="font-mono text-xs">{color}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t">
+                                        <label className="block font-semibold mb-2">
+                                            Delivery Instruction
+                                        </label>
+                                        <textarea
+                                            value={deliveryNotes}
+                                            onChange={(e) => setDeliveryNotes(e.target.value)}
+                                            placeholder="Write a note..."
+                                            className="w-full border rounded px-3 py-2 text-sm min-h-[80px]"
+                                        ></textarea>
+                                    </div>
+                                    {/* Submit Button */}
+                                    <div className="flex justify-center">
                                         <button
-                                            onClick={() => {
-                                                setCustomLogo(null);
-                                                setLogoPreview(null);
-                                            }}
-                                            className="text-red-600 text-sm hover:underline"
+                                            className="cursor-pointer bg-[#e6af2e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c8971e] transition-colors w-full disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            onClick={handleSubmitOrder}
+                                            disabled={isSubmitting}
                                         >
-                                            Remove
+                                            {isSubmitting ? (
+                                                <>
+                                                    <LoadingSpinner size="sm" color="white" />
+                                                    <span>Submitting Order...</span>
+                                                </>
+                                            ) : (
+                                                'Send for Evaluation'
+                                            )}
                                         </button>
                                     </div>
-                                )}
-
-                                {customLogo && (
-                                    <>
-                                        <div className="flex-1">
-                                            <label className="text-xs text-gray-600">Logo Size</label>
-                                            <input
-                                                type="range"
-                                                min="0.5"
-                                                max="3"
-                                                step="0.01"
-                                                value={logoSize}
-                                                onChange={(e) =>
-                                                    setLogoSize(parseFloat(e.target.value))
-                                                }
-                                                className="w-full"
-                                            />
-                                            <span className="text-xs">{logoSize.toFixed(1)}x</span>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2 text-xs">
-                                            <div>
-                                                <label className="text-gray-600">X Position</label>
-                                                <input
-                                                    type="number"
-                                                    value={logoPosition.x}
-                                                    onChange={(e) =>
-                                                        setLogoPosition((prev) => ({
-                                                            ...prev,
-                                                            x: parseFloat(e.target.value) || 0,
-                                                        }))
-                                                    }
-                                                    className="w-full border rounded px-2 py-1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-gray-600">Y Position</label>
-                                                <input
-                                                    type="number"
-                                                    value={logoPosition.y}
-                                                    onChange={(e) =>
-                                                        setLogoPosition((prev) => ({
-                                                            ...prev,
-                                                            y: parseFloat(e.target.value) || 0,
-                                                        }))
-                                                    }
-                                                    className="w-full border rounded px-2 py-1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-gray-600">Z Position</label>
-                                                <input
-                                                    type="number"
-                                                    value={logoPosition.z}
-                                                    onChange={(e) =>
-                                                        setLogoPosition((prev) => ({
-                                                            ...prev,
-                                                            z: parseFloat(e.target.value) || 0,
-                                                        }))
-                                                    }
-                                                    className="w-full border rounded px-2 py-1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </div>
-            </section>
-
-            {/* Stepper for Small/Medium Screens - Stationary */}
-            <div className="lg:hidden mt-6 mb-6">
-                <Stepper currentStep={currentStep} totalSteps={totalSteps} goToStep={goToStep} />
-            </div>
-
-            <StepNavigation 
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onNext={nextStep}
-                onPrev={prevStep}
-                isLastStep={false}
-            />
-            </>
-            )}
-
-            {/* STEP 2: Material Selection */}
-            {currentStep === 2 && (
-                <>
-            <div className="flex flex-col items-center justify-center mt-10">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
-                    Select the material you want
-                </h3>
-                <p className="text-black text-lg md:text-xl lg:text-2xl font-normal">
-                    you can select multiple materials and combined by percentage
-                </p>
-            </div>
-
-            <section>
-                {/* materials selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                    {materials.map((material) => (
-                        <button
-                            key={material.name}
-                            onClick={() => toggleMaterial(material.name)}
-                            className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[material.name]
-                                    ? "border-yellow-500 bg-yellow-50"
-                                    : "border-gray-300"
-                                }`}
-                        >
-                            <h3 className="text-xl font-semibold mb-2">{material.name}</h3>
-                            <ul className="list-disc list-inside">
-                                {material.features.map((feature, i) => (
-                                    <li key={i} className="text-black text-base font-normal">
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                        </button>
-                    ))}
-                    {/* materials percentage */}
-                    <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
-                        <h3 className="font-semibold mb-3">Materials selected</h3>
-                        <p className="text-xs text-gray-600 mb-3">
-                            Note: You may adjust percentages to achieve 100% mixture
-                        </p>
-                        <div className="space-y-2">
-                            {Object.entries(selectedMaterials).map(([name, percentage]) => (
-                                <div key={name} className="flex items-center justify-between">
-                                    <span className="text-sm">{name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            value={percentage}
-                                            onChange={(e) =>
-                                                updateMaterialPercentage(name, e.target.value)
-                                            }
-                                            className="w-16 px-2 py-1 border rounded text-sm"
-                                            min="0"
-                                            max="100"
-                                        />
-                                        <span className="text-sm">%</span>
-                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <StepNavigation 
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onNext={nextStep}
-                onPrev={prevStep}
-                isLastStep={false}
-            />
-            </>
-            )}
-
-            {/* STEP 3: Review & Submit */}
-            {currentStep === 3 && (
-                <>
-            {/* Company Information */}
-            <div className="flex flex-col items-center justify-center mt-6 md:mt-10 mb-8">
-                <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6">
-                    Company Information
-                </h3>
-                <div className="w-full max-w-2xl bg-white rounded-lg border-2 border-gray-300 p-4 md:p-6">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Customer Name *
-                            </label>
-                            <input
-                                type="text"
-                                value={companyName}
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="Enter customer name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Person *
-                            </label>
-                            <input
-                                type="text"
-                                value={contactPerson}
-                                onChange={(e) => setContactPerson(e.target.value)}
-                                placeholder="Enter contact person name"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-semibold mb-2">
-                                Contact Phone *
-                            </label>
-                            <input
-                                type="tel"
-                                value={contactPhone}
-                                onChange={(e) => setContactPhone(e.target.value)}
-                                placeholder="(+63) 9XX XXX XXXX"
-                                className="w-full border rounded px-3 py-2 bg-gray-50 text-sm md:text-base"
-                                required
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Order summary and address */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-5 ml-5 mr-5">
-                {/* Order summary */}
-                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
-                    <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
-
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between pb-4 border-b">
-                            <span className="font-semibold">Quantity</span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => handleQuantityChange(-10)}
-                                    className="border rounded p-1"
-                                >
-                                    <Minus size={16}></Minus>
-                                </button>
-                                <span className="w-12 text-center">{quantity}</span>
-                                <button
-                                    onClick={() => handleQuantityChange(10)}
-                                    className="border rounded p-1"
-                                >
-                                    <Plus size={16}></Plus>
-                                </button>
                             </div>
-                        </div>
 
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Product:</span>
-                                <span className="font-semibold">{selectedHanger}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600"> Material:</span>
-                                <div className="text-right">
-                                    {Object.entries(selectedMaterials).map(
-                                        ([name, percentage]) => (
-                                            <div key={name}>
-                                                {percentage}% {name}
-                                            </div>
-                                        )
+                            {/* Address Selection */}
+                            <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
+                                <h2 className="text-xl font-semibold mb-6">My Address</h2>
+
+                                <div className="space-y-4">
+                                    {addresses.length > 0 ? (
+                                        addresses.map((addr, idx) => (
+                                            <label
+                                                key={idx}
+                                                className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="address"
+                                                    checked={selectedAddress === idx}
+                                                    onChange={() => setSelectedAddress(idx)}
+                                                    className="mt-1"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-semibold">{addr.name}</span>
+                                                        {addr.isDefault && (
+                                                            <span className="bg-[#007BFF] text-white text-xs px-2 py-0.5 rounded">
+                                                                Default
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-gray-600">{addr.phone}</p>
+                                                    <p className="text-sm text-gray-600">{addr.address}</p>
+                                                </div>
+                                            </label>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <p className="mb-2 text-yellow-800 font-semibold">
+                                                ⚠️ No delivery address found
+                                            </p>
+                                            <p className="text-sm text-yellow-700">
+                                                Please update your company address in Account Settings
+                                            </p>
+                                            <p className="text-xs text-yellow-600 mt-2">
+                                                Orders without a proper address may experience delivery delays
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex justify-between item-center">
-                                <span className="text-gray-600">Color:</span>
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="w-6 h-6 rounded border"
-                                        style={{ backgroundColor: color }}
-                                    ></div>
-                                    <span className="font-mono text-xs">{color}</span>
+                        </div>
+
+                        {/* Modal */}
+                        {showModal && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[200]">
+                                <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 text-center max-w-md">
+                                    <img
+                                        src={validationIcon}
+                                        alt="Validation Icon"
+                                        className="mx-auto mb-4 w-16 h-16"
+                                    />
+                                    <h3 className="text-xl text-white font-semibold mb-4">
+                                        Your order will be validated first
+                                    </h3>
+                                    <p className="mb-6 text-white">
+                                        We will maintain communication and provide updates as needed.
+                                    </p>
+                                    <p className="mb-6 text-white text-sm">
+                                        Order Number:{" "}
+                                        {companyName ? `ORD-${new Date().getFullYear()}...` : ""}
+                                    </p>
+                                    <div className="flex gap-3 justify-center">
+                                        <Link to="/orders">
+                                            <button
+                                                className="bg-[#F5F5F5] text-[#333333] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#e0e0e0] transition-colors border border-gray-300"
+                                                onClick={() => setShowModal(false)}
+                                            >
+                                                View My Orders
+                                            </button>
+                                        </Link>
+                                        <Link to="/messages">
+                                            <button
+                                                className="bg-white text-[#007BFF] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                                                onClick={() => setShowModal(false)}
+                                            >
+                                                Go to Messages
+                                            </button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="pt-4 border-t">
-                            <label className="block font-semibold mb-2">
-                                Delivery Instruction
-                            </label>
-                            <textarea
-                                value={deliveryNotes}
-                                onChange={(e) => setDeliveryNotes(e.target.value)}
-                                placeholder="Write a note..."
-                                className="w-full border rounded px-3 py-2 text-sm min-h-[80px]"
-                            ></textarea>
-                        </div>
-                        {/* Submit Button */}
-                        <div className="flex justify-center">
-                            <button
-                                className="cursor-pointer bg-[#e6af2e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#c8971e] transition-colors w-full disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                onClick={handleSubmitOrder}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <LoadingSpinner size="sm" color="white" />
-                                        <span>Submitting Order...</span>
-                                    </>
-                                ) : (
-                                    'Send for Evaluation'
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Address Selection */}
-                <div className="bg-white rounded-lg border-2 border-gray-300 p-6">
-                    <h2 className="text-xl font-semibold mb-6">My Address</h2>
-
-                    <div className="space-y-4">
-                        {addresses.length > 0 ? (
-                            addresses.map((addr, idx) => (
-                                <label
-                                    key={idx}
-                                    className="flex item-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50"
-                                >
-                                    <input
-                                        type="radio"
-                                        name="address"
-                                        checked={selectedAddress === idx}
-                                        onChange={() => setSelectedAddress(idx)}
-                                        className="mt-1"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold">{addr.name}</span>
-                                            {addr.isDefault && (
-                                                <span className="bg-[#007BFF] text-white text-xs px-2 py-0.5 rounded">
-                                                    Default
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-600">{addr.phone}</p>
-                                        <p className="text-sm text-gray-600">{addr.address}</p>
-                                    </div>
-                                </label>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="mb-2 text-yellow-800 font-semibold">
-                                    ⚠️ No delivery address found
-                                </p>
-                                <p className="text-sm text-yellow-700">
-                                    Please update your company address in Account Settings
-                                </p>
-                                <p className="text-xs text-yellow-600 mt-2">
-                                    Orders without a proper address may experience delivery delays
-                                </p>
-                            </div>
                         )}
-                    </div>
-                </div>
-            </div>
 
-                {/* Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[200]">
-                        <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 text-center max-w-md">
-                            <img
-                                src={validationIcon}
-                                alt="Validation Icon"
-                                className="mx-auto mb-4 w-16 h-16"
-                            />
-                            <h3 className="text-xl text-white font-semibold mb-4">
-                                Your order will be validated first
-                            </h3>
-                            <p className="mb-6 text-white">
-                                We will maintain communication and provide updates as needed.
-                            </p>
-                            <p className="mb-6 text-white text-sm">
-                                Order Number:{" "}
-                                {companyName ? `ORD-${new Date().getFullYear()}...` : ""}
-                            </p>
-                            <div className="flex gap-3 justify-center">
-                                <Link to="/orders">
-                                    <button
-                                        className="bg-[#F5F5F5] text-[#333333] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#e0e0e0] transition-colors border border-gray-300"
-                                        onClick={() => setShowModal(false)}
-                                    >
-                                        View My Orders
-                                    </button>
-                                </Link>
-                                <Link to="/messages">
-                                    <button
-                                        className="bg-white text-[#007BFF] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                                        onClick={() => setShowModal(false)}
-                                    >
-                                        Go to Messages
-                                    </button>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
+                        <StepNavigation
+                            currentStep={currentStep}
+                            totalSteps={totalSteps}
+                            onNext={nextStep}
+                            onPrev={prevStep}
+                            isLastStep={true}
+                        />
+                    </>
                 )}
 
-            <StepNavigation 
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onNext={nextStep}
-                onPrev={prevStep}
-                isLastStep={true}
-            />
-            </>
-            )}
-
-            {/* Instructions Modal */}
-            {showInstructionsModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] pt-24 md:pt-28">
-                    <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto mx-4 relative z-[10000] mt-4">
+                {/* Instructions Modal */}
+                {showInstructionsModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] pt-24 md:pt-28">
+                        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto mx-4 relative z-[10000] mt-4">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <Info className="text-[#007BFF]" size={24} />
@@ -1972,7 +1970,7 @@ const Checkout = () => {
 
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             1
                                         </div>
                                         <div>
@@ -1987,7 +1985,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             2
                                         </div>
                                         <div>
@@ -2003,7 +2001,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             3
                                         </div>
                                         <div>
@@ -2018,7 +2016,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             4
                                         </div>
                                         <div>
@@ -2031,7 +2029,7 @@ const Checkout = () => {
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#007BFF] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                                             5
                                         </div>
                                         <div>
@@ -2067,7 +2065,7 @@ const Checkout = () => {
                                 <div className="flex justify-center gap-4 pt-4">
                                     <button
                                         onClick={() => setShowInstructionsModal(false)}
-                                        className="bg-[#007BFF] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#0056b3] transition-colors"
+                                        className="bg-[#191716] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#f1b322] transition-colors hover:text-[#191716] cursor-pointer"
                                     >
                                         Got it, let's start!
                                     </button>
@@ -2077,477 +2075,477 @@ const Checkout = () => {
                     </div>
                 )}
 
-            {/* Fullscreen 3D Viewer Modal */}
-            {isFullscreen && (
-                <div className="fixed inset-0 bg-[#191716] z-[200] flex flex-col">
-                    {/* Header with Close Button */}
-                    <div className="flex justify-between items-center p-3 md:p-4 bg-[#191716] backdrop-blur-sm border-b-2 border-[#E6AF2E]">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Preview</h3>
-                            <span className="text-[#E6AF2E] text-xs md:text-sm">({selectedHanger})</span>
-                        </div>
-                        <button
-                            onClick={toggleFullscreen}
-                            className="text-white hover:bg-[#DC3545] hover:text-white p-2 rounded-lg transition-colors"
-                            title="Exit Fullscreen cursor-pointer"
-                        >
-                            <X size={20} className="md:w-6 md:h-6 cursor-pointer" />
-                        </button>
-                    </div>
-
-                    {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                        {/* 3D Canvas */}
-                        <div className="flex-1 relative bg-gradient-to-br from-[#191716] to-[#191716]">
-                            <Suspense
-                                fallback={
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <LoadingSpinner size="xl" text="Loading 3D Model..." color="white" />
-                                    </div>
-                                }
+                {/* Fullscreen 3D Viewer Modal */}
+                {isFullscreen && (
+                    <div className="fixed inset-0 bg-[#191716] z-[200] flex flex-col">
+                        {/* Header with Close Button */}
+                        <div className="flex justify-between items-center p-3 md:p-4 bg-[#191716] backdrop-blur-sm border-b-2 border-[#E6AF2E]">
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <h3 className="text-white text-base md:text-lg lg:text-xl font-semibold">3D Preview</h3>
+                                <span className="text-[#E6AF2E] text-xs md:text-sm">({selectedHanger})</span>
+                            </div>
+                            <button
+                                onClick={toggleFullscreen}
+                                className="text-white hover:bg-[#f1b322] hover:text-white p-2 rounded-lg transition-colors"
+                                title="Exit Fullscreen cursor-pointer"
                             >
-                                <HangerScene
-                                    color={color}
-                                    hangerType={selectedHanger}
-                                    customText={customText}
-                                    textColor={textColor}
-                                    textPosition={textPosition}
-                                    textSize={textSize}
-                                    logoPreview={logoPreview}
-                                    logoPosition={logoPosition}
-                                    logoSize={logoSize}
-                                />
-                            </Suspense>
+                                <X size={20} className="md:w-6 md:h-6 cursor-pointer" />
+                            </button>
                         </div>
 
-                        {/* Customization Sidebar */}
-                        <div className="w-full md:w-80 lg:w-96 bg-[#191716] backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-[#E6AF2E] max-h-[40vh] md:max-h-none">
-                            {/* Color Picker */}
-                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
-                                <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
-                                <div className="space-y-2 md:space-y-3">
-                                    <div className="flex items-center gap-2">
+                        {/* Main Content Area */}
+                        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                            {/* 3D Canvas */}
+                            <div className="flex-1 relative bg-gradient-to-br from-[#191716] to-[#191716]">
+                                <Suspense
+                                    fallback={
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <LoadingSpinner size="xl" text="Loading 3D Model..." color="white" />
+                                        </div>
+                                    }
+                                >
+                                    <HangerScene
+                                        color={color}
+                                        hangerType={selectedHanger}
+                                        customText={customText}
+                                        textColor={textColor}
+                                        textPosition={textPosition}
+                                        textSize={textSize}
+                                        logoPreview={logoPreview}
+                                        logoPosition={logoPosition}
+                                        logoSize={logoSize}
+                                    />
+                                </Suspense>
+                            </div>
+
+                            {/* Customization Sidebar */}
+                            <div className="w-full md:w-80 lg:w-96 bg-[#191716] backdrop-blur-sm overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 border-t-2 md:border-t-0 md:border-l-2 border-[#E6AF2E] max-h-[40vh] md:max-h-none">
+                                {/* Color Picker */}
+                                <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
+                                    <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Color</h4>
+                                    <div className="space-y-2 md:space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="color"
+                                                value={color}
+                                                onChange={(e) => updateThreeJsColor(e.target.value)}
+                                                className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-[#DC3545]"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={color}
+                                                onChange={(e) => updateThreeJsColor(e.target.value)}
+                                                className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
+                                                placeholder="#4F46E5"
+                                            />
+                                        </div>
+                                        {/* Comic Style Color Picker */}
+                                        <ColorPickerWrapper>
+                                            <div className="comic-panel" style={{ background: '#191716', borderColor: '#E6AF2E' }}>
+                                                <div className="container-items">
+                                                    <button
+                                                        className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#e11d48' }}
+                                                        aria-color="#e11d48"
+                                                        onClick={() => updateThreeJsColor('#e11d48')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#f472b6' }}
+                                                        aria-color="#f472b6"
+                                                        onClick={() => updateThreeJsColor('#f472b6')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#fb923c' }}
+                                                        aria-color="#fb923c"
+                                                        onClick={() => updateThreeJsColor('#fb923c')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#facc15' }}
+                                                        aria-color="#facc15"
+                                                        onClick={() => updateThreeJsColor('#facc15')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#84cc16' }}
+                                                        aria-color="#84cc16"
+                                                        onClick={() => updateThreeJsColor('#84cc16')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#10b981' }}
+                                                        aria-color="#10b981"
+                                                        onClick={() => updateThreeJsColor('#10b981')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#0ea5e9' }}
+                                                        aria-color="#0ea5e9"
+                                                        onClick={() => updateThreeJsColor('#0ea5e9')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#3b82f6' }}
+                                                        aria-color="#3b82f6"
+                                                        onClick={() => updateThreeJsColor('#3b82f6')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#8b5cf6' }}
+                                                        aria-color="#8b5cf6"
+                                                        onClick={() => updateThreeJsColor('#8b5cf6')}
+                                                    />
+                                                    <button
+                                                        className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
+                                                        style={{ '--color': '#a78bfa' }}
+                                                        aria-color="#a78bfa"
+                                                        onClick={() => updateThreeJsColor('#a78bfa')}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </ColorPickerWrapper>
+                                    </div>
+                                </div>
+
+                                {/* Custom Text */}
+                                <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
+                                    <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
+                                    <input
+                                        type="text"
+                                        value={customText}
+                                        onChange={(e) => setCustomText(e.target.value)}
+                                        placeholder="Enter text"
+                                        className="w-full bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
+                                    />
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <label className="text-white text-xs">Color:</label>
                                         <input
                                             type="color"
-                                            value={color}
-                                            onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="w-10 h-10 md:w-12 md:h-12 rounded cursor-pointer border-2 border-[#DC3545]"
+                                            value={textColor}
+                                            onChange={(e) => setTextColor(e.target.value)}
+                                            className="w-8 h-8 rounded cursor-pointer border-2 border-[#DC3545]"
                                         />
                                         <input
                                             type="text"
-                                            value={color}
-                                            onChange={(e) => updateThreeJsColor(e.target.value)}
-                                            className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
-                                            placeholder="#4F46E5"
+                                            value={textColor}
+                                            onChange={(e) => setTextColor(e.target.value)}
+                                            className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
                                         />
                                     </div>
-                                    {/* Comic Style Color Picker */}
-                                    <ColorPickerWrapper>
-                                        <div className="comic-panel" style={{background: '#191716', borderColor: '#E6AF2E'}}>
-                                            <div className="container-items">
-                                                <button 
-                                                    className={`item-color ${color === '#e11d48' ? 'selected' : ''}`}
-                                                    style={{'--color': '#e11d48'}} 
-                                                    aria-color="#e11d48"
-                                                    onClick={() => updateThreeJsColor('#e11d48')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#f472b6' ? 'selected' : ''}`}
-                                                    style={{'--color': '#f472b6'}} 
-                                                    aria-color="#f472b6"
-                                                    onClick={() => updateThreeJsColor('#f472b6')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#fb923c' ? 'selected' : ''}`}
-                                                    style={{'--color': '#fb923c'}} 
-                                                    aria-color="#fb923c"
-                                                    onClick={() => updateThreeJsColor('#fb923c')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#facc15' ? 'selected' : ''}`}
-                                                    style={{'--color': '#facc15'}} 
-                                                    aria-color="#facc15"
-                                                    onClick={() => updateThreeJsColor('#facc15')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#84cc16' ? 'selected' : ''}`}
-                                                    style={{'--color': '#84cc16'}} 
-                                                    aria-color="#84cc16"
-                                                    onClick={() => updateThreeJsColor('#84cc16')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#10b981' ? 'selected' : ''}`}
-                                                    style={{'--color': '#10b981'}} 
-                                                    aria-color="#10b981"
-                                                    onClick={() => updateThreeJsColor('#10b981')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#0ea5e9' ? 'selected' : ''}`}
-                                                    style={{'--color': '#0ea5e9'}} 
-                                                    aria-color="#0ea5e9"
-                                                    onClick={() => updateThreeJsColor('#0ea5e9')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#3b82f6' ? 'selected' : ''}`}
-                                                    style={{'--color': '#3b82f6'}} 
-                                                    aria-color="#3b82f6"
-                                                    onClick={() => updateThreeJsColor('#3b82f6')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#8b5cf6' ? 'selected' : ''}`}
-                                                    style={{'--color': '#8b5cf6'}} 
-                                                    aria-color="#8b5cf6"
-                                                    onClick={() => updateThreeJsColor('#8b5cf6')}
-                                                />
-                                                <button 
-                                                    className={`item-color ${color === '#a78bfa' ? 'selected' : ''}`}
-                                                    style={{'--color': '#a78bfa'}} 
-                                                    aria-color="#a78bfa"
-                                                    onClick={() => updateThreeJsColor('#a78bfa')}
-                                                />
-                                            </div>
-                                        </div>
-                                    </ColorPickerWrapper>
-                                </div>
-                            </div>
-
-                            {/* Custom Text */}
-                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
-                                <h4 className="text-white font-semibold mb-2 md:mb-3 text-xs md:text-sm">Custom Text</h4>
-                                <input
-                                    type="text"
-                                    value={customText}
-                                    onChange={(e) => setCustomText(e.target.value)}
-                                    placeholder="Enter text"
-                                    className="w-full bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
-                                />
-                                <div className="flex items-center gap-2 mb-2">
-                                    <label className="text-white text-xs">Color:</label>
-                                    <input
-                                        type="color"
-                                        value={textColor}
-                                        onChange={(e) => setTextColor(e.target.value)}
-                                        className="w-8 h-8 rounded cursor-pointer border-2 border-[#DC3545]"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={textColor}
-                                        onChange={(e) => setTextColor(e.target.value)}
-                                        className="flex-1 bg-[#191716] text-white border border-[#E6AF2E] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#E6AF2E]"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-white text-xs">Position:</label>
-                                        <button
-                                            onClick={() => {
-                                                setTextPosition({ x: 0, y: 0, z: 0 });
-                                                setTextSize(0.5);
-                                            }}
-                                            className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
-                                        >
-                                            Reset to Default
-                                        </button>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-white text-xs w-4">X:</span>
-                                            <input
-                                                type="range"
-                                                min="-1"
-                                                max="1"
-                                                step="0.01"
-                                                value={textPosition.x}
-                                                onChange={(e) => setTextPosition({...textPosition, x: parseFloat(e.target.value)})}
-                                                className="flex-1"
-                                            />
-                                            <span className="text-white text-xs w-12">{textPosition.x.toFixed(1)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-white text-xs w-4">Y:</span>
-                                            <input
-                                                type="range"
-                                                min="-1"
-                                                max="1"
-                                                step="0.01"
-                                                value={textPosition.y}
-                                                onChange={(e) => setTextPosition({...textPosition, y: parseFloat(e.target.value)})}
-                                                className="flex-1"
-                                            />
-                                            <span className="text-white text-xs w-12">{textPosition.y.toFixed(1)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-white text-xs w-4">Z:</span>
-                                            <input
-                                                type="range"
-                                                min="-1"
-                                                max="1"
-                                                step="0.01"
-                                                value={textPosition.z}
-                                                onChange={(e) => setTextPosition({...textPosition, z: parseFloat(e.target.value)})}
-                                                className="flex-1"
-                                            />
-                                            <span className="text-white text-xs w-12">{textPosition.z.toFixed(1)}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-white text-xs w-16">Size:</label>
-                                        <input
-                                            type="range"
-                                            min="0.5"
-                                            max="2"
-                                            step="0.01"
-                                            value={textSize}
-                                            onChange={(e) => setTextSize(parseFloat(e.target.value))}
-                                            className="flex-1"
-                                        />
-                                        <span className="text-white text-xs w-10">{textSize.toFixed(1)}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Logo Upload */}
-                            <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
-                                <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
-                                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#E6AF2E] rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#E6AF2E] transition-colors">
-                                    <ImageIcon size={16} className="text-white" />
-                                    <span className="text-xs text-white ">
-                                        {customLogo ? customLogo.name : 'Upload Logo'}
-                                    </span>
-                                    <input
-                                        type="file"
-                                        accept="image/png,image/jpeg,image/svg+xml"
-                                        onChange={handleLogoUpload}
-                                        className="hidden"
-                                    />
-                                </label>
-                                {logoPreview && (
-                                    <div className="mt-2 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain border-2 border-[#DC3545] rounded bg-white" />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-white text-xs">Position:</label>
                                             <button
                                                 onClick={() => {
-                                                    setCustomLogo(null);
-                                                    setLogoPreview(null);
+                                                    setTextPosition({ x: 0, y: 0, z: 0 });
+                                                    setTextSize(0.5);
                                                 }}
-                                                className="text-red-400 hover:text-red-300 text-xs font-semibold"
+                                                className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
                                             >
-                                                Remove
+                                                Reset to Default
                                             </button>
                                         </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-white text-xs">Position:</label>
-                                                <button
-                                                    onClick={() => {
-                                                        setLogoPosition({ x: 0, y: 0, z: 0 });
-                                                        setLogoSize(0.5);
-                                                    }}
-                                                    className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
-                                                >
-                                                    Reset to Default
-                                                </button>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-white text-xs w-4">X:</span>
-                                                    <input
-                                                        type="range"
-                                                        min="-1"
-                                                        max="1"
-                                                        step="0.01"
-                                                        value={logoPosition.x}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, x: parseFloat(e.target.value)})}
-                                                        className="flex-1"
-                                                    />
-                                                    <span className="text-white text-xs w-12">{logoPosition.x.toFixed(1)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-white text-xs w-4">Y:</span>
-                                                    <input
-                                                        type="range"
-                                                        min="-1"
-                                                        max="1"
-                                                        step="0.01"
-                                                        value={logoPosition.y}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, y: parseFloat(e.target.value)})}
-                                                        className="flex-1"
-                                                    />
-                                                    <span className="text-white text-xs w-12">{logoPosition.y.toFixed(1)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-white text-xs w-4">Z:</span>
-                                                    <input
-                                                        type="range"
-                                                        min="-1"
-                                                        max="1"
-                                                        step="0.01"
-                                                        value={logoPosition.z}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, z: parseFloat(e.target.value)})}
-                                                        className="flex-1"
-                                                    />
-                                                    <span className="text-white text-xs w-12">{logoPosition.z.toFixed(1)}</span>
-                                                </div>
-                                            </div>
+                                        <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <label className="text-white text-xs w-16">Size:</label>
+                                                <span className="text-white text-xs w-4">X:</span>
                                                 <input
                                                     type="range"
-                                                    min="0.5"
-                                                    max="2"
+                                                    min="-1"
+                                                    max="1"
                                                     step="0.01"
-                                                    value={logoSize}
-                                                    onChange={(e) => setLogoSize(parseFloat(e.target.value))}
+                                                    value={textPosition.x}
+                                                    onChange={(e) => setTextPosition({ ...textPosition, x: parseFloat(e.target.value) })}
                                                     className="flex-1"
                                                 />
-                                                <span className="text-white text-xs w-10">{logoSize.toFixed(1)}</span>
+                                                <span className="text-white text-xs w-12">{textPosition.x.toFixed(1)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-white text-xs w-4">Y:</span>
+                                                <input
+                                                    type="range"
+                                                    min="-1"
+                                                    max="1"
+                                                    step="0.01"
+                                                    value={textPosition.y}
+                                                    onChange={(e) => setTextPosition({ ...textPosition, y: parseFloat(e.target.value) })}
+                                                    className="flex-1"
+                                                />
+                                                <span className="text-white text-xs w-12">{textPosition.y.toFixed(1)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-white text-xs w-4">Z:</span>
+                                                <input
+                                                    type="range"
+                                                    min="-1"
+                                                    max="1"
+                                                    step="0.01"
+                                                    value={textPosition.z}
+                                                    onChange={(e) => setTextPosition({ ...textPosition, z: parseFloat(e.target.value) })}
+                                                    className="flex-1"
+                                                />
+                                                <span className="text-white text-xs w-12">{textPosition.z.toFixed(1)}</span>
                                             </div>
                                         </div>
+                                        <div className="flex items-center gap-2">
+                                            <label className="text-white text-xs w-16">Size:</label>
+                                            <input
+                                                type="range"
+                                                min="0.5"
+                                                max="2"
+                                                step="0.01"
+                                                value={textSize}
+                                                onChange={(e) => setTextSize(parseFloat(e.target.value))}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-white text-xs w-10">{textSize.toFixed(1)}</span>
+                                        </div>
                                     </div>
-                                )}
+                                </div>
+
+                                {/* Logo Upload */}
+                                <div className="bg-[#191716]/70 rounded-lg p-3 md:p-4 border border-[#E6AF2E]">
+                                    <h4 className="text-[#E6AF2E] font-semibold mb-2 md:mb-3 text-xs md:text-sm">Logo</h4>
+                                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-[#E6AF2E] rounded-lg p-2 md:p-3 cursor-pointer hover:bg-[#E6AF2E] transition-colors">
+                                        <ImageIcon size={16} className="text-white" />
+                                        <span className="text-xs text-white ">
+                                            {customLogo ? customLogo.name : 'Upload Logo'}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/svg+xml"
+                                            onChange={handleLogoUpload}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    {logoPreview && (
+                                        <div className="mt-2 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <img src={logoPreview} alt="Logo" className="w-12 h-12 object-contain border-2 border-[#DC3545] rounded bg-white" />
+                                                <button
+                                                    onClick={() => {
+                                                        setCustomLogo(null);
+                                                        setLogoPreview(null);
+                                                    }}
+                                                    className="text-red-400 hover:text-red-300 text-xs font-semibold"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-white text-xs">Position:</label>
+                                                    <button
+                                                        onClick={() => {
+                                                            setLogoPosition({ x: 0, y: 0, z: 0 });
+                                                            setLogoSize(0.5);
+                                                        }}
+                                                        className="text-xs text-yellow-400 hover:text-yellow-300 underline font-semibold"
+                                                    >
+                                                        Reset to Default
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-white text-xs w-4">X:</span>
+                                                        <input
+                                                            type="range"
+                                                            min="-1"
+                                                            max="1"
+                                                            step="0.01"
+                                                            value={logoPosition.x}
+                                                            onChange={(e) => setLogoPosition({ ...logoPosition, x: parseFloat(e.target.value) })}
+                                                            className="flex-1"
+                                                        />
+                                                        <span className="text-white text-xs w-12">{logoPosition.x.toFixed(1)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-white text-xs w-4">Y:</span>
+                                                        <input
+                                                            type="range"
+                                                            min="-1"
+                                                            max="1"
+                                                            step="0.01"
+                                                            value={logoPosition.y}
+                                                            onChange={(e) => setLogoPosition({ ...logoPosition, y: parseFloat(e.target.value) })}
+                                                            className="flex-1"
+                                                        />
+                                                        <span className="text-white text-xs w-12">{logoPosition.y.toFixed(1)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-white text-xs w-4">Z:</span>
+                                                        <input
+                                                            type="range"
+                                                            min="-1"
+                                                            max="1"
+                                                            step="0.01"
+                                                            value={logoPosition.z}
+                                                            onChange={(e) => setLogoPosition({ ...logoPosition, z: parseFloat(e.target.value) })}
+                                                            className="flex-1"
+                                                        />
+                                                        <span className="text-white text-xs w-12">{logoPosition.z.toFixed(1)}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-white text-xs w-16">Size:</label>
+                                                    <input
+                                                        type="range"
+                                                        min="0.5"
+                                                        max="2"
+                                                        step="0.01"
+                                                        value={logoSize}
+                                                        onChange={(e) => setLogoSize(parseFloat(e.target.value))}
+                                                        className="flex-1"
+                                                    />
+                                                    <span className="text-white text-xs w-10">{logoSize.toFixed(1)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Footer with Info */}
-                    <div className="p-4 bg-[#191716] backdrop-blur-sm text-center border-t-2 border-[#DC3545]">
-                        <p className="text-white text-sm">
-                            Drag to rotate • Scroll to zoom • Right-click to pan • Press ESC
-                            or click{" "}
-                            <button
-                                onClick={toggleFullscreen}
-                                className="text-[#DC3545] hover:text-white underline ml-1 font-semibold cursor-pointer"
-                            >
-                                here
-                            </button>{" "}
-                            to exit
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Save Design Modal */}
-            {saveDesignModal && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[200] p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold">Save Design</h3>
-                            <button 
-                                onClick={() => setSaveDesignModal(false)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                <X size={24} />
-                            </button>
+                        {/* Footer with Info */}
+                        <div className="p-4 bg-[#191716] backdrop-blur-sm text-center border-t-2 border-[#DC3545]">
+                            <p className="text-white text-sm">
+                                Drag to rotate • Scroll to zoom • Right-click to pan • Press ESC
+                                or click{" "}
+                                <button
+                                    onClick={toggleFullscreen}
+                                    className="text-[#DC3545] hover:text-white underline ml-1 font-semibold cursor-pointer"
+                                >
+                                    here
+                                </button>{" "}
+                                to exit
+                            </p>
                         </div>
-                        
-                        <div className="mb-6">
-                            <label className="block text-sm font-semibold mb-2">Design Name</label>
-                            <input
-                                type="text"
-                                value={designName}
-                                onChange={(e) => setDesignName(e.target.value)}
-                                placeholder="e.g., Red 97-12 with Logo"
-                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#007BFF]"
-                                autoFocus
-                            />
-                        </div>
+                    </div>
+                )}
 
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                            <h4 className="font-semibold mb-2 text-sm">Design Details:</h4>
-                            <div className="space-y-1 text-sm text-gray-600">
-                                <p>• Hanger: <span className="font-medium">{selectedHanger}</span></p>
-                                <p>• Color: <span className="inline-block w-4 h-4 rounded border" style={{ backgroundColor: color }}></span> {color}</p>
-                                {customText && <p>• Text: <span className="font-medium">"{customText}"</span></p>}
-                                {logoPreview && <p>• Logo: <span className="font-medium">✓ Included</span></p>}
-                                {Object.keys(selectedMaterials).length > 0 && (
-                                    <p>• Materials: <span className="font-medium">{Object.keys(selectedMaterials).join(', ')}</span></p>
-                                )}
+                {/* Save Design Modal */}
+                {saveDesignModal && (
+                    <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[200] p-4">
+                        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold">Save Design</h3>
+                                <button
+                                    onClick={() => setSaveDesignModal(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    <X size={24} />
+                                </button>
                             </div>
-                        </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setSaveDesignModal(false)}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmSaveDesign}
-                                disabled={isSaving || !designName.trim()}
-                                className="flex-1 px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isSaving ? 'Saving...' : 'Save Design'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            <div className="mb-6">
+                                <label className="block text-sm font-semibold mb-2">Design Name</label>
+                                <input
+                                    type="text"
+                                    value={designName}
+                                    onChange={(e) => setDesignName(e.target.value)}
+                                    placeholder="e.g., Red 97-12 with Logo"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#007BFF]"
+                                    autoFocus
+                                />
+                            </div>
 
-            {/* Color Limitation Modal for 97-12 and 97-11 */}
-            {showColorLimitationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
-                        {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="p-4 md:p-6">
-                            <div className="flex justify-center mb-4">
-                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
-                                    <Info className="w-8 h-8 text-black" />
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                <h4 className="font-semibold mb-2 text-sm">Design Details:</h4>
+                                <div className="space-y-1 text-sm text-gray-600">
+                                    <p>• Hanger: <span className="font-medium">{selectedHanger}</span></p>
+                                    <p>• Color: <span className="inline-block w-4 h-4 rounded border" style={{ backgroundColor: color }}></span> {color}</p>
+                                    {customText && <p>• Text: <span className="font-medium">"{customText}"</span></p>}
+                                    {logoPreview && <p>• Logo: <span className="font-medium">✓ Included</span></p>}
+                                    {Object.keys(selectedMaterials).length > 0 && (
+                                        <p>• Materials: <span className="font-medium">{Object.keys(selectedMaterials).join(', ')}</span></p>
+                                    )}
                                 </div>
                             </div>
 
-                            <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
-                                For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
-                                Color changes will only apply on the main body and clips.
-                            </p>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
-                            <button
-                                onClick={() => setShowColorLimitationModal(false)}
-                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
-                            >
-                                Got it
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Notification Modal */}
-            {notificationModal.show && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
-                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
-                        {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-black text-lg md:text-xl font-black">
-                                {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
-                            </h2>
-                        </div>
-
-                        {/* Modal Body */}
-                        <div className="p-4 md:p-6">
-                            <p className="text-gray-700 text-base md:text-lg">{notificationModal.message}</p>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
-                            <button
-                                onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
-                            >
-                                OK
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setSaveDesignModal(false)}
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmSaveDesign}
+                                    disabled={isSaving || !designName.trim()}
+                                    className="flex-1 px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSaving ? 'Saving...' : 'Save Design'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* Color Limitation Modal for 97-12 and 97-11 */}
+                {showColorLimitationModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
+                        <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                            {/* Modal Header */}
+                            <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                                <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-4 md:p-6">
+                                <div className="flex justify-center mb-4">
+                                    <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
+                                        <Info className="w-8 h-8 text-black" />
+                                    </div>
+                                </div>
+
+                                <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
+                                    For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars.
+                                    Color changes will only apply on the main body and clips.
+                                </p>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                                <button
+                                    onClick={() => setShowColorLimitationModal(false)}
+                                    className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                                >
+                                    Got it
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Notification Modal */}
+                {notificationModal.show && (
+                    <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
+                        <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                            {/* Modal Header */}
+                            <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                                <h2 className="text-black text-lg md:text-xl font-black">
+                                    {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
+                                </h2>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-4 md:p-6">
+                                <p className="text-gray-700 text-base md:text-lg">{notificationModal.message}</p>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
+                                <button
+                                    onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
+                                    className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

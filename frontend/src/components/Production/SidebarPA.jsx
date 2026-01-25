@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import { NavLink } from 'react-router-dom'
-import { EllipsisVertical, LogOut, SquareUser, ShoppingCart, Target } from 'lucide-react'
+import { EllipsisVertical, LogOut, SquareUser, ShoppingCart, Target, User } from 'lucide-react'
+import MobileBottomNav from '../MobileBottomNav'
 
 const SidebarPA = () => {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ const SidebarPA = () => {
     return (
         <div>
             {/* Sidebar */}
-            <aside className="w-64 bg-[#191716] text-white flex flex-col border-r-5 border-[#DAC325] h-full">
+            <aside className="hidden lg:flex w-64 bg-[#191716] text-white flex-col border-r-5 border-[#DAC325] h-full">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-600">
                     <div className="flex items-center gap-3">
                         <img src={logo} alt="Logo" className="w-20 h-20" />
@@ -81,6 +82,16 @@ const SidebarPA = () => {
                     </Link>
                 </div>
             </aside>
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav
+                navItems={[
+                    { id: 'assignorder', path: '/assignorder', icon: SquareUser },
+                    { id: 'performance', path: '/performance', icon: Target },
+                    { id: 'profilePA', path: '/profilePA', icon: User },
+                    { id: 'logout', path: '/authPA', icon: LogOut },
+                ]}
+                accentColor="#E6AF2E"
+            />
         </div>
     )
 }

@@ -346,7 +346,7 @@ const PaymentPage = () => {
 
             {/* Success Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 p-3 md:p-4 animate-fadeIn">
+                <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-opacity-30 z-50 p-3 md:p-4 animate-fadeIn">
                     <div className="bg-[#4ade80] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">

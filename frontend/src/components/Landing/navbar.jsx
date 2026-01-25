@@ -250,7 +250,7 @@ const Navbar = () => {
       {/* Mobile menu */}
       <div
         ref={mobileMenuRef}
-        className={`md:hidden bg-[#353f94] transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+        className={`md:hidden  transition-all duration-300 ease-in-out overflow-x-hidden ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
       >
         <div className="mt-3 border-t-2 border-white pt-3 pb-2">
@@ -266,8 +266,8 @@ const Navbar = () => {
               {/* User Profile Section */}
               <div className="mt-3 pt-3 border-t border-gray-400">
                 <div className="px-1 py-2 mb-2">
-                  <div className="flex items-center gap-3 bg-[#0056b3] rounded-lg p-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#DC3545] to-[#c82333] rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="flex items-center gap-3 bg-[#f1b322] rounded-lg p-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#e6af2e] to-[#c82333]  rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                       <User className="text-white" size={24} strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -281,11 +281,11 @@ const Navbar = () => {
                 <div className="space-y-1 px-1">
                   <NavLink 
                     to="/checkout" 
-                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#0056b3] rounded-lg transition-colors duration-200"
+                    className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#f1b322] group-hover rounded-lg transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="w-8 h-8 bg-[#0056b3] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <ShoppingCart size={18} className="text-[#DC3545]" />
+                    <div className="w-8 h-8 bg-[#f1b322] group-hover:bg-[#e6af2e] transition-colors rounded-lg flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="flex-1">
                       <span className="text-sm font-medium block">Place Order</span>
@@ -298,8 +298,8 @@ const Navbar = () => {
                     className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Settings size={18} className="text-yellow-400" />
+                    <div className="w-8 h-8 bg-[#f1b322] group-hover:bg-[#e6af2e] transition-colors rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Settings size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="flex-1">
                       <span className="text-sm font-medium block">Account Settings</span>
@@ -312,8 +312,8 @@ const Navbar = () => {
                     className="flex items-center gap-3 px-3 py-2.5 text-white hover:bg-[#4a5899] rounded-lg transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="w-8 h-8 bg-[#4a5899] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <MessageCircle size={18} className="text-yellow-400" />
+                    <div className="w-8 h-8 bg-[#f1b322] group-hover:bg-[#e6af2e] transition-colors rounded-lg flex items-center justify-center flex-shrink-0">
+                      <MessageCircle size={18} className="text-gray-600 group-hover:text-white transition-colors" />
                     </div>
                     <div className="flex-1">
                       <span className="text-sm font-medium block">Messages</span>
