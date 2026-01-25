@@ -319,6 +319,8 @@ router.get("/user/:userid", async (req, res) => {
 
 // 📋 Get user orders WITH payments and materials (optimized with pagination)
 router.get("/user/:userid/full", async (req, res) => {
+  console.log('📋 Full orders endpoint called for userid:', req.params.userid);
+  console.log('Query params:', req.query);
   try {
     const { userid } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -328,6 +330,7 @@ router.get("/user/:userid/full", async (req, res) => {
     // Validate userid format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(userid)) {
+      console.error('Invalid userid format:', userid);
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
@@ -360,7 +363,21 @@ router.get("/user/:userid/full", async (req, res) => {
       .range(offset, offset + limit - 1);
 
     if (ordersError) {
+      console.error('Orders fetch error:', ordersError);
       throw ordersError;
+    }
+
+    // If no orders, return early
+    if (!orders || orders.length === 0) {
+      return res.status(200).json({
+        orders: [],
+        pagination: {
+          currentPage: page,
+          totalPages: 0,
+          totalOrders: 0,
+          ordersPerPage: limit
+        }
+      });
     }
 
     // Batch fetch all materials for all orders in one query
