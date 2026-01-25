@@ -748,13 +748,13 @@ const Order = () => {
                     </div>
 
                     {/* Skeleton Loaders */}
-                    <div className="space-y-4 md:space-y-6">
-                        {[1, 2, 3].map((n) => (
-                            <div key={n} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div className="space-y-4 md:space-y-6" style={{ minHeight: '400px' }}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                            <div key={n} className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minHeight: '120px' }}>
                                 <div className="px-3 md:px-6 py-4">
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                                         {/* Image skeleton */}
-                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded animate-pulse"></div>
+                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded animate-pulse flex-shrink-0" style={{ aspectRatio: '1/1' }}></div>
                                         
                                         {/* Content skeleton */}
                                         <div className="flex-1 space-y-3 w-full">
@@ -829,7 +829,7 @@ const Order = () => {
                 </div>
 
                 {/* Orders List */}
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-4 md:space-y-6" style={{ minHeight: '400px' }}>
                     {filteredOrders.length === 0 ? (
                         <div className="bg-white rounded-lg shadow-lg p-6 md:p-12 text-center">
                             <p className="text-xl md:text-2xl text-gray-600">No orders found</p>
@@ -868,7 +868,7 @@ const Order = () => {
                                         <div className="lg:hidden space-y-4">
                                             {/* Product Image & Name */}
                                             <div className="flex items-center gap-3">
-                                                <div className="w-16 h-16 md:w-20 md:h-20 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                                                <div className="w-16 h-16 md:w-20 md:h-20 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0" style={{ aspectRatio: '1/1' }}>
                                                     {(() => {
                                                         try {
                                                             if (order.threeddesigndata) {
@@ -882,6 +882,9 @@ const Order = () => {
                                                                             src={designData.thumbnail}
                                                                             alt="Design preview"
                                                                             className="w-full h-full object-cover"
+                                                                            width="80"
+                                                                            height="80"
+                                                                            loading="lazy"
                                                                         />
                                                                     );
                                                                 }
@@ -931,7 +934,7 @@ const Order = () => {
                                         <div className="hidden lg:flex items-center">
                                             {/* Product Image & Name */}
                                             <div className="flex-1 flex items-center gap-4">
-                                                <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                                                <div className="w-16 h-16 border-2 border-gray-300 rounded flex items-center justify-center bg-white overflow-hidden flex-shrink-0" style={{ aspectRatio: '1/1' }}>
                                                     {(() => {
                                                         try {
                                                             if (order.threeddesigndata) {
@@ -945,6 +948,9 @@ const Order = () => {
                                                                             src={designData.thumbnail}
                                                                             alt="Design preview"
                                                                             className="w-full h-full object-cover"
+                                                                            width="64"
+                                                                            height="64"
+                                                                            loading="lazy"
                                                                         />
                                                                     );
                                                                 }
