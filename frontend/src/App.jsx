@@ -65,6 +65,9 @@ import NotificationPageOM from './pages/OperationalManagerPages/NotificationPage
 
 import VerificationPage from './pages/OperationalManagerPages/VerificationPage';
 
+import { SpeedInsights } from "@vercel/speed-insights/react"
+
+
 
 // ✅ Protect logged-in customer routes
 const ProtectedRoute = ({ element }) => {
@@ -221,7 +224,12 @@ const router = createBrowserRouter(
 );
 
 const App = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <SpeedInsights />
+    </>
+  );
 };
 
 export default App;
