@@ -2,8 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react'
 import ProductCards from '../../components/Checkout/productcard'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import MB3ProductPage from '../../images/MB3ProductPage.png'
+import Product9712 from '../../images/97-12ProductPage.png'
+import ProductCQ807 from '../../images/CQ-807ProductPage.png'
+import Product9711 from '../../images/97-11ProductPage.png'
+import Product9708 from '../../images/97-08ProductPage.png'
 
 const ProductSA = () => {
+    // Map product names to their images
+    const productImageMap = {
+        'MB3': MB3ProductPage,
+        '97-12': Product9712,
+        'CQ-807': ProductCQ807,
+        '97-11': Product9711,
+        '97-08': Product9708
+    }
+    
+    const getProductImage = (productName) => {
+        return productImageMap[productName] || null
+    }
     const [products, setProducts] = useState([])
     const [materials, setMaterials] = useState([])
     const [loading, setLoading] = useState(true)
@@ -16,7 +33,12 @@ const ProductSA = () => {
     const [editingMaterial, setEditingMaterial] = useState(null)
     
     // Form states
-    const [productForm, setProductForm] = useState({ productname: '', description: '' })
+    const [productForm, setProductForm] = useState({ 
+        productname: '', 
+        description: '', 
+        image_url: '', 
+        model_url: '' 
+    })
     const [materialForm, setMaterialForm] = useState({ materialname: '', features: [''] })
     
     useEffect(() => {
@@ -44,16 +66,68 @@ const ProductSA = () => {
         }
     }
     
+    // Convert file to base64
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(file)
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = error => reject(error)
+        })
+    }
+    
+    // Handle image upload
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file')
+                return
+            }
+            try {
+                const base64 = await fileToBase64(file)
+                setProductForm({ ...productForm, image_url: base64 })
+            } catch (err) {
+                alert('Failed to process image')
+            }
+        }
+    }
+    
+    // Handle 3D model upload
+    const handleModelUpload = async (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            const validExtensions = ['.glb', '.gltf', '.obj', '.fbx']
+            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+            
+            if (!validExtensions.includes(fileExtension)) {
+                alert('Please select a valid 3D model file (.glb, .gltf, .obj, .fbx)')
+                return
+            }
+            try {
+                const base64 = await fileToBase64(file)
+                setProductForm({ ...productForm, model_url: base64 })
+            } catch (err) {
+                alert('Failed to process 3D model')
+            }
+        }
+    }
+    
     // Product handlers
     const handleAddProduct = () => {
         setEditingProduct(null)
-        setProductForm({ productname: '', description: '' })
+        setProductForm({ productname: '', description: '', image_url: '', model_url: '' })
         setShowProductModal(true)
     }
     
     const handleEditProduct = (product) => {
         setEditingProduct(product)
-        setProductForm({ productname: product.productname, description: product.description || '' })
+        setProductForm({ 
+            productname: product.productname, 
+            description: product.description || '', 
+            image_url: product.image_url || '',
+            model_url: product.model_url || ''
+        })
         setShowProductModal(true)
     }
     
@@ -191,7 +265,15 @@ const ProductSA = () => {
             
             {/* Product Image Area */}
             <div className="bg-gray-50 h-32 flex items-center justify-center border-b border-gray-200">
-                <div className="text-6xl"><ProductCards /></div>
+                {getProductImage(product.productname) ? (
+                    <img 
+                        src={getProductImage(product.productname)} 
+                        alt={product.productname}
+                        className="h-full w-full object-contain p-2"
+                    />
+                ) : (
+                    <div className="text-6xl"><ProductCards /></div>
+                )}
             </div>
             {/* Product Name Badge */}
             <div className="bg-[#E6AF2E] p-3 text-center">
@@ -335,24 +417,25 @@ const ProductSA = () => {
             {/* Product Modal */}
             {showProductModal && (
                 <div className="fixed inset-0 bg-blur-50 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold mb-4">
                             {editingProduct ? 'Edit Product' : 'Add New Product'}
                         </h3>
                         
                         <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Product Name</label>
+                            <label className="block text-sm font-medium mb-2">Product Name *</label>
                             <input
                                 type="text"
                                 value={productForm.productname}
                                 onChange={(e) => setProductForm({ ...productForm, productname: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
                                 placeholder="e.g., MB3"
+                                required
                             />
                         </div>
                         
                         <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+                            <label className="block text-sm font-medium mb-2">Description</label>
                             <textarea
                                 value={productForm.description}
                                 onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
@@ -362,10 +445,60 @@ const ProductSA = () => {
                             />
                         </div>
                         
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Product Image</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            />
+                            {productForm.image_url && (
+                                <div className="mt-2">
+                                    <img 
+                                        src={productForm.image_url} 
+                                        alt="Preview" 
+                                        className="h-20 w-20 object-cover rounded border border-gray-300"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setProductForm({ ...productForm, image_url: '' })}
+                                        className="mt-1 text-xs text-red-600 hover:text-red-700"
+                                    >
+                                        Remove Image
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">3D Model</label>
+                            <input
+                                type="file"
+                                accept=".glb,.gltf,.obj,.fbx"
+                                onChange={handleModelUpload}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Supported formats: .glb, .gltf, .obj, .fbx</p>
+                            {productForm.model_url && (
+                                <div className="mt-2">
+                                    <p className="text-sm text-green-600">✓ 3D Model uploaded</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setProductForm({ ...productForm, model_url: '' })}
+                                        className="mt-1 text-xs text-red-600 hover:text-red-700"
+                                    >
+                                        Remove Model
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        
                         <div className="flex gap-3">
                             <button
                                 onClick={handleSaveProduct}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center gap-2"
+                                disabled={!productForm.productname}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                                 <Save size={16} />
                                 Save

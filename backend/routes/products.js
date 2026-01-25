@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
 // ➕ POST /products - Create new product
 router.post("/", async (req, res) => {
   try {
-    const { productname, description, image_url } = req.body;
+    const { productname, description, image_url, model_url } = req.body;
 
     if (!productname) {
       return res.status(400).json({ error: "Product name is required" });
@@ -39,7 +39,7 @@ router.post("/", async (req, res) => {
 
     const { data: product, error } = await supabase
       .from("products")
-      .insert([{ productname, description, image_url }])
+      .insert([{ productname, description, image_url, model_url }])
       .select()
       .single();
 
@@ -61,13 +61,14 @@ router.post("/", async (req, res) => {
 router.patch("/:productid", async (req, res) => {
   try {
     const { productid } = req.params;
-    const { productname, description, image_url, is_active } = req.body;
+    const { productname, description, image_url, model_url, is_active } = req.body;
 
     const updateData = { updatedat: new Date().toISOString() };
     
     if (productname !== undefined) updateData.productname = productname;
     if (description !== undefined) updateData.description = description;
     if (image_url !== undefined) updateData.image_url = image_url;
+    if (model_url !== undefined) updateData.model_url = model_url;
     if (is_active !== undefined) updateData.is_active = is_active;
 
     const { data: product, error } = await supabase
