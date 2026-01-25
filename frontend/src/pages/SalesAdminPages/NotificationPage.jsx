@@ -275,11 +275,19 @@ const NotificationPage = () => {
                                             
                                             {/* Order info */}
                                             {notification.orders && (
-                                                <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                                                    <span>Order: {notification.orders.companyname || 'N/A'}</span>
-                                                    <span className="px-2 py-1 bg-gray-100 rounded">
+                                                <div className="mt-2 flex flex-wrap items-center gap-2 md:gap-4 text-xs text-gray-500">
+                                                    <span className="font-medium">Order: {notification.orders.companyname || 'N/A'}</span>
+                                                    {notification.orders.quantity && (
+                                                        <span className="text-gray-400">Qty: {notification.orders.quantity}</span>
+                                                    )}
+                                                    <span className="px-2 py-1 bg-gray-100 rounded font-medium">
                                                         {notification.orders.orderstatus}
                                                     </span>
+                                                    {notification.type === 'order_created' && (
+                                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">
+                                                            New Order
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
                                             
