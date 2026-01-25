@@ -24,6 +24,12 @@ const Order = () => {
     const [error, setError] = useState(null);
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
+    
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalOrders, setTotalOrders] = useState(0);
+    const ordersPerPage = 10;
 
     const [showProofModal, setShowProofModal] = useState(false);
     const [proofImage, setProofImage] = useState(null);
@@ -63,26 +69,25 @@ const Order = () => {
     const handleOrderUpdate = useCallback((payload) => {
 
         if (payload.eventType === 'INSERT') {
-            // New order added
-            setOrders(prev => [payload.new, ...prev]);
-            // Fetch payment info for new order
-            fetchPaymentInfo([payload.new]);
+            // New order added - refetch current page to maintain pagination
+            if (currentPage === 1) {
+                // Only auto-update if on first page
+                window.location.reload();
+            }
         } else if (payload.eventType === 'UPDATE') {
-            // Order updated
+            // Order updated - update in current list if present
             setOrders(prev => 
                 prev.map(order => 
-                    order.orderid === payload.new.orderid ? payload.new : order
+                    order.orderid === payload.new.orderid ? { ...payload.new, payment: orderPayments[payload.new.orderid] } : order
                 )
             );
-            // Refetch payment info when order updates (status might have changed)
-            fetchPaymentInfo([payload.new]);
         } else if (payload.eventType === 'DELETE') {
             // Order deleted
             setOrders(prev => 
                 prev.filter(order => order.orderid !== payload.old.orderid)
             );
         }
-    }, []);
+    }, [currentPage, orderPayments]);
 
     // Real-time payment update handler
     const handlePaymentUpdate = useCallback((payload) => {
@@ -127,73 +132,64 @@ const Order = () => {
     // Subscribe to real-time payment updates (all payments for this user's orders)
     const { isSubscribed: isPaymentsSubscribed } = useRealtimePayments(null, handlePaymentUpdate);
 
-    // Fetch orders when component mounts or when returning from payment page
+    // Fetch orders when component mounts, page changes, or when returning from payment page
     useEffect(() => {
-        const fetchOrders = async () => {
-            if (!user || !user.userid) {
-                setError('User not logged in');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                // Add timestamp to prevent caching
-                const timestamp = new Date().getTime();
-                const response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}?_t=${timestamp}`);
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch orders');
-                }
-
-                const data = await response.json();
-
-                console.log('Fetched orders:', data.orders?.length, 'orders');
-
-                setOrders(data.orders || []);
-                
-                // Fetch payment info for each order
-                if (data.orders && data.orders.length > 0) {
-                    fetchPaymentInfo(data.orders);
-                }
-                
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching orders:', err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchOrders();
-    }, [user, location.state?.refresh]); // Add location.state?.refresh as dependency
+    }, [user, currentPage, location.state?.refresh]); // Add currentPage as dependency
 
-    // Fetch payment information for orders
-    const fetchPaymentInfo = async (orders) => {
-        const paymentPromises = orders.map(async (order) => {
-            try {
-                const timestamp = new Date().getTime();
-                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${order.orderid}?_t=${timestamp}`);
-                if (response.ok) {
-                    const payment = await response.json();
-                    console.log(`Payment info for order ${order.orderid}:`, payment?.paymentstatus);
-                    return { orderid: order.orderid, payment };
-                }
-            } catch (error) {
-                console.error(`Error fetching payment for order ${order.orderid}:`, error);
+    // Separate fetchOrders function for reuse
+    const fetchOrders = async () => {
+        if (!user || !user.userid) {
+            setError('User not logged in');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            // Add timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            // Use optimized endpoint that includes payments and materials
+            const response = await fetch(
+                `https://gatsis-hub.vercel.app/orders/user/${user.userid}/full?page=${currentPage}&limit=${ordersPerPage}&_t=${timestamp}`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch orders');
             }
-            return { orderid: order.orderid, payment: null };
-        });
 
-        const results = await Promise.all(paymentPromises);
-        const paymentsMap = {};
-        results.forEach(({ orderid, payment }) => {
-            paymentsMap[orderid] = payment;
-        });
-        setOrderPayments(paymentsMap);
-        console.log('Payment statuses loaded:', Object.keys(paymentsMap).length, 'payments');
+            const data = await response.json();
 
+            console.log('Fetched orders:', data.orders?.length, 'orders');
+            console.log('Pagination:', data.pagination);
+
+            setOrders(data.orders || []);
+            
+            // Set pagination data
+            if (data.pagination) {
+                setTotalPages(data.pagination.totalPages);
+                setTotalOrders(data.pagination.totalOrders);
+            }
+            
+            // Extract payments from orders data (already included)
+            if (data.orders && data.orders.length > 0) {
+                const paymentsMap = {};
+                data.orders.forEach(order => {
+                    if (order.payment) {
+                        paymentsMap[order.orderid] = order.payment;
+                    }
+                });
+                setOrderPayments(paymentsMap);
+                console.log('Payment statuses loaded:', Object.keys(paymentsMap).length, 'payments');
+            }
+            
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Helper function to get status color
@@ -1186,6 +1182,66 @@ const Order = () => {
                         })
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {!loading && filteredOrders.length > 0 && totalPages > 1 && (
+                    <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-lg shadow-lg p-4">
+                        <div className="text-sm text-gray-600">
+                            Showing <span className="font-semibold">{orders.length}</span> of{' '}
+                            <span className="font-semibold">{totalOrders}</span> orders
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-2 bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-[2px_2px_0_#000000] disabled:translate-x-0 disabled:translate-y-0 font-semibold transition-all"
+                            >
+                                ← Prev
+                            </button>
+                            
+                            <div className="flex items-center gap-1">
+                                {[...Array(totalPages)].map((_, idx) => {
+                                    const pageNum = idx + 1;
+                                    // Show first page, last page, current page, and pages around current
+                                    if (
+                                        pageNum === 1 ||
+                                        pageNum === totalPages ||
+                                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`px-3 py-2 font-semibold transition-all ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-yellow-400 border-2 border-black shadow-[2px_2px_0_#000000]'
+                                                        : 'bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px]'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    } else if (
+                                        pageNum === currentPage - 2 ||
+                                        pageNum === currentPage + 2
+                                    ) {
+                                        return <span key={pageNum} className="px-2">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                            
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-2 bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-[2px_2px_0_#000000] disabled:translate-x-0 disabled:translate-y-0 font-semibold transition-all"
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Proof of Payment Modal */}

@@ -317,6 +317,99 @@ router.get("/user/:userid", async (req, res) => {
   }
 });
 
+// 📋 Get user orders WITH payments and materials (optimized with pagination)
+router.get("/user/:userid/full", async (req, res) => {
+  try {
+    const { userid } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Validate userid format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userid)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+
+    // Get total count for pagination
+    const { count, error: countError } = await supabase
+      .from("orders")
+      .select("*", { count: 'exact', head: true })
+      .eq("userid", userid);
+
+    if (countError) throw countError;
+
+    // Fetch orders with payments in a single query using LEFT JOIN
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select(`
+        *,
+        payments (
+          paymentid,
+          paymentstatus,
+          datesubmitted,
+          proofofpaymenturl,
+          accountname,
+          accountnumber,
+          referencenumber,
+          amountpaid
+        )
+      `)
+      .eq("userid", userid)
+      .order("datecreated", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (ordersError) {
+      throw ordersError;
+    }
+
+    // Batch fetch all materials for all orders in one query
+    const orderIds = orders.map(o => o.orderid);
+    const { data: allOrderMaterials } = await supabase
+      .from('order_materials')
+      .select(`
+        orderid,
+        percentage,
+        materials!inner(materialname)
+      `)
+      .in('orderid', orderIds);
+
+    // Group materials by orderid
+    const materialsMap = {};
+    if (allOrderMaterials) {
+      allOrderMaterials.forEach(om => {
+        if (!materialsMap[om.orderid]) {
+          materialsMap[om.orderid] = {};
+        }
+        materialsMap[om.orderid][om.materials.materialname] = om.percentage;
+      });
+    }
+
+    // Combine orders with materials and extract payment
+    const ordersWithMaterialsAndPayments = orders.map(order => ({
+      ...order,
+      materials: materialsMap[order.orderid] || order.materials,
+      payment: order.payments?.[0] || null,
+      payments: undefined
+    }));
+
+    res.status(200).json({
+      orders: ordersWithMaterialsAndPayments || [],
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        totalOrders: count,
+        ordersPerPage: limit
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      error: err.message || 'Failed to fetch orders',
+      details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
+    });
+  }
+});
+
 // 📋 Get all orders (admin)
 router.get("/all", async (req, res) => {
   try {
