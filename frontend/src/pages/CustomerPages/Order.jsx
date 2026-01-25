@@ -733,9 +733,49 @@ const Order = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="text-center">
-                    <LoadingSpinner size="lg" text="Loading orders..." />
+            <div className="min-h-screen bg-gray-100">
+                <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-12">
+                    {/* Title */}
+                    <div className="flex items-center justify-center gap-4 mb-6 md:mb-12">
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center">My Orders</h1>
+                    </div>
+
+                    {/* Tabs skeleton */}
+                    <div className="flex justify-center gap-3 md:gap-6 lg:gap-8 mb-6 md:mb-8">
+                        {[1, 2, 3, 4, 5].map(n => (
+                            <div key={n} className="h-8 w-20 md:w-24 bg-gray-200 rounded animate-pulse"></div>
+                        ))}
+                    </div>
+
+                    {/* Skeleton Loaders */}
+                    <div className="space-y-4 md:space-y-6">
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                                <div className="px-3 md:px-6 py-4">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                                        {/* Image skeleton */}
+                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded animate-pulse"></div>
+                                        
+                                        {/* Content skeleton */}
+                                        <div className="flex-1 space-y-3 w-full">
+                                            <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                                            <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                                            <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+                                        </div>
+                                        
+                                        {/* Status skeleton */}
+                                        <div className="hidden md:block">
+                                            <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="text-center mt-8 text-gray-500">
+                        <LoadingSpinner size="md" text="Loading your orders..." />
+                    </div>
                 </div>
             </div>
         );
@@ -1230,7 +1270,10 @@ const Order = () => {
                         
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                onClick={() => {
+                                    setCurrentPage(prev => Math.max(1, prev - 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
                                 disabled={currentPage === 1}
                                 className="px-3 py-2 bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-[2px_2px_0_#000000] disabled:translate-x-0 disabled:translate-y-0 font-semibold transition-all"
                             >
@@ -1249,7 +1292,10 @@ const Order = () => {
                                         return (
                                             <button
                                                 key={pageNum}
-                                                onClick={() => setCurrentPage(pageNum)}
+                                                onClick={() => {
+                                                    setCurrentPage(pageNum);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
                                                 className={`px-3 py-2 font-semibold transition-all ${
                                                     currentPage === pageNum
                                                         ? 'bg-yellow-400 border-2 border-black shadow-[2px_2px_0_#000000]'
@@ -1270,7 +1316,10 @@ const Order = () => {
                             </div>
                             
                             <button
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                onClick={() => {
+                                    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
                                 disabled={currentPage === totalPages}
                                 className="px-3 py-2 bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-[2px_2px_0_#000000] disabled:translate-x-0 disabled:translate-y-0 font-semibold transition-all"
                             >
