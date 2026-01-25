@@ -347,22 +347,10 @@ router.get("/user/:userid/full", async (req, res) => {
 
     console.log('Total orders count:', count);
 
-    // Fetch orders with payments in a single query using LEFT JOIN
+    // Fetch orders first without joins to ensure basic query works
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select(`
-        *,
-        payments (
-          paymentid,
-          paymentstatus,
-          datesubmitted,
-          proofofpaymenturl,
-          accountname,
-          accountnumber,
-          referencenumber,
-          amountpaid
-        )
-      `)
+      .select("*")
       .eq("userid", userid)
       .order("datecreated", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -389,7 +377,9 @@ router.get("/user/:userid/full", async (req, res) => {
 
     // Batch fetch all materials for all orders in one query
     const orderIds = orders.map(o => o.orderid);
-    const { data: allOrderMaterials } = await supabase
+    
+    // Fetch materials
+    const { data: allOrderMaterials, error: materialsError } = await supabase
       .from('order_materials')
       .select(`
         orderid,
@@ -397,6 +387,23 @@ router.get("/user/:userid/full", async (req, res) => {
         materials!inner(materialname)
       `)
       .in('orderid', orderIds);
+    
+    if (materialsError) {
+      console.error('Materials fetch error:', materialsError);
+      // Don't throw, just log - materials are optional
+    }
+
+    // Fetch payments separately in batch
+    const { data: allPayments, error: paymentsError } = await supabase
+      .from('payments')
+      .select('*')
+      .in('orderid', orderIds)
+      .order('datesubmitted', { ascending: false });
+    
+    if (paymentsError) {
+      console.error('Payments fetch error:', paymentsError);
+      // Don't throw, just log - payments might not exist
+    }
 
     // Group materials by orderid
     const materialsMap = {};
@@ -409,17 +416,22 @@ router.get("/user/:userid/full", async (req, res) => {
       });
     }
 
+    // Group payments by orderid (get first one for each order)
+    const paymentsMap = {};
+    if (allPayments) {
+      allPayments.forEach(payment => {
+        if (!paymentsMap[payment.orderid]) {
+          paymentsMap[payment.orderid] = payment;
+        }
+      });
+    }
+
     // Combine orders with materials and extract payment
     const ordersWithMaterialsAndPayments = orders.map(order => {
-      const orderPayment = Array.isArray(order.payments) && order.payments.length > 0 
-        ? order.payments[0] 
-        : null;
-      
       return {
         ...order,
         materials: materialsMap[order.orderid] || order.materials,
-        payment: orderPayment,
-        payments: undefined
+        payment: paymentsMap[order.orderid] || null
       };
     });
 
