@@ -337,10 +337,15 @@ router.get("/user/:userid/full", async (req, res) => {
     // Get total count for pagination
     const { count, error: countError } = await supabase
       .from("orders")
-      .select("*", { count: 'exact', head: true })
+      .select("orderid", { count: 'exact', head: true })
       .eq("userid", userid);
 
-    if (countError) throw countError;
+    if (countError) {
+      console.error('Count error:', countError);
+      throw countError;
+    }
+
+    console.log('Total orders count:', count);
 
     // Fetch orders with payments in a single query using LEFT JOIN
     const { data: orders, error: ordersError } = await supabase
@@ -366,6 +371,8 @@ router.get("/user/:userid/full", async (req, res) => {
       console.error('Orders fetch error:', ordersError);
       throw ordersError;
     }
+
+    console.log('Fetched orders:', orders?.length);
 
     // If no orders, return early
     if (!orders || orders.length === 0) {
@@ -403,12 +410,20 @@ router.get("/user/:userid/full", async (req, res) => {
     }
 
     // Combine orders with materials and extract payment
-    const ordersWithMaterialsAndPayments = orders.map(order => ({
-      ...order,
-      materials: materialsMap[order.orderid] || order.materials,
-      payment: order.payments?.[0] || null,
-      payments: undefined
-    }));
+    const ordersWithMaterialsAndPayments = orders.map(order => {
+      const orderPayment = Array.isArray(order.payments) && order.payments.length > 0 
+        ? order.payments[0] 
+        : null;
+      
+      return {
+        ...order,
+        materials: materialsMap[order.orderid] || order.materials,
+        payment: orderPayment,
+        payments: undefined
+      };
+    });
+
+    console.log('Sending response with', ordersWithMaterialsAndPayments.length, 'orders');
 
     res.status(200).json({
       orders: ordersWithMaterialsAndPayments || [],
@@ -420,6 +435,7 @@ router.get("/user/:userid/full", async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Error in /user/:userid/full endpoint:', err);
     res.status(500).json({ 
       error: err.message || 'Failed to fetch orders',
       details: process.env.NODE_ENV !== 'production' ? err.toString() : undefined
