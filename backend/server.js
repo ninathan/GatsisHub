@@ -17,6 +17,7 @@ import productsRoutes from "./routes/products.js";
 import materialsRoutes from "./routes/materials.js";
 import orderLogsRoutes from "./routes/orderLogs.js";
 import submissionsRoutes from "./routes/submissions.js";
+import contactRoutes from "./routes/contact.js";
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use("/products", productsRoutes);
 app.use("/materials", materialsRoutes);
 app.use("/order-logs", orderLogsRoutes);
 app.use("/submissions", submissionsRoutes);
+app.use("/contact", contactRoutes);
 
 // Health check
 app.get("/", (req, res) => {
