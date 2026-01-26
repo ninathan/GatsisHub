@@ -1,5 +1,6 @@
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import { useState } from 'react';
+import styled from 'styled-components';
 import banner from '../../images/contanctusbanner.png'
 import banner2 from '../../images/contanctusbanner2.png'
 import useScrollAnimation from '../../hooks/useScrollAnimation';
@@ -125,7 +126,7 @@ const ContanctUs = () => {
                 }`}
               >
                 <FaEnvelope className='inline text-xl md:text-2xl text-black flex-shrink-0' />
-                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>Gatsishub@gmail.com</span>
+                <span className='text-base md:text-lg lg:text-xl ml-2 break-words'>gatsishub@gmail.com</span>
               </div>
               <div 
                 ref={addressAnim.ref}
@@ -142,65 +143,215 @@ const ContanctUs = () => {
           {/* left section */}
           <div 
             ref={formAnim.ref}
-            className={`lg:block -mt-10 ${
+            className={`lg:block -mt-10 flex justify-center ${
               formAnim.isVisible ? 'scroll-slide-left' : 'scroll-hidden'
             }`}
           >
-            <form onSubmit={handleSubmit} className="flex flex-col justify-between border p-4 md:p-6 rounded-2xl shadow-lg h-full bg-white hover:shadow-2xl transition-shadow duration-300">
-              <h3 className="text-lg md:text-xl font-semibold mb-4">Send us a Message</h3>
-              
-              {submitStatus.message && (
-                <div className={`mb-4 p-3 rounded-lg text-sm ${
-                  submitStatus.type === 'success' 
-                    ? 'bg-green-100 text-green-700 border border-green-300' 
-                    : 'bg-red-100 text-red-700 border border-red-300'
-                }`}>
-                  {submitStatus.message}
-                </div>
-              )}
+            <StyledWrapper>
+              <div className="gold-form-container">
+                <form className="gold-form" onSubmit={handleSubmit}>
+                  {submitStatus.message && (
+                    <div className={`mb-3 p-2 rounded-lg text-xs ${
+                      submitStatus.type === 'success' 
+                        ? 'bg-green-100 text-green-700 border border-green-300' 
+                        : 'bg-red-100 text-red-700 border border-red-300'
+                    }`}>
+                      {submitStatus.message}
+                    </div>
+                  )}
 
-              <input 
-                type="text" 
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" 
-                placeholder='Customer Name'
-                disabled={isSubmitting}
-                required
-              />
-              <input 
-                type="email" 
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all" 
-                placeholder="Customer Email"
-                disabled={isSubmitting}
-                required
-              />
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
-                className="border border-gray-300 rounded-lg p-3 md:p-4 text-sm md:text-base resize-none min-h-[120px] md:min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4 transition-all"
-                placeholder="Write your message here..."
-                disabled={isSubmitting}
-                required
-              />
-              <button 
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 self-end bg-[#e6af2e] text-white py-2 px-4 md:px-6 rounded-full hover:bg-[#c5941f] hover:scale-105 hover:shadow-lg transition-all duration-300 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isSubmitting ? 'Sending...' : 'Send'}
-              </button>
-            </form>
+                  <div className="gold-form-group">
+                    <label className="gold-form-label" htmlFor="name">Full Name</label>
+                    <input 
+                      className="gold-form-input" 
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      required 
+                    />
+                  </div>
+                  <div className="gold-form-group">
+                    <label className="gold-form-label" htmlFor="email">Email</label>
+                    <input 
+                      className="gold-form-input" 
+                      type="email" 
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      required 
+                    />
+                  </div>
+                  <div className="gold-form-group">
+                    <label className="gold-form-label" htmlFor="message">Message</label>
+                    <textarea 
+                      className="gold-form-textarea" 
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      required 
+                    />
+                  </div>
+                  <button 
+                    className="gold-form-button" 
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending...' : 'Submit'}
+                  </button>
+                </form>
+              </div>
+            </StyledWrapper>
           </div>
         </div>
       </section>
     </div>
   )
 }
+
+const StyledWrapper = styled.div`
+  .gold-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .gold-form {
+    width: 550px;
+    height: 480px;
+    padding: 30px;
+    background: linear-gradient(135deg, #ffd700, #daa520, #b8860b);
+    border-radius: 20px;
+    box-shadow:
+      10px 10px 20px rgba(139, 90, 43, 0.6),
+      -10px -10px 20px rgba(204, 173, 2, 0.126),
+      inset 2px 2px 5px rgba(237, 201, 0, 0.5),
+      inset -2px -2px 5px rgba(139, 90, 43, 0.5);
+    background-image: radial-gradient(
+        circle,
+        rgba(255, 215, 0, 0.25) 1px,
+        transparent 1px
+      ),
+      radial-gradient(circle, rgba(255, 193, 7, 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position:
+      0 0,
+      10px 10px;
+  }
+
+  .gold-form-group {
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  .gold-form-label {
+    display: block;
+    color: hsl(44, 100%, 67%); /* Light gold color */
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.3s cubic-bezier(0.5, 0, 0.1, 1);
+  }
+
+  .gold-form-input,
+  .gold-form-textarea {
+    width: 100%;
+    padding: 16px 18px;
+    border: none;
+    background: linear-gradient(135deg, #daa520, #b8860b);
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow:
+      6px 6px 12px rgba(139, 90, 43, 0.6),
+      -6px -6px 12px rgba(255, 215, 0, 0.4),
+      inset 2px 2px 4px rgba(139, 90, 43, 0.5),
+      inset -2px -2px 4px rgba(255, 215, 0, 0.5);
+    font-size: 16px;
+    color: hsl(44, 100%, 84%);
+    transition:
+      box-shadow 0.4s cubic-bezier(0.5, 0, 0.1, 1),
+      background 0.4s cubic-bezier(0.5, 0, 0.1, 1),
+      border-color 0.4s cubic-bezier(0.5, 0, 0.1, 1);
+  }
+
+  .gold-form-textarea {
+    height: 110px;
+    resize: none;
+  }
+
+  .gold-form-input:focus,
+  .gold-form-textarea:focus {
+    outline: none;
+    background: linear-gradient(135deg, #daa520, #b8860b);
+    border-color: #ffcc00;
+    box-shadow:
+      4px 4px 8px rgba(139, 90, 43, 0.7),
+      -4px -4px 8px rgba(255, 215, 0, 0.5),
+      inset 4px 4px 8px rgba(139, 90, 43, 0.6),
+      inset -4px -4px 8px rgba(255, 215, 0, 0.6);
+  }
+
+  .gold-form-input:focus + .gold-form-label,
+  .gold-form-textarea:focus + .gold-form-label {
+    color: #ffcc00;
+  }
+
+  .gold-form-button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #f0cd07, #ffc32d, #f5ba26);
+    border: 0px solid rgba(255, 217, 0, 0);
+    border-radius: 12px;
+    color: #3d2f1a;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    margin-top: 14px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow:
+      10px 10px 20px rgba(139, 90, 43, 0.6),
+      -10px -10px 20px rgba(255, 215, 0, 0.4),
+      inset 2px 2px 5px rgba(255, 215, 0, 0.5),
+      inset -2px -2px 5px rgba(139, 90, 43, 0.5);
+    transition:
+      transform 0.3s cubic-bezier(0.5, 0, 0.1, 1),
+      box-shadow 0.3s cubic-bezier(0.5, 0, 0.1, 1),
+      background 0.4s cubic-bezier(0.5, 0, 0.1, 1);
+  }
+
+  .gold-form-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f0cd07, #ffc32d, #f5ba26);
+    box-shadow:
+      10px 10px 20px rgba(139, 90, 43, 0.6),
+      -10px -10px 20px rgba(255, 215, 0, 0.4),
+      inset 2px 2px 5px rgba(255, 215, 0, 0.5),
+      inset -2px -2px 5px rgba(139, 90, 43, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .gold-form-button:active:not(:disabled) {
+    background: linear-gradient(135deg, #f0cd07, #ffc32d, #f5ba26);
+    box-shadow:
+      10px 10px 20px rgba(139, 90, 43, 0.6),
+      -10px -10px 20px rgba(255, 215, 0, 0.4),
+      inset 2px 2px 5px rgba(255, 215, 0, 0.5),
+      inset -2px -2px 5px rgba(139, 90, 43, 0.5);
+    transform: translateY(1px);
+  }
+
+  .gold-form-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
 
 export default ContanctUs;
