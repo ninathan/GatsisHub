@@ -6,7 +6,7 @@ const StepNavigation = ({ currentStep, totalSteps, onNext, onPrev, isLastStep })
             {currentStep > 1 && (
                 <button
                     onClick={onPrev}
-                    className="px-6 md:px-8 py-2 md:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold text-base md:text-lg shadow-md"
+                    className=" cursor-pointer px-6 md:px-8 py-2 md:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold text-base md:text-lg shadow-md"
                 >
                     ← Previous
                 </button>
@@ -17,7 +17,7 @@ const StepNavigation = ({ currentStep, totalSteps, onNext, onPrev, isLastStep })
             {!isLastStep && (
                 <button
                     onClick={onNext}
-                    className="px-6 md:px-8 py-2 md:py-3 bg-[#e6af2e] text-white rounded-lg hover:bg-[#c8971e] transition-colors font-semibold text-base md:text-lg shadow-lg"
+                    className="cursor-pointer px-6 md:px-8 py-2 md:py-3 bg-[#e6af2e] text-white rounded-lg hover:bg-[#c8971e] transition-colors font-semibold text-base md:text-lg shadow-lg"
                 >
                     Next →
                 </button>

@@ -42,8 +42,260 @@ const OrderDetailOM = () => {
     const [notificationType, setNotificationType] = useState('success');
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
+    
+    const [paymentInfo, setPaymentInfo] = useState(null);
+    const [showProofModal, setShowProofModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
+    const [paymentHistory, setPaymentHistory] = useState([]);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState('Unable to verify payment details. Please resubmit with clearer information.');
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+
+
+    const handleDownloadInvoice = () => {
+        if (!order) {
+            showNotificationMessage('Order data not available', 'error');
+            return;
+        }
+
+        // Create a simple HTML invoice for printing/saving as PDF
+        const invoiceWindow = window.open('', '_blank');
+
+        // Format materials as a readable string
+        const formatMaterialsForInvoice = (materialsObj) => {
+            if (!materialsObj || typeof materialsObj !== 'object') return 'N/A';
+            return Object.entries(materialsObj)
+                .map(([name, percentage]) => `${name} ${Math.round(percentage)}%`)
+                .join(', ');
+        };
+
+        const invoiceHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Invoice - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 3px solid #E6AF2E;
+                        padding-bottom: 20px;
+                        margin-bottom: 30px;
+                    }
+                    .company-name {
+                        font-size: 32px;
+                        font-weight: bold;
+                        color: #191716;
+                        margin-bottom: 5px;
+                    }
+                    .invoice-title {
+                        font-size: 24px;
+                        color: #666;
+                        margin-top: 10px;
+                    }
+                    .info-section {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .info-block {
+                        flex: 1;
+                    }
+                    .info-block h3 {
+                        color: #191716;
+                        border-bottom: 2px solid #E6AF2E;
+                        padding-bottom: 5px;
+                        margin-bottom: 10px;
+                    }
+                    .info-row {
+                        margin: 8px 0;
+                    }
+                    .label {
+                        font-weight: bold;
+                        color: #555;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    th {
+                        background-color: #191716;
+                        color: white;
+                        padding: 12px;
+                        text-align: left;
+                    }
+                    td {
+                        padding: 12px;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    .total-section {
+                        margin-top: 30px;
+                        text-align: right;
+                    }
+                    .total-row {
+                        margin: 10px 0;
+                        font-size: 18px;
+                    }
+                    .total-amount {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #191716;
+                        margin-top: 15px;
+                        padding-top: 15px;
+                        border-top: 2px solid #E6AF2E;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                        border-top: 1px solid #ddd;
+                        padding-top: 20px;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="company-name">GatsisHub</div>
+                    <div class="invoice-title">INVOICE</div>
+                </div>
+
+                <div class="info-section">
+                    <div class="info-block">
+                        <h3>Invoice Details</h3>
+                        <div class="info-row">
+                            <span class="label">Invoice Number:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Date:</span> ${formatDate(order.datecreated)}
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Status:</span> ${order.orderstatus}
+                        </div>
+                        ${order.deadline ? `
+                        <div class="info-row">
+                            <span class="label">Deadline:</span> ${formatDate(order.deadline)}
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="info-block">
+                        <h3>Bill To</h3>
+                        <div class="info-row">
+                            <strong>${order.companyname}</strong>
+                        </div>
+                        <div class="info-row">
+                            ${order.contactperson}
+                        </div>
+                        <div class="info-row">
+                            ${order.contactphone}
+                        </div>
+                        ${order.deliveryaddress ? `
+                        <div class="info-row" style="margin-top: 10px;">
+                            ${typeof order.deliveryaddress === 'object' ? order.deliveryaddress.address : order.deliveryaddress}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>${order.hangertype}</strong>
+                                ${order.selectedcolor ? `<br><small>Color: ${order.selectedcolor}</small>` : ''}
+                                ${order.customtext ? `<br><small>Custom Text: "${order.customtext}"</small>` : ''}
+                                ${order.customlogo ? `<br><small>Custom Logo: Yes</small>` : ''}
+                                ${order.materials ? `<br><small>Material: ${formatMaterialsForInvoice(order.materials)}</small>` : ''}
+                            </td>
+                            <td style="text-align: center;">${order.quantity}</td>
+                            <td style="text-align: right;">₱${order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                            <td style="text-align: right;">₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                ${order.orderinstructions || order.deliverynotes ? `
+                <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-left: 4px solid #E6AF2E;">
+                    ${order.orderinstructions ? `
+                    <div style="margin-bottom: 10px;">
+                        <strong>Order Instructions:</strong><br>
+                        ${order.orderinstructions}
+                    </div>
+                    ` : ''}
+                    ${order.deliverynotes ? `
+                    <div>
+                        <strong>Delivery Notes:</strong><br>
+                        ${order.deliverynotes}
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                <div class="total-section">
+                    <div class="total-row">
+                        Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
+                    </div>
+                    <div class="total-amount">
+                        Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your business!</p>
+                    <p>GatsisHub - Custom Hanger Solutions</p>
+                    <p>For inquiries, please contact us through our support system.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 30px;">
+                    <button onclick="window.print()" style="background: #191716; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">
+                        Save as PDF
+                    </button>
+                    <button onclick="window.close()" style="background: #666; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                        Close
+                    </button>
+                </div>
+                <script>
+                    // Instructions for saving as PDF
+                    const instructionDiv = document.createElement('div');
+                    instructionDiv.className = 'no-print';
+                    instructionDiv.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px; text-align: left;';
+                    instructionDiv.innerHTML = '<strong>💡 To save as PDF:</strong><ol style="margin: 10px 0; padding-left: 20px;"><li>Click "Save as PDF" button above</li><li>In the print dialog, select <strong>"Save as PDF"</strong> or <strong>"Microsoft Print to PDF"</strong> as the destination</li><li>Click Save and choose where to save the file</li></ol>';
+                    document.querySelector('.no-print').parentNode.insertBefore(instructionDiv, document.querySelector('.no-print'));
+                </script>
+            </body>
+            </html>
+        `;
+
+        invoiceWindow.document.write(invoiceHTML);
+        invoiceWindow.document.close();
+    };
+
 
     // Real-time order update handler
     const handleOrderUpdate = useCallback((payload) => {
@@ -636,75 +888,35 @@ const OrderDetailOM = () => {
 
                         {/* Action Buttons */}
                         <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                            {orderStatus !== 'Verifying Payment' && orderStatus !== 'In Production' && orderStatus !== 'Waiting for Shipment' && orderStatus !== 'In Transit' && orderStatus !== 'Completed' && (
-                                <>
-                                    <button
-                                        onClick={handleApproveOrder}
-                                        disabled={isApprovingOrder || isConfirmingPayment}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        {isApprovingOrder ? (
-                                            <>
-                                                <LoadingSpinner size="sm" color="white" />
-                                                <span>Approving...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check size={18} />
-                                                Approve Order
-                                            </>
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={handlePaymentConfirm}
-                                        disabled={isApprovingOrder || isConfirmingPayment}
-                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        {isConfirmingPayment ? (
-                                            <>
-                                                <LoadingSpinner size="sm" color="white" />
-                                                <span>Confirming...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CreditCard size={18} />
-                                                Payment Confirm
-                                            </>
-                                        )}
-                                    </button>
-                                </>
-                            )}
                             <button
                                 onClick={handleViewProof}
-                                className="bg-indigo-700 hover:bg-indigo-800 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                disabled={!paymentInfo}
+                                className={`cursor-pointer px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm ${paymentInfo
+                                        ? 'bg-[#191817] hover:bg-[#333333] text-white'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
                             >
                                 <Eye size={18} />
-                                View Proof
+                                View Proof {paymentInfo ? '' : '(Not Available)'}
                             </button>
-                            <button
+                            {/* <button
                                 onClick={handleExportXLS}
                                 className="bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
                             >
                                 <FileSpreadsheet size={18} />
                                 Export XLS
-                            </button>
+                            </button> */}
                             <button
-                                onClick={handleExportPDF}
-                                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                onClick={handleDownloadInvoice}
+                                className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <FileText size={18} />
-                                Export PDF
+                                Download Invoice
                             </button>
-                            <button
-                                onClick={handleContactCustomer}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
-                            >
-                                <Phone size={18} />
-                                Contact Customer
-                            </button>
+                            
                             <button
                                 onClick={() => navigate(`/logpageOM/${orderid}`)}
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <ClipboardClock size={18} />
                                 View Activity Log

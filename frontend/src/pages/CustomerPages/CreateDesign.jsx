@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import HangerScene from '../../components/Checkout/HangerScene';
-import { Download, Save, ArrowLeft, Maximize2, Minimize2, Info, Upload, Type, Image as ImageIcon, X, Plus, Minus } from 'lucide-react';
+import { Download, Save, ArrowLeft, Maximize2, Minimize2, Info, Upload, Type, Palette, Mouse, Image as ImageIcon, X, Plus, Minus } from 'lucide-react';
+
 import ProductCard from '../../components/Checkout/productcard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import logo from '../../images/logo.png';
@@ -181,7 +182,7 @@ const CreateDesign = () => {
             if (pendingDesign) {
                 try {
                     const designData = JSON.parse(pendingDesign);
-                    
+
                     // Restore the design state
                     setSelectedHanger(designData.hangerType);
                     setColor(designData.color);
@@ -193,10 +194,10 @@ const CreateDesign = () => {
                     setLogoPosition(designData.logoPosition);
                     setLogoSize(designData.logoSize);
                     setSelectedMaterials(designData.materials);
-                    
+
                     // Clear pending design from localStorage
                     localStorage.removeItem('pendingDesignSave');
-                    
+
                     // Show save modal automatically
                     setTimeout(() => {
                         setSaveDesignModal(true);
@@ -326,17 +327,17 @@ const CreateDesign = () => {
                 materials: selectedMaterials
             };
             localStorage.setItem('pendingDesignSave', JSON.stringify(tempDesign));
-            
+
             setNotificationModal({
                 show: true,
                 type: 'error',
                 message: 'Please log in or register to save your design. Your current design will be saved after you log in.'
             });
-            
+
             // Redirect to login after 2 seconds
-            setTimeout(() => {
-                navigate('/login');
-            }, 2000);
+            // setTimeout(() => {
+            //     navigate('/login');
+            // }, 2000);
             return;
         }
 
@@ -518,7 +519,7 @@ const CreateDesign = () => {
         setSelectedHanger(hangerId);
         setShowHangerSelection(false);
         setShowInstructionsModal(true);
-        
+
         if (hangerId === '97-12' || hangerId === '97-11') {
             setShowColorLimitationModal(true);
         }
@@ -606,13 +607,13 @@ const CreateDesign = () => {
                                     </div>
                                     {/* Comic Style Color Picker */}
                                     <ColorPickerWrapper>
-                                        <div className="comic-panel" style={{background: '#191716', borderColor: '#E6AF2E'}}>
+                                        <div className="comic-panel" style={{ background: '#191716', borderColor: '#E6AF2E' }}>
                                             <div className="container-items">
                                                 {colors.map((col) => (
-                                                    <button 
+                                                    <button
                                                         key={col}
                                                         className={`item-color ${color === col ? 'selected' : ''}`}
-                                                        style={{'--color': col}} 
+                                                        style={{ '--color': col }}
                                                         aria-color={col}
                                                         onClick={() => updateThreeJsColor(col)}
                                                     />
@@ -670,7 +671,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.x}
-                                                onChange={(e) => setTextPosition({...textPosition, x: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, x: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.x.toFixed(1)}</span>
@@ -683,7 +684,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.y}
-                                                onChange={(e) => setTextPosition({...textPosition, y: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, y: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.y.toFixed(1)}</span>
@@ -696,7 +697,7 @@ const CreateDesign = () => {
                                                 max="1"
                                                 step="0.01"
                                                 value={textPosition.z}
-                                                onChange={(e) => setTextPosition({...textPosition, z: parseFloat(e.target.value)})}
+                                                onChange={(e) => setTextPosition({ ...textPosition, z: parseFloat(e.target.value) })}
                                                 className="flex-1"
                                             />
                                             <span className="text-white text-xs w-12">{textPosition.z.toFixed(1)}</span>
@@ -769,7 +770,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.x}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, x: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, x: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.x.toFixed(1)}</span>
@@ -782,7 +783,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.y}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, y: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, y: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.y.toFixed(1)}</span>
@@ -795,7 +796,7 @@ const CreateDesign = () => {
                                                         max="1"
                                                         step="0.01"
                                                         value={logoPosition.z}
-                                                        onChange={(e) => setLogoPosition({...logoPosition, z: parseFloat(e.target.value)})}
+                                                        onChange={(e) => setLogoPosition({ ...logoPosition, z: parseFloat(e.target.value) })}
                                                         className="flex-1"
                                                     />
                                                     <span className="text-white text-xs w-12">{logoPosition.z.toFixed(1)}</span>
@@ -934,14 +935,13 @@ const CreateDesign = () => {
                                                             setShowColorLimitationModal(true);
                                                         }
                                                     }}
-                                                    className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 cursor-pointer ${
-                                                        selectedHanger === hanger.id
+                                                    className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all w-20 cursor-pointer ${selectedHanger === hanger.id
                                                             ? "border-[#007BFF] shadow-md"
                                                             : "border-gray-300 hover:border-gray-400"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <div className="bg-white p-2 flex items-center justify-center aspect-square">
-                                                        <img 
+                                                        <img
                                                             src={hangerImages[hanger.id]}
                                                             alt={hanger.name}
                                                             className="w-full h-full object-contain"
@@ -957,7 +957,7 @@ const CreateDesign = () => {
 
                                     {/* Action Buttons */}
                                     <div className="space-y-2 mt-4">
-                                        <button 
+                                        <button
                                             onClick={handleDownloadDesign}
                                             disabled={isDownloading}
                                             className="w-full bg-[#F5F5F5] hover:bg-[#e0e0e0] text-[#333333] font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base border border-gray-300"
@@ -974,7 +974,7 @@ const CreateDesign = () => {
                                                 </>
                                             )}
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={handleSaveDesign}
                                             className="w-full bg-[#e6af2e] hover:bg-[#c8971e] text-white font-semibold py-2 md:py-3 rounded flex items-center justify-center gap-2 cursor-pointer transition-colors text-sm md:text-base"
                                         >
@@ -1028,10 +1028,10 @@ const CreateDesign = () => {
                                                 <div className="comic-panel">
                                                     <div className="container-items">
                                                         {colors.map((col) => (
-                                                            <button 
+                                                            <button
                                                                 key={col}
                                                                 className={`item-color ${color === col ? 'selected' : ''}`}
-                                                                style={{'--color': col}} 
+                                                                style={{ '--color': col }}
                                                                 aria-color={col}
                                                                 onClick={() => updateThreeJsColor(col)}
                                                             />
@@ -1252,124 +1252,34 @@ const CreateDesign = () => {
                 </div>
             )}
 
-            {/* Instructions Modal */}
-            {showInstructionsModal && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center gap-3">
-                                <Info className="text-[#007BFF]" size={24} />
-                                <h2 className="text-2xl font-bold text-[#007BFF]">
-                                    Design Instructions
-                                </h2>
-                            </div>
-                            <button
-                                onClick={() => setShowInstructionsModal(false)}
-                                className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4 text-gray-700">
-                            <div>
-                                <h3 className="font-semibold mb-2">🎨 Customization Options</h3>
-                                <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li>Select hanger type from available models</li>
-                                    <li>Choose from preset colors or use custom color picker</li>
-                                    <li>Add custom text with adjustable size and color</li>
-                                    <li>Upload and position your logo</li>
-                                    <li>Select materials and their percentages</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold mb-2">🖱️ 3D Viewer Controls</h3>
-                                <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li>Click and drag to rotate the hanger</li>
-                                    <li>Scroll to zoom in/out</li>
-                                    <li>Click fullscreen button for better view</li>
-                                    <li>Press ESC to exit fullscreen</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold mb-2">💾 Saving & Downloading</h3>
-                                <ul className="list-disc list-inside space-y-1 text-sm">
-                                    <li>Save: Stores design in your account (requires login)</li>
-                                    <li>Download: Exports PNG image + JSON data file</li>
-                                    <li>View saved designs in Account Settings</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => setShowInstructionsModal(false)}
-                            className="mt-6 w-full bg-[#E6AF2E] text-[#191716] hover:bg-[#191716] hover:text-white py-2 px-4 rounded-lg transition-colors cursor-pointer"
-                        >
-                            Got it!
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Save Design Modal */}
-            {saveDesignModal && (
-                <div className="fixed inset-0 bg-transparent bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-4 md:p-6">
-                        <h2 className="text-lg md:text-xl font-bold mb-4">Save Design</h2>
-                        <input
-                            type="text"
-                            value={designName}
-                            onChange={(e) => setDesignName(e.target.value)}
-                            placeholder="Enter design name"
-                            className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#35408E] mb-4 text-sm md:text-base"
-                        />
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setSaveDesignModal(false)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg transition-colors text-sm md:text-base cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmSaveDesign}
-                                disabled={isSaving}
-                                className="flex-1 bg-[#35408E] hover:bg-[#2a3270] text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50 text-sm md:text-base cursor-pointer"
-                            >
-                                {isSaving ? 'Saving...' : 'Save'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Color Limitation Modal */}
             {showColorLimitationModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
+                        <div className="bg-[#1ac2ff] px-4 md:px-6 py-3 md:py-4">
+                            <h3 className="text-white text-xl md:text-2xl font-bold">Color Customization Notice</h3>
                         </div>
 
                         {/* Modal Body */}
                         <div className="p-4 md:p-6">
                             <div className="flex justify-center mb-4">
-                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
-                                    <Info className="w-8 h-8 text-black" />
+                                <div className="w-16 h-16 bg-[#1ac2ff] rounded-full flex items-center justify-center">
+                                    <Info className="w-8 h-8 text-white" />
                                 </div>
                             </div>
 
-                            <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
-                                For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars. 
+                            <p className="text-center text-gray-700 mb-6 text-sm md:text-base leading-relaxed">
+                                For Model <span className="font-bold text-[#1ac2ff]">{selectedHanger}</span>, kindly disregard the color change on hooks and bars.
                                 Color changes will only apply on the main body and clips.
                             </p>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex justify-center">
                             <button
                                 onClick={() => setShowColorLimitationModal(false)}
-                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                                className="bg-[#1ac2ff] hover:bg-[#15a8d6] text-white font-semibold px-8 py-2 rounded-lg transition-all shadow-md hover:shadow-lg text-sm md:text-base"
                             >
                                 Got it
                             </button>
@@ -1380,33 +1290,41 @@ const CreateDesign = () => {
 
             {/* Notification Modal */}
             {notificationModal.show && (
-                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                <div className="fixed inset-0 bg-black/50 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className={`rounded-lg shadow-2xl max-w-md w-full overflow-hidden ${notificationModal.type === 'success' ? 'bg-white' : 'bg-white'}`}>
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-black text-lg md:text-xl font-black">
-                                {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
+                        <div className={`px-4 md:px-6 py-3 md:py-4 ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                            <h2 className="text-white text-lg md:text-xl font-bold flex items-center gap-2">
+                                {notificationModal.type === 'success' ? (
+                                    <>
+                                        <span className="text-2xl">Success</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-2xl">Error</span>
+                                    </>
+                                )}
                             </h2>
                         </div>
 
                         {/* Modal Body */}
                         <div className="p-4 md:p-6">
-                            <p className="text-gray-700 text-base md:text-lg text-center">{notificationModal.message}</p>
+                            <p className="text-gray-700 text-base md:text-xl text-center leading-relaxed">{notificationModal.message}</p>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4">
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4">
                             {notificationModal.message.includes('log in') ? (
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                        className="flex-1 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
+                                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm md:text-base  cursor-pointer"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={() => navigate('/login')}
-                                        className="flex-1 bg-[#ffd93d] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
+                                        className="flex-1 bg-[#ffd93d] hover:bg-[#ffc107] text-gray-900 font-semibold py-2 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm md:text-base cursor-pointer"
                                     >
                                         Login
                                     </button>
@@ -1414,11 +1332,123 @@ const CreateDesign = () => {
                             ) : (
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                    className="w-full bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black py-2 px-4 transition-all text-sm md:text-base cursor-pointer"
+                                    className={`w-full font-semibold py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg text-sm md:text-base ${notificationModal.type === 'success'
+                                            ? 'bg-[#4ade80] hover:bg-[#22c55e] text-white'
+                                            : 'bg-[#ff6b6b] hover:bg-[#ef4444] text-white'
+                                        }`}
                                 >
                                     Close
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Save Design Modal */}
+            {saveDesignModal && (
+                <div className="fixed inset-0 bg-black/50 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-[#E6AF2E] px-4 md:px-6 py-3 md:py-4">
+                            <h2 className="text-white text-lg md:text-xl font-bold">Save Design</h2>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Design Name
+                            </label>
+                            <input
+                                type="text"
+                                value={designName}
+                                onChange={(e) => setDesignName(e.target.value)}
+                                placeholder="Enter design name"
+                                className="w-full px-3 md:px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent transition-all text-sm md:text-base"
+                            />
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 flex gap-3">
+                            <button
+                                onClick={() => setSaveDesignModal(false)}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm md:text-base"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmSaveDesign}
+                                disabled={isSaving}
+                                className="flex-1 bg-[#E6AF2E] hover:bg-[#d49f1f] text-white font-semibold py-2 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg text-sm md:text-base cursor-pointer"
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Instructions Modal */}
+            {showInstructionsModal && (
+                <div className="fixed inset-0 bg-black/50 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-[#007BFF] px-4 md:px-6 py-3 md:py-4 flex justify-between items-center sticky top-0 z-10">
+                            <div className="flex items-center gap-3">
+                                <Info className="text-white" size={24} />
+                                <h2 className="text-white text-xl md:text-2xl font-bold">
+                                    Design Instructions
+                                </h2>
+                            </div>
+                            <button
+                                onClick={() => setShowInstructionsModal(false)}
+                                className="text-white hover:bg-white/20 p-1 rounded-lg transition-colors cursor-pointer"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-4 md:p-6">
+                            <div className="space-y-6 text-gray-700">
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-[#007BFF]"><Palette className="inline-block mr-2 text-black" />Customization Options</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-sm md:text-base">
+                                        <li>Select hanger type from available models</li>
+                                        <li>Choose from preset colors or use custom color picker</li>
+                                        <li>Add custom text with adjustable size and color</li>
+                                        <li>Upload and position your logo</li>
+                                        <li>Select materials and their percentages</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-[#007BFF]"><Mouse className="inline-block mr-2 text-black" /> 3D Viewer Controls</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-sm md:text-base">
+                                        <li>Click and drag to rotate the hanger</li>
+                                        <li>Scroll to zoom in/out</li>
+                                        <li>Click fullscreen button for better view</li>
+                                        <li>Press ESC to exit fullscreen</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 text-[#007BFF]"><Save className="inline-block mr-2 text-black" /> Saving & Downloading</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-sm md:text-base">
+                                        <li>Save: Stores design in your account (requires login)</li>
+                                        <li>Download: Exports PNG image + JSON data file</li>
+                                        <li>View saved designs in Account Settings</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 sticky bottom-0">
+                            <button
+                                onClick={() => setShowInstructionsModal(false)}
+                                className="w-full bg-[#007BFF] hover:bg-[#0056b3] text-white font-semibold py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg cursor-pointer"
+                            >
+                                Got it!
+                            </button>
                         </div>
                     </div>
                 </div>

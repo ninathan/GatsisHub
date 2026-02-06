@@ -1,16 +1,13 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import logo from '../../images/logo.png'
-import userav from '../../images/user-alt.png'
-import googlelogo from '../../images/googlelogo.png'
-import key from '../../images/key.png'
 import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../Transition/PageTransition'
 import { useAuth } from '../../context/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
-import { jwtDecode } from 'jwt-decode' // ✅ FIXED import
+import { jwtDecode } from 'jwt-decode'
 import TwoFactorVerification from './TwoFactorVerification'
-import { Eye, EyeOff, Check, X, Mail, Phone, Calendar, MapPin, Lock, User, Building, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, EyeOff, Lock, User } from 'lucide-react'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -18,12 +15,10 @@ const Login = () => {
 
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showTwoFactor, setShowTwoFactor] = useState(false)
-
-  const IntputField =
-    'border-2 border-gray-300 rounded-xl pl-12 pr-4 py-3 w-full text-base focus:outline-none focus:border-[#E6AF2E] focus:ring-2 focus:ring-[#E6AF2E]/20 transition-all'
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -116,7 +111,6 @@ const Login = () => {
       } else {
         // Check if user needs to complete profile (new Google users without addresses)
         if (!data.user.addresses || data.user.addresses.length === 0) {
-
           navigate('/complete-profile')
         } else {
           navigate('/logged')
@@ -125,7 +119,6 @@ const Login = () => {
       
       window.dispatchEvent(new Event('user-updated'))
     } catch (err) {
-
       setError(err.message)
     }
   }
@@ -149,267 +142,182 @@ const Login = () => {
   return (
     <PageTransition direction='right'>
       <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
-        {/* Left side */}
-        <div className='bg-[#191716] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1'>
-          <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4'>
-            <Link to='/'>
-              <img src={logo} alt='Logo' className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto' />
+        {/* Left side - Brand Section */}
+        <div className='bg-gradient-to-br from-[#191716] to-[#2d2a28] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1 relative overflow-hidden'>
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-10">
+            <div className="absolute top-20 left-20 w-40 h-40 bg-[#E6AF2E] rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-20 w-60 h-60 bg-[#E6AF2E] rounded-full blur-3xl"></div>
+          </div>
+
+          <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4 relative z-10'>
+            <Link to='/' className="group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#E6AF2E] rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                <img 
+                  src={logo} 
+                  alt='Logo' 
+                  className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto relative z-10 transition-transform group-hover:scale-110 duration-300' 
+                />
+              </div>
             </Link>
-            <h1 className='text-white text-2xl md:text-3xl lg:text-4xl font-semibold mt-4 md:mt-6 text-center'>Welcome to GatsisHub</h1>
-            <p className='text-white text-sm md:text-base lg:text-xl text-center mt-3 md:mt-5 font-medium px-4 max-w-md'>
-              Premium Hanger Solutions Crafted for Quality and Style.
-            </p>
-            <Link
-              to='/signup'
-              className='bg-[#E6AF2E] text-black px-6 md:px-8 py-2.5 md:py-3 text-base md:text-lg lg:text-xl rounded-2xl mt-4 md:mt-6 hover:bg-[#c4ad1f] transition-colors'
-            >
-              Sign Up
-            </Link>
-            <p className='text-white text-sm md:text-base lg:text-lg mt-3 text-center'>Don't have an account yet?</p>
+            
+            <div className="mt-8 md:mt-10 text-center max-w-md">
+              <h1 className='text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-4'>
+                Welcome to <span className="text-[#E6AF2E]">GatsisHub</span>
+              </h1>
+              <p className='text-gray-300 text-sm md:text-base lg:text-lg leading-relaxed mb-8'>
+                Premium Hanger Solutions Crafted for Quality and Style.
+              </p>
+              
+              <div className="space-y-4">
+                <Link
+                  to='/signup'
+                  className='inline-block bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-[#191716] px-8 py-3 text-base md:text-lg font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 duration-300'
+                >
+                  Create Account
+                </Link>
+                <p className='text-gray-400 text-sm md:text-base'>
+                  Don't have an account yet?
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right side */}
-        <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2'>
-          <h1 className='text-[#191716] text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-center'>
-            Sign In to GatsisHub
-          </h1>
+        {/* Right side - Login Form */}
+        <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2 bg-gray-50'>
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8 md:mb-10">
+              <h1 className='text-[#191716] text-3xl md:text-4xl lg:text-5xl font-bold mb-3'>
+                Sign In
+              </h1>
+              <p className="text-gray-600 text-sm md:text-base">
+                Welcome back! Please enter your details.
+              </p>
+            </div>
 
-          <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
+            <form onSubmit={handleLogin} className='w-full bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200'>
+              {/* Email Input */}
+              <div className="mb-5">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type='email'
+                    placeholder='you@example.com'
+                    value={emailAddress}
+                    onChange={(e) => setEmailAddress(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#E6AF2E] focus:ring-2 focus:ring-[#E6AF2E]/20 transition-all text-gray-900"
+                    required
+                  />
+                </div>
+              </div>
 
-            <StyledInputWrapper className="mb-4 md:mb-5">
-              <div className="input__container email-input">
-                <div className="shadow__input" />
-                <button type="button" className="input__button__shadow">
-                  <User size={18} />
-                </button>
-                <input
-                  type='email'
-                  placeholder='you@example.com'
-                  value={emailAddress}
-                  onChange={(e) => setEmailAddress(e.target.value)}
-                  className="input__search"
-                  required
+              {/* Password Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder='Enter your password'
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#E6AF2E] focus:ring-2 focus:ring-[#E6AF2E]/20 transition-all text-gray-900"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                  <p className='text-red-700 text-sm'>{error}</p>
+                </div>
+              )}
+
+              {/* Sign In Button */}
+              <button
+                type='submit'
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-base md:text-lg"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </span>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+
+              {/* Forgot Password Link */}
+              <div className="text-center mt-4">
+                <Link 
+                  to='/forgotpassword'
+                  className='text-[#E6AF2E] hover:text-[#d4a02a] text-sm font-medium transition-colors'
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-gray-50 text-gray-500 font-medium">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Login */}
+            <div className='flex justify-center'>
+              <div className="w-full max-w-xs">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  shape='rectangular'
+                  size='large'
+                  text='continue_with'
+                  width='100%'
                 />
               </div>
-            </StyledInputWrapper>
-            <StyledInputWrapper className="mb-5 md:mb-6">
-              <div className="input__container password-input">
-                <div className="shadow__input" />
-                <button type="button" className="input__button__shadow">
-                  <Lock size={18} />
-                </button>
-                <input
-                  type='password'
-                  placeholder='Enter your password'
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input__search"
-                  required
-                />
-              </div>
-            </StyledInputWrapper>
+            </div>
 
-            {error && <p className='text-red-600 text-sm md:text-base text-center mb-4'>{error}</p>}
-
-            <StyledButton
-              type='submit'
-              disabled={loading}
-              className="sign-in-btn"
-            >
-              {loading ? 'Signing In...' : 'Sign In'}
-            </StyledButton>
-
-            <p className='text-[#35408E] text-xs md:text-sm underline text-center mt-3'>
-              <Link to='/forgotpassword'>Forgot password?</Link>
+            {/* Sign Up Link */}
+            <p className="text-center text-gray-600 text-sm mt-6">
+              Don't have an account?{' '}
+              <Link to='/signup' className="text-[#E6AF2E] hover:text-[#d4a02a] font-semibold transition-colors">
+                Sign up
+              </Link>
             </p>
-          </form>
-        
-          <p className='text-black text-sm md:text-base lg:text-lg mt-4 md:mt-5 opacity-50'>or</p>
-
-          {/* ✅ GOOGLE LOGIN BUTTON */}
-          <div className='flex justify-center mt-4 md:mt-5'>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              shape='pill'
-              size='large'
-              text='continue_with'
-            />
           </div>
         </div>
       </div>
     </PageTransition>
   )
 }
-
-const StyledButton = styled.button`
-  width: 100%;
-  padding: 1rem 2rem;
-  font-weight: 700;
-  font-size: 1.25rem;
-  background: #e9b50b;
-  color: #f0f0f0;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  border-bottom: 2px solid #e9b50b;
-  border-right: 2px solid #e9b50b;
-  border-top: 2px solid white;
-  border-left: 2px solid white;
-  transition-duration: 1s;
-  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
-
-  &:hover {
-    border-top: 2px solid #e9b50b;
-    border-left: 2px solid #e9b50b;
-    border-bottom: 5px solid #000;
-    border-right: 5px solid #000;
-    box-shadow: rgba(233, 181, 11, 0.4) 8px 8px, 
-                rgba(233, 181, 11, 0.3) 12px 12px,
-                rgba(233, 181, 11, 0.2) 17px 17px;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  @media (min-width: 768px) {
-    font-size: 1.5rem;
-    padding: 1rem 2rem;
-  }
-
-  @media (min-width: 1024px) {
-    font-size: 1.75rem;
-  }
-`;
-
-const StyledInputWrapper = styled.div`
-  .input__container {
-    position: relative;
-    background: #f0f0f0;
-    padding: 12px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    border: 3px solid #000;
-    width: 100%;
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    transform-style: preserve-3d;
-    transform: rotateX(10deg) rotateY(-10deg);
-    perspective: 1000px;
-    box-shadow: 8px 8px 0 #000;
-  }
-
-  .input__container:hover {
-    transform: rotateX(5deg) rotateY(-5deg) scale(1.05);
-    box-shadow: 18px 18px 0 -3px #e9b50b, 18px 18px 0 0 #000;
-  }
-
-  .shadow__input {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    bottom: 0;
-    z-index: -1;
-    transform: translateZ(-50px);
-    background: linear-gradient(
-      45deg,
-      rgba(255, 107, 107, 0.4) 0%,
-      rgba(255, 107, 107, 0.1) 100%
-    );
-    filter: blur(20px);
-  }
-
-  .input__button__shadow {
-    cursor: pointer;
-    border: 2px solid #000;
-    background: #e9b50b;
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px;
-    transform: translateZ(20px);
-    position: relative;
-    z-index: 3;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
-  .input__button__shadow:hover {
-    background: #e9b50b;
-    transform: translateZ(10px) translateX(-5px) translateY(-5px);
-    box-shadow: 5px 5px 0 0 #000;
-  }
-
-  .input__button__shadow svg {
-    fill: #000;
-    width: 20px;
-    height: 20px;
-  }
-
-  .input__search {
-    width: 100%;
-    outline: none;
-    border: 2px solid #000;
-    padding: 10px 12px;
-    font-size: 15px;
-    background: #fff;
-    color: #000;
-    transform: translateZ(10px);
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    position: relative;
-    z-index: 3;
-    font-family: "Roboto", Arial, sans-serif;
-    letter-spacing: -0.5px;
-  }
-
-  .input__search::placeholder {
-    color: #666;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
-  .input__search:hover,
-  .input__search:focus {
-    background: #f0f0f0;
-    transform: translateZ(20px) translateX(-5px) translateY(-5px);
-    box-shadow: 5px 5px 0 0 #000;
-  }
-
-  .email-input::before {
-    content: "EMAIL ADDRESS";
-    position: absolute;
-    top: -12px;
-    left: 15px;
-    background: #e9b50b;
-    color: #000;
-    font-weight: bold;
-    padding: 4px 8px;
-    font-size: 12px;
-    transform: translateZ(50px);
-    z-index: 4;
-    border: 2px solid #000;
-  }
-
-  .password-input::before {
-    content: "PASSWORD";
-    position: absolute;
-    top: -12px;
-    left: 15px;
-    background: #e9b50b;
-    color: #000;
-    font-weight: bold;
-    padding: 4px 8px;
-    font-size: 12px;
-    transform: translateZ(50px);
-    z-index: 4;
-    border: 2px solid #000;
-  }
-`;
 
 export default Login

@@ -24,12 +24,12 @@ const PaymentPage = () => {
     // Get order details from location state if available
     const orderDetails = location.state?.orderDetails || null;
 
-  // Scroll animations
-  const titleAnim = useScrollAnimation({ threshold: 0.3 });
-  const bankAnim = useScrollAnimation({ threshold: 0.2 });
-  const gcashAnim = useScrollAnimation({ threshold: 0.2 });
-  const bankInfoAnim = useScrollAnimation({ threshold: 0.2 });
-  const gcashInfoAnim = useScrollAnimation({ threshold: 0.2 });
+    // Scroll animations
+    const titleAnim = useScrollAnimation({ threshold: 0.3 });
+    const bankAnim = useScrollAnimation({ threshold: 0.2 });
+    const gcashAnim = useScrollAnimation({ threshold: 0.2 });
+    const bankInfoAnim = useScrollAnimation({ threshold: 0.2 });
+    const gcashInfoAnim = useScrollAnimation({ threshold: 0.2 });
 
     const handleConfirm = (method) => {
         setPaymentMethod(method);
@@ -68,10 +68,10 @@ const PaymentPage = () => {
             const formData = new FormData();
             formData.append('proofOfPayment', selectedFile);
             formData.append('paymentMethod', paymentMethod);
-            
+
             // Get customer info from localStorage
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            
+
             // Add order details if available
             if (orderDetails?.orderid) {
                 formData.append('orderid', orderDetails.orderid);
@@ -233,26 +233,26 @@ const PaymentPage = () => {
                             </div>
                         )}
 
-                    {/* GCash QR Code (if GCash) */}
-                    {paymentMethod === 'GCash' && (
-                        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-                            <h4 className="font-semibold text-gray-800 mb-3 text-center text-sm md:text-base">Scan QR Code to Pay</h4>
-                            <div className="flex flex-col items-center">
-                                <div className="bg-white p-3 md:p-4 rounded-lg shadow-md mb-3">
-                                    <img 
-                                        src={GCashQR}
-                                        alt="GCash QR Code" 
-                                        className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
-                                    />
-                                </div>
-                                <div className="text-center space-y-1 px-2">
-                                    <p className="text-xs md:text-sm text-gray-700"><strong>GCash Name:</strong> EL**A R.</p>
-                                    <p className="text-xs md:text-sm text-gray-700"><strong>Mobile Number:</strong> 09665426313</p>
-                                    <p className="text-xs text-gray-500 mt-2">After payment, take a screenshot and upload as proof</p>
+                        {/* GCash QR Code (if GCash) */}
+                        {paymentMethod === 'GCash' && (
+                            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                                <h4 className="font-semibold text-gray-800 mb-3 text-center text-sm md:text-base">Scan QR Code to Pay</h4>
+                                <div className="flex flex-col items-center">
+                                    <div className="bg-white p-3 md:p-4 rounded-lg shadow-md mb-3">
+                                        <img
+                                            src={GCashQR}
+                                            alt="GCash QR Code"
+                                            className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
+                                        />
+                                    </div>
+                                    <div className="text-center space-y-1 px-2">
+                                        <p className="text-xs md:text-sm text-gray-700"><strong>GCash Name:</strong> EL**A R.</p>
+                                        <p className="text-xs md:text-sm text-gray-700"><strong>Mobile Number:</strong> 09665426313</p>
+                                        <p className="text-xs text-gray-500 mt-2">After payment, take a screenshot and upload as proof</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
                         {/* File Upload Area */}
                         <div className="mb-6">
@@ -347,34 +347,94 @@ const PaymentPage = () => {
 
             {/* Success Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-opacity-30 z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#4ade80] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
-                        {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h3 className="text-black text-xl md:text-2xl font-black">✓ Payment Submitted!</h3>
+                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        {/* Modal Header with Gradient */}
+                        <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-8 text-center">
+                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
+                                <FaCheckCircle className="text-5xl text-green-500" />
+                            </div>
+                            <h3 className="text-2xl md:text-3xl text-white font-bold mb-2">
+                                Payment Submitted! ✓
+                            </h3>
+                            <p className="text-white/90 text-sm md:text-base">
+                                Your proof of payment is being reviewed
+                            </p>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-4 md:p-6 text-center">
-                            <div className="mb-4 flex justify-center">
-                                <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
-                                    <FaCheckCircle className="text-4xl text-[#4ade80]" />
+                        <div className="p-6 md:p-8">
+                            {/* Success Message */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-r-lg p-4 mb-6">
+                                <div className="flex gap-3">
+                                    <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-green-900 mb-1">Thank You!</p>
+                                        <p className="text-sm text-green-800">
+                                            Your payment proof has been successfully submitted. We'll verify it and update your order status shortly.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <p className="text-gray-700 text-base md:text-lg">Thank you for submitting your payment proof. We'll verify and update your order status shortly.</p>
-                        </div>
 
-                        {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                            {/* What's Next Section */}
+                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-6 border-2 border-gray-200">
+                                <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    What happens next?
+                                </h4>
+                                <div className="space-y-2">
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                                        <p className="text-sm text-gray-700">Our team will verify your payment</p>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-2 h-2 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                                        <p className="text-sm text-gray-700">You'll receive a confirmation notification</p>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-2 h-2 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                                        <p className="text-sm text-gray-700">Your order will move to production</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Timeline Estimate */}
+                            <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-3 mb-6">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Estimated verification time:</strong> Within 24-48 hours
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Action Button */}
                             <button
                                 onClick={() => {
                                     setShowModal(false);
                                     navigate('/orders');
                                 }}
-                                className="bg-[#ffd93d] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                                className="w-full bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white font-bold py-3 md:py-4 px-6 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-base md:text-lg"
                             >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
                                 View My Orders
                             </button>
+                        </div>
+
+                        {/* Footer Note */}
+                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                            <p className="text-center text-xs text-gray-600">
+                                Need help? <a href="/messages" className="text-[#E6AF2E] hover:text-[#d4a02a] font-semibold underline">Contact Support</a>
+                            </p>
                         </div>
                     </div>
                 </div>

@@ -5,7 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, PartyPopper, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import MB3ProductPage from '../../images/MB3ProductPage.png'
 import Product9712 from '../../images/97-12ProductPage.png'
@@ -190,6 +190,13 @@ const Checkout = () => {
     const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, z: 0 });
     const [textSize, setTextSize] = useState(0.5);
     const [logoSize, setLogoSize] = useState(1);
+
+    // Add this with your other state declarations
+    // Add this with your other state declarations
+    const [showDescribeModal, setShowDescribeModal] = useState(false);
+    const [clothingDescription, setClothingDescription] = useState('');
+    const [isSendingDescription, setIsSendingDescription] = useState(false);
+    const [savedClothingDescription, setSavedClothingDescription] = useState(''); // New: to save the description
 
     // Set default positions/sizes for 97-12 and 97-11
     useEffect(() => {
@@ -492,6 +499,7 @@ const Checkout = () => {
                     ? addresses[selectedAddress].address
                     : `${companyName}, ${contactPhone}`, // Use company info as fallback address
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
+            clothingPreferences: savedClothingDescription || null, // New: save clothing description
         };
 
 
@@ -567,9 +575,9 @@ const Checkout = () => {
 
             // Show success modal and redirect to orders page after 2 seconds
             setShowModal(true);
-            setTimeout(() => {
-                navigate("/orders");
-            }, 2000);
+            // setTimeout(() => {
+            //     navigate("/orders");
+            // }, 2000);
         } catch (error) {
 
             showNotification(`Failed to create order: ${error.message}`);
@@ -1208,9 +1216,9 @@ const Checkout = () => {
                                                             }`}
                                                     >
                                                         <div className="bg-white p-2 flex items-center justify-center aspect-square">
-                                                            <img 
-                                                src={hangerImages[hanger.id]}
-                                                alt={hanger.name}
+                                                            <img
+                                                                src={hangerImages[hanger.id]}
+                                                                alt={hanger.name}
                                                                 className="w-full h-full object-contain"
                                                             />
                                                         </div>
@@ -1642,68 +1650,532 @@ const Checkout = () => {
                 )}
 
                 {/* STEP 2: Material Selection */}
+                {/* UI Enchance Describe your preferences button for UI/UX still hardcoded */}
                 {currentStep === 2 && (
                     <>
-                        <div className="flex flex-col items-center justify-center mt-10">
-                            <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-medium mb-6 md:mb-10">
-                                Select the material you want
+                        <div className="flex flex-col items-center justify-center mt-6 md:mt-10">
+                            <h3 className="text-black text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+                                Select Your Materials
                             </h3>
-                            <p className="text-black text-lg md:text-xl lg:text-2xl font-normal">
-                                you can select multiple materials and combined by percentage
+                            <p className="text-gray-600 text-base md:text-lg lg:text-xl text-center max-w-2xl px-4">
+                                Choose one or multiple materials and adjust percentages to create your perfect blend
                             </p>
                         </div>
 
-                        <section>
-                            {/* materials selection */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                                {materials.map((material) => (
-                                    <button
-                                        key={material.name}
-                                        onClick={() => toggleMaterial(material.name)}
-                                        className={`cursor-pointer hover:border-yellow-500 border-2 rounded-lg p-4 text-left transition-all ${selectedMaterials[material.name]
-                                            ? "border-yellow-500 bg-yellow-50"
-                                            : "border-gray-300"
-                                            }`}
-                                    >
-                                        <h3 className="text-xl font-semibold mb-2">{material.name}</h3>
-                                        <ul className="list-disc list-inside">
-                                            {material.features.map((feature, i) => (
-                                                <li key={i} className="text-black text-base font-normal">
-                                                    {feature}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </button>
-                                ))}
-                                {/* materials percentage */}
-                                <div className="bg-white rounded-lg border-2 border-gray-300 p-4">
-                                    <h3 className="font-semibold mb-3">Materials selected</h3>
-                                    <p className="text-xs text-gray-600 mb-3">
-                                        Note: You may adjust percentages to achieve 100% mixture
-                                    </p>
-                                    <div className="space-y-2">
-                                        {Object.entries(selectedMaterials).map(([name, percentage]) => (
-                                            <div key={name} className="flex items-center justify-between">
-                                                <span className="text-sm">{name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        value={percentage}
-                                                        onChange={(e) =>
-                                                            updateMaterialPercentage(name, e.target.value)
-                                                        }
-                                                        className="w-16 px-2 py-1 border rounded text-sm"
-                                                        min="0"
-                                                        max="100"
-                                                    />
-                                                    <span className="text-sm">%</span>
+                        <section className="px-3 md:px-6 py-6 md:py-8">
+                            <div className="max-w-7xl mx-auto">
+                                {/* Help Banner */}
+                                <div className="bg-[#E6AF2E] rounded-2xl p-6 md:p-8 mb-8 shadow-xl">
+                                    <div className="flex flex-col md:flex-row items-center gap-6">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 text-center md:text-left">
+                                            <h4 className="text-[#191716] text-xl md:text-2xl font-bold mb-2">
+                                                Not Sure Which Material to Choose?
+                                            </h4>
+                                            <p className="text-[#191716]/90 text-sm md:text-base mb-4">
+                                                Tell us about your clothing needs and our experts will recommend the best materials for you!
+                                            </p>
+                                            <button
+                                                onClick={() => setShowDescribeModal(true)}
+                                                className="bg-[#191716] hover:bg-gray-800 text-white font-bold px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto md:mx-0"
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                                Describe Your Clothing Needs
+                                            </button>
+                                        </div>
+                                        <div className="hidden lg:block flex-shrink-0">
+                                            <div className="text-6xl">👔</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* User's Clothing Preference Card - NEW */}
+                                {savedClothingDescription && (
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-2 border-green-300 shadow-lg p-6 mb-8 animate-fadeIn">
+                                        <div className="flex items-start gap-4">
+                                            <div className="flex-shrink-0">
+                                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
                                                 </div>
                                             </div>
-                                        ))}
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-lg md:text-xl font-bold text-green-900 flex items-center gap-2">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                        Your Clothing Preference
+                                                    </h4>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSavedClothingDescription('');
+                                                            setClothingDescription('');
+                                                        }}
+                                                        className="text-red-600 hover:text-red-700 text-sm font-semibold flex items-center gap-1"
+                                                        title="Remove preference"
+                                                    >
+                                                        <X size={16} />
+                                                        Remove
+                                                    </button>
+                                                </div>
+
+                                                <div className="bg-white rounded-lg p-4 border-2 border-green-200 shadow-sm">
+                                                    <p className="text-gray-700 text-sm md:text-base whitespace-pre-wrap leading-relaxed">
+                                                        {savedClothingDescription}
+                                                    </p>
+                                                </div>
+
+                                                <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                                                    <div className="flex-1 bg-blue-100 border-l-4 border-blue-500 rounded-r-lg p-3">
+                                                        <div className="flex items-start gap-2">
+                                                            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                            </svg>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-blue-900 mb-1">✓ Preference Saved</p>
+                                                                <p className="text-xs text-blue-800">
+                                                                    Our team will review your needs during order validation and recommend the best materials.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            setClothingDescription(savedClothingDescription);
+                                                            setShowDescribeModal(true);
+                                                        }}
+                                                        className="bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 text-sm"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                        Edit
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Materials Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+                                    {materials.map((material) => {
+                                        const isSelected = selectedMaterials[material.name];
+
+                                        // Define best clothing types for each material
+                                        const clothingTypes = {
+                                            'Polypropylene (PP)': {
+                                                icon: '👕',
+                                                clothes: ['T-shirts', 'Sportswear', 'Casual wear', 'Lightweight garments'],
+                                                description: 'Ideal for everyday clothing'
+                                            },
+                                            'ABS Plastic': {
+                                                icon: '🧥',
+                                                clothes: ['Jackets', 'Coats', 'Heavy garments', 'Structured clothing'],
+                                                description: 'Perfect for heavy-duty items'
+                                            },
+                                            'Polycarbonate (PC)': {
+                                                icon: '👔',
+                                                clothes: ['Suits', 'Formal wear', 'Delicate fabrics', 'Premium clothing'],
+                                                description: 'Best for high-end garments'
+                                            },
+                                            'High Impact Polystyrene (HIPS)': {
+                                                icon: '👗',
+                                                clothes: ['Dresses', 'Blouses', 'Light tops', 'Delicate items'],
+                                                description: 'Gentle on fine fabrics'
+                                            },
+                                            'Polyethylene Terephthalate (PET)': {
+                                                icon: '🩳',
+                                                clothes: ['Pants', 'Shorts', 'Activewear', 'Durable clothing'],
+                                                description: 'Great for everyday use'
+                                            },
+                                            'Polyvinyl Chloride (PVC)': {
+                                                icon: '🧤',
+                                                clothes: ['Accessories', 'Outerwear', 'Waterproof items', 'Heavy garments'],
+                                                description: 'Durable for all conditions'
+                                            }
+                                        };
+
+                                        const materialInfo = clothingTypes[material.name] || {
+                                            icon: '👚',
+                                            clothes: ['Various clothing types'],
+                                            description: 'Versatile material'
+                                        };
+
+                                        return (
+                                            <button
+                                                key={material.name}
+                                                onClick={() => toggleMaterial(material.name)}
+                                                className={`group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:scale-105 ${isSelected
+                                                    ? 'bg-gradient-to-br from-[#E6AF2E] to-[#d4a02a] shadow-xl ring-4 ring-[#E6AF2E] ring-opacity-50'
+                                                    : 'bg-white hover:shadow-lg border-2 border-gray-200 hover:border-[#E6AF2E]'
+                                                    }`}
+                                            >
+                                                {/* Selected Badge */}
+                                                {isSelected && (
+                                                    <div className="absolute top-3 right-3 z-10">
+                                                        <div className="bg-white rounded-full p-1.5 shadow-lg">
+                                                            <svg className="w-5 h-5 text-[#E6AF2E]" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Card Content */}
+                                                <div className="p-5 md:p-6 flex flex-col h-full cursor-pointer">
+                                                    {/* Material Icon & Name */}
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className={`text-4xl transform transition-transform group-hover:scale-110 ${isSelected ? 'animate-bounce' : ''}`}>
+                                                            {materialInfo.icon}
+                                                        </div>
+                                                        <div className="flex-1 text-left">
+                                                            <h3 className={`text-lg md:text-xl font-bold mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                                                                {material.name}
+                                                            </h3>
+                                                            <p className={`text-xs md:text-sm ${isSelected ? 'text-white/90' : 'text-gray-600'}`}>
+                                                                {materialInfo.description}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Features */}
+                                                    <div className={`mb-4 p-3 rounded-lg ${isSelected ? 'bg-white/20' : 'bg-gray-50'}`}>
+                                                        <p className={`text-xs font-semibold mb-2 ${isSelected ? 'text-white' : 'text-gray-700'}`}>
+                                                            ✨ Key Features:
+                                                        </p>
+                                                        <ul className="space-y-1">
+                                                            {material.features && material.features.length > 0 ? (
+                                                                material.features.slice(0, 3).map((feature, i) => (
+                                                                    <li key={i} className={`text-xs md:text-sm flex items-start gap-2 ${isSelected ? 'text-white' : 'text-gray-600'}`}>
+                                                                        <span className="mt-0.5">•</span>
+                                                                        <span>{feature}</span>
+                                                                    </li>
+                                                                ))
+                                                            ) : (
+                                                                <li className={`text-xs md:text-sm ${isSelected ? 'text-white' : 'text-gray-600'}`}>
+                                                                    High-quality material
+                                                                </li>
+                                                            )}
+                                                        </ul>
+                                                    </div>
+
+                                                    {/* Best For Section */}
+                                                    <div className={`p-3 rounded-lg border-2 ${isSelected ? 'bg-white/10 border-white/30' : 'bg-blue-50 border-blue-200'}`}>
+                                                        <p className={`text-xs font-semibold mb-2 flex items-center gap-1 ${isSelected ? 'text-white' : 'text-blue-900'}`}>
+                                                            <span>👍</span> Best For:
+                                                        </p>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {materialInfo.clothes.slice(0, 3).map((clothing, i) => (
+                                                                <span
+                                                                    key={i}
+                                                                    className={`text-xs px-2 py-1 rounded-full font-medium ${isSelected
+                                                                        ? 'bg-white/20 text-white'
+                                                                        : 'bg-blue-100 text-blue-800'
+                                                                        }`}
+                                                                >
+                                                                    {clothing}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Hover Instruction */}
+                                                    <div className={`mt-4 text-center text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-[#E6AF2E]'}`}>
+                                                        {isSelected ? '✓ Selected' : 'Click to select'}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Material Percentage Control */}
+                                {Object.keys(selectedMaterials).length > 0 && (
+                                    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border-2 border-[#E6AF2E] p-6 md:p-8">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div>
+                                                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+                                                    Material Composition
+                                                </h3>
+                                                <p className="text-sm text-gray-600">
+                                                    Adjust percentages to achieve 100% mixture
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`text-3xl md:text-4xl font-black ${Math.abs(Object.values(selectedMaterials).reduce((sum, val) => sum + val, 0) - 100) < 0.1
+                                                    ? 'text-green-600'
+                                                    : 'text-red-600'
+                                                    }`}>
+                                                    {Object.values(selectedMaterials).reduce((sum, val) => sum + val, 0).toFixed(1)}%
+                                                </div>
+                                                <div className="text-xs text-gray-500 font-semibold">Total</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mb-6">
+                                            <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
+                                                {Object.entries(selectedMaterials).map(([name, percentage], index) => {
+                                                    const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500'];
+                                                    return (
+                                                        <div
+                                                            key={name}
+                                                            className={`${colors[index % colors.length]} transition-all duration-300`}
+                                                            style={{ width: `${percentage}%` }}
+                                                            title={`${name}: ${percentage.toFixed(1)}%`}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Material Sliders */}
+                                        <div className="space-y-4">
+                                            {Object.entries(selectedMaterials).map(([name, percentage], index) => {
+                                                const colors = [
+                                                    { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300', slider: 'accent-blue-600' },
+                                                    { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300', slider: 'accent-green-600' },
+                                                    { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300', slider: 'accent-yellow-600' },
+                                                    { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300', slider: 'accent-purple-600' },
+                                                    { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300', slider: 'accent-pink-600' },
+                                                    { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-300', slider: 'accent-indigo-600' }
+                                                ];
+                                                const colorScheme = colors[index % colors.length];
+
+                                                return (
+                                                    <div
+                                                        key={name}
+                                                        className={`p-4 rounded-xl border-2 ${colorScheme.bg} ${colorScheme.border} transition-all hover:shadow-md`}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <span className={`font-bold text-sm md:text-base ${colorScheme.text}`}>
+                                                                {name}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={Math.round(percentage)}
+                                                                    onChange={(e) => updateMaterialPercentage(name, e.target.value)}
+                                                                    className={`w-16 md:w-20 px-2 py-1 border-2 ${colorScheme.border} rounded-lg text-center font-bold ${colorScheme.text} bg-white focus:ring-2 focus:ring-offset-2 ${colorScheme.slider.replace('accent', 'focus:ring')}`}
+                                                                    min="0"
+                                                                    max="100"
+                                                                />
+                                                                <span className={`text-lg font-bold ${colorScheme.text}`}>%</span>
+                                                            </div>
+                                                        </div>
+                                                        <input
+                                                            type="range"
+                                                            value={percentage}
+                                                            onChange={(e) => updateMaterialPercentage(name, e.target.value)}
+                                                            className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${colorScheme.slider}`}
+                                                            min="0"
+                                                            max="100"
+                                                            step="0.1"
+                                                        />
+                                                        <div className="flex justify-between mt-2">
+                                                            <span className="text-xs text-gray-500">0%</span>
+                                                            <span className="text-xs text-gray-500">50%</span>
+                                                            <span className="text-xs text-gray-500">100%</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Validation Message */}
+                                        {Math.abs(Object.values(selectedMaterials).reduce((sum, val) => sum + val, 0) - 100) < 0.1 ? (
+                                            <div className="mt-6 p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center gap-3">
+                                                <svg className="w-6 h-6 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                </svg>
+                                                <div>
+                                                    <p className="font-bold text-green-800">Perfect! Your material composition is balanced.</p>
+                                                    <p className="text-sm text-green-700">You can proceed to the next step.</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl flex items-center gap-3">
+                                                <svg className="w-6 h-6 text-yellow-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                                <div>
+                                                    <p className="font-bold text-yellow-800">Material percentages must total 100%</p>
+                                                    <p className="text-sm text-yellow-700">
+                                                        Current total: {Object.values(selectedMaterials).reduce((sum, val) => sum + val, 0).toFixed(1)}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* No Materials Selected Message */}
+                                {Object.keys(selectedMaterials).length === 0 && (
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
+                                        <div className="text-6xl mb-4">🎨</div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                            No materials selected yet
+                                        </h3>
+                                        <p className="text-gray-600">
+                                            Click on the material cards above to start building your custom blend, or describe your needs for expert recommendations!
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Describe Your Needs Modal */}
+                        {showDescribeModal && (
+                            <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-scaleIn">
+                                    {/* Modal Header */}
+                                    <div className="bg-[#E6AF2E] px-6 py-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-[#191716] text-xl md:text-2xl font-bold">Describe Your Clothing Needs</h3>
+                                                    <p className="text-[#191716]/80 text-sm">Help us recommend the best materials</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setShowDescribeModal(false);
+                                                    setClothingDescription(savedClothingDescription);
+                                                }}
+                                                className="text-[#191716] hover:bg-white/20 p-2 rounded-lg transition-colors cursor-pointer"
+                                            >
+                                                <X size={24} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Body */}
+                                    <div className="p-6 md:p-8">
+                                        {/* Instructions */}
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                            <div className="flex gap-3">
+                                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                </svg>
+                                                <div>
+                                                    <h4 className="font-bold text-blue-900 mb-1">How to describe your needs:</h4>
+                                                    <ul className="text-sm text-blue-800 space-y-1">
+                                                        <li>• What types of clothing will you hang?</li>
+                                                        <li>• Are they heavy (coats, suits) or light (t-shirts, blouses)?</li>
+                                                        <li>• Do you need hangers for delicate fabrics?</li>
+                                                        <li>• Any special requirements (water-resistant, extra durability)?</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Text Area */}
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                                Tell us about your clothing needs:
+                                            </label>
+                                            <textarea
+                                                value={clothingDescription}
+                                                onChange={(e) => setClothingDescription(e.target.value)}
+                                                placeholder="Example: I need hangers for my retail store. We sell formal wear including suits, dress shirts, and blazers. We need durable hangers that can handle heavy garments and maintain their shape..."
+                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
+                                                rows="8"
+                                                maxLength={1000}
+                                            />
+                                            <div className="flex justify-between mt-2">
+                                                <p className="text-xs text-gray-500">Be as detailed as possible for best recommendations</p>
+                                                <p className="text-xs text-gray-400">{clothingDescription.length}/1000</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Example Suggestions */}
+                                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                            <p className="text-sm font-semibold text-gray-700 mb-2">Quick suggestions:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    'Heavy winter coats and jackets',
+                                                    'Delicate silk dresses',
+                                                    'Business suits and formal wear',
+                                                    'Casual t-shirts and jeans',
+                                                    'Children\'s clothing',
+                                                    'Activewear and sportswear'
+                                                ].map((suggestion, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setClothingDescription(prev =>
+                                                            prev ? `${prev}\n• ${suggestion}` : `• ${suggestion}`
+                                                        )}
+                                                        className="text-xs bg-white hover:bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200 transition-colors"
+                                                    >
+                                                        + {suggestion}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Info Note */}
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-4">
+                                            <div className="flex gap-2">
+                                                <svg className="w-5 h-5 text-yellow-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                                <p className="text-sm text-yellow-800">
+                                                    <strong>Note:</strong> You can still select materials manually, or leave this for our team to recommend the best options during order validation.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Footer */}
+                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowDescribeModal(false);
+                                                setClothingDescription(savedClothingDescription);
+                                            }}
+                                            className="px-6 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (!clothingDescription.trim()) {
+                                                    showNotification('Please describe your clothing needs');
+                                                    return;
+                                                }
+                                                setSavedClothingDescription(clothingDescription);
+                                                setShowDescribeModal(false);
+                                                showNotification('Your clothing preference has been saved! Our team will review it during order validation.', 'success');
+                                            }}
+                                            disabled={!clothingDescription.trim()}
+                                            className="px-6 py-2.5 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Send Preference
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </section>
+                        )}
 
                         <StepNavigation
                             currentStep={currentStep}
@@ -1780,7 +2252,7 @@ const Checkout = () => {
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handleQuantityChange(-10)}
-                                    disabled={quantity <= 100}
+                                                disabled={quantity <= 100}
                                                 className="border rounded p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
                                             >
                                                 <Minus size={16}></Minus>
@@ -1906,44 +2378,150 @@ const Checkout = () => {
 
                         {/* Modal */}
                         {showModal && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[200]">
-                                <div className="bg-[#007BFF] rounded-lg shadow-lg p-8 text-center max-w-md">
-                                    <img
-                                        src={validationIcon}
-                                        alt="Validation Icon"
-                                        className="mx-auto mb-4 w-16 h-16"
-                                    />
-                                    <h3 className="text-xl text-white font-semibold mb-4">
-                                        Your order will be validated first
-                                    </h3>
-                                    <p className="mb-6 text-white">
-                                        We will maintain communication and provide updates as needed.
-                                    </p>
-                                    <p className="mb-6 text-white text-sm">
-                                        Order Number:{" "}
-                                        {companyName ? `ORD-${new Date().getFullYear()}...` : ""}
-                                    </p>
-                                    <div className="flex gap-3 justify-center">
-                                        <Link to="/orders">
-                                            <button
-                                                className="bg-[#F5F5F5] text-[#333333] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-[#e0e0e0] transition-colors border border-gray-300"
-                                                onClick={() => setShowModal(false)}
-                                            >
-                                                View My Orders
-                                            </button>
-                                        </Link>
-                                        <Link to="/messages">
-                                            <button
-                                                className="bg-white text-[#007BFF] px-8 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                                                onClick={() => setShowModal(false)}
-                                            >
-                                                Go to Messages
-                                            </button>
-                                        </Link>
+                            <div className="fixed inset-0 flex items-center justify-center backdrop-blue-sm bg-opacity-50 backdrop-blur-sm z-[200] p-4">
+                                <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                                    {/* Success Header with Gradient */}
+                                    <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-8 text-center">
+                                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
+                                            <img
+                                                src={validationIcon}
+                                                alt="Validation Icon"
+                                                className="w-12 h-12"
+                                            />
+                                        </div>
+                                        <h3 className="text-2xl md:text-3xl text-white font-bold mb-2">
+                                            Order Submitted Successfully! <PartyPopper size={40}  className="justify-center inline-block" />
+                                        </h3>
+                                        <p className="text-white/90 text-sm md:text-base">
+                                            Your custom hanger order is being reviewed
+                                        </p>
+                                    </div>
+
+                                    {/* Modal Body */}
+                                    <div className="p-6 md:p-8">
+                                        {/* Order Number Badge */}
+                                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-6 border-2 border-gray-200">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-[#E6AF2E] rounded-lg flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="text-xs text-gray-500 font-medium">Order Number</p>
+                                                        <p className="text-lg font-bold text-gray-900">
+                                                            {companyName ? `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000) + 1000}` : "Generating..."}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const orderNum = companyName ? `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 9000) + 1000}` : "";
+                                                        navigator.clipboard.writeText(orderNum);
+                                                    }}
+                                                    className="text-[#E6AF2E] hover:text-[#d4a02a] transition-colors"
+                                                    title="Copy order number"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Information Box */}
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                            <div className="flex gap-3">
+                                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                </svg>
+                                                <div className="flex-1">
+                                                    <h4 className="font-bold text-blue-900 mb-1">What happens next?</h4>
+                                                    <ul className="text-sm text-blue-800 space-y-1">
+                                                        <li>• Our team will review your order details</li>
+                                                        <li>• You'll receive pricing and timeline information</li>
+                                                        <li>• We'll keep you updated via messages</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Timeline Steps */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                <span className="text-sm font-semibold text-green-700">Current: Order Validation</span>
+                                            </div>
+                                            <div className="space-y-2 pl-4 border-l-2 border-gray-200">
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
+                                                    <span>Next: Payment</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
+                                                    <span>Then: Production</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>
+                                                    <span>Finally: Delivery</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex flex-col sm:flex-row gap-3">
+                                            <Link to="/orders" className="flex-1">
+                                                <button
+                                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                                                    onClick={() => setShowModal(false)}
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                    </svg>
+                                                    <span>View My Orders</span>
+                                                </button>
+                                            </Link>
+                                            <Link to="/messages" className="flex-1">
+                                                <button
+                                                    className="w-full bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                                    onClick={() => setShowModal(false)}
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                                    </svg>
+                                                    <span>Go to Messages</span>
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    {/* Footer Note */}
+                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                        <p className="text-center text-xs text-gray-600">
+                                            Expected response time: <span className="font-semibold text-gray-900">Within 24 hours</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         )}
+
+                        {/* Add animation styles if not already present */}
+                        <style jsx>{`
+                        @keyframes scaleIn {
+                            from {
+                            opacity: 0;
+                            transform: scale(0.9);
+                        }
+                            to {
+                                opacity: 1;
+                                transform: scale(1);
+                            }
+                        }
+                        .animate-scaleIn {
+                        animation: scaleIn 0.3s ease-out;
+                        }
+                        `}</style>
 
                         <StepNavigation
                             currentStep={currentStep}
@@ -2443,57 +3021,182 @@ const Checkout = () => {
 
                 {/* Save Design Modal */}
                 {saveDesignModal && (
-                    <div className="fixed inset-0 bg-transparent flex items-center justify-center z-[200] p-4">
-                        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold">Save Design</h3>
-                                <button
-                                    onClick={() => setSaveDesignModal(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            <div className="mb-6">
-                                <label className="block text-sm font-semibold mb-2">Design Name</label>
-                                <input
-                                    type="text"
-                                    value={designName}
-                                    onChange={(e) => setDesignName(e.target.value)}
-                                    placeholder="e.g., Red 97-12 with Logo"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#007BFF]"
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                                <h4 className="font-semibold mb-2 text-sm">Design Details:</h4>
-                                <div className="space-y-1 text-sm text-gray-600">
-                                    <p>• Hanger: <span className="font-medium">{selectedHanger}</span></p>
-                                    <p>• Color: <span className="inline-block w-4 h-4 rounded border" style={{ backgroundColor: color }}></span> {color}</p>
-                                    {customText && <p>• Text: <span className="font-medium">"{customText}"</span></p>}
-                                    {logoPreview && <p>• Logo: <span className="font-medium">✓ Included</span></p>}
-                                    {Object.keys(selectedMaterials).length > 0 && (
-                                        <p>• Materials: <span className="font-medium">{Object.keys(selectedMaterials).join(', ')}</span></p>
-                                    )}
+                    <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                            {/* Modal Header with Gradient */}
+                            <div className="bg-[#E6AF2E] px-6 py-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                            <Save className="w-6 h-6 text-[#E6AF2E]" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-[#191716]">Save Your Design</h3>
+                                            <p className="text-xm text-[#191716]/80">Access it anytime from your account</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSaveDesignModal(false)}
+                                        className="text-[#191716] cursor-pointer hover:bg-white/20 p-1.5 rounded-lg transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setSaveDesignModal(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmSaveDesign}
-                                    disabled={isSaving || !designName.trim()}
-                                    className="flex-1 px-4 py-2 bg-[#007BFF] text-white rounded hover:bg-[#0056b3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isSaving ? 'Saving...' : 'Save Design'}
-                                </button>
+                            {/* Modal Body */}
+                            <div className="p-6">
+                                {/* Design Name Input */}
+                                <div className="mb-6">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Design Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={designName}
+                                            onChange={(e) => setDesignName(e.target.value)}
+                                            placeholder="e.g., Red 97-12 with Logo"
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent transition-all"
+                                            autoFocus
+                                            maxLength={50}
+                                        />
+                                        <div className="absolute right-3 top-3 text-xs text-gray-400">
+                                            {designName.length}/50
+                                        </div>
+                                    </div>
+                                    {!designName.trim() && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Give your design a memorable name
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Design Preview Card */}
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 mb-6 border-2 border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            Design Preview
+                                        </h4>
+                                        {capturedThumbnail && (
+                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                                                ✓ Thumbnail Ready
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Thumbnail Preview */}
+                                    {capturedThumbnail && (
+                                        <div className="mb-4 flex justify-center">
+                                            <div className="relative">
+                                                <img
+                                                    src={capturedThumbnail}
+                                                    alt="Design thumbnail"
+                                                    className="w-32 h-32 object-cover rounded-lg border-4 border-white shadow-lg"
+                                                />
+                                                <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#E6AF2E] rounded-full flex items-center justify-center shadow-lg">
+                                                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Design Details Grid */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-white rounded-lg p-3 shadow-sm">
+                                            <p className="text-xs text-gray-500 mb-1">Hanger Model</p>
+                                            <p className="font-bold text-gray-900">{selectedHanger}</p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 shadow-sm">
+                                            <p className="text-xs text-gray-500 mb-1">Color</p>
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-6 h-6 rounded border-2 border-gray-300 shadow-sm"
+                                                    style={{ backgroundColor: color }}
+                                                ></div>
+                                                <span className="font-mono text-xs font-bold text-gray-900">{color}</span>
+                                            </div>
+                                        </div>
+                                        {customText && (
+                                            <div className="bg-white rounded-lg p-3 shadow-sm col-span-2">
+                                                <p className="text-xs text-gray-500 mb-1">Custom Text</p>
+                                                <p className="font-semibold text-gray-900 text-sm">"{customText}"</p>
+                                            </div>
+                                        )}
+                                        {logoPreview && (
+                                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                                                <p className="text-xs text-gray-500 mb-1">Logo</p>
+                                                <div className="flex items-center gap-2">
+                                                    <img src={logoPreview} alt="Logo" className="w-8 h-8 object-contain rounded border" />
+                                                    <span className="text-green-600 font-semibold text-sm">✓ Included</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {Object.keys(selectedMaterials).length > 0 && (
+                                            <div className="bg-white rounded-lg p-3 shadow-sm col-span-2">
+                                                <p className="text-xs text-gray-500 mb-1">Materials</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {Object.entries(selectedMaterials).map(([name, percentage]) => (
+                                                        <span
+                                                            key={name}
+                                                            className="text-xs bg-[#E6AF2E] text-white px-2 py-1 rounded-full font-semibold"
+                                                        >
+                                                            {name} {Math.round(percentage)}%
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Info Box */}
+                                <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-3 mb-6">
+                                    <div className="flex gap-2">
+                                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                        </svg>
+                                        <p className="text-xs text-blue-800">
+                                            Your design will be saved to your account and can be accessed from <strong>Account Settings → Designs</strong>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setSaveDesignModal(false)}
+                                        className="cursor-pointer flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all font-semibold text-gray-700 shadow-sm hover:shadow-md"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmSaveDesign}
+                                        disabled={isSaving || !designName.trim()}
+                                        className="cursor-pointer flex-1 px-6 py-3 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save size={18} />
+                                                Save Design
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2501,34 +3204,78 @@ const Checkout = () => {
 
                 {/* Color Limitation Modal for 97-12 and 97-11 */}
                 {showColorLimitationModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
-                        <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                    <div className="fixed inset-0 backdrop-blue-sm bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fadeIn">
                             {/* Modal Header */}
-                            <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                                <h3 className="text-black text-xl md:text-2xl font-black">Color Customization Notice</h3>
+                            <div className="bg-[#E6AF2E] px-4 md:px-6 py-4 md:py-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                        <Info className="w-5 h-5 md:w-6 md:h-6 text-[#191716]" />
+                                    </div>
+                                    <h3 className="text-[#191716] text-lg md:text-xl font-bold">Color Customization Notice</h3>
+                                </div>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-4 md:p-6">
-                                <div className="flex justify-center mb-4">
-                                    <div className="w-16 h-16 bg-white border-[3px] border-black flex items-center justify-center">
-                                        <Info className="w-8 h-8 text-black" />
+                            <div className="p-5 md:p-6">
+                                {/* Visual Representation */}
+                                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 mb-4 border-2 border-blue-200">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="text-3xl">🪝</div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-gray-900">Model {selectedHanger}</p>
+                                            <p className="text-xs text-gray-600">Limited color customization</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-gray-700"><strong>Main body</strong> - Color applies</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-gray-700"><strong>Clips</strong> - Color applies</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="text-gray-500"><strong>Hooks & bars</strong> - Color won't change</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <p className="text-center text-gray-700 mb-6 text-sm md:text-base">
-                                    For Model <span className="font-black">{selectedHanger}</span>, kindly disregard the color change on hooks and bars.
-                                    Color changes will only apply on the main body and clips.
+                                {/* Information Text */}
+                                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg mb-4">
+                                    <div className="flex gap-3">
+                                        <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="text-sm text-yellow-800 font-medium">
+                                                Please note: Hooks and bars will maintain their default color regardless of your selected color.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-center text-gray-600 text-sm">
+                                    This is a design limitation specific to this model. All other parts can be fully customized.
                                 </p>
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-center">
+                            <div className="bg-gray-50 px-5 md:px-6 py-4 flex justify-center border-t border-gray-200">
                                 <button
                                     onClick={() => setShowColorLimitationModal(false)}
-                                    className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 py-2 transition-all text-sm md:text-base cursor-pointer"
+                                    className="bg-[#E6AF2E] cursor-pointer text-white font-semibold px-8 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95 text-sm md:text-base"
                                 >
-                                    Got it
+                                    I Understand
                                 </button>
                             </div>
                         </div>
@@ -2537,25 +3284,54 @@ const Checkout = () => {
 
                 {/* Notification Modal */}
                 {notificationModal.show && (
-                    <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-[200] p-3 md:p-4 animate-fadeIn">
-                        <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationModal.type === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                    <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                             {/* Modal Header */}
-                            <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                                <h2 className="text-black text-lg md:text-xl font-black">
-                                    {notificationModal.type === 'success' ? '✓ Success' : '✕ Error'}
-                                </h2>
+                            <div className={`px-6 py-5 ${notificationModal.type === 'success'
+                                    ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'
+                                    : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444]'
+                                }`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                        {notificationModal.type === 'success' ? (
+                                            <svg className="w-6 h-6 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-6 h-6 text-[#ff6b6b]" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">
+                                        {notificationModal.type === 'success' ? 'Success!' : 'Error'}
+                                    </h2>
+                                </div>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-4 md:p-6">
-                                <p className="text-gray-700 text-base md:text-lg">{notificationModal.message}</p>
+                            <div className="p-6 md:p-8">
+                                <div className={`p-4 rounded-lg border-l-4 ${notificationModal.type === 'success'
+                                        ? 'bg-green-50 border-green-400'
+                                        : 'bg-red-50 border-red-400'
+                                    }`}>
+                                    <p className={`text-base md:text-lg leading-relaxed ${notificationModal.type === 'success'
+                                            ? 'text-green-800'
+                                            : 'text-red-800'
+                                        }`}>
+                                        {notificationModal.message}
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
+                            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                    className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
+                                    className={`px-6 md:px-8 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base cursor-pointer ${notificationModal.type === 'success'
+                                            ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-[#191716]'
+                                            : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444] hover:from-[#ef4444] hover:to-[#dc2626] text-[#191716]'
+                                        }`}
                                 >
                                     OK
                                 </button>

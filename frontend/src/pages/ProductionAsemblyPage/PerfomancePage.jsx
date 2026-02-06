@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Package, TrendingUp, Award, AlertCircle, Send, X, CheckCircle } from 'lucide-react';
+import { Users, Package, TrendingUp, Award, AlertCircle, Send, X, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const PerformancePage = () => {
@@ -18,6 +18,12 @@ const PerformancePage = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [employeeId, setEmployeeId] = useState(null);
     const [teamId, setTeamId] = useState(null);
+
+    // Pagination states
+    const [currentQuotaPage, setCurrentQuotaPage] = useState(1);
+    const [orderPages, setOrderPages] = useState({}); // Track page per quota
+    const quotasPerPage = 3;
+    const ordersPerPage = 3;
 
     useEffect(() => {
         // Get employee data from localStorage
@@ -64,6 +70,14 @@ const PerformancePage = () => {
             );
 
             setQuotas(quotasWithOrders);
+            
+            // Initialize order pages for each quota
+            const initialPages = {};
+            quotasWithOrders.forEach(quota => {
+                initialPages[quota.quotaid] = 1;
+            });
+            setOrderPages(initialPages);
+            
             setLoading(false);
         } catch (error) {
             console.error('Error fetching quotas:', error);
@@ -174,9 +188,45 @@ const PerformancePage = () => {
         }));
     };
 
+    // Filter quotas
     const filteredQuotas = selectedQuota === 'All' 
         ? quotas 
         : quotas.filter(quota => quota.quotaid === parseInt(selectedQuota));
+
+    // Paginate quotas
+    const totalQuotaPages = Math.ceil(filteredQuotas.length / quotasPerPage);
+    const indexOfLastQuota = currentQuotaPage * quotasPerPage;
+    const indexOfFirstQuota = indexOfLastQuota - quotasPerPage;
+    const currentQuotas = filteredQuotas.slice(indexOfFirstQuota, indexOfLastQuota);
+
+    // Paginate orders for a specific quota
+    const getPaginatedOrders = (quota) => {
+        const currentPage = orderPages[quota.quotaid] || 1;
+        const orders = quota.orders || [];
+        const totalPages = Math.ceil(orders.length / ordersPerPage);
+        const indexOfLastOrder = currentPage * ordersPerPage;
+        const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+        const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+
+        return {
+            orders: currentOrders,
+            currentPage,
+            totalPages,
+            totalOrders: orders.length
+        };
+    };
+
+    const handleQuotaPageChange = (pageNumber) => {
+        setCurrentQuotaPage(pageNumber);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleOrderPageChange = (quotaId, pageNumber) => {
+        setOrderPages(prev => ({
+            ...prev,
+            [quotaId]: pageNumber
+        }));
+    };
 
     const uniqueQuotaOptions = ['All', ...quotas.map(q => ({ id: q.quotaid, name: q.quotaname }))];
 
@@ -184,6 +234,88 @@ const PerformancePage = () => {
     const totalTarget = quotas.reduce((sum, quota) => sum + (quota.targetquota || 0), 0);
     const totalFinished = quotas.reduce((sum, quota) => sum + (quota.finishedquota || 0), 0);
     const avgCompletion = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
+
+    // Pagination Component
+    const PaginationControls = ({ currentPage, totalPages, onPageChange, label }) => {
+        if (totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages = [];
+            const maxVisible = 5;
+            
+            if (totalPages <= maxVisible) {
+                for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                }
+            } else {
+                if (currentPage <= 3) {
+                    for (let i = 1; i <= 4; i++) pages.push(i);
+                    pages.push('...');
+                    pages.push(totalPages);
+                } else if (currentPage >= totalPages - 2) {
+                    pages.push(1);
+                    pages.push('...');
+                    for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+                } else {
+                    pages.push(1);
+                    pages.push('...');
+                    for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                    pages.push('...');
+                    pages.push(totalPages);
+                }
+            }
+            return pages;
+        };
+
+        return (
+            <div className="flex items-center justify-between mt-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <div className="text-sm text-gray-600">
+                    Showing page <span className="font-semibold">{currentPage}</span> of{' '}
+                    <span className="font-semibold">{totalPages}</span> {label && `(${label})`}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-all font-semibold text-sm flex items-center gap-1"
+                    >
+                        <ChevronLeft size={16} />
+                        Prev
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                        {getPageNumbers().map((pageNum, idx) => (
+                            pageNum === '...' ? (
+                                <span key={`ellipsis-${idx}`} className="px-3 py-2 text-gray-500">...</span>
+                            ) : (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => onPageChange(pageNum)}
+                                    className={`px-3 py-2 rounded-lg font-semibold text-sm transition-all ${
+                                        currentPage === pageNum
+                                            ? 'bg-[#E6AF2E] text-white shadow-md'
+                                            : 'bg-white border-2 border-gray-300 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            )
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-all font-semibold text-sm flex items-center gap-1"
+                    >
+                        Next
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex w-full bg-gray-100">
@@ -225,7 +357,10 @@ const PerformancePage = () => {
                                 {uniqueQuotaOptions.map((option) => (
                                     <button
                                         key={typeof option === 'string' ? option : option.id}
-                                        onClick={() => setSelectedQuota(typeof option === 'string' ? option : option.id)}
+                                        onClick={() => {
+                                            setSelectedQuota(typeof option === 'string' ? option : option.id);
+                                            setCurrentQuotaPage(1); // Reset to first page when filter changes
+                                        }}
                                         className={`cursor-pointer px-4 py-2 rounded-lg font-medium whitespace-nowrap text-sm md:text-base ${
                                             selectedQuota === (typeof option === 'string' ? option : option.id)
                                                 ? 'bg-[#E6AF2E] text-white' 
@@ -291,15 +426,17 @@ const PerformancePage = () => {
 
                         {/* Quota Cards */}
                         <div className="space-y-6">
-                            {filteredQuotas.length === 0 ? (
+                            {currentQuotas.length === 0 ? (
                                 <div className="bg-white rounded-lg shadow p-8 text-center">
                                     <p className="text-gray-500">No quotas available</p>
                                 </div>
                             ) : (
-                                filteredQuotas.map((quota) => {
+                                currentQuotas.map((quota) => {
                                     const quotaPercentage = quota.targetquota > 0 
                                         ? Math.round((quota.finishedquota / quota.targetquota) * 100) 
                                         : 0;
+                                    
+                                    const { orders: paginatedOrders, currentPage: orderPage, totalPages: orderTotalPages, totalOrders: orderCount } = getPaginatedOrders(quota);
 
                                     return (
                                         <div key={quota.quotaid} className="bg-white rounded-lg shadow">
@@ -327,23 +464,17 @@ const PerformancePage = () => {
                                             {/* Assigned Orders */}
                                             <div className="p-4 md:p-6">
                                                 <h3 className="text-lg font-semibold mb-4 text-[#191716]">
-                                                    Assigned Orders ({quota.orders?.length || 0})
+                                                    Assigned Orders ({orderCount})
                                                 </h3>
 
-                                                {loading ? (
-                                                    <LoadingSpinner />
-                                                ) : (!quota.orders || quota.orders.length === 0) ? (
+                                                {(!quota.orders || quota.orders.length === 0) ? (
                                                     <div className="text-center py-8 text-gray-500">
                                                         No orders assigned to this quota
                                                     </div>
                                                 ) : (
-                                                    <div className="space-y-4">
-                                                        {quota.orders.map((order) => {
-                                                            const orderProgress = order.quantity > 0 
-                                                                ? Math.round(((order.quantity - (order.quantity || 0)) / order.quantity) * 100)
-                                                                : 0;
-
-                                                            return (
+                                                    <>
+                                                        <div className="space-y-4">
+                                                            {paginatedOrders.map((order) => (
                                                                 <div 
                                                                     key={order.orderid}
                                                                     className="border rounded-lg p-4 hover:shadow-md transition-all"
@@ -352,7 +483,7 @@ const PerformancePage = () => {
                                                                         <div className="flex-1">
                                                                             <div className="flex items-center gap-2 mb-2">
                                                                                 <h4 className="font-semibold text-gray-900">
-                                                                                    {'ORD-' + order.orderid.slice(0, 8).toUpperCase() || `Order #${order.orderid.slice(0, 8)}`}
+                                                                                    {'ORD-' + order.orderid.slice(0, 8).toUpperCase()}
                                                                                 </h4>
                                                                                 <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.orderstatus)}`}>
                                                                                     {order.orderstatus}
@@ -373,7 +504,7 @@ const PerformancePage = () => {
                                                                         </button>
                                                                     </div>
 
-                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                                         <div>
                                                                             <p className="text-gray-600">Quantity</p>
                                                                             <p className="font-semibold">{order.quantity?.toLocaleString() || 0} units</p>
@@ -392,9 +523,17 @@ const PerformancePage = () => {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Orders Pagination */}
+                                                        <PaginationControls
+                                                            currentPage={orderPage}
+                                                            totalPages={orderTotalPages}
+                                                            onPageChange={(page) => handleOrderPageChange(quota.quotaid, page)}
+                                                            label={`${orderCount} orders`}
+                                                        />
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -402,6 +541,16 @@ const PerformancePage = () => {
                                 })
                             )}
                         </div>
+
+                        {/* Quota Pagination */}
+                        {filteredQuotas.length > quotasPerPage && (
+                            <PaginationControls
+                                currentPage={currentQuotaPage}
+                                totalPages={totalQuotaPages}
+                                onPageChange={handleQuotaPageChange}
+                                label={`${filteredQuotas.length} quotas`}
+                            />
+                        )}
                     </>
                 )}
 
@@ -425,8 +574,8 @@ const PerformancePage = () => {
                                         <h3 className="font-semibold text-gray-900 mb-2">Order Details</h3>
                                         <div className="grid grid-cols-2 gap-3 text-sm">
                                             <div>
-                                                <p className="text-gray-600">Order Name</p>
-                                                <p className="font-medium">{selectedOrder.order.ordername || 'N/A'}</p>
+                                                <p className="text-gray-600">Order ID</p>
+                                                <p className="font-medium">{'ORD-' + selectedOrder.order.orderid.slice(0, 8).toUpperCase()}</p>
                                             </div>
                                             <div>
                                                 <p className="text-gray-600">Quota</p>
@@ -531,8 +680,6 @@ const PerformancePage = () => {
             `}</style>
         </div>
     );
-
-
 };
 
 export default PerformancePage;

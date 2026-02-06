@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
-import styled from 'styled-components'
 import logo from '../../images/logo.png'
 import { Link, useNavigate } from 'react-router-dom'
 import PageTransition from '../../components/Transition/PageTransition'
 import LoadingSpinner from '../../components/LoadingSpinner'
-import { Lock, User } from 'lucide-react'
+import { Lock, User, Mail, Eye, EyeOff, Shield, Settings, Database, Server } from 'lucide-react'
 
 const AuthSystemA = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -60,103 +60,209 @@ const AuthSystemA = () => {
     return (
         <PageTransition direction='right'>
             <div className='grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full'>
-                {/* Left side */}
-                <div className='bg-[#191716] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1'>
-                    <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4'>
-                        <Link to='/'>
-                            <img src={logo} alt='Logo' className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto' />
+                {/* Left side - Brand Section */}
+                <div className='bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] w-full min-h-[400px] lg:min-h-screen order-2 lg:order-1 relative overflow-hidden'>
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10">
+                        <div className="absolute top-20 left-20 w-40 h-40 bg-red-500 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-20 right-20 w-60 h-60 bg-red-600 rounded-full blur-3xl"></div>
+                    </div>
+
+                    <div className='flex flex-col items-center justify-center h-full py-8 md:py-12 lg:py-20 px-4 relative z-10'>
+                        <Link to='/' className="group">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-red-500 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                                <img 
+                                    src={logo} 
+                                    alt='Logo' 
+                                    className='w-[100px] h-[100px] md:w-[140px] md:h-[140px] lg:w-[170px] lg:h-[170px] mx-auto relative z-10 transition-transform group-hover:scale-110 duration-300' 
+                                />
+                            </div>
                         </Link>
-                        <h1 className='text-white text-2xl md:text-3xl lg:text-4xl font-semibold mt-4 md:mt-6 text-center'>Welcome to GatsisHub</h1>
-                        <p className='text-white text-sm md:text-base lg:text-xl text-center mt-3 md:mt-5 font-medium px-4 max-w-md'>
-                            System Administrator Portal - Complete System Control
-                        </p>
+                        
+                        <div className="mt-8 md:mt-10 text-center max-w-md">
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                                <Shield className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+                                <h1 className='text-white text-2xl md:text-3xl lg:text-4xl font-bold'>
+                                    <span className="text-red-500">System</span> Control
+                                </h1>
+                            </div>
+                            <p className='text-gray-300 text-sm md:text-base lg:text-lg leading-relaxed mb-6'>
+                                Complete system administration and management control center.
+                            </p>
+                            
+                            {/* Feature highlights */}
+                            <div className="space-y-3 text-left">
+                                <div className="flex items-center gap-3 text-gray-300">
+                                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                        <Settings className="w-5 h-5 text-red-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">System Configuration</p>
+                                        <p className="text-xs text-gray-400">Manage all system settings</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-300">
+                                    {/* <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                        <Database className="w-5 h-5 text-red-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">Data Management</p>
+                                        <p className="text-xs text-gray-400">Full database access</p>
+                                    </div> */}
+                                </div>
+                                <div className="flex items-center gap-3 text-gray-300">
+                                    <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                        <Server className="w-5 h-5 text-red-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">User Administration</p>
+                                        <p className="text-xs text-gray-400">Control all user accounts</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Right side */}
-                <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2'>
-                    <h1 className='text-[#191716] text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-center'>
-                        System Admin Sign In
-                    </h1>
-
-                    <form onSubmit={handleLogin} className='flex flex-col mt-6 md:mt-8 lg:mt-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200'>
-
-                        <StyledInputWrapper className="mb-4 md:mb-5">
-                            <div className="input__container email-input">
-                                <div className="shadow__input" />
-                                <button type="button" className="input__button__shadow">
-                                    <User size={18} />
-                                </button>
-                                <input
-                                    type='email'
-                                    placeholder='sysadmin@example.com'
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="input__search"
-                                    required
-                                    disabled={loading}
-                                />
+                {/* Right side - Login Form */}
+                <div className='flex flex-col items-center justify-center py-8 md:py-12 lg:py-20 px-4 md:px-8 lg:px-12 order-1 lg:order-2 bg-gray-50'>
+                    <div className="w-full max-w-md">
+                        {/* Header with Badge */}
+                        <div className="text-center mb-8 md:mb-10">
+                            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-full mb-4 shadow-lg">
+                                <Shield className="w-5 h-5" />
+                                <span className="text-sm font-semibold">System Administrator</span>
                             </div>
-                        </StyledInputWrapper>
-
-                        <StyledInputWrapper className="mb-5 md:mb-6">
-                            <div className="input__container password-input">
-                                <div className="shadow__input" />
-                                <button type="button" className="input__button__shadow">
-                                    <Lock size={18} />
-                                </button>
-                                <input
-                                    type='password'
-                                    placeholder='Enter your password'
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="input__search"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-                        </StyledInputWrapper>
-
-                        {/* Remember Me Checkbox */}
-                        <div className='flex items-center mb-4 md:mb-5'>
-                            <input
-                                type="checkbox"
-                                id="rememberMe"
-                                className='w-4 h-4 text-[#E6AF2E] bg-gray-100 border-gray-300 rounded focus:ring-[#E6AF2E] focus:ring-2 cursor-pointer'
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                                disabled={loading}
-                            />
-                            <label htmlFor="rememberMe" className='ml-2 text-sm md:text-base font-medium text-gray-700 cursor-pointer'>
-                                Remember me
-                            </label>
+                            <h1 className='text-[#191716] text-3xl md:text-4xl lg:text-5xl font-bold mb-3'>
+                                Admin Sign In
+                            </h1>
+                            <p className="text-gray-600 text-sm md:text-base">
+                                Access system control panel
+                            </p>
                         </div>
 
-                        {error && <p className='text-red-600 text-sm md:text-base text-center mb-4 bg-red-50 p-3 rounded-lg border border-red-200'>{error}</p>}
-
-                        <StyledButton
-                            type='submit'
-                            disabled={loading}
-                            className="sign-in-btn"
-                        >
-                            {loading ? 'Signing In...' : 'Sign In'}
-                        </StyledButton>
-                    </form>
-
-                    {/* Security Notice */}
-                    <div className="mt-6 max-w-md w-full">
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                    </svg>
+                        <form onSubmit={handleLogin} className='w-full bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-200'>
+                            {/* Email Input */}
+                            <div className="mb-5">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Mail className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type='email'
+                                        placeholder='sysadmin@gatsishub.com'
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-gray-900"
+                                        required
+                                        disabled={loading}
+                                    />
                                 </div>
-                                <div className="ml-3">
-                                    <p className="text-sm text-yellow-700 font-medium">
-                                        Restricted Access - System Administrators Only
+                            </div>
+
+                            {/* Password Input */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder='Enter your password'
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full pl-10 pr-12 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all text-gray-900"
+                                        required
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                        disabled={loading}
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Remember Me Checkbox */}
+                            <div className='flex items-center justify-between mb-6'>
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="rememberMe"
+                                        className='w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2 cursor-pointer'
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                        disabled={loading}
+                                    />
+                                    <label htmlFor="rememberMe" className='ml-2 text-sm font-medium text-gray-700 cursor-pointer'>
+                                        Remember me
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Error Message */}
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                                    <p className='text-red-700 text-sm'>{error}</p>
+                                </div>
+                            )}
+
+                            {/* Sign In Button */}
+                            <button
+                                type='submit'
+                                disabled={loading}
+                                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-base md:text-lg flex items-center justify-center gap-2"
+                            >
+                                {loading ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Authenticating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield className="w-5 h-5" />
+                                        Access System
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        {/* Security Notice */}
+                        <div className="mt-6 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-r-lg">
+                            <div className="flex items-start gap-3">
+                                <Shield className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-semibold text-red-900 mb-1">⚠️ Restricted Access</p>
+                                    <p className="text-xs text-red-700">
+                                        This portal is restricted to authorized System Administrators only. 
+                                        All access attempts are logged and monitored for security purposes.
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Additional Warning */}
+                        <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                                <p className="text-xs text-gray-600">
+                                    <strong>Note:</strong> Unauthorized access attempts will be reported to security.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -165,179 +271,5 @@ const AuthSystemA = () => {
         </PageTransition>
     )
 }
-
-const StyledButton = styled.button`
-  width: 100%;
-  padding: 1rem 2rem;
-  font-weight: 700;
-  font-size: 1.25rem;
-  background: #e9b50b;
-  color: #f0f0f0;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  border-bottom: 2px solid #e9b50b;
-  border-right: 2px solid #e9b50b;
-  border-top: 2px solid white;
-  border-left: 2px solid white;
-  transition-duration: 1s;
-  transition-property: border-top, border-left, border-bottom, border-right, box-shadow;
-
-  &:hover {
-    border-top: 2px solid #e9b50b;
-    border-left: 2px solid #e9b50b;
-    border-bottom: 5px solid #000;
-    border-right: 5px solid #000;
-    box-shadow: rgba(233, 181, 11, 0.4) 8px 8px, 
-                rgba(233, 181, 11, 0.3) 12px 12px,
-                rgba(233, 181, 11, 0.2) 17px 17px;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  @media (min-width: 768px) {
-    font-size: 1.5rem;
-    padding: 1rem 2rem;
-  }
-
-  @media (min-width: 1024px) {
-    font-size: 1.75rem;
-  }
-`;
-
-const StyledInputWrapper = styled.div`
-  .input__container {
-    position: relative;
-    background: #f0f0f0;
-    padding: 12px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-    border: 3px solid #000;
-    width: 100%;
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    transform-style: preserve-3d;
-    transform: rotateX(10deg) rotateY(-10deg);
-    perspective: 1000px;
-    box-shadow: 8px 8px 0 #000;
-  }
-
-  .input__container:hover {
-    transform: rotateX(5deg) rotateY(-5deg) scale(1.05);
-    box-shadow: 18px 18px 0 -3px #e9b50b, 18px 18px 0 0 #000;
-  }
-
-  .shadow__input {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    bottom: 0;
-    z-index: -1;
-    transform: translateZ(-50px);
-    background: linear-gradient(
-      45deg,
-      rgba(255, 107, 107, 0.4) 0%,
-      rgba(255, 107, 107, 0.1) 100%
-    );
-    filter: blur(20px);
-  }
-
-  .input__button__shadow {
-    cursor: pointer;
-    border: 2px solid #000;
-    background: #e9b50b;
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px;
-    transform: translateZ(20px);
-    position: relative;
-    z-index: 3;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
-  .input__button__shadow:hover {
-    background: #e9b50b;
-    transform: translateZ(10px) translateX(-5px) translateY(-5px);
-    box-shadow: 5px 5px 0 0 #000;
-  }
-
-  .input__button__shadow svg {
-    fill: #000;
-    width: 20px;
-    height: 20px;
-  }
-
-  .input__search {
-    width: 100%;
-    outline: none;
-    border: 2px solid #000;
-    padding: 10px 12px;
-    font-size: 15px;
-    background: #fff;
-    color: #000;
-    transform: translateZ(10px);
-    transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
-    position: relative;
-    z-index: 3;
-    font-family: "Roboto", Arial, sans-serif;
-    letter-spacing: -0.5px;
-  }
-
-  .input__search::placeholder {
-    color: #666;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
-  .input__search:hover,
-  .input__search:focus {
-    background: #f0f0f0;
-    transform: translateZ(20px) translateX(-5px) translateY(-5px);
-    box-shadow: 5px 5px 0 0 #000;
-  }
-
-  .input__search:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .email-input::before {
-    content: "EMAIL ADDRESS";
-    position: absolute;
-    top: -12px;
-    left: 15px;
-    background: #e9b50b;
-    color: #000;
-    font-weight: bold;
-    padding: 4px 8px;
-    font-size: 12px;
-    transform: translateZ(50px);
-    z-index: 4;
-    border: 2px solid #000;
-  }
-
-  .password-input::before {
-    content: "PASSWORD";
-    position: absolute;
-    top: -12px;
-    left: 15px;
-    background: #e9b50b;
-    color: #000;
-    font-weight: bold;
-    padding: 4px 8px;
-    font-size: 12px;
-    transform: translateZ(50px);
-    z-index: 4;
-    border: 2px solid #000;
-  }
-`;
 
 export default AuthSystemA

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { ChevronDown, MessageCircle, Eye } from 'lucide-react';
 import { FileText } from 'lucide-react';
-import { Download, CreditCard } from 'lucide-react';
+import { Download, CreditCard, X, Truck, Box, ClipboardPen, Boxes } from 'lucide-react';
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -24,7 +24,7 @@ const Order = () => {
     const [error, setError] = useState(null);
     const [show3DModal, setShow3DModal] = useState(false);
     const [selected3DDesign, setSelected3DDesign] = useState(null);
-    
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -52,7 +52,7 @@ const Order = () => {
     const [reviewMessage, setReviewMessage] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-    const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed'];
+    const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'];
 
     // Map tab names to their corresponding order statuses
     const getStatusesForTab = (tab) => {
@@ -60,7 +60,8 @@ const Order = () => {
             'Pending': ['For Evaluation', 'Waiting for Payment'],
             'Processing': ['Verifying Payment', 'In Production', 'Waiting for Shipment'],
             'Shipped': ['In Transit'],
-            'Completed': ['Completed']
+            'Completed': ['Completed'],
+            'Cancelled': ['Cancelled']
         };
         return statusMap[tab] || [];
     };
@@ -76,14 +77,14 @@ const Order = () => {
             }
         } else if (payload.eventType === 'UPDATE') {
             // Order updated - update in current list if present
-            setOrders(prev => 
-                prev.map(order => 
+            setOrders(prev =>
+                prev.map(order =>
                     order.orderid === payload.new.orderid ? { ...payload.new, payment: orderPayments[payload.new.orderid] } : order
                 )
             );
         } else if (payload.eventType === 'DELETE') {
             // Order deleted
-            setOrders(prev => 
+            setOrders(prev =>
                 prev.filter(order => order.orderid !== payload.old.orderid)
             );
         }
@@ -106,7 +107,7 @@ const Order = () => {
                 delete updated[deletedOrderId];
                 return updated;
             });
-            
+
             // Refetch the specific order to get the updated status (should be 'Waiting for Payment')
             if (deletedOrderId) {
                 const timestamp = new Date().getTime();
@@ -114,8 +115,8 @@ const Order = () => {
                     .then(res => res.json())
                     .then(data => {
                         if (data.order) {
-                            setOrders(prev => 
-                                prev.map(order => 
+                            setOrders(prev =>
+                                prev.map(order =>
                                     order.orderid === deletedOrderId ? data.order : order
                                 )
                             );
@@ -128,7 +129,7 @@ const Order = () => {
 
     // Subscribe to real-time order updates
     const { isSubscribed } = useRealtimeOrders(user?.userid, handleOrderUpdate);
-    
+
     // Subscribe to real-time payment updates (all payments for this user's orders)
     const { isSubscribed: isPaymentsSubscribed } = useRealtimePayments(null, handlePaymentUpdate);
 
@@ -149,7 +150,7 @@ const Order = () => {
             setLoading(true);
             // Add timestamp to prevent caching
             const timestamp = new Date().getTime();
-            
+
             // Try the new optimized endpoint first
             let response = await fetch(
                 `https://gatsis-hub.vercel.app/orders/user/${user.userid}/full?page=${currentPage}&limit=${ordersPerPage}&_t=${timestamp}`
@@ -159,7 +160,7 @@ const Order = () => {
             if (!response.ok) {
                 console.warn('New endpoint failed, trying fallback...');
                 response = await fetch(`https://gatsis-hub.vercel.app/orders/user/${user.userid}?_t=${timestamp}`);
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch orders');
                 }
@@ -167,11 +168,11 @@ const Order = () => {
                 // Handle old endpoint response (without pagination)
                 const data = await response.json();
                 console.log('Fetched orders (fallback):', data.orders?.length, 'orders');
-                
+
                 setOrders(data.orders || []);
                 setTotalPages(1);
                 setTotalOrders(data.orders?.length || 0);
-                
+
                 // Need to fetch payments separately with old endpoint
                 if (data.orders && data.orders.length > 0) {
                     const paymentsMap = {};
@@ -188,7 +189,7 @@ const Order = () => {
                     }));
                     setOrderPayments(paymentsMap);
                 }
-                
+
                 setError(null);
                 setLoading(false);
                 return;
@@ -201,13 +202,13 @@ const Order = () => {
             console.log('Pagination:', data.pagination);
 
             setOrders(data.orders || []);
-            
+
             // Set pagination data
             if (data.pagination) {
                 setTotalPages(data.pagination.totalPages);
                 setTotalOrders(data.pagination.totalOrders);
             }
-            
+
             // Extract payments from orders data (already included)
             if (data.orders && data.orders.length > 0) {
                 const paymentsMap = {};
@@ -219,7 +220,7 @@ const Order = () => {
                 setOrderPayments(paymentsMap);
                 console.log('Payment statuses loaded:', Object.keys(paymentsMap).length, 'payments');
             }
-            
+
             setError(null);
         } catch (err) {
             console.error('Error fetching orders:', err);
@@ -311,7 +312,7 @@ const Order = () => {
         try {
             // Get customer data from localStorage (stored as 'user')
             const customer = JSON.parse(localStorage.getItem('user'));
-            
+
             if (!customer || !customer.customerid) {
                 showNotification('Please log in to contact support', 'error');
                 return;
@@ -319,7 +320,7 @@ const Order = () => {
 
             // Try to fetch an active and present Sales Admin first (priority: online)
             let employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&ispresent=true&limit=1');
-            
+
             if (!employeesResponse.ok) {
                 showNotification('Failed to load support team. Please try again.', 'error');
                 return;
@@ -332,7 +333,7 @@ const Order = () => {
             if (salesAdmins.length === 0) {
 
                 employeesResponse = await fetch('https://gatsis-hub.vercel.app/employees?role=Sales Admin&status=Active&limit=1');
-                
+
                 if (!employeesResponse.ok) {
                     showNotification('Failed to load support team. Please try again.', 'error');
                     return;
@@ -369,8 +370,8 @@ const Order = () => {
             });
 
             if (response.ok) {
-                const statusMessage = isOnline 
-                    ? `Message sent to ${supportAgent.employeename} (Online)! Redirecting...` 
+                const statusMessage = isOnline
+                    ? `Message sent to ${supportAgent.employeename} (Online)! Redirecting...`
                     : `Message sent to ${supportAgent.employeename}! They will respond when available. Redirecting...`;
                 showNotification(statusMessage, 'success');
                 // Navigate to messages page after a short delay
@@ -496,7 +497,7 @@ const Order = () => {
     const handleDownloadInvoice = (order) => {
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
-        
+
         // Format materials as a readable string
         const formatMaterialsForInvoice = (materialsObj) => {
             if (!materialsObj || typeof materialsObj !== 'object') return 'N/A';
@@ -504,7 +505,7 @@ const Order = () => {
                 .map(([name, percentage]) => `${name} ${Math.round(percentage)}%`)
                 .join(', ');
         };
-        
+
         const invoiceHTML = `
             <!DOCTYPE html>
             <html>
@@ -725,7 +726,7 @@ const Order = () => {
             </body>
             </html>
         `;
-        
+
         invoiceWindow.document.write(invoiceHTML);
         invoiceWindow.document.close();
     };
@@ -755,14 +756,14 @@ const Order = () => {
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                                         {/* Image skeleton */}
                                         <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded animate-pulse flex-shrink-0" style={{ aspectRatio: '1/1' }}></div>
-                                        
+
                                         {/* Content skeleton */}
                                         <div className="flex-1 space-y-3 w-full">
                                             <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse"></div>
                                             <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
                                             <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
                                         </div>
-                                        
+
                                         {/* Status skeleton */}
                                         <div className="hidden md:block">
                                             <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
@@ -849,7 +850,7 @@ const Order = () => {
                             const statusColor = getStatusColor(order.orderstatus);
 
                             return (
-                                <div 
+                                <div
                                     key={order.orderid}
                                     className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 animate-fadeIn"
                                     style={{ animationDelay: `${index * 100}ms` }}
@@ -914,7 +915,7 @@ const Order = () => {
                                             <div className="flex items-center justify-between gap-4">
                                                 <div>
                                                     <p className="text-xs text-gray-500 mb-1">Status</p>
-                                                    <span 
+                                                    <span
                                                         className="text-white px-3 py-1 rounded font-semibold text-xs inline-block"
                                                         style={{ backgroundColor: statusColor }}
                                                     >
@@ -969,16 +970,16 @@ const Order = () => {
                                                 <span>ORD-{order.orderid.slice(0, 8).toUpperCase()}</span>
                                             </div>
 
-                                            
-                                    {/* Status */}
-                                    <div className="flex-1 text-center">
-                                        <span 
-                                            className="text-white px-4 py-1 rounded font-semibold text-sm inline-block"
-                                            style={{ backgroundColor: statusColor }}
-                                        >
-                                            {order.orderstatus}
-                                        </span>
-                                    </div>
+
+                                            {/* Status */}
+                                            <div className="flex-1 text-center">
+                                                <span
+                                                    className="text-white px-4 py-1 rounded font-semibold text-sm inline-block"
+                                                    style={{ backgroundColor: statusColor }}
+                                                >
+                                                    {order.orderstatus}
+                                                </span>
+                                            </div>
 
                                             {/* Price */}
                                             <div className="flex-1 text-center">
@@ -1079,15 +1080,14 @@ const Order = () => {
                                                             )}
                                                             {order.deadline && (
                                                                 <div className="flex justify-between border-t pt-2 mt-2">
-                                                                    <span className="font-semibold text-lg">Expected Deadline:</span>
+                                                                    <span className="font-semibold text-lg">Expected Production Deadline:</span>
                                                                     <span className="text-lg font-bold text-indigo-600">{formatDate(order.deadline)}</span>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
 
-                                                    {/* Right Column - Contact & Address Information */}
-                                                    <div>
+                                                        {/* Contact */}
+                                                        <hr />
                                                         <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">Contact Information</h3>
                                                         <div className="text-xs md:text-sm mb-4">
                                                             <p className="font-semibold">{order.contactperson}</p>
@@ -1108,17 +1108,6 @@ const Order = () => {
                                                                 <p className="text-gray-400 italic">No address provided</p>
                                                             )}
                                                         </div>
-
-                                                        {/* Order Instructions Section */}
-                                                        {order.orderinstructions && (
-                                                            <>
-                                                                <h3 className="text-lg md:text-xl font-bold mb-2 mt-4">Order Instructions</h3>
-                                                                <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
-                                                                    <p className="text-xs md:text-sm text-gray-700">{order.orderinstructions}</p>
-                                                                </div>
-                                                            </>
-                                                        )}
-
                                                         {/* Delivery Notes Section */}
                                                         {order.deliverynotes && (
                                                             <>
@@ -1139,6 +1128,181 @@ const Order = () => {
                                                                 View 3D Design
                                                             </button>
                                                         )}
+                                                    </div>
+
+                                                    {/* Right Column - Contact & Address Information */}
+                                                    <div>
+                                                        {/* Shipping & Tracking Information - Show when order is In Transit or Completed */}
+                                                        {(order.orderstatus === 'In Transit' || order.orderstatus === 'Completed') && (
+                                                            <>
+                                                                <h3 className="text-lg md:text-xl font-bold mb-3 mt-4 md:mt-6 flex items-center gap-2">
+                                                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                    Shipping Information
+                                                                </h3>
+
+                                                                {/* Courier & Tracking Number */}
+                                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-4 mb-4">
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <p className="text-xs font-semibold text-blue-700 mb-1">Courier Service</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                                </svg>
+                                                                                <span className="text-base font-bold text-blue-900">
+                                                                                    {/* Hardcoded for now - will be replaced with real data */}
+                                                                                    J&T Express
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs font-semibold text-blue-700 mb-1">Tracking Number</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                                                                </svg>
+                                                                                <span className="text-base font-mono font-bold text-blue-900">
+                                                                                    {/* Hardcoded for now - will be replaced with real data */}
+                                                                                    JT{order.orderid.slice(0, 12).toUpperCase()}
+                                                                                </span>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        navigator.clipboard.writeText(`JT${order.orderid.slice(0, 12).toUpperCase()}`);
+                                                                                        showNotification('Tracking number copied to clipboard!', 'success');
+                                                                                    }}
+                                                                                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                                                    title="Copy tracking number"
+                                                                                >
+                                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Tracking Timeline */}
+                                                                <div className="bg-white rounded-lg border-2 border-gray-200 p-4">
+                                                                    <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                                        <svg className="w-4 h-4 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                        </svg>
+                                                                        Shipment Timeline
+                                                                    </h4>
+
+                                                                    {/* Timeline Items - Hardcoded for now */}
+                                                                    <div className="space-y-4">
+                                                                        {/* Sample tracking logs - will be replaced with real data */}
+                                                                        {[
+                                                                            {
+                                                                                date: '2024-01-15',
+                                                                                time: '14:30',
+                                                                                type: 'Out for Delivery',
+                                                                                location: 'Manila Hub',
+                                                                                description: 'Package is out for delivery to your address',
+                                                                                icon: <Truck />,
+                                                                                color: 'blue'
+                                                                            },
+                                                                            {
+                                                                                date: '2024-01-15',
+                                                                                time: '08:45',
+                                                                                type: 'In Transit',
+                                                                                location: 'Quezon City Sorting Facility',
+                                                                                description: 'Package arrived at sorting facility',
+                                                                                icon: <Boxes />,
+                                                                                color: 'green'
+                                                                            },
+                                                                            {
+                                                                                date: '2024-01-14',
+                                                                                time: '16:20',
+                                                                                type: 'Picked Up',
+                                                                                location: 'GatsisHub Warehouse',
+                                                                                description: 'Package picked up by courier',
+                                                                                icon: <Box />,
+                                                                                color: 'yellow'
+                                                                            },
+                                                                            {
+                                                                                date: '2024-01-14',
+                                                                                time: '10:00',
+                                                                                type: 'Ready for Pickup',
+                                                                                location: 'GatsisHub Warehouse',
+                                                                                description: 'Package is ready for courier pickup',
+                                                                                icon: <ClipboardPen />,
+                                                                                color: 'gray'
+                                                                            }
+                                                                        ].map((log, index) => (
+                                                                            <div key={index} className="flex gap-3 relative">
+                                                                                {/* Timeline line */}
+                                                                                {index !== 3 && (
+                                                                                    <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-gray-300"></div>
+                                                                                )}
+
+                                                                                {/* Icon */}
+                                                                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg z-10 ${log.color === 'blue' ? 'bg-blue-100 border-2 border-blue-500' :
+                                                                                        log.color === 'green' ? 'bg-green-100 border-2 border-green-500' :
+                                                                                            log.color === 'yellow' ? 'bg-yellow-100 border-2 border-yellow-500' :
+                                                                                                'bg-gray-100 border-2 border-gray-400'
+                                                                                    }`}>
+                                                                                    {log.icon}
+                                                                                </div>
+
+                                                                                {/* Content */}
+                                                                                <div className="flex-1 pb-4">
+                                                                                    <div className="flex items-start justify-between mb-1">
+                                                                                        <p className={`font-bold text-sm ${log.color === 'blue' ? 'text-blue-900' :
+                                                                                                log.color === 'green' ? 'text-green-900' :
+                                                                                                    log.color === 'yellow' ? 'text-yellow-900' :
+                                                                                                        'text-gray-900'
+                                                                                            }`}>
+                                                                                            {log.type}
+                                                                                        </p>
+                                                                                        <span className="text-xs text-gray-500">
+                                                                                            {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {log.time}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <p className="text-xs text-gray-600 mb-1">
+                                                                                        📍 {log.location}
+                                                                                    </p>
+                                                                                    <p className="text-xs text-gray-500">
+                                                                                        {log.description}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+
+                                                                    {/* Expected Delivery */}
+                                                                    {order.deadline && (
+                                                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                                                            <div className="flex items-center justify-between bg-green-50 border-l-4 border-green-500 rounded-r-lg p-3">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                    </svg>
+                                                                                    <span className="text-sm font-semibold text-green-900">Expected Delivery:</span>
+                                                                                </div>
+                                                                                <span className="text-sm font-bold text-green-800">
+                                                                                    {/* {formatDate(order.deadline)} */}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {/* Order Instructions Section */}
+                                                        {order.orderinstructions && (
+                                                            <>
+                                                                <h3 className="text-lg md:text-xl font-bold mb-2 mt-4">Order Instructions</h3>
+                                                                <div className="border rounded-lg p-3 bg-blue-50 border-blue-200 mb-3">
+                                                                    <p className="text-xs md:text-sm text-gray-700">{order.orderinstructions}</p>
+                                                                </div>
+                                                            </>
+                                                        )}
 
                                                         {/* Design File Button */}
                                                         {order.customdesignurl && (
@@ -1151,10 +1315,10 @@ const Order = () => {
                                                 </div>
 
                                                 {/* Action Buttons */}
-                                                <div className="flex gap-2 md:gap-3 mt-4 md:mt-6 flex-wrap">
+                                                <div className="flex gap-2 md:gap-3 mt-4 md:mt-6  flex-wrap">
                                                     {/* Download Invoice - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
                                                     {['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleDownloadInvoice(order)}
                                                             className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
                                                         >
@@ -1176,14 +1340,44 @@ const Order = () => {
                                                         </button>
                                                     )}
 
+
+
                                                     {/* Payment Pending Verification Notice */}
-                                                    {orderPayments[order.orderid]?.paymentstatus === 'Pending Verification' && (
-                                                        <div className="bg-blue-50 border border-blue-300 rounded px-3 py-2 flex items-center gap-2">
-                                                            <span className="text-blue-600 text-xs md:text-sm font-semibold">
-                                                                Payment Submitted - Awaiting Verification
-                                                            </span>
-                                                        </div>
+                                                    {/* Payment Status Notices */}
+                                                    {orderPayments[order.orderid] && (
+                                                        <>
+                                                            {/* Payment Pending Verification - Only show when order is in payment verification stage */}
+                                                            {orderPayments[order.orderid].paymentstatus === 'Pending Verification' &&
+                                                                (order.orderstatus === 'Waiting for Payment' || order.orderstatus === 'Verifying Payment') && (
+                                                                    <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg px-3 py-2 flex items-center gap-2">
+                                                                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                        <span className="text-blue-600 text-xs md:text-sm font-semibold">
+                                                                            Payment Submitted - Awaiting Verification
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
+                                                            {/* Payment Verified - Show when payment is verified */}
+                                                            {orderPayments[order.orderid].paymentstatus === 'Verified' &&
+                                                                (order.orderstatus === 'In Production' ||
+                                                                    order.orderstatus === 'Waiting for Shipment' ||
+                                                                    order.orderstatus === 'In Transit' ||
+                                                                    order.orderstatus === 'Completed') && (
+                                                                    <div className="bg-green-50 border-l-4 border-green-400 rounded-r-lg px-3 py-2 flex items-center gap-2">
+                                                                        <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                        <span className="text-green-600 text-xs md:text-sm font-semibold">
+                                                                            ✓ Payment Verified
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                        </>
                                                     )}
+
+
 
                                                     {/* Payment Rejected Notice */}
                                                     {orderPayments[order.orderid]?.paymentstatus === 'Rejected' && (
@@ -1195,55 +1389,60 @@ const Order = () => {
                                                     )}
 
                                                     {/* Payment - Show when Waiting for Payment AND (no payment OR payment rejected) */}
-                                                    {order.orderstatus === 'Waiting for Payment' && 
-                                                    (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
-                                                        <Link 
-                                                            to="/payment" 
-                                                            state={{ orderDetails: order }}
-                                                            style={{ textDecoration: 'none' }}
-                                                        >
-                                                            <StyledWrapper>
-                                                                <div className="container">
-                                                                    <div className="left-side">
-                                                                        <div className="card">
-                                                                            <div className="card-line" />
-                                                                            <div className="buttons" />
-                                                                        </div>
-                                                                        <div className="post">
-                                                                            <div className="post-line" />
-                                                                            <div className="screen">
-                                                                                <div className="dollar">₱</div>
+                                                    {order.orderstatus === 'Waiting for Payment' &&
+                                                        (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
+                                                            <Link
+                                                                to="/payment"
+                                                                state={{ orderDetails: order }}
+                                                                style={{ textDecoration: 'none' }}
+                                                            >
+                                                                <StyledWrapper>
+                                                                    <div className="container">
+                                                                        <div className="left-side">
+                                                                            <div className="card">
+                                                                                <div className="card-line" />
+                                                                                <div className="buttons" />
                                                                             </div>
-                                                                            <div className="numbers" />
-                                                                            <div className="numbers-line2" />
+                                                                            <div className="post">
+                                                                                <div className="post-line" />
+                                                                                <div className="screen">
+                                                                                    <div className="dollar">₱</div>
+                                                                                </div>
+                                                                                <div className="numbers" />
+                                                                                <div className="numbers-line2" />
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="right-side">
+                                                                            <div className="new">
+                                                                                {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit' : 'Payment'}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="right-side">
-                                                                        <div className="new">
-                                                                            {orderPayments[order.orderid]?.paymentstatus === 'Rejected' ? 'Resubmit' : 'Payment'}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </StyledWrapper>
-                                                        </Link>
-                                                    )}
+                                                                </StyledWrapper>
+                                                            </Link>
+                                                        )}
 
                                                     {/* Contact Support - Always visible */}
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleContactSupport(order)}
-                                                        className="bg-[#191716] text-white px-3 md:px-6 py-2 rounded transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
+                                                        className="bg-[#191716] text-white px-3 md:px-4 py-0.5 md:py-1 rounded-lg transition-all duration-300 hover:scale-105 hover:bg-gray-800 flex items-center justify-center gap-2 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg min-w-[140px] md:min-w-[160px]"
                                                     >
-                                                        <MessageCircle size={18} />
-                                                        Contact Support
+                                                        <MessageCircle size={18} className="md:w-5 md:h-5" />
+                                                        <span className="hidden sm:inline">Contact Support</span>
+                                                        <span className="sm:hidden">Support</span>
                                                     </button>
 
                                                     {/* Cancel Order - Only show in For Evaluation or Waiting for Payment (before Processing) */}
                                                     {(order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment') && (
                                                         <button
                                                             onClick={() => openCancelModal(order)}
-                                                            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors text-sm font-semibold"
+                                                            className="bg-red-500 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-red-600 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[160px]"
                                                         >
-                                                            Cancel Order
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                            <span className="hidden sm:inline">Cancel Order</span>
+                                                            <span className="sm:hidden">Cancel</span>
                                                         </button>
                                                     )}
 
@@ -1273,7 +1472,7 @@ const Order = () => {
                             Showing <span className="font-semibold">{orders.length}</span> of{' '}
                             <span className="font-semibold">{totalOrders}</span> orders
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => {
@@ -1285,7 +1484,7 @@ const Order = () => {
                             >
                                 ← Prev
                             </button>
-                            
+
                             <div className="flex items-center gap-1">
                                 {[...Array(totalPages)].map((_, idx) => {
                                     const pageNum = idx + 1;
@@ -1302,11 +1501,10 @@ const Order = () => {
                                                     setCurrentPage(pageNum);
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }}
-                                                className={`px-3 py-2 font-semibold transition-all ${
-                                                    currentPage === pageNum
-                                                        ? 'bg-yellow-400 border-2 border-black shadow-[2px_2px_0_#000000]'
-                                                        : 'bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px]'
-                                                }`}
+                                                className={`px-3 py-2 font-semibold transition-all ${currentPage === pageNum
+                                                    ? 'bg-yellow-400 border-2 border-black shadow-[2px_2px_0_#000000]'
+                                                    : 'bg-white border-2 border-black shadow-[2px_2px_0_#000000] hover:shadow-[1px_1px_0_#000000] hover:translate-x-[1px] hover:translate-y-[1px]'
+                                                    }`}
                                             >
                                                 {pageNum}
                                             </button>
@@ -1320,7 +1518,7 @@ const Order = () => {
                                     return null;
                                 })}
                             </div>
-                            
+
                             <button
                                 onClick={() => {
                                     setCurrentPage(prev => Math.min(totalPages, prev + 1));
@@ -1338,48 +1536,115 @@ const Order = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scaleIn flex flex-col">
+                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3">
+                        <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <img src={logo} alt="Logo" className="w-16 h-10" />
-                                <h2 className="text-black text-xl md:text-2xl font-black">Proof of Payment</h2>
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    <svg className="w-6 h-6 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">Proof of Payment</h2>
+                                    <p className="text-[#191716]/70 text-xs md:text-sm">Payment verification document</p>
+                                </div>
                             </div>
+                            <button
+                                onClick={closeProofModal}
+                                className="text-white cursor-pointer hover:bg-white/20 p-2 rounded-lg transition-colors"
+                                title="Close"
+                            >
+                                <X size={24} />
+                            </button>
                         </div>
 
                         {/* Content Container - Scrollable */}
-                        <div className="bg-white mx-4 md:mx-6 my-4 border-[3px] border-black p-3 md:p-4 overflow-auto max-h-[60vh]">
-                            {proofImage && proofImage.toLowerCase().endsWith('.pdf') ? (
-                                <div className="flex flex-col items-center gap-4 py-4">
-                                    <FileText size={48} className="text-indigo-600" />
-                                    <p className="text-gray-700 font-semibold">PDF Payment Proof</p>
-                                    <a 
-                                        href={proofImage} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded transition-colors font-semibold flex items-center gap-2"
-                                    >
-                                        <Eye size={18} />
-                                        Open PDF
-                                    </a>
-                                </div>
-                            ) : (
-                                <img
-                                    src={proofImage}
-                                    alt="Proof of Payment"
-                                    className="w-full h-auto rounded max-h-[55vh] object-contain"
-                                />
-                            )}
+                        <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
+                            <div className="bg-white rounded-xl shadow-md p-4 md:p-6 border-2 border-gray-200">
+                                {proofImage && proofImage.toLowerCase().endsWith('.pdf') ? (
+                                    <div className="flex flex-col items-center gap-6 py-8">
+                                        <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center shadow-lg">
+                                            <FileText size={40} className="text-indigo-600" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold text-gray-900 mb-2">PDF Payment Proof</p>
+                                            <p className="text-sm text-gray-600">Click below to view the document</p>
+                                        </div>
+                                        <a
+                                            href={proofImage}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-8 py-3 rounded-lg transition-all shadow-md hover:shadow-lg font-semibold flex items-center gap-2"
+                                        >
+                                            <Eye size={20} />
+                                            Open PDF Document
+                                        </a>
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 w-full max-w-md">
+                                            <p className="text-sm text-blue-800">
+                                                <strong>Tip:</strong> The PDF will open in a new tab. Make sure pop-ups are enabled.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+
+                                        {/* Image Display */}
+                                        <div className="bg-gray-900 rounded-lg p-2 flex items-center justify-center" style={{ minHeight: '400px' }}>
+                                            <img
+                                                src={proofImage}
+                                                alt="Proof of Payment"
+                                                className="max-w-full h-auto rounded max-h-[60vh] object-contain"
+                                            />
+                                        </div>
+
+                                        {/* Image Controls */}
+                                        <div className="flex justify-center gap-3">
+                                            <a
+                                                href={proofImage}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 text-sm"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                Open in New Tab
+                                            </a>
+                                            <button
+                                                onClick={() => {
+                                                    const link = document.createElement('a');
+                                                    link.href = proofImage;
+                                                    link.download = `payment-proof-${Date.now()}.jpg`;
+                                                    link.click();
+                                                }}
+                                                className="bg-[#E6AF2E] hover:bg-[#d4a02a] text-white px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 text-sm cursor-pointer"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Save Image
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Back Button */}
-                        <div className="flex justify-center pb-6 md:pb-8 px-4">
+                        {/* Footer with Action Button */}
+                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                            <p className="text-sm text-gray-600">
+                                Review the payment details carefully
+                            </p>
                             <button
                                 onClick={closeProofModal}
-                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-8 md:px-12 py-2 transition-all text-sm md:text-base cursor-pointer"
+                                className="bg-gradient-to-r from-[#191716] to-[#2d2a28] hover:from-[#2d2a28] hover:to-[#191716] text-white px-8 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg font-semibold flex items-center gap-2 cursor-pointer"
                             >
-                                Back
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Close
                             </button>
                         </div>
                     </div>
@@ -1388,93 +1653,171 @@ const Order = () => {
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#1ac2ff] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-6xl w-full max-h-[90vh] overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-black text-lg md:text-2xl font-black">3D Design Preview</h2>
-                                <p className="text-black text-xs md:text-sm mt-1 font-semibold">Interactive view of your customized hanger</p>
+                        <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    <svg className="w-6 h-6 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">3D Design Preview</h2>
+                                    <p className="text-[#191716]/70 text-xs md:text-sm">Interactive view of your customized hanger</p>
+                                </div>
                             </div>
                             <button
                                 onClick={close3DModal}
-                                className="text-black hover:text-gray-700 transition-colors text-3xl font-black cursor-pointer"
+                                className="text-[#191716] hover:bg-[#191716]/20 p-2 rounded-lg transition-colors cursor-pointer bg-white"
+                                title="Close"
                             >
-                                ×
+                                <X size={24} />
                             </button>
                         </div>
 
-                        {/* 3D Viewer */}
-                        <div className="bg-white p-3 md:p-6">
-                            <div className="w-full h-[300px] md:h-[400px] lg:h-[500px] bg-gray-50 border-[3px] border-black overflow-hidden">
-                                <Suspense fallback={
-                                    <div className='w-full h-full flex items-center justify-center'>
-                                        <div className='text-center'>
-                                            <LoadingSpinner size="lg" text="Loading 3D Design..." />
+                        {/* 3D Viewer Container */}
+                        <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+                            {/* 3D Canvas */}
+                            <div className="bg-gradient-to-br from-[#191716] to-[#2d2a28] rounded-xl shadow-2xl overflow-hidden border-2 border-gray-300 mb-6">
+                                <div className="w-full h-[300px] md:h-[400px] lg:h-[500px]">
+                                    <Suspense fallback={
+                                        <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-[#191716] to-[#2d2a28]'>
+                                            <div className='text-center'>
+                                                <LoadingSpinner size="lg" text="Loading 3D Design..." color="white" />
+                                            </div>
+                                        </div>
+                                    }>
+                                        <HangerScene
+                                            color={selected3DDesign.color || '#4F46E5'}
+                                            hangerType={selected3DDesign.hangerType || 'MB7'}
+                                            customText={selected3DDesign.customText || ''}
+                                            textColor={selected3DDesign.textColor || '#000000'}
+                                            textPosition={selected3DDesign.textPosition || { x: 0, y: 0, z: 0.49 }}
+                                            textSize={selected3DDesign.textSize || 0.5}
+                                            logoPreview={selected3DDesign.logoPreview || null}
+                                            logoPosition={selected3DDesign.logoPosition || { x: 0, y: 0.5, z: 0.49 }}
+                                            logoSize={selected3DDesign.logoSize || 0.3}
+                                        />
+                                    </Suspense>
+                                </div>
+
+                                {/* 3D Controls Info Bar */}
+                                <div className="bg-white/10 backdrop-blur-sm px-4 py-3 border-t border-white/20">
+                                    <div className="flex items-center justify-center gap-6 text-white text-xs md:text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                            </svg>
+                                            <span>Drag to rotate</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                            </svg>
+                                            <span>Scroll to zoom</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                                            </svg>
+                                            <span>Right-click to pan</span>
                                         </div>
                                     </div>
-                                }>
-                                    <HangerScene
-                                        color={selected3DDesign.color || '#4F46E5'}
-                                        hangerType={selected3DDesign.hangerType || 'MB7'}
-                                        customText={selected3DDesign.customText || ''}
-                                        textColor={selected3DDesign.textColor || '#000000'}
-                                        textPosition={selected3DDesign.textPosition || { x: 0, y: 0, z: 0.49 }}
-                                        textSize={selected3DDesign.textSize || 0.5}
-                                        logoPreview={selected3DDesign.logoPreview || null}
-                                        logoPosition={selected3DDesign.logoPosition || { x: 0, y: 0.5, z: 0.49 }}
-                                        logoSize={selected3DDesign.logoSize || 0.3}
-                                    />
-                                </Suspense>
+                                </div>
                             </div>
 
                             {/* Design Details */}
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm">
-                                <div className="bg-gray-50 p-3 rounded">
-                                    <span className="font-semibold text-gray-700">Hanger Type:</span>
-                                    <span className="ml-2">{selected3DDesign.hangerType}</span>
+                            <div className="bg-white rounded-xl shadow-md p-5 md:p-6 border-2 border-gray-200">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <h3 className="text-lg font-bold text-gray-900">Design Details</h3>
                                 </div>
-                                <div className="bg-gray-50 p-3 rounded flex items-center">
-                                    <span className="font-semibold text-gray-700">Color:</span>
-                                    <div className="ml-2 flex items-center gap-2">
-                                        <div
-                                            className="w-6 h-6 rounded border border-gray-300"
-                                            style={{ backgroundColor: selected3DDesign.color }}
-                                        ></div>
-                                        <span>{selected3DDesign.color}</span>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Hanger Type */}
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+                                        <p className="text-xs font-semibold text-gray-500 mb-1">Hanger Model</p>
+                                        <p className="text-base font-bold text-gray-900">{selected3DDesign.hangerType}</p>
                                     </div>
-                                </div>
-                                {selected3DDesign.customText && (
-                                    <>
-                                        <div className="bg-gray-50 p-3 rounded">
-                                            <span className="font-semibold text-gray-700">Custom Text:</span>
-                                            <span className="ml-2">{selected3DDesign.customText}</span>
+
+                                    {/* Color */}
+                                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+                                        <p className="text-xs font-semibold text-gray-500 mb-1">Base Color</p>
+                                        <div className="flex items-center gap-2">
+                                            <div
+                                                className="w-8 h-8 rounded-lg border-2 border-white shadow-md"
+                                                style={{ backgroundColor: selected3DDesign.color }}
+                                            ></div>
+                                            <span className="text-sm font-mono font-bold text-gray-900">{selected3DDesign.color}</span>
                                         </div>
-                                        <div className="bg-gray-50 p-3 rounded flex items-center">
-                                            <span className="font-semibold text-gray-700">Text Color:</span>
-                                            <div className="ml-2 flex items-center gap-2">
+                                    </div>
+
+                                    {/* Custom Text */}
+                                    {selected3DDesign.customText && (
+                                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                                            <p className="text-xs font-semibold text-blue-700 mb-1">Custom Text</p>
+                                            <p className="text-base font-semibold text-blue-900">"{selected3DDesign.customText}"</p>
+                                        </div>
+                                    )}
+
+                                    {/* Text Color */}
+                                    {selected3DDesign.customText && (
+                                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                                            <p className="text-xs font-semibold text-blue-700 mb-1">Text Color</p>
+                                            <div className="flex items-center gap-2">
                                                 <div
-                                                    className="w-6 h-6 rounded border border-gray-300"
+                                                    className="w-8 h-8 rounded-lg border-2 border-white shadow-md"
                                                     style={{ backgroundColor: selected3DDesign.textColor }}
                                                 ></div>
-                                                <span>{selected3DDesign.textColor}</span>
+                                                <span className="text-sm font-mono font-bold text-blue-900">{selected3DDesign.textColor}</span>
                                             </div>
                                         </div>
-                                    </>
-                                )}
+                                    )}
+
+                                    {/* Logo */}
+                                    {selected3DDesign.logoPreview && (
+                                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 md:col-span-2">
+                                            <p className="text-xs font-semibold text-purple-700 mb-2">Custom Logo</p>
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={selected3DDesign.logoPreview}
+                                                    alt="Logo"
+                                                    className="w-12 h-12 object-contain bg-white rounded-lg border-2 border-purple-300 shadow-sm p-1"
+                                                />
+                                                <span className="text-green-700 font-semibold flex items-center gap-1">
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Logo Included
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-                            <p className="text-xs md:text-sm text-black font-semibold text-center sm:text-left">
-                                 Drag to rotate • Scroll to zoom • Right-click to pan
-                            </p>
+                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="hidden sm:inline">Use your mouse or touch gestures to interact with the 3D model</span>
+                                <span className="sm:hidden">Interact with 3D model</span>
+                            </div>
                             <button
                                 onClick={close3DModal}
-                                className="bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-6 md:px-8 py-2 transition-all text-sm md:text-base w-full sm:w-auto cursor-pointer"
+                                className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg shadow-md hover:shadow-lg px-8 py-2.5 transition-all font-semibold w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer"
                             >
-                                Close
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Close Preview
                             </button>
                         </div>
                     </div>
@@ -1483,70 +1826,115 @@ const Order = () => {
 
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className=" bg-white border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-black text-xl md:text-2xl font-black">Cancel Order</h2>
+                        <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">Cancel Order</h2>
+                                    <p className="text-[#191716]/80 text-xs md:text-sm">This action is permanent</p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-4 md:p-6">
-                            <div className="mb-4">
-                                <p className="text-gray-700 mb-2 text-sm md:text-base">
+                        <div className="p-5 md:p-6">
+                            {/* Confirmation Question */}
+                            <div className="mb-5">
+                                <p className="text-gray-700 mb-4 text-base md:text-lg font-medium">
                                     Are you sure you want to cancel this order?
                                 </p>
-                                <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                                    <p className="text-sm font-semibold text-gray-800">
-                                        Order: ORD-{orderToCancel.orderid.slice(0, 8).toUpperCase()}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {orderToCancel.hangertype} - {orderToCancel.quantity}x
-                                    </p>
+
+                                {/* Order Info Card */}
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-bold text-gray-900 mb-1">
+                                                Order: ORD-{orderToCancel.orderid.slice(0, 8).toUpperCase()}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                {orderToCancel.hangertype} - {orderToCancel.quantity}x
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="mb-4">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            {/* Reason Input */}
+                            <div className="mb-5">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
                                     Reason for cancellation (optional):
                                 </label>
                                 <textarea
                                     value={cancelReason}
                                     onChange={(e) => setCancelReason(e.target.value)}
-                                    placeholder="Tell us why you're cancelling this order..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                    placeholder="Help us improve by telling us why you're cancelling..."
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none transition-all"
                                     rows="4"
+                                    maxLength={500}
                                 />
+                                <div className="flex justify-between mt-1">
+                                    <p className="text-xs text-gray-500">Your feedback helps us improve</p>
+                                    <p className="text-xs text-gray-400">{cancelReason.length}/500</p>
+                                </div>
                             </div>
 
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                                <p className="text-sm text-yellow-800">
-                                    ⚠️ <strong>Warning:</strong> This action cannot be undone. The order will be permanently deleted from our system.
-                                </p>
+                            {/* Warning Box */}
+                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 rounded-r-lg p-4">
+                                <div className="flex gap-3">
+                                    <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-yellow-900 mb-1">⚠️ Important Warning</p>
+                                        <p className="text-sm text-yellow-800">
+                                            This action <strong>cannot be undone</strong>. The order will be permanently deleted from our system.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+                        <div className="bg-gray-50 px-5 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
                             <button
                                 onClick={closeCancelModal}
                                 disabled={isCancelling}
-                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
+                                className="px-6 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1 cursor-pointer"
                             >
                                 Keep Order
                             </button>
                             <button
                                 onClick={handleCancelOrder}
                                 disabled={isCancelling}
-                                className="px-4 md:px-6 py-2 bg-[#ff6b6b] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
+                                className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
                             >
                                 {isCancelling ? (
                                     <>
-                                        <LoadingSpinner size="sm" color="white" />
+                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
                                         Cancelling...
                                     </>
                                 ) : (
-                                    'Yes, Cancel Order'
+                                    <>
+                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Yes, Cancel Order
+                                    </>
                                 )}
                             </button>
                         </div>
@@ -1555,92 +1943,141 @@ const Order = () => {
             )}
 
             {/* Rating Modal */}
+            {/* Rating Modal */}
             {showRatingModal && orderToRate && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-white border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn">
+                <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-black text-xl md:text-2xl font-black">Rate Your Order</h2>
+                        <div className="bg-[#E6AF2E] px-6 py-5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    <svg className="w-7 h-7 text-[#E6AF2E]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">Rate Your Order</h2>
+                                    <p className="text-[#191716]/80 text-xs md:text-sm">Help us improve our service</p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-4 md:p-6">
+                        <div className="p-5 md:p-6">
                             {/* Order Info */}
-                            <div className="mb-4 md:mb-6">
-                                <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                                    <p className="text-sm font-semibold text-gray-800">
-                                        Order: ORD-{orderToRate.orderid.slice(0, 8).toUpperCase()}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {orderToRate.hangertype} - {orderToRate.quantity}x
-                                    </p>
+                            <div className="mb-6">
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 bg-[#E6AF2E] rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-bold text-gray-900 mb-1">
+                                                Order: ORD-{orderToRate.orderid.slice(0, 8).toUpperCase()}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                {orderToRate.hangertype} - {orderToRate.quantity} pieces
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Star Rating */}
-                            <div className="mb-4 md:mb-6">
-                                <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">
+                            <div className="mb-6">
+                                <label className="block text-sm font-bold text-gray-700 mb-3 text-center">
                                     How would you rate your experience?
                                 </label>
-                                <div className="flex justify-center">
-                                    <StarRating 
-                                        rating={rating} 
-                                        readOnly={false} 
-                                        size={48}
+                                <div className="flex justify-center py-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-200">
+                                    <StarRating
+                                        rating={rating}
+                                        readOnly={false}
+                                        size={56}
                                         onChange={setRating}
                                     />
                                 </div>
-                                <p className="text-center text-sm text-gray-600 mt-2">
-                                    {rating === 1 && 'Poor'}
-                                    {rating === 2 && 'Fair'}
-                                    {rating === 3 && 'Good'}
-                                    {rating === 4 && 'Very Good'}
-                                    {rating === 5 && 'Excellent'}
-                                </p>
+                                <div className="mt-3 text-center">
+                                    <div className={`inline-block px-4 py-2 rounded-full font-bold text-sm ${rating === 5 ? 'bg-green-100 text-green-700' :
+                                        rating === 4 ? 'bg-blue-100 text-blue-700' :
+                                            rating === 3 ? 'bg-yellow-100 text-yellow-700' :
+                                                rating === 2 ? 'bg-orange-100 text-orange-700' :
+                                                    'bg-red-100 text-red-700'
+                                        }`}>
+                                        {rating === 1 && '😞 Poor'}
+                                        {rating === 2 && '😐 Fair'}
+                                        {rating === 3 && '🙂 Good'}
+                                        {rating === 4 && '😊 Very Good'}
+                                        {rating === 5 && '🤩 Excellent'}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Review Message */}
-                            <div className="mb-4">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <div className="mb-5">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">
                                     Share your experience (optional):
                                 </label>
                                 <textarea
                                     value={reviewMessage}
                                     onChange={(e) => setReviewMessage(e.target.value)}
-                                    placeholder="Tell us about your experience with this order..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                    placeholder="Tell us what you loved or how we can improve..."
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#E6AF2E] focus:border-transparent resize-none transition-all"
                                     rows="4"
+                                    maxLength={500}
                                 />
+                                <div className="flex justify-between mt-1">
+                                    <p className="text-xs text-gray-500">Your honest feedback is appreciated</p>
+                                    <p className="text-xs text-gray-400">{reviewMessage.length}/500</p>
+                                </div>
                             </div>
 
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p className="text-sm text-blue-800">
-                                    💡 Your feedback helps us improve our service and assists other customers in making informed decisions.
-                                </p>
+                            {/* Info Box */}
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-r-lg p-4">
+                                <div className="flex gap-3">
+                                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900 mb-1">💡 Why your feedback matters</p>
+                                        <p className="text-xs text-blue-800">
+                                            Your review helps us improve our service and assists other customers in making informed decisions.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+                        <div className="bg-gray-50 px-5 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
                             <button
                                 onClick={closeRatingModal}
                                 disabled={isSubmittingReview}
-                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1"
+                                className="px-6 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base w-full sm:w-auto order-2 sm:order-1 cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmitReview}
                                 disabled={isSubmittingReview}
-                                className="px-4 md:px-6 py-2 bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
+                                className="px-6 py-2.5 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm md:text-base w-full sm:w-auto order-1 sm:order-2 cursor-pointer"
                             >
                                 {isSubmittingReview ? (
                                     <>
-                                        <LoadingSpinner size="sm" color="white" />
+                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
                                         Submitting...
                                     </>
                                 ) : (
-                                    'Submit Review'
+                                    <>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Submit Review
+                                    </>
                                 )}
                             </button>
                         </div>
@@ -1650,25 +2087,55 @@ const Order = () => {
 
             {/* Notification Modal */}
             {showNotificationModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className={`border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-[#4ade80]' : 'bg-[#ff6b6b]'}`}>
+                <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
+                    <div className={`rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-white' : 'bg-white'
+                        }`}>
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4">
-                            <h2 className="text-black text-lg md:text-xl font-black">
-                                {notificationType === 'success' ? '✓ Success' : '✕ Error'}
-                            </h2>
+                        <div className={`px-6 py-5 ${notificationType === 'success'
+                            ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'
+                            : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444]'
+                            }`}>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    {notificationType === 'success' ? (
+                                        <svg className="w-6 h-6 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-6 h-6 text-[#ff6b6b]" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <h2 className="text-[#191716] text-xl md:text-2xl font-bold">
+                                    {notificationType === 'success' ? 'Success!' : 'Error'}
+                                </h2>
+                            </div>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-4 md:p-6">
-                            <p className="text-gray-700 text-base md:text-lg">{notificationMessage}</p>
+                        <div className="p-6 md:p-8">
+                            <div className={`p-4 rounded-lg border-l-4 ${notificationType === 'success'
+                                ? 'bg-green-50 border-green-400'
+                                : 'bg-red-50 border-red-400'
+                                }`}>
+                                <p className={`text-base md:text-lg leading-relaxed ${notificationType === 'success'
+                                    ? 'text-green-800'
+                                    : 'text-red-800'
+                                    }`}>
+                                    {notificationMessage}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end">
+                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
                             <button
                                 onClick={closeNotificationModal}
-                                className="px-4 md:px-6 py-2 bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black transition-all text-sm md:text-base cursor-pointer"
+                                className={`cursor-pointer px-6 md:px-8 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base ${notificationType === 'success'
+                                    ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-[#191716]'
+                                    : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444] hover:from-[#ef4444] hover:to-[#dc2626] text-[#191716]'
+                                    }`}
                             >
                                 OK
                             </button>

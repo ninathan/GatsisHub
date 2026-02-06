@@ -27,7 +27,7 @@ const OrderDetail = () => {
     const { orderid } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -56,10 +56,12 @@ const OrderDetail = () => {
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
+    
+
     // Real-time payment update handler
     const handlePaymentUpdate = useCallback(async (payload) => {
         console.log('Payment realtime update:', payload);
-        
+
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             // Payment added or updated - refresh payment info
             try {
@@ -71,7 +73,7 @@ const OrderDetail = () => {
             } catch (error) {
                 console.error('Error fetching updated payment:', error);
             }
-            
+
             // Also refresh payment history
             try {
                 const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
@@ -85,7 +87,7 @@ const OrderDetail = () => {
         } else if (payload.eventType === 'DELETE') {
             // Payment deleted (rejected) - clear payment info
             setPaymentInfo(null);
-            
+
             // Refresh payment history to show the rejection
             try {
                 const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
@@ -102,14 +104,14 @@ const OrderDetail = () => {
     // Real-time order update handler
     const handleOrderUpdate = useCallback((payload) => {
         console.log('Order realtime update:', payload);
-        
+
         if (payload.new) {
             // Update order state with new data
             setOrder(payload.new);
             setOrderStatus(payload.new.orderstatus);
             setValidatedPrice(payload.new.totalprice || '');
             setDeadline(payload.new.deadline || '');
-            
+
             // Show notification for status changes
             if (payload.old && payload.old.orderstatus !== payload.new.orderstatus) {
                 showNotificationMessage(`Order status updated to: ${payload.new.orderstatus}`, 'success');
@@ -119,7 +121,7 @@ const OrderDetail = () => {
 
     // Subscribe to real-time payment updates for this order
     const { isSubscribed: isPaymentSubscribed } = useRealtimePayments(orderid, handlePaymentUpdate);
-    
+
     // Subscribe to real-time order updates
     const { isSubscribed: isOrderSubscribed } = useRealtimeSingleOrder(orderid, handleOrderUpdate);
 
@@ -135,7 +137,7 @@ const OrderDetail = () => {
             try {
                 setLoading(true);
                 const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch order');
                 }
@@ -213,19 +215,19 @@ const OrderDetail = () => {
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
         setOrderStatus(newStatus);
-        
+
         try {
             setIsSavingStatus(true);
-            
+
             // Get employee info from localStorage
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     status: newStatus,
                     employeeid: employee?.employeeid,
                     employeename: employee?.employeename
@@ -256,16 +258,16 @@ const OrderDetail = () => {
 
         try {
             setIsSavingPrice(true);
-            
+
             // Get employee info from localStorage
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/price`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     price: parseFloat(validatedPrice),
                     employeeid: employee?.employeeid,
                     employeename: employee?.employeename
@@ -303,13 +305,13 @@ const OrderDetail = () => {
         try {
             // Get employee info from localStorage
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/deadline`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     deadline,
                     employeeid: employee?.employeeid,
                     employeename: employee?.employeename
@@ -412,7 +414,7 @@ const OrderDetail = () => {
     const handleContactCustomer = async () => {
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             if (!employee || !employee.employeeid) {
                 showNotificationMessage('Please log in to contact customer', 'error');
                 return;
@@ -425,14 +427,14 @@ const OrderDetail = () => {
 
             // Get customer ID from userid
             const customerResponse = await fetch(`https://gatsis-hub.vercel.app/auth/customer/${order.userid}`);
-            
+
             if (!customerResponse.ok) {
                 showNotificationMessage('Failed to get customer information', 'error');
                 return;
             }
 
             const customerData = await customerResponse.json();
-            
+
             // The API returns customer data directly, not wrapped
             const customerid = customerData.customerid;
 
@@ -477,7 +479,7 @@ const OrderDetail = () => {
 
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
-        
+
         // Format materials as a readable string
         const formatMaterialsForInvoice = (materialsObj) => {
             if (!materialsObj || typeof materialsObj !== 'object') return 'N/A';
@@ -485,7 +487,7 @@ const OrderDetail = () => {
                 .map(([name, percentage]) => `${name} ${Math.round(percentage)}%`)
                 .join(', ');
         };
-        
+
         const invoiceHTML = `
             <!DOCTYPE html>
             <html>
@@ -706,7 +708,7 @@ const OrderDetail = () => {
             </body>
             </html>
         `;
-        
+
         invoiceWindow.document.write(invoiceHTML);
         invoiceWindow.document.close();
     };
@@ -738,7 +740,7 @@ const OrderDetail = () => {
         setIsProcessingPayment(true);
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}`, {
                 method: 'DELETE',
                 headers: {
@@ -759,7 +761,7 @@ const OrderDetail = () => {
             setShowRejectModal(false);
             setPaymentInfo(null);
             setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
-            
+
             // Refresh order data
             const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
             if (orderResponse.ok) {
@@ -784,7 +786,7 @@ const OrderDetail = () => {
         setIsProcessingPayment(true);
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
-            
+
             // Approve payment
             const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}/verify`, {
                 method: 'PATCH',
@@ -806,14 +808,14 @@ const OrderDetail = () => {
 
             showNotificationMessage('Payment approved and order moved to production', 'success');
             setShowProofModal(false);
-            
+
             // Refresh payment and order data
             const paymentResponse = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
             if (paymentResponse.ok) {
                 const payment = await paymentResponse.json();
                 setPaymentInfo(payment);
             }
-            
+
             const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
             if (orderResponse.ok) {
                 const data = await orderResponse.json();
@@ -1025,8 +1027,8 @@ const OrderDetail = () => {
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Delivery Address</h3>
                             {order.deliveryaddress ? (
                                 <p className="text-gray-700">
-                                    {typeof order.deliveryaddress === 'object' 
-                                        ? order.deliveryaddress.address 
+                                    {typeof order.deliveryaddress === 'object'
+                                        ? order.deliveryaddress.address
                                         : order.deliveryaddress}
                                 </p>
                             ) : (
@@ -1067,14 +1069,14 @@ const OrderDetail = () => {
                                 </div>
                                 {(() => {
                                     try {
-                                        const designData = typeof order.threeddesigndata === 'string' 
-                                            ? JSON.parse(order.threeddesigndata) 
+                                        const designData = typeof order.threeddesigndata === 'string'
+                                            ? JSON.parse(order.threeddesigndata)
                                             : order.threeddesigndata;
-                                        
+
                                         if (designData && designData.thumbnail) {
                                             return (
-                                                <img 
-                                                    src={designData.thumbnail} 
+                                                <img
+                                                    src={designData.thumbnail}
                                                     alt="Design preview"
                                                     className="w-full max-w-md h-64 object-contain mx-auto rounded border border-gray-300"
                                                 />
@@ -1092,7 +1094,7 @@ const OrderDetail = () => {
                         {order.customdesignurl && (
                             <div className="flex items-center gap-3">
                                 <span className="font-semibold text-gray-800">Attached File:</span>
-                                <a 
+                                <a
                                     href={order.customdesignurl}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -1109,11 +1111,10 @@ const OrderDetail = () => {
                             <button
                                 onClick={handleViewProof}
                                 disabled={!paymentInfo}
-                                className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm ${
-                                    paymentInfo 
-                                        ? 'bg-indigo-700 hover:bg-indigo-800 text-white' 
+                                className={`cursor-pointer px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm ${paymentInfo
+                                        ? 'bg-[#191817] hover:bg-[#333333] text-white'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
+                                    }`}
                             >
                                 <Eye size={18} />
                                 View Proof {paymentInfo ? '' : '(Not Available)'}
@@ -1127,21 +1128,21 @@ const OrderDetail = () => {
                             </button> */}
                             <button
                                 onClick={handleDownloadInvoice}
-                                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <FileText size={18} />
                                 Download Invoice
                             </button>
                             <button
                                 onClick={handleContactCustomer}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <Phone size={18} />
                                 Contact Customer
                             </button>
                             <button
                                 onClick={() => navigate(`/logpageSA/${orderid}`)}
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+                                className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <ClipboardClock size={18} />
                                 View Activity Log
@@ -1159,21 +1160,29 @@ const OrderDetail = () => {
 
             {/* Proof of Payment Modal */}
             {showProofModal && paymentInfo && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
-                    <div className="bg-[#ff66a3] border-[3px] border-black shadow-[12px_12px_0_#000000] max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
+                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
                         {/* Modal Header */}
-                        <div className="bg-white border-b-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0">
+                        <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-4 flex items-center justify-between flex-shrink-0">
                             <div>
-                                <h2 className="text-black text-xl md:text-2xl font-black">Payment Information</h2>
-                                <p className="text-black text-xs md:text-sm mt-1 flex items-center gap-2 font-semibold">
-                                    Payment Method: {paymentInfo.paymentmethod} | Status: 
-                                    <span className={`px-2 py-0.5 border-[2px] border-black text-xs font-black ${
-                                        paymentInfo.paymentstatus === 'Verified' ? 'bg-[#4ade80]' :
-                                        paymentInfo.paymentstatus === 'Rejected' ? 'bg-[#ff6b6b]' :
-                                        paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-[#ffd93d]' :
-                                        'bg-gray-300'
-                                    }`}>
-                                        {paymentInfo.paymentstatus}
+                                <h2 className="text-white text-xl md:text-2xl font-bold flex items-center gap-2">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Payment Information
+                                </h2>
+                                <p className="text-white/90 text-sm mt-1 flex items-center gap-2">
+                                    <span className="font-semibold">Method: {paymentInfo.paymentmethod}</span>
+                                    <span className="mx-1">•</span>
+                                    <span className="flex items-center gap-1">
+                                        Status:
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${paymentInfo.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
+                                                paymentInfo.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
+                                                    paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-yellow-400 text-gray-900' :
+                                                        'bg-gray-400 text-white'
+                                            }`}>
+                                            {paymentInfo.paymentstatus}
+                                        </span>
                                     </span>
                                 </p>
                             </div>
@@ -1182,91 +1191,110 @@ const OrderDetail = () => {
                                     setShowProofModal(false);
                                     setActiveTab('current');
                                 }}
-                                className="text-black hover:text-gray-700 transition-colors text-3xl font-black"
+                                className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
                             >
-                                ×
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </button>
                         </div>
 
                         {/* Tab Navigation */}
-                        <div className="bg-white border-b-[3px] border-black flex-shrink-0">
+                        <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
                             <div className="flex px-6">
                                 <button
                                     onClick={() => setActiveTab('current')}
-                                    className={`px-4 md:px-6 py-3 font-black text-xs md:text-sm border-b-[3px] transition-colors ${
-                                        activeTab === 'current'
-                                            ? 'border-black text-black bg-[#ffd93d]'
-                                            : 'border-transparent text-gray-600 hover:text-black'
-                                    }`}
+                                    className={`px-6 py-3 font-semibold text-sm transition-all relative ${activeTab === 'current'
+                                            ? 'text-[#E6AF2E] bg-white'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                        }`}
                                 >
                                     Current Payment
+                                    {activeTab === 'current' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E6AF2E]"></div>
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('history')}
-                                    className={`px-4 md:px-6 py-3 font-black text-xs md:text-sm border-b-[3px] transition-colors ${
-                                        activeTab === 'history'
-                                            ? 'border-black text-black bg-[#ffd93d]'
-                                            : 'border-transparent text-gray-600 hover:text-black'
-                                    }`}
+                                    className={`px-6 py-3 font-semibold text-sm transition-all relative ${activeTab === 'history'
+                                            ? 'text-[#E6AF2E] bg-white'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                        }`}
                                 >
                                     Transaction History ({paymentHistory.length})
+                                    {activeTab === 'history' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E6AF2E]"></div>
+                                    )}
                                 </button>
                             </div>
                         </div>
 
                         {/* Tab Content - Scrollable */}
-                        <div className="bg-white p-4 md:p-6 overflow-auto flex-1">
+                        <div className="bg-gray-50 p-6 overflow-auto flex-1">
                             {activeTab === 'current' ? (
                                 // Current Payment Tab
                                 <>
-                                    {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
-                                        <div className="flex flex-col items-center gap-4 py-8">
-                                            <FileText size={64} className="text-indigo-600" />
-                                            <p className="text-gray-700 font-semibold text-lg">PDF Payment Proof</p>
-                                            <a 
-                                                href={paymentInfo.proofofpayment} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold flex items-center gap-2"
-                                            >
-                                                <Eye size={20} />
-                                                Open PDF
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <div className="w-full bg-gray-50 rounded-lg border-2 border-gray-200 overflow-hidden">
-                                            <img
-                                                src={paymentInfo.proofofpayment}
-                                                alt="Proof of Payment"
-                                                className="w-full h-auto max-h-[60vh] object-contain"
-                                            />
-                                        </div>
-                                    )}
+                                    {/* Payment Proof Display */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                                        {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
+                                            <div className="flex flex-col items-center gap-4 py-12">
+                                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center">
+                                                    <FileText size={40} className="text-indigo-600" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-gray-900 font-bold text-xl mb-2">PDF Payment Proof</p>
+                                                    <p className="text-gray-600 text-sm">Click below to view the document</p>
+                                                </div>
+                                                <a
+                                                    href={paymentInfo.proofofpayment}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-8 py-3 rounded-lg transition-all font-semibold flex items-center gap-2 shadow-md hover:shadow-lg"
+                                                >
+                                                    <Eye size={20} />
+                                                    Open PDF Document
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4">
+                                                <img
+                                                    src={paymentInfo.proofofpayment}
+                                                    alt="Proof of Payment"
+                                                    className="w-full h-auto max-h-[60vh] object-contain rounded-lg"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Current Payment Details */}
-                                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                                        <h3 className="font-semibold text-gray-800 mb-3">Payment Details</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Submitted:</span>
-                                                <span className="font-medium">{formatDate(paymentInfo.datesubmitted)}</span>
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                                            <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Payment Details
+                                        </h3>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                <span className="text-gray-600 font-medium">Submitted:</span>
+                                                <span className="font-semibold text-gray-900">{formatDate(paymentInfo.datesubmitted)}</span>
                                             </div>
                                             {paymentInfo.amountpaid && (
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-600">Amount:</span>
-                                                    <span className="font-medium">PHP {paymentInfo.amountpaid}</span>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Amount:</span>
+                                                    <span className="font-semibold text-gray-900">₱{parseFloat(paymentInfo.amountpaid).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                 </div>
                                             )}
                                             {paymentInfo.transactionreference && (
-                                                <div className="flex justify-between">
-                                                    <span className="text-gray-600">Reference:</span>
-                                                    <span className="font-medium">{paymentInfo.transactionreference}</span>
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Reference:</span>
+                                                    <span className="font-mono text-sm font-semibold text-gray-900">{paymentInfo.transactionreference}</span>
                                                 </div>
                                             )}
                                             {paymentInfo.notes && (
-                                                <div className="pt-2 border-t">
-                                                    <span className="text-gray-600">Notes:</span>
-                                                    <p className="text-gray-800 mt-1">{paymentInfo.notes}</p>
+                                                <div className="pt-3 border-t border-gray-200">
+                                                    <span className="text-gray-600 font-medium block mb-2">Notes:</span>
+                                                    <p className="text-gray-800 bg-gray-50 p-3 rounded-lg text-sm">{paymentInfo.notes}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -1275,43 +1303,50 @@ const OrderDetail = () => {
                             ) : (
                                 // Transaction History Tab
                                 <div className="space-y-4">
-                                    <h3 className="font-semibold text-gray-800 text-lg mb-4">Payment Transaction History</h3>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <svg className="w-6 h-6 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <h3 className="font-bold text-gray-900 text-xl">Payment Transaction History</h3>
+                                    </div>
+
                                     {paymentHistory.length === 0 ? (
-                                        <div className="text-center py-12 text-gray-500">
-                                            <FileText size={48} className="mx-auto mb-3 text-gray-400" />
-                                            <p>No transaction history available</p>
+                                        <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                                            <FileText size={48} className="mx-auto mb-4 text-gray-400" />
+                                            <p className="text-gray-600 font-medium">No transaction history available</p>
+                                            <p className="text-gray-400 text-sm mt-1">Past payment actions will appear here</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {paymentHistory.map((transaction, index) => (
-                                                <div 
-                                                    key={transaction.historyid || index} 
-                                                    className={`border rounded-lg p-4 ${
-                                                        transaction.action === 'approved' ? 'bg-green-50 border-green-200' :
-                                                        transaction.action === 'rejected' ? 'bg-red-50 border-red-200' :
-                                                        'bg-gray-50 border-gray-200'
-                                                    }`}
+                                                <div
+                                                    key={transaction.historyid || index}
+                                                    className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all hover:shadow-md ${transaction.action === 'approved' ? 'border-green-200' :
+                                                            transaction.action === 'rejected' ? 'border-red-200' :
+                                                                'border-gray-200'
+                                                        }`}
                                                 >
                                                     {/* Transaction Header */}
-                                                    <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex justify-between items-start mb-4">
                                                         <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                                    transaction.action === 'approved' ? 'bg-green-600 text-white' :
-                                                                    transaction.action === 'rejected' ? 'bg-red-600 text-white' :
-                                                                    'bg-gray-600 text-white'
-                                                                }`}>
-                                                                    {transaction.action.toUpperCase()}
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${transaction.action === 'approved' ? 'bg-green-100 text-green-700' :
+                                                                        transaction.action === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                            'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                    {transaction.action}
                                                                 </span>
-                                                                <span className={`text-sm font-medium ${
-                                                                    transaction.paymentstatus === 'Verified' ? 'text-green-700' :
-                                                                    transaction.paymentstatus === 'Rejected' ? 'text-red-700' :
-                                                                    'text-yellow-700'
-                                                                }`}>
+                                                                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${transaction.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
+                                                                        transaction.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
+                                                                            'bg-yellow-400 text-gray-900'
+                                                                    }`}>
                                                                     {transaction.paymentstatus}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-xs text-gray-500 mt-1">
+                                                            <p className="text-sm text-gray-500 flex items-center gap-1">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
                                                                 {formatDate(transaction.datesubmitted)}
                                                             </p>
                                                         </div>
@@ -1320,7 +1355,7 @@ const OrderDetail = () => {
                                                                 href={transaction.proofofpayment}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
+                                                                className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1 transition-colors"
                                                             >
                                                                 <Eye size={16} />
                                                                 View Proof
@@ -1329,40 +1364,46 @@ const OrderDetail = () => {
                                                     </div>
 
                                                     {/* Transaction Details */}
-                                                    <div className="space-y-2 text-sm">
-                                                        <div className="grid grid-cols-2 gap-2">
+                                                    <div className="space-y-3">
+                                                        <div className="grid grid-cols-2 gap-4">
                                                             <div>
-                                                                <span className="text-gray-600">Method:</span>
-                                                                <p className="font-medium">{transaction.paymentmethod}</p>
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Method</span>
+                                                                <p className="font-semibold text-gray-900">{transaction.paymentmethod}</p>
                                                             </div>
                                                             {transaction.amountpaid && (
                                                                 <div>
-                                                                    <span className="text-gray-600">Amount:</span>
-                                                                    <p className="font-medium">PHP {transaction.amountpaid}</p>
+                                                                    <span className="text-gray-500 text-xs uppercase tracking-wide">Amount</span>
+                                                                    <p className="font-semibold text-gray-900">₱{parseFloat(transaction.amountpaid).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
                                                                 </div>
                                                             )}
                                                         </div>
                                                         {transaction.transactionreference && (
                                                             <div>
-                                                                <span className="text-gray-600">Reference:</span>
-                                                                <p className="font-medium">{transaction.transactionreference}</p>
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Reference</span>
+                                                                <p className="font-mono text-sm font-semibold text-gray-900">{transaction.transactionreference}</p>
                                                             </div>
                                                         )}
                                                         {transaction.notes && (
-                                                            <div className="pt-2 border-t border-gray-300">
-                                                                <span className="text-gray-600">Notes:</span>
-                                                                <p className="text-gray-800 mt-1">{transaction.notes}</p>
+                                                            <div className="pt-3 border-t border-gray-200">
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Notes</span>
+                                                                <p className="text-gray-800 mt-1 bg-gray-50 p-3 rounded-lg text-sm">{transaction.notes}</p>
                                                             </div>
                                                         )}
                                                         {transaction.dateverified && (
-                                                            <div className="pt-2 border-t border-gray-300">
-                                                                <span className="text-gray-600">Verified:</span>
-                                                                <p className="text-gray-800">{formatDate(transaction.dateverified)}</p>
-                                                                {transaction.employees && (
-                                                                    <p className="text-xs text-gray-500">
-                                                                        by {transaction.employees.employeename}
-                                                                    </p>
-                                                                )}
+                                                            <div className="pt-3 border-t border-gray-200 bg-blue-50 -mx-5 -mb-5 px-5 py-3 rounded-b-xl">
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                    <span className="text-blue-900 font-medium">
+                                                                        Verified: {formatDate(transaction.dateverified)}
+                                                                    </span>
+                                                                    {transaction.employees && (
+                                                                        <span className="text-blue-700">
+                                                                            by {transaction.employees.employeename}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
@@ -1374,15 +1415,15 @@ const OrderDetail = () => {
                             )}
                         </div>
 
-                        {/* Footer - Action Buttons (only show for current payment tab) */}
+                        {/* Footer - Action Buttons */}
                         {activeTab === 'current' && (
-                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
+                            <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
                                 <div className="flex gap-3 w-full sm:w-auto">
                                     {paymentInfo.paymentstatus !== 'Verified' && (
                                         <button
                                             onClick={handleApprovePayment}
                                             disabled={isProcessingPayment}
-                                            className="flex-1 sm:flex-none bg-[#4ade80] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                                            className="flex-1 sm:flex-none bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {isProcessingPayment ? (
                                                 <>
@@ -1392,7 +1433,7 @@ const OrderDetail = () => {
                                             ) : (
                                                 <>
                                                     <Check size={18} />
-                                                    Approve
+                                                    Approve Payment
                                                 </>
                                             )}
                                         </button>
@@ -1401,9 +1442,12 @@ const OrderDetail = () => {
                                         <button
                                             onClick={handleRejectPayment}
                                             disabled={isProcessingPayment}
-                                            className="flex-1 sm:flex-none bg-[#ff6b6b] border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                                            className="flex-1 sm:flex-none bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            ✕ Reject
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Reject Payment
                                         </button>
                                     )}
                                 </div>
@@ -1412,20 +1456,20 @@ const OrderDetail = () => {
                                         setShowProofModal(false);
                                         setActiveTab('current');
                                     }}
-                                    className="w-full sm:w-auto bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all text-sm md:text-base"
+                                    className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg transition-all"
                                 >
                                     Close
                                 </button>
                             </div>
                         )}
                         {activeTab === 'history' && (
-                            <div className="bg-white border-t-[3px] border-black px-4 md:px-6 py-3 md:py-4 flex justify-end flex-shrink-0">
+                            <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end flex-shrink-0">
                                 <button
                                     onClick={() => {
                                         setShowProofModal(false);
                                         setActiveTab('current');
                                     }}
-                                    className="bg-white border-[3px] border-black shadow-[3px_3px_0_#000000] hover:shadow-[1.5px_1.5px_0_#000000] hover:translate-x-[1.5px] hover:translate-y-[1.5px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] text-black font-black px-4 md:px-6 py-2 transition-all text-sm md:text-base"
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg transition-all"
                                 >
                                     Close
                                 </button>
@@ -1479,7 +1523,7 @@ const OrderDetail = () => {
                         {/* Footer */}
                         <div className="bg-gray-100 px-6 py-4 flex justify-between items-center">
                             <p className="text-sm text-gray-600">
-                                 Drag to rotate • Scroll to zoom • Right-click to pan
+                                Drag to rotate • Scroll to zoom • Right-click to pan
                             </p>
                             <button
                                 onClick={close3DModal}
@@ -1494,7 +1538,7 @@ const OrderDetail = () => {
 
             {/* Notification Modal */}
             {showNotification && (
-                <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 backdrop-blur-sm bg-transparent flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden">
                         {/* Modal Header */}
                         <div className={`px-6 py-4 ${notificationType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
@@ -1512,11 +1556,10 @@ const OrderDetail = () => {
                         <div className="bg-gray-50 px-6 py-4 flex justify-end">
                             <button
                                 onClick={closeNotification}
-                                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                                    notificationType === 'success'
+                                className={`cursor-pointer px-6 py-2 rounded-lg font-semibold transition-colors ${notificationType === 'success'
                                         ? 'bg-green-600 hover:bg-green-700 text-white'
                                         : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}
+                                    }`}
                             >
                                 OK
                             </button>

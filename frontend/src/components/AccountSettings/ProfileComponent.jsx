@@ -663,7 +663,7 @@ const ProfileComponent = () => {
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`w-full text-left px-6 py-4 transition-colors ${activeTab === tab
+                                        className={`cursor-pointer w-full text-left px-6 py-4 transition-colors ${activeTab === tab
                                             ? 'bg-[#e6af2e] text-[#191716] font-semibold'
                                             : 'text-gray-700 hover:bg-gray-100'
                                             }`}
@@ -748,7 +748,7 @@ const ProfileComponent = () => {
                                                     <button
                                                         onClick={handleEditProfile}
                                                         className="w-full bg-[#e6af2e] hover:bg-[#191716] text-[#191716]
-                                                        hover:text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
+                                                        hover:text-white font-semibold py-2 px-4 md:px-6 rounded transition-colors flex items-center justify-center gap-2 text-sm md:text-base cursor-pointer"
                                                     >
                                                         <Edit size={16} />
                                                         Edit Profile

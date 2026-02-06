@@ -57,6 +57,12 @@ const SidebarPA = () => {
                                 Performance
                             </NavLink>
                         </li>
+                        <li className="hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded">
+                            <NavLink to="/profilePA" className="block">
+                                <User size={20} className='mr-2 inline' />
+                                Profile
+                            </NavLink>
+                        </li>
                         <li className='hover:bg-[#E6AF2E] hover:text-[#191716] p-2 rounded'>
                             <button onClick={handleLogout} className="block w-full text-left">
                                 <LogOut size={20} className='mr-2 inline' />
