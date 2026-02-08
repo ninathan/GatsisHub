@@ -51,7 +51,8 @@ router.post("/create", async (req, res) => {
       deliveryNotes,
       orderInstructions,
       deliveryAddress, // Add delivery address field
-      threeDDesignData // Complete 3D design JSON string
+      threeDDesignData, // Complete 3D design JSON string
+      totalprice // Add total price
     } = req.body;
 
     // Validate required fields
@@ -119,6 +120,7 @@ router.post("/create", async (req, res) => {
       orderinstructions: orderInstructions || null,
       deliveryaddress: deliveryAddress || null, // Store delivery address
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
+      totalprice: totalprice || null, // Store calculated price
       orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()
     };

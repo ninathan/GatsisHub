@@ -239,6 +239,8 @@ const Checkout = () => {
     const [addresses, setAddresses] = useState([]);
     const [hangers, setHangers] = useState([]);
     const [materials, setMaterials] = useState([]);
+    const [products, setProducts] = useState([]); // Store full product data with weight
+    const [materialsFullData, setMaterialsFullData] = useState([]); // Store full material data with price
 
     // Predefined colors for quick selection
     const colors = [
@@ -255,6 +257,43 @@ const Checkout = () => {
         "#84CC16",
         "#EAB308",
     ];
+
+    // Calculate total price based on weight, materials, and quantity
+    const calculateTotalPrice = () => {
+        try {
+            // Find the selected product
+            const product = products.find(p => p.productname === selectedHanger);
+            if (!product || !product.weight) {
+                console.warn('Product weight not found for:', selectedHanger);
+                return null;
+            }
+
+            // Convert weight from grams to kg
+            const weightInKg = parseFloat(product.weight) / 1000;
+            
+            // Calculate total weight for all units
+            const totalWeight = weightInKg * quantity;
+
+            // Calculate material cost
+            let materialCost = 0;
+            for (const [materialName, percentage] of Object.entries(selectedMaterials)) {
+                const material = materialsFullData.find(m => m.materialname === materialName);
+                if (material && material.price_per_kg) {
+                    const materialWeight = totalWeight * (percentage / 100);
+                    materialCost += materialWeight * parseFloat(material.price_per_kg);
+                }
+            }
+
+            // Add delivery cost (fixed 2500 PHP)
+            const deliveryCost = 2500;
+            const totalPrice = materialCost + deliveryCost;
+
+            return totalPrice.toFixed(2);
+        } catch (error) {
+            console.error('Error calculating price:', error);
+            return null;
+        }
+    };
 
     // Handlers
     const handleQuantityChange = (delta) => {
@@ -472,6 +511,9 @@ const Checkout = () => {
             thumbnail: thumbnailBase64, // Add thumbnail for order preview
         };
 
+        // Calculate total price
+        const totalPrice = calculateTotalPrice();
+
         // Prepare order data
         const orderData = {
             userid: userId,
@@ -500,6 +542,7 @@ const Checkout = () => {
                     : `${companyName}, ${contactPhone}`, // Use company info as fallback address
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
             clothingPreferences: savedClothingDescription || null, // New: save clothing description
+            totalprice: totalPrice // Add calculated price
         };
 
 
@@ -943,6 +986,10 @@ const Checkout = () => {
                 const productsData = await productsResponse.json();
 
                 if (productsData.products) {
+                    // Store full product data
+                    setProducts(productsData.products);
+                    
+                    // Map for UI display
                     const mappedHangers = productsData.products.map(product => ({
                         id: product.productname,
                         name: product.productname,
@@ -956,9 +1003,14 @@ const Checkout = () => {
                 const materialsData = await materialsResponse.json();
 
                 if (materialsData.materials) {
+                    // Store full material data
+                    setMaterialsFullData(materialsData.materials);
+                    
+                    // Map for UI display
                     const mappedMaterials = materialsData.materials.map(material => ({
                         name: material.materialname,
-                        features: material.features || []
+                        features: material.features || [],
+                        price_per_kg: material.price_per_kg
                     }));
                     setMaterials(mappedMaterials);
                 }
@@ -2295,6 +2347,27 @@ const Checkout = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Price Breakdown */}
+                                    {calculateTotalPrice() && (
+                                        <div className="pt-4 border-t space-y-2">
+                                            <h3 className="font-semibold mb-3">Price Breakdown</h3>
+                                            <div className="space-y-1 text-sm">
+                                                <div className="flex justify-between text-gray-600">
+                                                    <span>Material Cost:</span>
+                                                    <span>₱{(parseFloat(calculateTotalPrice()) - 2500).toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-gray-600">
+                                                    <span>Delivery Fee:</span>
+                                                    <span>₱2,500.00</span>
+                                                </div>
+                                                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                                                    <span>Total Price:</span>
+                                                    <span className="text-green-600">₱{parseFloat(calculateTotalPrice()).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="pt-4 border-t">
                                         <label className="block font-semibold mb-2">

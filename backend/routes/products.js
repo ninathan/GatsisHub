@@ -83,13 +83,14 @@ router.patch("/:productid", async (req, res) => {
       if (error.code === 'PGRST116') {
         return res.status(404).json({ error: "Product not found" });
       }
-      throw error;
+      console.error("Supabase error updating product:", error);
+      return res.status(400).json({ error: error.message || "Failed to update product" });
     }
 
     res.status(200).json({ product });
   } catch (err) {
-    console.error("Error updating product:", err);
-    res.status(500).json({ error: "Failed to update product" });
+    console.error("Error updating product:", err.message, err);
+    res.status(500).json({ error: err.message || "Failed to update product" });
   }
 });
 

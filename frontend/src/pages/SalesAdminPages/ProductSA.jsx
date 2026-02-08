@@ -249,7 +249,7 @@ const ProductSA = () => {
     const ProductCard = ({ product }) => (
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow relative group">
             {/* Action buttons */}
-            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="absolute top-2 right-2 flex gap-2 z-10">
                 <button
                     onClick={() => handleEditProduct(product)}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg"
@@ -306,7 +306,7 @@ const ProductSA = () => {
     const MaterialCard = ({ material }) => (
         <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow relative group">
             {/* Action buttons */}
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-4 right-4 flex gap-2">
                 <button
                     onClick={() => handleEditMaterial(material)}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg"
