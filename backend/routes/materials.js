@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
 // ➕ POST /materials - Create new material
 router.post("/", async (req, res) => {
   try {
-    const { materialname, features } = req.body;
+    const { materialname, features, price_per_kg } = req.body;
 
     if (!materialname) {
       return res.status(400).json({ error: "Material name is required" });
@@ -39,7 +39,7 @@ router.post("/", async (req, res) => {
 
     const { data: material, error } = await supabase
       .from("materials")
-      .insert([{ materialname, features: features || [] }])
+      .insert([{ materialname, features: features || [], price_per_kg }])
       .select()
       .single();
 
@@ -61,13 +61,14 @@ router.post("/", async (req, res) => {
 router.patch("/:materialid", async (req, res) => {
   try {
     const { materialid } = req.params;
-    const { materialname, features, is_active } = req.body;
+    const { materialname, features, is_active, price_per_kg } = req.body;
 
     const updateData = { updatedat: new Date().toISOString() };
     
     if (materialname !== undefined) updateData.materialname = materialname;
     if (features !== undefined) updateData.features = features;
     if (is_active !== undefined) updateData.is_active = is_active;
+    if (price_per_kg !== undefined) updateData.price_per_kg = price_per_kg;
 
     const { data: material, error } = await supabase
       .from("materials")

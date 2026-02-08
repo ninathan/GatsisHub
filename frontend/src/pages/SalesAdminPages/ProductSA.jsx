@@ -37,9 +37,10 @@ const ProductSA = () => {
         productname: '', 
         description: '', 
         image_url: '', 
-        model_url: '' 
+        model_url: '',
+        weight: ''
     })
-    const [materialForm, setMaterialForm] = useState({ materialname: '', features: [''] })
+    const [materialForm, setMaterialForm] = useState({ materialname: '', features: [''], price_per_kg: '' })
     
     useEffect(() => {
         fetchData()
@@ -116,7 +117,7 @@ const ProductSA = () => {
     // Product handlers
     const handleAddProduct = () => {
         setEditingProduct(null)
-        setProductForm({ productname: '', description: '', image_url: '', model_url: '' })
+        setProductForm({ productname: '', description: '', image_url: '', model_url: '', weight: '' })
         setShowProductModal(true)
     }
     
@@ -126,7 +127,8 @@ const ProductSA = () => {
             productname: product.productname, 
             description: product.description || '', 
             image_url: product.image_url || '',
-            model_url: product.model_url || ''
+            model_url: product.model_url || '',
+            weight: product.weight || ''
         })
         setShowProductModal(true)
     }
@@ -173,7 +175,7 @@ const ProductSA = () => {
     // Material handlers
     const handleAddMaterial = () => {
         setEditingMaterial(null)
-        setMaterialForm({ materialname: '', features: [''] })
+        setMaterialForm({ materialname: '', features: [''], price_per_kg: '' })
         setShowMaterialModal(true)
     }
     
@@ -181,7 +183,8 @@ const ProductSA = () => {
         setEditingMaterial(material)
         setMaterialForm({ 
             materialname: material.materialname, 
-            features: material.features && material.features.length > 0 ? material.features : ['']
+            features: material.features && material.features.length > 0 ? material.features : [''],
+            price_per_kg: material.price_per_kg || ''
         })
         setShowMaterialModal(true)
     }
@@ -321,7 +324,13 @@ const ProductSA = () => {
             </div>
             
             {/* Material Name Header */}
-            <h3 className="font-bold text-lg text-gray-900 mb-4">{material.materialname}</h3>
+            <h3 className="font-bold text-lg text-gray-900 mb-2">{material.materialname}</h3>
+            {/* Price per kg */}
+            {material.price_per_kg && (
+                <p className="text-sm text-green-700 font-semibold mb-4">
+                    ₱{parseFloat(material.price_per_kg).toFixed(2)} / kg
+                </p>
+            )}
             {/* Features List */}
             <ul className="space-y-2">
                 {material.features && material.features.map((feature, index) => (
@@ -446,6 +455,20 @@ const ProductSA = () => {
                         </div>
                         
                         <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Weight (grams)</label>
+                            <input
+                                type="number"
+                                value={productForm.weight}
+                                onChange={(e) => setProductForm({ ...productForm, weight: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                placeholder="e.g., 50"
+                                min="0"
+                                step="0.01"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Enter product weight in grams</p>
+                        </div>
+                        
+                        <div className="mb-4">
                             <label className="block text-sm font-medium mb-2">Product Image</label>
                             <input
                                 type="file"
@@ -532,6 +555,20 @@ const ProductSA = () => {
                                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
                                 placeholder="e.g., Polypropylene (PP)"
                             />
+                        </div>
+                        
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Price per Kg (PHP)</label>
+                            <input
+                                type="number"
+                                value={materialForm.price_per_kg}
+                                onChange={(e) => setMaterialForm({ ...materialForm, price_per_kg: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                placeholder="e.g., 150.00"
+                                min="0"
+                                step="0.01"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Enter price per kilogram in Philippine Pesos</p>
                         </div>
                         
                         <div className="mb-4">

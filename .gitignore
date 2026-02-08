@@ -54,3 +54,8 @@ create_production_submissions_table.sql
 add_last_successful_login_column.sql
 add_verification_security.sql
 VERIFICATION_SECURITY.md
+add_material_price_per_kg.sql
+add_product_weight.sql
+backend/routes/materials.js
+backend/routes/products.js
+frontend/src/pages/SalesAdminPages/ProductSA.jsx
