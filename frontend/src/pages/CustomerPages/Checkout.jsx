@@ -138,6 +138,38 @@ const Checkout = () => {
     const threeCanvasRef = useRef(null);
     const { user } = useAuth();
 
+    // VAT rates by country (in percentage)
+    const VAT_RATES = {
+        'Philippines': 12,
+        'Singapore': 9,
+        'Malaysia': 10,
+        'Indonesia': 11,
+        'Thailand': 7,
+        'Vietnam': 10,
+        'Japan': 10,
+        'South Korea': 10,
+        'China': 13,
+        'Hong Kong': 0,
+        'Taiwan': 5,
+        'India': 18,
+        'United States': 0, // Varies by state
+        'United Kingdom': 20,
+        'Australia': 10,
+        'Canada': 5, // GST, varies by province
+        'Germany': 19,
+        'France': 20,
+        'Italy': 22,
+        'Spain': 21,
+        'Netherlands': 21,
+        'default': 12 // Default to Philippines VAT
+    };
+
+    // Get VAT rate based on user's country
+    const getVATRate = () => {
+        const userCountry = user?.country || 'Philippines';
+        return VAT_RATES[userCountry] || VAT_RATES['default'];
+    };
+
     // Hanger image mapping
     const hangerImages = {
         'MB3': MB3ProductPage,
@@ -150,6 +182,8 @@ const Checkout = () => {
     // Modal states
     const [showModal, setShowModal] = useState(false);
     const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [submittedOrderData, setSubmittedOrderData] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [saveDesignModal, setSaveDesignModal] = useState(false);
     const [designName, setDesignName] = useState('');
@@ -196,7 +230,9 @@ const Checkout = () => {
     const [showDescribeModal, setShowDescribeModal] = useState(false);
     const [clothingDescription, setClothingDescription] = useState('');
     const [isSendingDescription, setIsSendingDescription] = useState(false);
-    const [savedClothingDescription, setSavedClothingDescription] = useState(''); // New: to save the description
+    const [savedClothingDescription, setSavedClothingDescription] = useState('');
+    const [aiRecommendations, setAiRecommendations] = useState(null);
+    const [isLoadingAI, setIsLoadingAI] = useState(false); // New: to save the description
 
     // Set default positions/sizes for 97-12 and 97-11
     useEffect(() => {
@@ -286,13 +322,428 @@ const Checkout = () => {
 
             // Add delivery cost (fixed 2500 PHP)
             const deliveryCost = 2500;
-            const totalPrice = materialCost + deliveryCost;
+            const subtotal = materialCost + deliveryCost;
+            
+            // Calculate VAT based on user's country
+            const vatRate = getVATRate();
+            const vatAmount = subtotal * (vatRate / 100);
+            const totalPrice = subtotal + vatAmount;
 
             return totalPrice.toFixed(2);
         } catch (error) {
             console.error('Error calculating price:', error);
             return null;
         }
+    };
+
+    // Get AI material recommendations using Gemini API
+    const getAIMaterialRecommendations = async () => {
+        if (!clothingDescription.trim()) {
+            showNotification('Please describe your clothing needs first');
+            return;
+        }
+
+        setIsLoadingAI(true);
+        try {
+            // Use Gemini API (Free tier: https://ai.google.dev/)
+            const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+            
+            if (!GEMINI_API_KEY) {
+                throw new Error('Gemini API key not configured');
+            }
+            
+            // Get available materials info
+            const materialsList = materials.map(m => `${m.name} - ${m.features.join(', ')}`).join('\n');
+            
+            const prompt = `You are a materials expert helping customers choose the best hanger materials for their clothing needs.
+
+Available Materials:
+${materialsList}
+
+Customer's Clothing Needs:
+${clothingDescription}
+
+Based on the customer's needs, recommend:
+1. Which materials are best suited (can be multiple)
+2. Suggested percentage composition for each material (must total 100%)
+3. Brief explanation why these materials work best
+
+Respond in JSON format:
+{
+  "recommendations": [
+    {"material": "Material Name", "percentage": 50, "reason": "explanation"},
+    {"material": "Material Name", "percentage": 50, "reason": "explanation"}
+  ],
+  "summary": "Brief overall explanation"
+}`;
+
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API Error:', response.status, errorData);
+                throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            const aiText = data.candidates[0].content.parts[0].text;
+            
+            // Extract JSON from response
+            const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const recommendations = JSON.parse(jsonMatch[0]);
+                setAiRecommendations(recommendations);
+                
+                // Auto-apply recommendations
+                const newMaterials = {};
+                recommendations.recommendations.forEach(rec => {
+                    // Find matching material (case-insensitive)
+                    const material = materials.find(m => 
+                        m.name.toLowerCase() === rec.material.toLowerCase()
+                    );
+                    if (material) {
+                        newMaterials[material.name] = rec.percentage;
+                    }
+                });
+                
+                if (Object.keys(newMaterials).length > 0) {
+                    setSelectedMaterials(newMaterials);
+                    showNotification('AI recommendations applied! Review the materials below.', 'success');
+                }
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('AI recommendation error:', error);
+            
+            // Check if it's an API key issue
+            if (error.message.includes('API_KEY_INVALID') || error.message.includes('403')) {
+                showNotification('AI service configuration error. Please contact support or select materials manually.');
+            } else if (error.message.includes('429')) {
+                showNotification('AI service is temporarily busy. Please try again in a moment or select materials manually.');
+            } else {
+                showNotification('Failed to get AI recommendations. Please try again or select materials manually.');
+            }
+        } finally {
+            setIsLoadingAI(false);
+        }
+    };
+
+    // Get detailed price breakdown for display
+    const getPriceBreakdown = () => {
+        try {
+            const product = products.find(p => p.productname === selectedHanger);
+            if (!product || !product.weight) return null;
+
+            const weightInKg = parseFloat(product.weight) / 1000;
+            const totalWeight = weightInKg * quantity;
+
+            const breakdown = {
+                productWeight: parseFloat(product.weight),
+                weightPerUnit: weightInKg,
+                totalWeight: totalWeight,
+                materials: [],
+                totalMaterialCost: 0,
+                deliveryCost: 2500,
+                vatRate: getVATRate(),
+                country: user?.country || 'Philippines'
+            };
+
+            for (const [materialName, percentage] of Object.entries(selectedMaterials)) {
+                const material = materialsFullData.find(m => m.materialname === materialName);
+                if (material && material.price_per_kg) {
+                    const materialWeight = totalWeight * (percentage / 100);
+                    const materialCost = materialWeight * parseFloat(material.price_per_kg);
+                    
+                    breakdown.materials.push({
+                        name: materialName,
+                        percentage: percentage,
+                        pricePerKg: parseFloat(material.price_per_kg),
+                        weight: materialWeight,
+                        cost: materialCost
+                    });
+                    
+                    breakdown.totalMaterialCost += materialCost;
+                }
+            }
+
+            breakdown.subtotal = breakdown.totalMaterialCost + breakdown.deliveryCost;
+            breakdown.vatAmount = breakdown.subtotal * (breakdown.vatRate / 100);
+            breakdown.totalPrice = breakdown.subtotal + breakdown.vatAmount;
+
+            return breakdown;
+        } catch (error) {
+            console.error('Error getting price breakdown:', error);
+            return null;
+        }
+    };
+
+    // Download invoice as HTML file
+    const handleDownloadInvoice = () => {
+        if (!submittedOrderData) return;
+
+        const docType = submittedOrderData.hasPayment ? 'Receipt' : 'Invoice';
+        const invoiceHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${docType} - ${submittedOrderData.orderNumber}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #191716;
+            margin-bottom: 5px;
+        }
+        .doc-title {
+            font-size: 24px;
+            color: #3b82f6;
+            margin-top: 10px;
+        }
+        .info-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-block h3 {
+            color: #191716;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-row {
+            margin: 8px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .breakdown-section {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .total-section {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #3b82f6;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .total-amount {
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            font-weight: bold;
+            color: #191716;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #3b82f6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .status-paid {
+            background-color: #10b981;
+            color: white;
+        }
+        .status-pending {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">GatsisHub</div>
+        <div class="doc-title">${docType}</div>
+        <div class="status-badge ${submittedOrderData.hasPayment ? 'status-paid' : 'status-pending'}">
+            ${submittedOrderData.hasPayment ? '✓ PAID' : 'PENDING PAYMENT'}
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="info-block">
+            <h3>Order Information</h3>
+            <div class="info-row"><span class="label">Order Number:</span> ${submittedOrderData.orderNumber}</div>
+            <div class="info-row"><span class="label">Date:</span> ${new Date(submittedOrderData.datecreated || Date.now()).toLocaleDateString()}</div>
+        </div>
+        <div class="info-block">
+            <h3>Customer Information</h3>
+            <div class="info-row"><span class="label">Company:</span> ${submittedOrderData.companyName}</div>
+            <div class="info-row"><span class="label">Contact:</span> ${submittedOrderData.contactPerson}</div>
+            <div class="info-row"><span class="label">Phone:</span> ${submittedOrderData.contactPhone}</div>
+        </div>
+    </div>
+
+    <div class="info-block">
+        <h3>Product Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Specification</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Product</td>
+                    <td>${submittedOrderData.selectedHanger}</td>
+                </tr>
+                <tr>
+                    <td>Quantity</td>
+                    <td>${submittedOrderData.quantity} units</td>
+                </tr>
+                <tr>
+                    <td>Color</td>
+                    <td>${submittedOrderData.color}</td>
+                </tr>
+                <tr>
+                    <td>Materials</td>
+                    <td>${Object.entries(submittedOrderData.selectedMaterials).map(([name, pct]) => `${Math.round(pct)}% ${name}`).join(', ')}</td>
+                </tr>
+                ${submittedOrderData.customtext ? `<tr><td>Custom Text</td><td>"${submittedOrderData.customtext}"</td></tr>` : ''}
+                ${submittedOrderData.customlogo ? `<tr><td>Custom Logo</td><td>✓ Included</td></tr>` : ''}
+            </tbody>
+        </table>
+    </div>
+
+    ${submittedOrderData.breakdown ? `
+    <div class="breakdown-section">
+        <h3>Price Breakdown</h3>
+        <div class="info-row">
+            <span class="label">Product Weight:</span> ${submittedOrderData.breakdown.productWeight}g per unit
+        </div>
+        <div class="info-row">
+            <span class="label">Total Weight:</span> ${submittedOrderData.breakdown.totalWeight.toFixed(3)} kg
+        </div>
+        
+        <h4 style="margin-top: 20px;">Material Costs:</h4>
+        ${submittedOrderData.breakdown.materials.map(mat => `
+        <div class="breakdown-item">
+            <div>
+                <strong>${mat.name} (${mat.percentage}%)</strong><br>
+                <small>₱${mat.pricePerKg.toLocaleString('en-PH', { minimumFractionDigits: 2 })} per kg × ${mat.weight.toFixed(3)} kg</small>
+            </div>
+            <div>
+                <strong>₱${mat.cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+            </div>
+        </div>
+        `).join('')}
+    </div>
+
+    <div class="total-section">
+        <div class="total-row">
+            <span>Total Material Cost:</span>
+            <span>₱${submittedOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="total-row">
+            <span>Delivery Fee:</span>
+            <span>₱${submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="total-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 5px;">
+            <span><strong>Subtotal:</strong></span>
+            <span><strong>₱${submittedOrderData.breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
+        </div>
+        <div class="total-row">
+            <span>VAT (${submittedOrderData.breakdown.vatRate}% - ${submittedOrderData.breakdown.country}):</span>
+            <span>₱${submittedOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="total-amount">
+            <span>TOTAL AMOUNT:</span>
+            <span>₱${submittedOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+    </div>
+    ` : ''}
+
+    <div class="footer">
+        <p><strong>GatsisHub</strong> - Custom Hanger Solutions</p>
+        <p>Thank you for your business!</p>
+        <p style="margin-top: 10px;">This is a computer-generated ${docType.toLowerCase()} and does not require a signature.</p>
+    </div>
+</body>
+</html>
+        `.trim();
+
+        // Create blob and download
+        const blob = new Blob([invoiceHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${docType}-${submittedOrderData.orderNumber}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     // Handlers
@@ -615,6 +1066,26 @@ const Checkout = () => {
             const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
             existingOrders.unshift(localOrderData);
             localStorage.setItem("orders", JSON.stringify(existingOrders));
+
+            // Store submitted order data for invoice
+            const orderDataForInvoice = {
+                ...result.order,
+                orderNumber: localOrderData.orderNumber,
+                companyName,
+                contactPerson,
+                contactPhone,
+                quantity,
+                selectedHanger,
+                selectedMaterials,
+                color,
+                breakdown: getPriceBreakdown(),
+                deliveryAddress: addresses.length > 0 && addresses[selectedAddress]?.address
+                    ? addresses[selectedAddress].address
+                    : `${companyName}, ${contactPhone}`,
+                hasPayment: false // Will be updated when payment is submitted
+            };
+            console.log('Setting submitted order data:', orderDataForInvoice);
+            setSubmittedOrderData(orderDataForInvoice);
 
             // Show success modal and redirect to orders page after 2 seconds
             setShowModal(true);
@@ -1716,35 +2187,38 @@ const Checkout = () => {
 
                         <section className="px-3 md:px-6 py-6 md:py-8">
                             <div className="max-w-7xl mx-auto">
-                                {/* Help Banner */}
-                                <div className="bg-[#E6AF2E] rounded-2xl p-6 md:p-8 mb-8 shadow-xl">
-                                    <div className="flex flex-col md:flex-row items-center gap-6">
+                                {/* Enhanced AI Help Banner */}
+                                <div className="bg-gradient-to-br from-[#E6AF2E] via-[#f0b940] to-[#E6AF2E] rounded-2xl p-4 md:p-8 mb-8 shadow-2xl border-2 border-yellow-600">
+                                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
                                         <div className="flex-shrink-0">
-                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                                                <svg className="w-7 h-7 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                                 </svg>
                                             </div>
                                         </div>
                                         <div className="flex-1 text-center md:text-left">
-                                            <h4 className="text-[#191716] text-xl md:text-2xl font-bold mb-2">
-                                                Not Sure Which Material to Choose?
-                                            </h4>
-                                            <p className="text-[#191716]/90 text-sm md:text-base mb-4">
-                                                Tell us about your clothing needs and our experts will recommend the best materials for you!
+                                            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">NEW</span>
+                                                <h4 className="text-[#191716] text-lg md:text-2xl font-bold">
+                                                    AI-Powered Material Recommendations
+                                                </h4>
+                                            </div>
+                                            <p className="text-[#191716]/90 text-xs md:text-base mb-3 md:mb-4">
+                                                Not sure which materials to choose? Our AI assistant will analyze your needs and recommend the perfect material combination!
                                             </p>
                                             <button
                                                 onClick={() => setShowDescribeModal(true)}
-                                                className="bg-[#191716] hover:bg-gray-800 text-white font-bold px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto md:mx-0"
+                                                className="bg-[#191716] hover:bg-gray-800 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto md:mx-0 text-sm md:text-base"
                                             >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                                 </svg>
-                                                Describe Your Clothing Needs
+                                                Get AI Recommendations
                                             </button>
                                         </div>
                                         <div className="hidden lg:block flex-shrink-0">
-                                            <div className="text-6xl">👔</div>
+                                            <div className="text-5xl md:text-6xl">🤖</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1805,6 +2279,7 @@ const Checkout = () => {
                                                     <button
                                                         onClick={() => {
                                                             setClothingDescription(savedClothingDescription);
+                                                            setAiRecommendations(null); // Clear previous AI recommendations
                                                             setShowDescribeModal(true);
                                                         }}
                                                         className="bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 text-sm"
@@ -1812,7 +2287,7 @@ const Checkout = () => {
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
-                                                        Edit
+                                                        Edit & Get New AI Suggestions
                                                     </button>
                                                 </div>
                                             </div>
@@ -2090,91 +2565,91 @@ const Checkout = () => {
 
                         {/* Describe Your Needs Modal */}
                         {showDescribeModal && (
-                            <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-scaleIn">
+                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto">
+                                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl my-4 sm:my-8 animate-scaleIn">
                                     {/* Modal Header */}
-                                    <div className="bg-[#E6AF2E] px-6 py-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    <div className="bg-gradient-to-r from-[#E6AF2E] to-[#f0b940] px-4 sm:px-6 py-3 sm:py-4">
+                                        <div className="flex items-center justify-between gap-2 sm:gap-3">
+                                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                                     </svg>
                                                 </div>
-                                                <div>
-                                                    <h3 className="text-[#191716] text-xl md:text-2xl font-bold">Describe Your Clothing Needs</h3>
-                                                    <p className="text-[#191716]/80 text-sm">Help us recommend the best materials</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-[#191716] text-sm sm:text-lg md:text-xl font-bold truncate">AI Material Assistant</h3>
+                                                    <p className="text-[#191716]/80 text-xs sm:text-sm hidden sm:block">Get personalized recommendations</p>
                                                 </div>
                                             </div>
                                             <button
                                                 onClick={() => {
                                                     setShowDescribeModal(false);
                                                     setClothingDescription(savedClothingDescription);
+                                                    setAiRecommendations(null);
                                                 }}
-                                                className="text-[#191716] hover:bg-white/20 p-2 rounded-lg transition-colors cursor-pointer"
+                                                className="text-[#191716] hover:bg-white/20 p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer flex-shrink-0"
                                             >
-                                                <X size={24} />
+                                                <X size={20} className="sm:w-6 sm:h-6" />
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Modal Body */}
-                                    <div className="p-6 md:p-8">
+                                    <div className="p-3 sm:p-4 md:p-6 max-h-[60vh] overflow-y-auto">
                                         {/* Instructions */}
-                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
-                                            <div className="flex gap-3">
-                                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                                            <div className="flex gap-2">
+                                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                                 </svg>
-                                                <div>
-                                                    <h4 className="font-bold text-blue-900 mb-1">How to describe your needs:</h4>
-                                                    <ul className="text-sm text-blue-800 space-y-1">
-                                                        <li>• What types of clothing will you hang?</li>
-                                                        <li>• Are they heavy (coats, suits) or light (t-shirts, blouses)?</li>
-                                                        <li>• Do you need hangers for delicate fabrics?</li>
-                                                        <li>• Any special requirements (water-resistant, extra durability)?</li>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-blue-900 mb-1 text-xs sm:text-sm">How to describe:</h4>
+                                                    <ul className="text-xs text-blue-800 space-y-0.5">
+                                                        <li>• What clothing types?</li>
+                                                        <li>• Heavy or light fabrics?</li>
+                                                        <li>• Special requirements?</li>
                                                     </ul>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Text Area */}
-                                        <div className="mb-6">
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                                Tell us about your clothing needs:
+                                        <div className="mb-3 sm:mb-4">
+                                            <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                                                Tell us about your needs:
                                             </label>
                                             <textarea
                                                 value={clothingDescription}
                                                 onChange={(e) => setClothingDescription(e.target.value)}
-                                                placeholder="Example: I need hangers for my retail store. We sell formal wear including suits, dress shirts, and blazers. We need durable hangers that can handle heavy garments and maintain their shape..."
-                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-                                                rows="8"
+                                                placeholder="Example: I need hangers for formal wear, suits and dress shirts..."
+                                                className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all text-xs sm:text-sm"
+                                                rows="4"
                                                 maxLength={1000}
                                             />
-                                            <div className="flex justify-between mt-2">
-                                                <p className="text-xs text-gray-500">Be as detailed as possible for best recommendations</p>
+                                            <div className="flex justify-between mt-1">
+                                                <p className="text-xs text-gray-500">Be detailed</p>
                                                 <p className="text-xs text-gray-400">{clothingDescription.length}/1000</p>
                                             </div>
                                         </div>
 
                                         {/* Example Suggestions */}
-                                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                                            <p className="text-sm font-semibold text-gray-700 mb-2">Quick suggestions:</p>
-                                            <div className="flex flex-wrap gap-2">
+                                        <div className="bg-gray-50 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                                            <p className="text-xs font-semibold text-gray-700 mb-1 sm:mb-2">Quick suggestions:</p>
+                                            <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                                 {[
-                                                    'Heavy winter coats and jackets',
+                                                    'Heavy winter coats',
                                                     'Delicate silk dresses',
-                                                    'Business suits and formal wear',
-                                                    'Casual t-shirts and jeans',
+                                                    'Business suits',
+                                                    'Casual t-shirts',
                                                     'Children\'s clothing',
-                                                    'Activewear and sportswear'
+                                                    'Activewear'
                                                 ].map((suggestion, index) => (
                                                     <button
                                                         key={index}
                                                         onClick={() => setClothingDescription(prev =>
                                                             prev ? `${prev}\n• ${suggestion}` : `• ${suggestion}`
                                                         )}
-                                                        className="text-xs bg-white hover:bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200 transition-colors"
+                                                        className="text-xs bg-white hover:bg-blue-50 text-blue-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-blue-200 transition-colors"
                                                     >
                                                         + {suggestion}
                                                     </button>
@@ -2183,47 +2658,131 @@ const Checkout = () => {
                                         </div>
 
                                         {/* Info Note */}
-                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-4">
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-2 sm:p-3">
                                             <div className="flex gap-2">
-                                                <svg className="w-5 h-5 text-yellow-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <svg className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                                 </svg>
-                                                <p className="text-sm text-yellow-800">
-                                                    <strong>Note:</strong> You can still select materials manually, or leave this for our team to recommend the best options during order validation.
+                                                <p className="text-xs text-yellow-800 flex-1">
+                                                    <strong>Note:</strong> You can select materials manually or get AI help.
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {/* AI Recommendations Display */}
+                                        {aiRecommendations && (
+                                            <div className="mt-3 sm:mt-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-3 sm:p-4 animate-fadeIn">
+                                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <h4 className="font-bold text-green-900 text-sm sm:text-base">AI Recommendations</h4>
+                                                </div>
+                                                
+                                                <div className="bg-white rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
+                                                    <p className="text-xs text-gray-700 mb-2">
+                                                        <strong>Summary:</strong> {aiRecommendations.summary}
+                                                    </p>
+                                                    
+                                                    <div className="space-y-1 sm:space-y-2">
+                                                        <p className="text-xs font-semibold text-gray-700">Recommended Materials:</p>
+                                                        {aiRecommendations.recommendations.map((rec, idx) => (
+                                                            <div key={idx} className="bg-gray-50 rounded p-2 border border-gray-200">
+                                                                <div className="flex justify-between items-start mb-1 gap-2">
+                                                                    <span className="font-semibold text-gray-900 text-xs">{rec.material}</span>
+                                                                    <span className="bg-green-600 text-white px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0">{rec.percentage}%</span>
+                                                                </div>
+                                                                <p className="text-xs text-gray-600">{rec.reason}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="bg-blue-100 border-l-4 border-blue-500 rounded-r p-2">
+                                                    <p className="text-xs text-blue-800">
+                                                        ✓ Recommendations applied! Adjust manually if needed.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Modal Footer */}
-                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+                                    <div className="bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 flex flex-col gap-2">
+                                        {/* AI Recommendation Button - Full width on mobile */}
                                         <button
-                                            onClick={() => {
-                                                setShowDescribeModal(false);
-                                                setClothingDescription(savedClothingDescription);
-                                            }}
-                                            className="px-6 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md cursor-pointer"
+                                            onClick={getAIMaterialRecommendations}
+                                            disabled={!clothingDescription.trim() || isLoadingAI}
+                                            className="w-full px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
                                         >
-                                            Cancel
+                                            {isLoadingAI ? (
+                                                <>
+                                                    <LoadingSpinner size="sm" color="white" />
+                                                    <span className="hidden sm:inline">Getting AI Recommendations...</span>
+                                                    <span className="sm:hidden">Loading...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                                    </svg>
+                                                    <span className="hidden sm:inline">Get AI Recommendations</span>
+                                                    <span className="sm:hidden">Get AI Suggestions</span>
+                                                </>
+                                            )}
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                if (!clothingDescription.trim()) {
-                                                    showNotification('Please describe your clothing needs');
-                                                    return;
-                                                }
-                                                setSavedClothingDescription(clothingDescription);
-                                                setShowDescribeModal(false);
-                                                showNotification('Your clothing preference has been saved! Our team will review it during order validation.', 'success');
-                                            }}
-                                            disabled={!clothingDescription.trim()}
-                                            className="px-6 py-2.5 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Send Preference
-                                        </button>
+                                        
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setShowDescribeModal(false);
+                                                    setClothingDescription(savedClothingDescription);
+                                                    setAiRecommendations(null);
+                                                }}
+                                                className="flex-1 px-3 sm:px-4 py-2 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md cursor-pointer text-xs sm:text-sm"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (!clothingDescription.trim()) {
+                                                        showNotification('Please describe your clothing needs');
+                                                        return;
+                                                    }
+                                                    
+                                                    // Save preference first
+                                                    setSavedClothingDescription(clothingDescription);
+                                                    
+                                                    // If AI hasn't been called yet, call it automatically
+                                                    if (!aiRecommendations && !isLoadingAI) {
+                                                        getAIMaterialRecommendations();
+                                                        // Don't close modal yet, let AI finish
+                                                        return;
+                                                    }
+                                                    
+                                                    // Close modal if AI recommendations are already there
+                                                    setShowDescribeModal(false);
+                                                    showNotification('Your preference has been saved!', 'success');
+                                                }}
+                                                disabled={!clothingDescription.trim() || isLoadingAI}
+                                                className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
+                                            >
+                                                {isLoadingAI ? (
+                                                    <>
+                                                        <LoadingSpinner size="sm" color="white" />
+                                                        <span className="hidden sm:inline">Getting AI Recommendations...</span>
+                                                        <span className="sm:hidden">Loading...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        {aiRecommendations ? 'Save & Apply' : 'Save & Get AI Recommendations'}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2349,25 +2908,83 @@ const Checkout = () => {
                                     </div>
 
                                     {/* Price Breakdown */}
-                                    {calculateTotalPrice() && (
-                                        <div className="pt-4 border-t space-y-2">
-                                            <h3 className="font-semibold mb-3">Price Breakdown</h3>
-                                            <div className="space-y-1 text-sm">
-                                                <div className="flex justify-between text-gray-600">
-                                                    <span>Material Cost:</span>
-                                                    <span>₱{(parseFloat(calculateTotalPrice()) - 2500).toFixed(2)}</span>
+                                    {(() => {
+                                        const breakdown = getPriceBreakdown();
+                                        if (!breakdown) return null;
+
+                                        return (
+                                            <div className="pt-4 border-t space-y-3">
+                                                <h3 className="font-semibold mb-3 text-base">Price Computation</h3>
+                                                
+                                                {/* Product Weight Info */}
+                                                <div className="bg-blue-50 p-3 rounded text-xs space-y-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">Product Weight:</span>
+                                                        <span className="font-medium">{breakdown.productWeight}g per unit</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">Quantity:</span>
+                                                        <span className="font-medium">{quantity} units</span>
+                                                    </div>
+                                                    <div className="flex justify-between font-semibold border-t border-blue-200 pt-1">
+                                                        <span className="text-gray-700">Total Weight:</span>
+                                                        <span className="text-blue-700">{breakdown.totalWeight.toFixed(3)} kg</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex justify-between text-gray-600">
-                                                    <span>Delivery Fee:</span>
-                                                    <span>₱2,500.00</span>
+
+                                                {/* Material Breakdown */}
+                                                <div className="space-y-2">
+                                                    <h4 className="font-medium text-sm text-gray-700">Material Costs:</h4>
+                                                    {breakdown.materials.map((mat, idx) => (
+                                                        <div key={idx} className="bg-gray-50 p-3 rounded text-xs space-y-1">
+                                                            <div className="font-medium text-gray-800 mb-1">
+                                                                {mat.name} ({mat.percentage}%)
+                                                            </div>
+                                                            <div className="flex justify-between text-gray-600">
+                                                                <span>Price per kg:</span>
+                                                                <span>₱{mat.pricePerKg.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-gray-600">
+                                                                <span>Material used:</span>
+                                                                <span>{mat.weight.toFixed(3)} kg</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-gray-600">
+                                                                <span className="text-xs">({mat.weight.toFixed(3)} kg × ₱{mat.pricePerKg.toFixed(2)})</span>
+                                                            </div>
+                                                            <div className="flex justify-between font-semibold border-t border-gray-300 pt-1">
+                                                                <span className="text-gray-700">Subtotal:</span>
+                                                                <span className="text-green-600">₱{mat.cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                                                    <span>Total Price:</span>
-                                                    <span className="text-green-600">₱{parseFloat(calculateTotalPrice()).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+
+                                                {/* Total Summary */}
+                                                <div className="space-y-1 text-sm border-t-2 pt-3">
+                                                    <div className="flex justify-between text-gray-700">
+                                                        <span>Total Material Cost:</span>
+                                                        <span className="font-semibold">₱{breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-gray-700">
+                                                        <span>Delivery Fee:</span>
+                                                        <span className="font-semibold">₱{breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-gray-700 pt-1 border-t border-gray-300">
+                                                        <span className="font-semibold">Subtotal:</span>
+                                                        <span className="font-bold">₱{breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-gray-700">
+                                                        <span>VAT ({breakdown.vatRate}% - {breakdown.country}):</span>
+                                                        <span className="font-semibold">₱{breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2">
+                                                        <span className="text-gray-900">Total Price:</span>
+                                                        <span className="text-green-600">₱{breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     <div className="pt-4 border-t">
                                         <label className="block font-semibold mb-2">
@@ -2451,10 +3068,10 @@ const Checkout = () => {
 
                         {/* Modal */}
                         {showModal && (
-                            <div className="fixed inset-0 flex items-center justify-center backdrop-blue-sm bg-opacity-50 backdrop-blur-sm z-[200] p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                            <div className="fixed inset-0 flex items-center justify-center backdrop-blue-sm bg-opacity-50 backdrop-blur-sm z-[200] p-3 md:p-4">
+                                <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
                                     {/* Success Header with Gradient */}
-                                    <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-8 text-center">
+                                    <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-4 md:px-6 py-4 md:py-8 text-center">
                                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
                                             <img
                                                 src={validationIcon}
@@ -2462,18 +3079,18 @@ const Checkout = () => {
                                                 className="w-12 h-12"
                                             />
                                         </div>
-                                        <h3 className="text-2xl md:text-3xl text-white font-bold mb-2">
-                                            Order Submitted Successfully! <PartyPopper size={40}  className="justify-center inline-block" />
+                                        <h3 className="text-xl md:text-2xl lg:text-3xl text-white font-bold mb-2">
+                                            Order Submitted Successfully! <PartyPopper size={32}  className="justify-center inline-block md:w-10 md:h-10" />
                                         </h3>
-                                        <p className="text-white/90 text-sm md:text-base">
+                                        <p className="text-white/90 text-xs md:text-sm">
                                             Your custom hanger order is being reviewed
                                         </p>
                                     </div>
 
                                     {/* Modal Body */}
-                                    <div className="p-6 md:p-8">
+                                    <div className="p-4 md:p-6 lg:p-8">
                                         {/* Order Number Badge */}
-                                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 mb-6 border-2 border-gray-200">
+                                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6 border-2 border-gray-200">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 bg-[#E6AF2E] rounded-lg flex items-center justify-center">
@@ -2543,29 +3160,45 @@ const Checkout = () => {
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex flex-col sm:flex-row gap-3">
-                                            <Link to="/orders" className="flex-1">
-                                                <button
-                                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-                                                    onClick={() => setShowModal(false)}
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                    </svg>
-                                                    <span>View My Orders</span>
-                                                </button>
-                                            </Link>
-                                            <Link to="/messages" className="flex-1">
-                                                <button
-                                                    className="w-full bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                                                    onClick={() => setShowModal(false)}
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                                    </svg>
-                                                    <span>Go to Messages</span>
-                                                </button>
-                                            </Link>
+                                        <div className="flex flex-col gap-3">
+                                            {/* View Invoice Button */}
+                                            <button
+                                                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                                onClick={() => {
+                                                    setShowModal(false);
+                                                    setShowInvoiceModal(true);
+                                                }}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <span>View Invoice</span>
+                                            </button>
+                                            
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                <Link to="/orders" className="flex-1">
+                                                    <button
+                                                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                                                        onClick={() => setShowModal(false)}
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                        </svg>
+                                                        <span>View My Orders</span>
+                                                    </button>
+                                                </Link>
+                                                <Link to="/messages" className="flex-1">
+                                                    <button
+                                                        className="w-full bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                                        onClick={() => setShowModal(false)}
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                                        </svg>
+                                                        <span>Go to Messages</span>
+                                                    </button>
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -2574,6 +3207,216 @@ const Checkout = () => {
                                         <p className="text-center text-xs text-gray-600">
                                             Expected response time: <span className="font-semibold text-gray-900">Within 24 hours</span>
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Invoice/Receipt Modal */}
+                        {showInvoiceModal && submittedOrderData && (
+                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto">
+                                <div className="bg-white rounded-lg md:rounded-xl shadow-2xl max-w-3xl w-full my-4 md:my-8 animate-scaleIn">
+                                    {/* Header */}
+                                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white truncate">
+                                                    {submittedOrderData.hasPayment ? 'Receipt' : 'Invoice'}
+                                                </h2>
+                                                <p className="text-white/90 text-xs md:text-sm truncate">
+                                                    {submittedOrderData.hasPayment ? 'Payment Confirmed' : 'Awaiting Payment'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowInvoiceModal(false)}
+                                            className="text-white hover:bg-white/20 p-1.5 md:p-2 rounded-lg transition-colors flex-shrink-0"
+                                        >
+                                            <X size={20} className="md:w-6 md:h-6" />
+                                        </button>
+                                    </div>
+
+                                    {/* Body */}
+                                    <div className="p-3 md:p-4 lg:p-6 max-h-[70vh] overflow-y-auto">
+                                        {/* Order Info */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6 pb-4 md:pb-6 border-b">
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Order Number</p>
+                                                <p className="font-bold text-sm md:text-base lg:text-lg">{submittedOrderData.orderNumber}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Date</p>
+                                                <p className="font-semibold text-sm md:text-base">{new Date().toLocaleDateString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Customer</p>
+                                                <p className="font-semibold text-sm md:text-base">{submittedOrderData.companyName}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 mb-1">Contact</p>
+                                                <p className="font-semibold text-sm md:text-base">{submittedOrderData.contactPerson}</p>
+                                                <p className="text-xs md:text-sm text-gray-600">{submittedOrderData.contactPhone}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Product Details */}
+                                        <div className="mb-4 md:mb-6 pb-4 md:pb-6 border-b">
+                                            <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4">Product Details</h3>
+                                            <div className="bg-gray-50 rounded-lg p-3 md:p-4 space-y-2 text-xs md:text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Product:</span>
+                                                    <span className="font-semibold">{submittedOrderData.selectedHanger}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Quantity:</span>
+                                                    <span className="font-semibold">{submittedOrderData.quantity} units</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Color:</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-5 h-5 rounded border" style={{ backgroundColor: submittedOrderData.color }}></div>
+                                                        <span className="font-mono text-xs">{submittedOrderData.color}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-gray-600">Materials:</span>
+                                                    <div className="text-right">
+                                                        {Object.entries(submittedOrderData.selectedMaterials).map(([name, percentage]) => (
+                                                            <div key={name} className="font-semibold">{percentage}% {name}</div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Price Breakdown */}
+                                        {submittedOrderData.breakdown && (
+                                            <div className="mb-4 md:mb-6">
+                                                <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4">Price Breakdown</h3>
+                                                
+                                                {/* Weight Info */}
+                                                <div className="bg-blue-50 p-2 md:p-3 rounded-lg mb-3 md:mb-4 text-xs md:text-sm space-y-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">Product Weight:</span>
+                                                        <span className="font-medium">{submittedOrderData.breakdown.productWeight}g per unit</span>
+                                                    </div>
+                                                    <div className="flex justify-between font-semibold border-t border-blue-200 pt-1">
+                                                        <span>Total Weight:</span>
+                                                        <span className="text-blue-700">{submittedOrderData.breakdown.totalWeight.toFixed(3)} kg</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Material Costs */}
+                                                <div className="space-y-3 mb-4">
+                                                    <h4 className="font-semibold text-sm">Material Costs:</h4>
+                                                    {submittedOrderData.breakdown.materials.map((mat, idx) => (
+                                                        <div key={idx} className="bg-gray-50 p-3 rounded-lg text-xs space-y-1">
+                                                            <div className="font-semibold text-gray-800 mb-1">{mat.name} ({mat.percentage}%)</div>
+                                                            <div className="flex justify-between text-gray-600">
+                                                                <span>Price per kg:</span>
+                                                                <span>₱{mat.pricePerKg.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-gray-600">
+                                                                <span>Material used:</span>
+                                                                <span>{mat.weight.toFixed(3)} kg</span>
+                                                            </div>
+                                                            <div className="flex justify-between font-semibold border-t border-gray-300 pt-1">
+                                                                <span>Subtotal:</span>
+                                                                <span className="text-green-600">₱{mat.cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Total Summary */}
+                                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-4 space-y-2">
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-700">Total Material Cost:</span>
+                                                        <span className="font-semibold">₱{submittedOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-700">Delivery Fee:</span>
+                                                        <span className="font-semibold">₱{submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-sm pt-2 border-t border-green-300">
+                                                        <span className="text-gray-700 font-semibold">Subtotal:</span>
+                                                        <span className="font-bold">₱{submittedOrderData.breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-sm">
+                                                        <span className="text-gray-700">VAT ({submittedOrderData.breakdown.vatRate}% - {submittedOrderData.breakdown.country}):</span>
+                                                        <span className="font-semibold">₱{submittedOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between font-bold text-xl pt-2 border-t-2 border-green-400">
+                                                        <span className="text-gray-900">Total Amount:</span>
+                                                        <span className="text-green-600">₱{submittedOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Payment Status */}
+                                        {submittedOrderData.hasPayment ? (
+                                            <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-green-900">Payment Received</p>
+                                                        <p className="text-sm text-green-700">Thank you for your payment!</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-yellow-900">Payment Pending</p>
+                                                        <p className="text-sm text-yellow-700">Please proceed to payment after order validation</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="bg-gray-50 px-3 md:px-4 lg:px-6 py-3 md:py-4 border-t flex flex-col sm:flex-row gap-2 md:gap-3">
+                                        <button
+                                            onClick={() => window.print()}
+                                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+                                        >
+                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Print {submittedOrderData.hasPayment ? 'Receipt' : 'Invoice'}</span>
+                                            <span className="sm:hidden">Print</span>
+                                        </button>
+                                        <button
+                                            onClick={handleDownloadInvoice}
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+                                        >
+                                            <Download size={16} className="md:w-5 md:h-5" />
+                                            <span className="hidden sm:inline">Download {submittedOrderData.hasPayment ? 'Receipt' : 'Invoice'}</span>
+                                            <span className="sm:hidden">Download</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setShowInvoiceModal(false)}
+                                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold transition-all text-xs md:text-sm"
+                                        >
+                                            Close
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -2608,20 +3451,20 @@ const Checkout = () => {
 
                 {/* Instructions Modal */}
                 {showInstructionsModal && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] pt-24 md:pt-28">
-                        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl max-h-[80vh] overflow-y-auto mx-4 relative z-[10000] mt-4">
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-3">
-                                    <Info className="text-[#007BFF]" size={24} />
-                                    <h2 className="text-2xl font-bold text-[#007BFF]">
+                    <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] p-3 md:p-4">
+                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000]">
+                            <div className="flex justify-between items-start md:items-center mb-4 md:mb-6 gap-2">
+                                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                                    <Info className="text-[#007BFF] flex-shrink-0" size={20} />
+                                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#007BFF]">
                                         Ordering Process Instructions
                                     </h2>
                                 </div>
                                 <button
                                     onClick={() => setShowInstructionsModal(false)}
-                                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                                    className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 p-1"
                                 >
-                                    <X size={24} />
+                                    <X size={20} className="md:w-6 md:h-6" />
                                 </button>
                             </div>
 
@@ -3094,18 +3937,18 @@ const Checkout = () => {
 
                 {/* Save Design Modal */}
                 {saveDesignModal && (
-                    <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                    <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
+                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
                             {/* Modal Header with Gradient */}
-                            <div className="bg-[#E6AF2E] px-6 py-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                            <Save className="w-6 h-6 text-[#E6AF2E]" />
+                            <div className="bg-[#E6AF2E] px-4 md:px-6 py-4 md:py-6">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                                            <Save className="w-5 h-5 md:w-6 md:h-6 text-[#E6AF2E]" />
                                         </div>
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-[#191716]">Save Your Design</h3>
-                                            <p className="text-xm text-[#191716]/80">Access it anytime from your account</p>
+                                        <div className="min-w-0">
+                                            <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-[#191716]">Save Your Design</h3>
+                                            <p className="text-xs md:text-sm text-[#191716]/80 hidden sm:block">Access it anytime from your account</p>
                                         </div>
                                     </div>
                                     <button
@@ -3118,9 +3961,9 @@ const Checkout = () => {
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-6">
+                            <div className="p-4 md:p-6 max-h-[60vh] overflow-y-auto">
                                 {/* Design Name Input */}
-                                <div className="mb-6">
+                                <div className="mb-4 md:mb-6">
                                     <label className="block text-sm font-bold text-gray-700 mb-2">
                                         Design Name <span className="text-red-500">*</span>
                                     </label>
@@ -3358,37 +4201,37 @@ const Checkout = () => {
                 {/* Notification Modal */}
                 {notificationModal.show && (
                     <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                             {/* Modal Header */}
-                            <div className={`px-6 py-5 ${notificationModal.type === 'success'
+                            <div className={`px-4 md:px-6 py-3 md:py-5 ${notificationModal.type === 'success'
                                     ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'
                                     : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444]'
                                 }`}>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
                                         {notificationModal.type === 'success' ? (
-                                            <svg className="w-6 h-6 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#4ade80]" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                             </svg>
                                         ) : (
-                                            <svg className="w-6 h-6 text-[#ff6b6b]" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-5 h-5 md:w-6 md:h-6 text-[#ff6b6b]" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                             </svg>
                                         )}
                                     </div>
-                                    <h2 className="text-[#191716] text-xl md:text-2xl font-bold">
+                                    <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-[#191716]">
                                         {notificationModal.type === 'success' ? 'Success!' : 'Error'}
                                     </h2>
                                 </div>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-6 md:p-8">
-                                <div className={`p-4 rounded-lg border-l-4 ${notificationModal.type === 'success'
+                            <div className="p-4 md:p-6 lg:p-8">
+                                <div className={`p-3 md:p-4 rounded-lg border-l-4 ${notificationModal.type === 'success'
                                         ? 'bg-green-50 border-green-400'
                                         : 'bg-red-50 border-red-400'
                                     }`}>
-                                    <p className={`text-base md:text-lg leading-relaxed ${notificationModal.type === 'success'
+                                    <p className={`text-sm md:text-base lg:text-lg leading-relaxed ${notificationModal.type === 'success'
                                             ? 'text-green-800'
                                             : 'text-red-800'
                                         }`}>
@@ -3398,10 +4241,10 @@ const Checkout = () => {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
+                            <div className="bg-gray-50 px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 flex justify-end">
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
-                                    className={`px-6 md:px-8 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base cursor-pointer ${notificationModal.type === 'success'
+                                    className={`px-4 md:px-6 lg:px-8 py-2 md:py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-xs md:text-sm lg:text-base cursor-pointer ${notificationModal.type === 'success'
                                             ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-[#191716]'
                                             : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444] hover:from-[#ef4444] hover:to-[#dc2626] text-[#191716]'
                                         }`}

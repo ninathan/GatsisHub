@@ -141,13 +141,29 @@ const ProductSA = () => {
             
             const method = editingProduct ? 'PATCH' : 'POST'
             
+            // Prepare data with proper type conversion
+            const dataToSend = {
+                productname: productForm.productname,
+                description: productForm.description || null,
+                image_url: productForm.image_url || null,
+                weight: productForm.weight ? parseFloat(productForm.weight) : null
+            };
+            
+            // Only include model_url if it exists (column may not be in database)
+            if (productForm.model_url) {
+                dataToSend.model_url = productForm.model_url;
+            }
+            
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(productForm)
+                body: JSON.stringify(dataToSend)
             })
             
-            if (!response.ok) throw new Error('Failed to save product')
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save product');
+            }
             
             await fetchData()
             setShowProductModal(false)
@@ -199,13 +215,23 @@ const ProductSA = () => {
             
             const method = editingMaterial ? 'PATCH' : 'POST'
             
+            // Prepare data with proper type conversion
+            const dataToSend = {
+                materialname: materialForm.materialname,
+                features: filteredFeatures,
+                price_per_kg: materialForm.price_per_kg ? parseFloat(materialForm.price_per_kg) : null
+            };
+            
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...materialForm, features: filteredFeatures })
+                body: JSON.stringify(dataToSend)
             })
             
-            if (!response.ok) throw new Error('Failed to save material')
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save material');
+            }
             
             await fetchData()
             setShowMaterialModal(false)

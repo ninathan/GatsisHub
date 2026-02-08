@@ -52,6 +52,10 @@ const Order = () => {
     const [reviewMessage, setReviewMessage] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+    // Invoice modal state
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [invoiceOrderData, setInvoiceOrderData] = useState(null);
+
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'];
 
     // Map tab names to their corresponding order statuses
@@ -491,6 +495,328 @@ const Order = () => {
             showNotification('Failed to cancel order. Please try again or contact support.', 'error');
         } finally {
             setIsCancelling(false);
+        }
+    };
+
+    // Download invoice/receipt as HTML file
+    const handleDownloadInvoiceFromOrder = () => {
+        if (!invoiceOrderData) return;
+
+        const docType = invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice';
+        const invoiceHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${docType} - ${invoiceOrderData.orderNumber}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #191716;
+            margin-bottom: 5px;
+        }
+        .doc-title {
+            font-size: 24px;
+            color: #3b82f6;
+            margin-top: 10px;
+        }
+        .info-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-block h3 {
+            color: #191716;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-row {
+            margin: 8px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .breakdown-section {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .total-section {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #3b82f6;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .total-amount {
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            font-weight: bold;
+            color: #191716;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #3b82f6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .status-paid {
+            background-color: #10b981;
+            color: white;
+        }
+        .status-pending {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">GatsisHub</div>
+        <div class="doc-title">${docType}</div>
+        <div class="status-badge ${invoiceOrderData.hasPayment ? 'status-paid' : 'status-pending'}">
+            ${invoiceOrderData.hasPayment ? '✓ PAID' : 'PENDING PAYMENT'}
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="info-block">
+            <h3>Order Information</h3>
+            <div class="info-row"><span class="label">Order Number:</span> ${invoiceOrderData.orderNumber}</div>
+            <div class="info-row"><span class="label">Date:</span> ${new Date(invoiceOrderData.datecreated).toLocaleDateString()}</div>
+        </div>
+        <div class="info-block">
+            <h3>Customer Information</h3>
+            <div class="info-row"><span class="label">Company:</span> ${invoiceOrderData.companyName}</div>
+            <div class="info-row"><span class="label">Contact:</span> ${invoiceOrderData.contactPerson}</div>
+            <div class="info-row"><span class="label">Phone:</span> ${invoiceOrderData.contactPhone}</div>
+        </div>
+    </div>
+
+    <div class="info-block">
+        <h3>Product Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Specification</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Product</td>
+                    <td>${invoiceOrderData.selectedHanger}</td>
+                </tr>
+                <tr>
+                    <td>Quantity</td>
+                    <td>${invoiceOrderData.quantity} units</td>
+                </tr>
+                ${invoiceOrderData.color ? `<tr><td>Color</td><td>${invoiceOrderData.color}</td></tr>` : ''}
+                <tr>
+                    <td>Materials</td>
+                    <td>${Object.entries(invoiceOrderData.selectedMaterials).map(([name, pct]) => `${Math.round(pct)}% ${name}`).join(', ')}</td>
+                </tr>
+                ${invoiceOrderData.customtext ? `<tr><td>Custom Text</td><td>"${invoiceOrderData.customtext}"</td></tr>` : ''}
+                ${invoiceOrderData.customlogo ? `<tr><td>Custom Logo</td><td>✓ Included</td></tr>` : ''}
+            </tbody>
+        </table>
+    </div>
+
+    ${invoiceOrderData.breakdown ? `
+    <div class="breakdown-section">
+        <h3>Price Breakdown</h3>
+        <div class="info-row">
+            <span class="label">Product Weight:</span> ${invoiceOrderData.breakdown.productWeight}g per unit
+        </div>
+        <div class="info-row">
+            <span class="label">Total Weight:</span> ${invoiceOrderData.breakdown.totalWeight.toFixed(3)} kg
+        </div>
+        
+        <h4 style="margin-top: 20px;">Material Costs:</h4>
+        ${invoiceOrderData.breakdown.materials.map(mat => `
+        <div class="breakdown-item">
+            <div>
+                <strong>${mat.name} (${mat.percentage}%)</strong><br>
+                <small>₱${mat.pricePerKg.toLocaleString('en-PH', { minimumFractionDigits: 2 })} per kg × ${mat.weight.toFixed(3)} kg</small>
+            </div>
+            <div>
+                <strong>₱${mat.cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+            </div>
+        </div>
+        `).join('')}
+    </div>
+
+    <div class="total-section">
+        <div class="total-row">
+            <span>Total Material Cost:</span>
+            <span>₱${invoiceOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="total-row">
+            <span>Delivery Fee:</span>
+            <span>₱${invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="total-amount">
+            <span>TOTAL AMOUNT:</span>
+            <span>₱${invoiceOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+    </div>
+    ` : ''}
+
+    <div class="footer">
+        <p><strong>GatsisHub</strong> - Custom Hanger Solutions</p>
+        <p>Thank you for your business!</p>
+        <p style="margin-top: 10px;">This is a computer-generated ${docType.toLowerCase()} and does not require a signature.</p>
+    </div>
+</body>
+</html>
+        `.trim();
+
+        // Create blob and download
+        const blob = new Blob([invoiceHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${docType}-${invoiceOrderData.orderNumber}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // Function to open invoice modal
+    const handleViewInvoice = async (order) => {
+        try {
+            // Fetch product data to get weight
+            const productRes = await fetch(`https://gatsis-hub.vercel.app/products`);
+            if (!productRes.ok) throw new Error('Failed to fetch product data');
+            const productsData = await productRes.json();
+            const product = productsData.products.find(p => p.productname === order.hangertype);
+
+            // Fetch materials data to get price per kg
+            const materialsRes = await fetch(`https://gatsis-hub.vercel.app/materials`);
+            if (!materialsRes.ok) throw new Error('Failed to fetch materials data');
+            const materialsData = await materialsRes.json();
+
+            // Calculate price breakdown
+            const breakdown = {
+                productWeight: product?.weight || 0,
+                totalWeight: ((product?.weight || 0) * order.quantity) / 1000, // Convert to kg
+                materials: [],
+                totalMaterialCost: 0,
+                deliveryCost: 2500,
+                totalPrice: parseFloat(order.totalprice) || 0
+            };
+
+            // Calculate material costs
+            if (order.materials && typeof order.materials === 'object') {
+                breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                    const material = materialsData.materials.find(m => m.materialname === name);
+                    const pricePerKg = material?.price_per_kg || 0;
+                    const weight = breakdown.totalWeight * (percentage / 100);
+                    const cost = weight * pricePerKg;
+                    breakdown.totalMaterialCost += cost;
+
+                    return {
+                        name,
+                        percentage: Math.round(percentage),
+                        pricePerKg,
+                        weight,
+                        cost
+                    };
+                });
+            }
+
+            // Check if payment exists
+            const hasPayment = orderPayments[order.orderid] && 
+                              orderPayments[order.orderid].paymentstatus === 'Verified';
+
+            // Prepare invoice data
+            const invoiceData = {
+                orderNumber: `ORD-${order.orderid.slice(0, 8).toUpperCase()}`,
+                datecreated: order.datecreated,
+                companyName: order.companyname,
+                contactPerson: order.contactperson,
+                contactPhone: order.contactphone,
+                selectedHanger: order.hangertype,
+                quantity: order.quantity,
+                color: order.selectedcolor,
+                selectedMaterials: order.materials,
+                breakdown,
+                hasPayment,
+                deliveryaddress: order.deliveryaddress,
+                customtext: order.customtext,
+                customlogo: order.customlogo,
+                textcolor: order.textcolor
+            };
+
+            setInvoiceOrderData(invoiceData);
+            setShowInvoiceModal(true);
+        } catch (err) {
+            console.error('Error fetching invoice data:', err);
+            showNotification('Failed to load invoice. Please try again.', 'error');
         }
     };
 
@@ -1316,6 +1642,18 @@ const Order = () => {
 
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2 md:gap-3 mt-4 md:mt-6  flex-wrap">
+                                                    {/* View Invoice - Show for orders with totalprice */}
+                                                    {order.totalprice && (
+                                                        <button
+                                                            onClick={() => handleViewInvoice(order)}
+                                                            className="bg-blue-600 text-white px-3 md:px-6 py-2 rounded hover:bg-blue-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
+                                                        >
+                                                            <FileText size={16} className="md:w-[18px] md:h-[18px]" />
+                                                            <span className="hidden sm:inline">View Invoice</span>
+                                                            <span className="sm:hidden">Invoice</span>
+                                                        </button>
+                                                    )}
+
                                                     {/* Download Invoice - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
                                                     {['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
                                                         <button
@@ -1324,7 +1662,7 @@ const Order = () => {
                                                         >
                                                             <Download size={16} className="md:w-[18px] md:h-[18px]" />
                                                             <span className="hidden sm:inline">Download Invoice</span>
-                                                            <span className="sm:hidden">Invoice</span>
+                                                            <span className="sm:hidden">Download</span>
                                                         </button>
                                                     )}
 
@@ -2143,6 +2481,237 @@ const Order = () => {
                     </div>
                 </div>
             )}
+
+            {/* Invoice/Receipt Modal */}
+            {showInvoiceModal && invoiceOrderData && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8 animate-scaleIn">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">
+                                        {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
+                                    </h2>
+                                    <p className="text-white/90 text-sm">
+                                        {invoiceOrderData.hasPayment ? 'Payment Confirmed' : 'Awaiting Payment'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowInvoiceModal(false)}
+                                className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 max-h-[70vh] overflow-y-auto">
+                            {/* Order Info */}
+                            <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b">
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Order Number</p>
+                                    <p className="font-bold text-lg">{invoiceOrderData.orderNumber}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Date</p>
+                                    <p className="font-semibold">{new Date(invoiceOrderData.datecreated).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Customer</p>
+                                    <p className="font-semibold">{invoiceOrderData.companyName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Contact</p>
+                                    <p className="font-semibold">{invoiceOrderData.contactPerson}</p>
+                                    <p className="text-sm text-gray-600">{invoiceOrderData.contactPhone}</p>
+                                </div>
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="mb-6 pb-6 border-b">
+                                <h3 className="font-bold text-lg mb-4">Product Details</h3>
+                                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Product:</span>
+                                        <span className="font-semibold">{invoiceOrderData.selectedHanger}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Quantity:</span>
+                                        <span className="font-semibold">{invoiceOrderData.quantity} units</span>
+                                    </div>
+                                    {invoiceOrderData.color && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Color:</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-5 h-5 rounded border" style={{ backgroundColor: invoiceOrderData.color }}></div>
+                                                <span className="font-mono text-xs">{invoiceOrderData.color}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-gray-600">Materials:</span>
+                                        <div className="text-right">
+                                            {Object.entries(invoiceOrderData.selectedMaterials).map(([name, percentage]) => (
+                                                <div key={name} className="font-semibold">{Math.round(percentage)}% {name}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {invoiceOrderData.customtext && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Custom Text:</span>
+                                            <span className="font-semibold italic">"{invoiceOrderData.customtext}"</span>
+                                        </div>
+                                    )}
+                                    {invoiceOrderData.customlogo && (
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Custom Logo:</span>
+                                            <span className="font-semibold">✓ Included</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Price Breakdown */}
+                            {invoiceOrderData.breakdown && (
+                                <div className="mb-6">
+                                    <h3 className="font-bold text-lg mb-4">Price Breakdown</h3>
+                                    
+                                    {/* Weight Info */}
+                                    <div className="bg-blue-50 p-3 rounded-lg mb-4 text-sm space-y-1">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Product Weight:</span>
+                                            <span className="font-medium">{invoiceOrderData.breakdown.productWeight}g per unit</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold border-t border-blue-200 pt-1">
+                                            <span>Total Weight:</span>
+                                            <span className="text-blue-700">{invoiceOrderData.breakdown.totalWeight.toFixed(3)} kg</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Material Costs */}
+                                    <div className="space-y-3 mb-4">
+                                        <h4 className="font-semibold text-sm">Material Costs:</h4>
+                                        {invoiceOrderData.breakdown.materials.map((mat, idx) => (
+                                            <div key={idx} className="bg-gray-50 p-3 rounded-lg text-xs space-y-1">
+                                                <div className="font-semibold text-gray-800 mb-1">{mat.name} ({mat.percentage}%)</div>
+                                                <div className="flex justify-between text-gray-600">
+                                                    <span>Price per kg:</span>
+                                                    <span>₱{mat.pricePerKg.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="flex justify-between text-gray-600">
+                                                    <span>Material used:</span>
+                                                    <span>{mat.weight.toFixed(3)} kg</span>
+                                                </div>
+                                                <div className="flex justify-between font-semibold border-t border-gray-300 pt-1">
+                                                    <span>Subtotal:</span>
+                                                    <span className="text-green-600">₱{mat.cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Total Summary */}
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-4 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-700">Total Material Cost:</span>
+                                            <span className="font-semibold">₱{invoiceOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-700">Delivery Fee:</span>
+                                            <span className="font-semibold">₱{invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between font-bold text-xl pt-2 border-t-2 border-green-400">
+                                            <span className="text-gray-900">Total Amount:</span>
+                                            <span className="text-green-600">₱{invoiceOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Payment Status */}
+                            {invoiceOrderData.hasPayment ? (
+                                <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-green-900">Payment Received</p>
+                                            <p className="text-sm text-green-700">Thank you for your payment!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-yellow-900">Payment Pending</p>
+                                            <p className="text-sm text-yellow-700">Please proceed to payment after order validation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gray-50 px-6 py-4 border-t flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => window.print()}
+                                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Print {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
+                            </button>
+                            <button
+                                onClick={handleDownloadInvoiceFromOrder}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                            >
+                                <Download size={20} />
+                                Download {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
+                            </button>
+                            <button
+                                onClick={() => setShowInvoiceModal(false)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add animation styles */}
+            <style jsx>{`
+                @keyframes scaleIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                .animate-scaleIn {
+                    animation: scaleIn 0.2s ease-out;
+                }
+            `}</style>
         </div>
     )
 }
