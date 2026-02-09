@@ -5,7 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, PartyPopper, X, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, PartyPopper, X, BotMessageSquare, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import MB3ProductPage from '../../images/MB3ProductPage.png'
 import Product9712 from '../../images/97-12ProductPage.png'
@@ -306,7 +306,7 @@ const Checkout = () => {
 
             // Convert weight from grams to kg
             const weightInKg = parseFloat(product.weight) / 1000;
-            
+
             // Calculate total weight for all units
             const totalWeight = weightInKg * quantity;
 
@@ -323,7 +323,7 @@ const Checkout = () => {
             // Add delivery cost (fixed 2500 PHP)
             const deliveryCost = 2500;
             const subtotal = materialCost + deliveryCost;
-            
+
             // Calculate VAT based on user's country
             const vatRate = getVATRate();
             const vatAmount = subtotal * (vatRate / 100);
@@ -347,14 +347,14 @@ const Checkout = () => {
         try {
             // Use Gemini API (Free tier: https://ai.google.dev/)
             const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-            
+
             if (!GEMINI_API_KEY) {
                 throw new Error('Gemini API key not configured');
             }
-            
+
             // Get available materials info
             const materialsList = materials.map(m => `${m.name} - ${m.features.join(', ')}`).join('\n');
-            
+
             const prompt = `You are a materials expert helping customers choose the best hanger materials for their clothing needs.
 
 Available Materials:
@@ -396,25 +396,25 @@ Respond in JSON format:
 
             const data = await response.json();
             const aiText = data.candidates[0].content.parts[0].text;
-            
+
             // Extract JSON from response
             const jsonMatch = aiText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 const recommendations = JSON.parse(jsonMatch[0]);
                 setAiRecommendations(recommendations);
-                
+
                 // Auto-apply recommendations
                 const newMaterials = {};
                 recommendations.recommendations.forEach(rec => {
                     // Find matching material (case-insensitive)
-                    const material = materials.find(m => 
+                    const material = materials.find(m =>
                         m.name.toLowerCase() === rec.material.toLowerCase()
                     );
                     if (material) {
                         newMaterials[material.name] = rec.percentage;
                     }
                 });
-                
+
                 if (Object.keys(newMaterials).length > 0) {
                     setSelectedMaterials(newMaterials);
                     showNotification('AI recommendations applied! Review the materials below.', 'success');
@@ -424,7 +424,7 @@ Respond in JSON format:
             }
         } catch (error) {
             console.error('AI recommendation error:', error);
-            
+
             // Check if it's an API key issue
             if (error.message.includes('API_KEY_INVALID') || error.message.includes('403')) {
                 showNotification('AI service configuration error. Please contact support or select materials manually.');
@@ -463,7 +463,7 @@ Respond in JSON format:
                 if (material && material.price_per_kg) {
                     const materialWeight = totalWeight * (percentage / 100);
                     const materialCost = materialWeight * parseFloat(material.price_per_kg);
-                    
+
                     breakdown.materials.push({
                         name: materialName,
                         percentage: percentage,
@@ -471,7 +471,7 @@ Respond in JSON format:
                         weight: materialWeight,
                         cost: materialCost
                     });
-                    
+
                     breakdown.totalMaterialCost += materialCost;
                 }
             }
@@ -1459,7 +1459,7 @@ Respond in JSON format:
                 if (productsData.products) {
                     // Store full product data
                     setProducts(productsData.products);
-                    
+
                     // Map for UI display
                     const mappedHangers = productsData.products.map(product => ({
                         id: product.productname,
@@ -1476,7 +1476,7 @@ Respond in JSON format:
                 if (materialsData.materials) {
                     // Store full material data
                     setMaterialsFullData(materialsData.materials);
-                    
+
                     // Map for UI display
                     const mappedMaterials = materialsData.materials.map(material => ({
                         name: material.materialname,
@@ -2218,7 +2218,7 @@ Respond in JSON format:
                                             </button>
                                         </div>
                                         <div className="hidden lg:block flex-shrink-0">
-                                            <div className="text-5xl md:text-6xl">🤖</div>
+                                            <BotMessageSquare size={60} className="text-[#191716]/80" />
                                         </div>
                                     </div>
                                 </div>
@@ -2565,20 +2565,20 @@ Respond in JSON format:
 
                         {/* Describe Your Needs Modal */}
                         {showDescribeModal && (
-                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto">
-                                <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl my-4 sm:my-8 animate-scaleIn">
+                            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                                <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-3xl my-8 animate-scaleIn">
                                     {/* Modal Header */}
-                                    <div className="bg-gradient-to-r from-[#E6AF2E] to-[#f0b940] px-4 sm:px-6 py-3 sm:py-4">
-                                        <div className="flex items-center justify-between gap-2 sm:gap-3">
-                                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                                                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div className="bg-[#E6AF2E] px-6 py-5">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                                     </svg>
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <h3 className="text-[#191716] text-sm sm:text-lg md:text-xl font-bold truncate">AI Material Assistant</h3>
-                                                    <p className="text-[#191716]/80 text-xs sm:text-sm hidden sm:block">Get personalized recommendations</p>
+                                                    <h3 className="text-[#191716] text-xl font-bold truncate">AI Material Assistant</h3>
+                                                    <p className="text-[#191716]/80 text-sm">Get personalized recommendations</p>
                                                 </div>
                                             </div>
                                             <button
@@ -2587,61 +2587,66 @@ Respond in JSON format:
                                                     setClothingDescription(savedClothingDescription);
                                                     setAiRecommendations(null);
                                                 }}
-                                                className="text-[#191716] hover:bg-white/20 p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                                                className="text-[#191716] hover:bg-white/20 p-2 rounded-lg transition-colors cursor-pointer flex-shrink-0"
                                             >
-                                                <X size={20} className="sm:w-6 sm:h-6" />
+                                                <X size={24} />
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Modal Body */}
-                                    <div className="p-3 sm:p-4 md:p-6 max-h-[60vh] overflow-y-auto">
+                                    <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
                                         {/* Instructions */}
-                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-2 sm:p-3 mb-3 sm:mb-4">
-                                            <div className="flex gap-2">
-                                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                            <div className="flex gap-3">
+                                                <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                                 </svg>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="font-bold text-blue-900 mb-1 text-xs sm:text-sm">How to describe:</h4>
-                                                    <ul className="text-xs text-blue-800 space-y-0.5">
-                                                        <li>• What clothing types?</li>
-                                                        <li>• Heavy or light fabrics?</li>
-                                                        <li>• Special requirements?</li>
+                                                    <h4 className="font-bold text-blue-900 mb-2 text-sm">How to describe your needs:</h4>
+                                                    <ul className="text-sm text-blue-800 space-y-1">
+                                                        <li>• What types of clothing will you hang?</li>
+                                                        <li>• Are they heavy coats or light garments?</li>
+                                                        <li>• Any special requirements (waterproof, delicate fabrics, etc.)?</li>
                                                     </ul>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Text Area */}
-                                        <div className="mb-3 sm:mb-4">
-                                            <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
-                                                Tell us about your needs:
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                                                Tell us about your clothing needs:
                                             </label>
                                             <textarea
                                                 value={clothingDescription}
                                                 onChange={(e) => setClothingDescription(e.target.value)}
-                                                placeholder="Example: I need hangers for formal wear, suits and dress shirts..."
-                                                className="w-full px-2 sm:px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all text-xs sm:text-sm"
-                                                rows="4"
+                                                placeholder="Example: I need hangers for formal wear including suits, dress shirts, and heavy winter coats. The garments are typically heavier and require strong, durable hangers..."
+                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all text-sm"
+                                                rows="5"
                                                 maxLength={1000}
                                             />
-                                            <div className="flex justify-between mt-1">
-                                                <p className="text-xs text-gray-500">Be detailed</p>
-                                                <p className="text-xs text-gray-400">{clothingDescription.length}/1000</p>
+                                            <div className="flex justify-between mt-2">
+                                                <p className="text-xs text-gray-500">Be as detailed as possible for better recommendations</p>
+                                                <p className="text-xs text-gray-400 font-mono">{clothingDescription.length}/1000</p>
                                             </div>
                                         </div>
 
                                         {/* Example Suggestions */}
-                                        <div className="bg-gray-50 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-                                            <p className="text-xs font-semibold text-gray-700 mb-1 sm:mb-2">Quick suggestions:</p>
-                                            <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                            <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                Quick suggestions (click to add):
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
                                                 {[
                                                     'Heavy winter coats',
                                                     'Delicate silk dresses',
                                                     'Business suits',
                                                     'Casual t-shirts',
-                                                    'Children\'s clothing',
+                                                    "Children's clothing",
                                                     'Activewear'
                                                 ].map((suggestion, index) => (
                                                     <button
@@ -2649,7 +2654,7 @@ Respond in JSON format:
                                                         onClick={() => setClothingDescription(prev =>
                                                             prev ? `${prev}\n• ${suggestion}` : `• ${suggestion}`
                                                         )}
-                                                        className="text-xs bg-white hover:bg-blue-50 text-blue-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-blue-200 transition-colors"
+                                                        className="text-xs bg-white hover:bg-blue-50 text-blue-700 px-3 py-2 rounded-full border border-blue-200 transition-colors cursor-pointer font-medium hover:border-blue-400"
                                                     >
                                                         + {suggestion}
                                                     </button>
@@ -2658,49 +2663,52 @@ Respond in JSON format:
                                         </div>
 
                                         {/* Info Note */}
-                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-2 sm:p-3">
-                                            <div className="flex gap-2">
-                                                <svg className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-4 mb-6">
+                                            <div className="flex gap-3">
+                                                <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                                 </svg>
-                                                <p className="text-xs text-yellow-800 flex-1">
-                                                    <strong>Note:</strong> You can select materials manually or get AI help.
+                                                <p className="text-sm text-yellow-800 flex-1">
+                                                    <strong>Note:</strong> You can select materials manually, or let our AI analyze your needs and suggest the perfect blend.
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* AI Recommendations Display */}
                                         {aiRecommendations && (
-                                            <div className="mt-3 sm:mt-4 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-3 sm:p-4 animate-fadeIn">
-                                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-5 animate-fadeIn">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <h4 className="font-bold text-green-900 text-sm sm:text-base">AI Recommendations</h4>
+                                                    <h4 className="font-bold text-green-900 text-base">AI Recommendations</h4>
                                                 </div>
-                                                
-                                                <div className="bg-white rounded-lg p-2 sm:p-3 mb-2 sm:mb-3">
-                                                    <p className="text-xs text-gray-700 mb-2">
-                                                        <strong>Summary:</strong> {aiRecommendations.summary}
+
+                                                <div className="bg-white rounded-lg p-4 mb-4">
+                                                    <p className="text-sm text-gray-700 mb-3">
+                                                        <strong className="text-gray-900">Summary:</strong> {aiRecommendations.summary}
                                                     </p>
-                                                    
-                                                    <div className="space-y-1 sm:space-y-2">
-                                                        <p className="text-xs font-semibold text-gray-700">Recommended Materials:</p>
+
+                                                    <div className="space-y-3">
+                                                        <p className="text-sm font-semibold text-gray-700">Recommended Materials:</p>
                                                         {aiRecommendations.recommendations.map((rec, idx) => (
-                                                            <div key={idx} className="bg-gray-50 rounded p-2 border border-gray-200">
-                                                                <div className="flex justify-between items-start mb-1 gap-2">
-                                                                    <span className="font-semibold text-gray-900 text-xs">{rec.material}</span>
-                                                                    <span className="bg-green-600 text-white px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0">{rec.percentage}%</span>
+                                                            <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                                <div className="flex justify-between items-start mb-2 gap-3">
+                                                                    <span className="font-semibold text-gray-900 text-sm">{rec.material}</span>
+                                                                    <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold flex-shrink-0">{rec.percentage}%</span>
                                                                 </div>
                                                                 <p className="text-xs text-gray-600">{rec.reason}</p>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="bg-blue-100 border-l-4 border-blue-500 rounded-r p-2">
-                                                    <p className="text-xs text-blue-800">
-                                                        ✓ Recommendations applied! Adjust manually if needed.
+
+                                                <div className="bg-blue-100 border-l-4 border-blue-500 rounded-r-lg p-3">
+                                                    <p className="text-sm text-blue-800 flex items-center gap-2">
+                                                        <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <span>Recommendations applied! You can adjust the percentages manually if needed.</span>
                                                     </p>
                                                 </div>
                                             </div>
@@ -2708,77 +2716,50 @@ Respond in JSON format:
                                     </div>
 
                                     {/* Modal Footer */}
-                                    <div className="bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 flex flex-col gap-2">
-                                        {/* AI Recommendation Button - Full width on mobile */}
-                                        <button
-                                            onClick={getAIMaterialRecommendations}
-                                            disabled={!clothingDescription.trim() || isLoadingAI}
-                                            className="w-full px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
-                                        >
-                                            {isLoadingAI ? (
-                                                <>
-                                                    <LoadingSpinner size="sm" color="white" />
-                                                    <span className="hidden sm:inline">Getting AI Recommendations...</span>
-                                                    <span className="sm:hidden">Loading...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                                    </svg>
-                                                    <span className="hidden sm:inline">Get AI Recommendations</span>
-                                                    <span className="sm:hidden">Get AI Suggestions</span>
-                                                </>
-                                            )}
-                                        </button>
-                                        
-                                        <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                        <div className="flex flex-col sm:flex-row gap-3">
                                             <button
                                                 onClick={() => {
                                                     setShowDescribeModal(false);
                                                     setClothingDescription(savedClothingDescription);
                                                     setAiRecommendations(null);
                                                 }}
-                                                className="flex-1 px-3 sm:px-4 py-2 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md cursor-pointer text-xs sm:text-sm"
+                                                className="flex-1 px-6 py-3 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:shadow-md cursor-pointer"
                                             >
                                                 Cancel
                                             </button>
+
                                             <button
                                                 onClick={() => {
                                                     if (!clothingDescription.trim()) {
                                                         showNotification('Please describe your clothing needs');
                                                         return;
                                                     }
-                                                    
-                                                    // Save preference first
+
                                                     setSavedClothingDescription(clothingDescription);
-                                                    
-                                                    // If AI hasn't been called yet, call it automatically
+
                                                     if (!aiRecommendations && !isLoadingAI) {
                                                         getAIMaterialRecommendations();
-                                                        // Don't close modal yet, let AI finish
                                                         return;
                                                     }
-                                                    
-                                                    // Close modal if AI recommendations are already there
+
                                                     setShowDescribeModal(false);
                                                     showNotification('Your preference has been saved!', 'success');
                                                 }}
                                                 disabled={!clothingDescription.trim() || isLoadingAI}
-                                                className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs sm:text-sm"
+                                                className="flex-1 px-6 py-3 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                                             >
                                                 {isLoadingAI ? (
                                                     <>
                                                         <LoadingSpinner size="sm" color="white" />
-                                                        <span className="hidden sm:inline">Getting AI Recommendations...</span>
-                                                        <span className="sm:hidden">Loading...</span>
+                                                        <span>Processing...</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                         </svg>
-                                                        {aiRecommendations ? 'Save & Apply' : 'Save & Get AI Recommendations'}
+                                                        <span>{aiRecommendations ? 'Save & Apply' : 'Save & Get Recommendations'}</span>
                                                     </>
                                                 )}
                                             </button>
@@ -2915,7 +2896,7 @@ Respond in JSON format:
                                         return (
                                             <div className="pt-4 border-t space-y-3">
                                                 <h3 className="font-semibold mb-3 text-base">Price Computation</h3>
-                                                
+
                                                 {/* Product Weight Info */}
                                                 <div className="bg-blue-50 p-3 rounded text-xs space-y-1">
                                                     <div className="flex justify-between">
@@ -3080,7 +3061,7 @@ Respond in JSON format:
                                             />
                                         </div>
                                         <h3 className="text-xl md:text-2xl lg:text-3xl text-white font-bold mb-2">
-                                            Order Submitted Successfully! <PartyPopper size={32}  className="justify-center inline-block md:w-10 md:h-10" />
+                                            Order Submitted Successfully! <PartyPopper size={32} className="justify-center inline-block md:w-10 md:h-10" />
                                         </h3>
                                         <p className="text-white/90 text-xs md:text-sm">
                                             Your custom hanger order is being reviewed
@@ -3174,7 +3155,7 @@ Respond in JSON format:
                                                 </svg>
                                                 <span>View Invoice</span>
                                             </button>
-                                            
+
                                             <div className="flex flex-col sm:flex-row gap-3">
                                                 <Link to="/orders" className="flex-1">
                                                     <button
@@ -3214,7 +3195,7 @@ Respond in JSON format:
 
                         {/* Invoice/Receipt Modal */}
                         {showInvoiceModal && submittedOrderData && (
-                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto">
+                            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto h-[85vh]">
                                 <div className="bg-white rounded-lg md:rounded-xl shadow-2xl max-w-3xl w-full my-4 md:my-8 animate-scaleIn">
                                     {/* Header */}
                                     <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
@@ -3298,7 +3279,7 @@ Respond in JSON format:
                                         {submittedOrderData.breakdown && (
                                             <div className="mb-4 md:mb-6">
                                                 <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4">Price Breakdown</h3>
-                                                
+
                                                 {/* Weight Info */}
                                                 <div className="bg-blue-50 p-2 md:p-3 rounded-lg mb-3 md:mb-4 text-xs md:text-sm space-y-1">
                                                     <div className="flex justify-between">
@@ -3452,7 +3433,7 @@ Respond in JSON format:
                 {/* Instructions Modal */}
                 {showInstructionsModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] p-3 md:p-4">
-                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[85vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000]">
+                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                             <div className="flex justify-between items-start md:items-center mb-4 md:mb-6 gap-2">
                                 <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                                     <Info className="text-[#007BFF] flex-shrink-0" size={20} />
@@ -3481,10 +3462,10 @@ Respond in JSON format:
 
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                                             1
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h4 className="font-semibold text-lg">
                                                 Select Hanger Type
                                             </h4>
@@ -3496,10 +3477,10 @@ Respond in JSON format:
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                                             2
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h4 className="font-semibold text-lg">
                                                 Choose Materials
                                             </h4>
@@ -3512,10 +3493,10 @@ Respond in JSON format:
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                                             3
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h4 className="font-semibold text-lg">
                                                 Customize Your Design
                                             </h4>
@@ -3527,10 +3508,10 @@ Respond in JSON format:
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                                             4
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h4 className="font-semibold text-lg">Review & Submit</h4>
                                             <p className="text-gray-600">
                                                 Check your order summary, confirm your delivery address,
@@ -3540,10 +3521,10 @@ Respond in JSON format:
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                                        <div className="bg-[#f1b322] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                                             5
                                         </div>
-                                        <div>
+                                        <div className="flex-1">
                                             <h4 className="font-semibold text-lg">
                                                 Order Validation
                                             </h4>
@@ -4204,8 +4185,8 @@ Respond in JSON format:
                         <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
                             {/* Modal Header */}
                             <div className={`px-4 md:px-6 py-3 md:py-5 ${notificationModal.type === 'success'
-                                    ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'
-                                    : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444]'
+                                ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'
+                                : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444]'
                                 }`}>
                                 <div className="flex items-center gap-2 md:gap-3">
                                     <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
@@ -4228,12 +4209,12 @@ Respond in JSON format:
                             {/* Modal Body */}
                             <div className="p-4 md:p-6 lg:p-8">
                                 <div className={`p-3 md:p-4 rounded-lg border-l-4 ${notificationModal.type === 'success'
-                                        ? 'bg-green-50 border-green-400'
-                                        : 'bg-red-50 border-red-400'
+                                    ? 'bg-green-50 border-green-400'
+                                    : 'bg-red-50 border-red-400'
                                     }`}>
                                     <p className={`text-sm md:text-base lg:text-lg leading-relaxed ${notificationModal.type === 'success'
-                                            ? 'text-green-800'
-                                            : 'text-red-800'
+                                        ? 'text-green-800'
+                                        : 'text-red-800'
                                         }`}>
                                         {notificationModal.message}
                                     </p>
@@ -4245,8 +4226,8 @@ Respond in JSON format:
                                 <button
                                     onClick={() => setNotificationModal({ show: false, type: '', message: '' })}
                                     className={`px-4 md:px-6 lg:px-8 py-2 md:py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-xs md:text-sm lg:text-base cursor-pointer ${notificationModal.type === 'success'
-                                            ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-[#191716]'
-                                            : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444] hover:from-[#ef4444] hover:to-[#dc2626] text-[#191716]'
+                                        ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-[#191716]'
+                                        : 'bg-gradient-to-r from-[#ff6b6b] to-[#ef4444] hover:from-[#ef4444] hover:to-[#dc2626] text-[#191716]'
                                         }`}
                                 >
                                     OK

@@ -790,8 +790,8 @@ const Order = () => {
             }
 
             // Check if payment exists
-            const hasPayment = orderPayments[order.orderid] && 
-                              orderPayments[order.orderid].paymentstatus === 'Verified';
+            const hasPayment = orderPayments[order.orderid] &&
+                orderPayments[order.orderid].paymentstatus === 'Verified';
 
             // Prepare invoice data
             const invoiceData = {
@@ -1458,167 +1458,346 @@ const Order = () => {
 
                                                     {/* Right Column - Contact & Address Information */}
                                                     <div>
-                                                        {/* Shipping & Tracking Information - Show when order is In Transit or Completed */}
-                                                        {(order.orderstatus === 'In Transit' || order.orderstatus === 'Completed') && (
-                                                            <>
-                                                                <h3 className="text-lg md:text-xl font-bold mb-3 mt-4 md:mt-6 flex items-center gap-2">
-                                                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                    </svg>
-                                                                    Shipping Information
-                                                                </h3>
+                                                        <div>
+                                                            {/* Shipping & Tracking Information - Show when order is In Transit or Completed */}
+                                                            {(order.orderstatus === 'In Transit' || order.orderstatus === 'Completed') ? (
+                                                                <>
+                                                                    <h3 className="text-lg md:text-xl font-bold mb-3 mt-4 md:mt-6 flex items-center gap-2">
+                                                                        <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                        </svg>
+                                                                        Shipping Information
+                                                                    </h3>
 
-                                                                {/* Courier & Tracking Number */}
-                                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-4 mb-4">
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                        <div>
-                                                                            <p className="text-xs font-semibold text-blue-700 mb-1">Courier Service</p>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                                                </svg>
-                                                                                <span className="text-base font-bold text-blue-900">
-                                                                                    {/* Hardcoded for now - will be replaced with real data */}
-                                                                                    J&T Express
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div>
-                                                                            <p className="text-xs font-semibold text-blue-700 mb-1">Tracking Number</p>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                                                                                </svg>
-                                                                                <span className="text-base font-mono font-bold text-blue-900">
-                                                                                    {/* Hardcoded for now - will be replaced with real data */}
-                                                                                    JT{order.orderid.slice(0, 12).toUpperCase()}
-                                                                                </span>
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        navigator.clipboard.writeText(`JT${order.orderid.slice(0, 12).toUpperCase()}`);
-                                                                                        showNotification('Tracking number copied to clipboard!', 'success');
-                                                                                    }}
-                                                                                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                                                                                    title="Copy tracking number"
-                                                                                >
-                                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                    {/* Courier & Tracking Number */}
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-4 mb-4">
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                            <div>
+                                                                                <p className="text-xs font-semibold text-blue-700 mb-1">Courier Service</p>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                                                                     </svg>
-                                                                                </button>
+                                                                                    <span className="text-base font-bold text-blue-900">
+                                                                                        J&T Express
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-xs font-semibold text-blue-700 mb-1">Tracking Number</p>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                                                                    </svg>
+                                                                                    <span className="text-base font-mono font-bold text-blue-900">
+                                                                                        JT{order.orderid.slice(0, 12).toUpperCase()}
+                                                                                    </span>
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            navigator.clipboard.writeText(`JT${order.orderid.slice(0, 12).toUpperCase()}`);
+                                                                                            showNotification('Tracking number copied to clipboard!', 'success');
+                                                                                        }}
+                                                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                                                        title="Copy tracking number"
+                                                                                    >
+                                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                                        </svg>
+                                                                                    </button>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
 
-                                                                {/* Tracking Timeline */}
-                                                                <div className="bg-white rounded-lg border-2 border-gray-200 p-4">
-                                                                    <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                                        <svg className="w-4 h-4 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                        </svg>
-                                                                        Shipment Timeline
-                                                                    </h4>
+                                                                    {/* Tracking Timeline */}
+                                                                    <div className="bg-white rounded-lg border-2 border-gray-200 p-4">
+                                                                        <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                                            <svg className="w-4 h-4 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                            </svg>
+                                                                            Shipment Timeline
+                                                                        </h4>
 
-                                                                    {/* Timeline Items - Hardcoded for now */}
-                                                                    <div className="space-y-4">
-                                                                        {/* Sample tracking logs - will be replaced with real data */}
-                                                                        {[
-                                                                            {
-                                                                                date: '2024-01-15',
-                                                                                time: '14:30',
-                                                                                type: 'Out for Delivery',
-                                                                                location: 'Manila Hub',
-                                                                                description: 'Package is out for delivery to your address',
-                                                                                icon: <Truck />,
-                                                                                color: 'blue'
-                                                                            },
-                                                                            {
-                                                                                date: '2024-01-15',
-                                                                                time: '08:45',
-                                                                                type: 'In Transit',
-                                                                                location: 'Quezon City Sorting Facility',
-                                                                                description: 'Package arrived at sorting facility',
-                                                                                icon: <Boxes />,
-                                                                                color: 'green'
-                                                                            },
-                                                                            {
-                                                                                date: '2024-01-14',
-                                                                                time: '16:20',
-                                                                                type: 'Picked Up',
-                                                                                location: 'GatsisHub Warehouse',
-                                                                                description: 'Package picked up by courier',
-                                                                                icon: <Box />,
-                                                                                color: 'yellow'
-                                                                            },
-                                                                            {
-                                                                                date: '2024-01-14',
-                                                                                time: '10:00',
-                                                                                type: 'Ready for Pickup',
-                                                                                location: 'GatsisHub Warehouse',
-                                                                                description: 'Package is ready for courier pickup',
-                                                                                icon: <ClipboardPen />,
-                                                                                color: 'gray'
-                                                                            }
-                                                                        ].map((log, index) => (
-                                                                            <div key={index} className="flex gap-3 relative">
-                                                                                {/* Timeline line */}
-                                                                                {index !== 3 && (
-                                                                                    <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-gray-300"></div>
-                                                                                )}
-
-                                                                                {/* Icon */}
-                                                                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg z-10 ${log.color === 'blue' ? 'bg-blue-100 border-2 border-blue-500' :
+                                                                        <div className="space-y-4">
+                                                                            {[
+                                                                                {
+                                                                                    date: '2024-01-15',
+                                                                                    time: '14:30',
+                                                                                    type: 'Out for Delivery',
+                                                                                    location: 'Manila Hub',
+                                                                                    description: 'Package is out for delivery to your address',
+                                                                                    icon: <Truck />,
+                                                                                    color: 'blue'
+                                                                                },
+                                                                                {
+                                                                                    date: '2024-01-15',
+                                                                                    time: '08:45',
+                                                                                    type: 'In Transit',
+                                                                                    location: 'Quezon City Sorting Facility',
+                                                                                    description: 'Package arrived at sorting facility',
+                                                                                    icon: <Boxes />,
+                                                                                    color: 'green'
+                                                                                },
+                                                                                {
+                                                                                    date: '2024-01-14',
+                                                                                    time: '16:20',
+                                                                                    type: 'Picked Up',
+                                                                                    location: 'GatsisHub Warehouse',
+                                                                                    description: 'Package picked up by courier',
+                                                                                    icon: <Box />,
+                                                                                    color: 'yellow'
+                                                                                },
+                                                                                {
+                                                                                    date: '2024-01-14',
+                                                                                    time: '10:00',
+                                                                                    type: 'Ready for Pickup',
+                                                                                    location: 'GatsisHub Warehouse',
+                                                                                    description: 'Package is ready for courier pickup',
+                                                                                    icon: <ClipboardPen />,
+                                                                                    color: 'gray'
+                                                                                }
+                                                                            ].map((log, index) => (
+                                                                                <div key={index} className="flex gap-3 relative">
+                                                                                    {index !== 3 && (
+                                                                                        <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-gray-300"></div>
+                                                                                    )}
+                                                                                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg z-10 ${log.color === 'blue' ? 'bg-blue-100 border-2 border-blue-500' :
                                                                                         log.color === 'green' ? 'bg-green-100 border-2 border-green-500' :
                                                                                             log.color === 'yellow' ? 'bg-yellow-100 border-2 border-yellow-500' :
                                                                                                 'bg-gray-100 border-2 border-gray-400'
-                                                                                    }`}>
-                                                                                    {log.icon}
-                                                                                </div>
-
-                                                                                {/* Content */}
-                                                                                <div className="flex-1 pb-4">
-                                                                                    <div className="flex items-start justify-between mb-1">
-                                                                                        <p className={`font-bold text-sm ${log.color === 'blue' ? 'text-blue-900' :
+                                                                                        }`}>
+                                                                                        {log.icon}
+                                                                                    </div>
+                                                                                    <div className="flex-1 pb-4">
+                                                                                        <div className="flex items-start justify-between mb-1">
+                                                                                            <p className={`font-bold text-sm ${log.color === 'blue' ? 'text-blue-900' :
                                                                                                 log.color === 'green' ? 'text-green-900' :
                                                                                                     log.color === 'yellow' ? 'text-yellow-900' :
                                                                                                         'text-gray-900'
-                                                                                            }`}>
-                                                                                            {log.type}
+                                                                                                }`}>
+                                                                                                {log.type}
+                                                                                            </p>
+                                                                                            <span className="text-xs text-gray-500">
+                                                                                                {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {log.time}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <p className="text-xs text-gray-600 mb-1">
+                                                                                            📍 {log.location}
                                                                                         </p>
-                                                                                        <span className="text-xs text-gray-500">
-                                                                                            {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {log.time}
-                                                                                        </span>
+                                                                                        <p className="text-xs text-gray-500">
+                                                                                            {log.description}
+                                                                                        </p>
                                                                                     </div>
-                                                                                    <p className="text-xs text-gray-600 mb-1">
-                                                                                        📍 {log.location}
-                                                                                    </p>
-                                                                                    <p className="text-xs text-gray-500">
-                                                                                        {log.description}
-                                                                                    </p>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+
+                                                                        {order.deadline && (
+                                                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                                                                <div className="flex items-center justify-between bg-green-50 border-l-4 border-green-500 rounded-r-lg p-3">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                        </svg>
+                                                                                        <span className="text-sm font-semibold text-green-900">Expected Delivery:</span>
+                                                                                    </div>
+                                                                                    <span className="text-sm font-bold text-green-800">
+                                                                                        {formatDate(order.deadline)}
+                                                                                    </span>
                                                                                 </div>
                                                                             </div>
-                                                                        ))}
+                                                                        )}
                                                                     </div>
+                                                                </>
+                                                            ) : (
+                                                                /* Order Status Timeline - Show when NOT In Transit or Completed */
+                                                                <>
+                                                                    <h3 className="text-lg md:text-xl font-bold mb-3 mt-4 md:mt-6 flex items-center gap-2">
+                                                                        <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                        </svg>
+                                                                        Order Progress
+                                                                    </h3>
 
-                                                                    {/* Expected Delivery */}
-                                                                    {order.deadline && (
-                                                                        <div className="mt-4 pt-4 border-t border-gray-200">
-                                                                            <div className="flex items-center justify-between bg-green-50 border-l-4 border-green-500 rounded-r-lg p-3">
+                                                                    {/* Current Status & Deadline */}
+                                                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 p-4 mb-4">
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                            <div>
+                                                                                <p className="text-xs font-semibold text-blue-700 mb-1">Current Status</p>
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                                                     </svg>
-                                                                                    <span className="text-sm font-semibold text-green-900">Expected Delivery:</span>
+                                                                                    <span className="text-base font-bold text-blue-900">
+                                                                                        {order.orderstatus}
+                                                                                    </span>
                                                                                 </div>
-                                                                                <span className="text-sm font-bold text-green-800">
-                                                                                    {/* {formatDate(order.deadline)} */}
+                                                                                <p className="text-xs text-blue-700 mt-1">
+                                                                                    Placed: {formatDate(order.datecreated)}
+                                                                                </p>
+                                                                            </div>
+                                                                            {order.deadline && (
+                                                                                <div>
+                                                                                    <p className="text-xs font-semibold text-blue-700 mb-1">Expected Completion</p>
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                        </svg>
+                                                                                        <span className="text-base font-bold text-blue-900">
+                                                                                            {formatDate(order.deadline)}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Processing Timeline */}
+                                                                    <div className="bg-white rounded-lg border-2 border-gray-200 p-4">
+                                                                        <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                                            <svg className="w-4 h-4 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                                            </svg>
+                                                                            Processing Steps
+                                                                        </h4>
+
+                                                                        {/* Timeline Items */}
+                                                                        <div className="space-y-4">
+                                                                            {[
+                                                                                {
+                                                                                    step: 'Order Received',
+                                                                                    completed: true,
+                                                                                    description: 'Your order has been received and confirmed',
+                                                                                    color: 'green'
+                                                                                },
+                                                                                {
+                                                                                    step: 'Payment Verification',
+                                                                                    completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment',
+                                                                                    description: 'Payment is being verified by our team',
+                                                                                    color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment' ? 'green' : 'gray'
+                                                                                },
+                                                                                {
+                                                                                    step: 'In Production',
+                                                                                    completed: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
+                                                                                    description: 'Your order is being manufactured',
+                                                                                    color: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? 'blue' : 'gray'
+                                                                                },
+                                                                                {
+                                                                                    step: 'Quality Check',
+                                                                                    completed: order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
+                                                                                    description: 'Quality inspection in progress',
+                                                                                    color: order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? 'yellow' : 'gray'
+                                                                                },
+                                                                                {
+                                                                                    step: 'Ready for Shipment',
+                                                                                    completed: order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
+                                                                                    description: 'Order is ready to be shipped',
+                                                                                    color: order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? 'purple' : 'gray'
+                                                                                }
+                                                                            ].map((item, index) => (
+                                                                                <div key={index} className="flex gap-3 relative">
+                                                                                    {/* Timeline line */}
+                                                                                    {index !== 4 && (
+                                                                                        <div className={`absolute left-[15px] top-8 bottom-0 w-0.5 ${item.completed ? 'bg-green-300' : 'bg-gray-300'
+                                                                                            }`}></div>
+                                                                                    )}
+
+                                                                                    {/* Icon */}
+                                                                                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10 ${item.color === 'green' ? 'bg-green-100 border-2 border-green-500' :
+                                                                                            item.color === 'blue' ? 'bg-blue-100 border-2 border-blue-500' :
+                                                                                                item.color === 'yellow' ? 'bg-yellow-100 border-2 border-yellow-500' :
+                                                                                                    item.color === 'purple' ? 'bg-purple-100 border-2 border-purple-500' :
+                                                                                                        'bg-gray-100 border-2 border-gray-400'
+                                                                                        }`}>
+                                                                                        {item.completed ? (
+                                                                                            <svg className={`w-5 h-5 ${item.color === 'green' ? 'text-green-600' :
+                                                                                                    item.color === 'blue' ? 'text-blue-600' :
+                                                                                                        item.color === 'yellow' ? 'text-yellow-600' :
+                                                                                                            item.color === 'purple' ? 'text-purple-600' :
+                                                                                                                'text-gray-600'
+                                                                                                }`} fill="currentColor" viewBox="0 0 20 20">
+                                                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                                            </svg>
+                                                                                        ) : (
+                                                                                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                                                                                        )}
+                                                                                    </div>
+
+                                                                                    {/* Content */}
+                                                                                    <div className="flex-1 pb-4">
+                                                                                        <div className="flex items-start justify-between mb-1">
+                                                                                            <p className={`font-bold text-sm ${item.color === 'green' ? 'text-green-900' :
+                                                                                                    item.color === 'blue' ? 'text-blue-900' :
+                                                                                                        item.color === 'yellow' ? 'text-yellow-900' :
+                                                                                                            item.color === 'purple' ? 'text-purple-900' :
+                                                                                                                'text-gray-900'
+                                                                                                }`}>
+                                                                                                {item.step}
+                                                                                            </p>
+                                                                                            {item.completed && (
+                                                                                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${item.color === 'green' ? 'bg-green-100 text-green-700' :
+                                                                                                        item.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                                                                                                            item.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                                                                                                                item.color === 'purple' ? 'bg-purple-100 text-purple-700' :
+                                                                                                                    'bg-gray-100 text-gray-700'
+                                                                                                    }`}>
+                                                                                                    {order.orderstatus === item.step ? 'Current' : 'Completed'}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <p className="text-xs text-gray-600">
+                                                                                            {item.description}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+
+                                                                        {/* Next Steps Info */}
+                                                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                                                            <div className="flex items-center justify-between bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-3">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                    </svg>
+                                                                                    <span className="text-sm font-semibold text-blue-900">Next Step:</span>
+                                                                                </div>
+                                                                                <span className="text-sm font-bold text-blue-800">
+                                                                                    {order.orderstatus === 'For Evaluation' || order.orderstatus === 'Waiting for Payment' ? 'Payment Verification' :
+                                                                                        order.orderstatus === 'Verifying Payment' ? 'Production Start' :
+                                                                                            order.orderstatus === 'In Production' ? 'Quality Check' :
+                                                                                                order.orderstatus === 'Waiting for Shipment' ? 'Shipment' :
+                                                                                                    'Processing'}
                                                                                 </span>
                                                                             </div>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            </>
-                                                        )}
+                                                                    </div>
+
+                                                                    {/* Info Box */}
+                                                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-r-lg p-4 mt-4">
+                                                                        <div className="flex items-start gap-3">
+                                                                            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                            <div>
+                                                                                <p className="text-sm font-semibold text-blue-900 mb-1">📦 Stay Updated</p>
+                                                                                <p className="text-xs text-blue-800">
+                                                                                    We'll keep you informed about your order progress. You'll receive tracking details once your order ships.
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            )}
+
+                                                            {/* Design File Button */}
+                                                            {order.customdesignurl && (
+                                                                <button className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-xs md:text-sm font-semibold hover:bg-red-700 mt-3 transition-all duration-300 hover:scale-105">
+                                                                    <FileText size={16} />
+                                                                    View Design File
+                                                                </button>
+                                                            )}
+                                                        </div>
 
                                                         {/* Order Instructions Section */}
                                                         {order.orderinstructions && (
@@ -2484,10 +2663,11 @@ const Order = () => {
 
             {/* Invoice/Receipt Modal */}
             {showInvoiceModal && invoiceOrderData && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full my-8 animate-scaleIn">
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                    {/* modal */}
+                    <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+                        <div className="bg-[#E6AF2E]  px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
                                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2670,8 +2850,15 @@ const Order = () => {
                         {/* Footer */}
                         <div className="bg-gray-50 px-6 py-4 border-t flex flex-col sm:flex-row gap-3">
                             <button
+                                onClick={handleDownloadInvoiceFromOrder}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Download size={20} />
+                                Download {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
+                            </button>
+                            <button
                                 onClick={() => window.print()}
-                                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -2679,15 +2866,8 @@ const Order = () => {
                                 Print {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
                             </button>
                             <button
-                                onClick={handleDownloadInvoiceFromOrder}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
-                            >
-                                <Download size={20} />
-                                Download {invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice'}
-                            </button>
-                            <button
                                 onClick={() => setShowInvoiceModal(false)}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all cursor-pointer"
                             >
                                 Close
                             </button>
