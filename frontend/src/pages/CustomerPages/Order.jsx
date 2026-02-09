@@ -2665,7 +2665,7 @@ const Order = () => {
             {showInvoiceModal && invoiceOrderData && (
                 <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
                     {/* modal */}
-                    <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
+                    <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-4xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                         {/* Header */}
                         <div className="bg-[#E6AF2E]  px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
