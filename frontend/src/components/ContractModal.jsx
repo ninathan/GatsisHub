@@ -54,6 +54,12 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
     };
 
     const handleSign = async () => {
+        // Check if sales admin has signed first
+        if (!order.sales_admin_signed) {
+            alert('The sales administrator must sign the contract first before you can proceed. Please wait for notification.');
+            return;
+        }
+
         if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
             alert('Please provide your signature');
             return;
@@ -170,7 +176,7 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
         <p class="bold">2.1. Delivery Date:</p>
         <p>The Company shall deliver the Goods to the Customer's specified location on or before <strong>${deliveryDate}</strong>.</p>
         <p class="bold">2.2. Delay Breach:</p>
-        <p>Time is of the essence. If the Goods are not delivered within <strong>7</strong> days of the Delivery Date, the Company is in contract breach. The Customer shall be entitled to a full refund of all monies paid and a one-time compensation credit of <strong>₱${parseFloat(compensation).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>.</p>
+        <p>Time is of the essence. If the Goods are not delivered within <strong>7</strong> days of the Delivery Date, the Company is in contract breach. The Customer shall be entitled to a full refund of all monies paid and a one-time compensation credit of <strong>₱${parseFloat(compensation).toLocaleString('en-PH', { minimumFractionDigits: 2 })} or 10% of the total price</strong>.</p>
     </div>
     
     <div class="section">

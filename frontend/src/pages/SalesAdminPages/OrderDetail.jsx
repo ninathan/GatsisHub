@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, useCallback } from "react";
+import React, { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import {
     Home,
     Package,
@@ -15,6 +15,7 @@ import {
     Edit2,
     ClipboardClock
 } from "lucide-react";
+import SignatureCanvas from 'react-signature-canvas';
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
@@ -55,6 +56,11 @@ const OrderDetail = () => {
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+
+    // Contract signing states
+    const [showContractSignModal, setShowContractSignModal] = useState(false);
+    const [isSigningContract, setIsSigningContract] = useState(false);
+    const sigPadRef = useRef(null);
 
     // Price breakdown states
     const [showPriceBreakdownModal, setShowPriceBreakdownModal] = useState(false);
@@ -631,6 +637,56 @@ const OrderDetail = () => {
         }
     };
 
+    const handleSignContract = async () => {
+        if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+            showNotificationMessage('Please provide your signature', 'error');
+            return;
+        }
+
+        setIsSigningContract(true);
+
+        try {
+            const signatureDataURL = sigPadRef.current.toDataURL();
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
+            const contractData = {
+                signature: signatureDataURL,
+                signedDate: new Date().toISOString(),
+                signedBy: employee?.employeename || 'Sales Administrator'
+            };
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/sign-contract-admin`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    contract_data: contractData,
+                    employeename: employee?.employeename
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to sign contract');
+            }
+
+            showNotificationMessage('Contract signed successfully! Customer has been notified.', 'success');
+            setShowContractSignModal(false);
+            
+            // Refresh order data
+            fetchOrderDetails();
+        } catch (err) {
+            console.error('Error signing contract:', err);
+            showNotificationMessage(err.message || 'Failed to sign contract', 'error');
+        } finally {
+            setIsSigningContract(false);
+        }
+    };
+
+    const clearSignature = () => {
+        sigPadRef.current?.clear();
+    };
+
     const handleContactCustomer = async () => {
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
@@ -1176,6 +1232,7 @@ const OrderDetail = () => {
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none disabled:opacity-50"
                             >
                                 <option>For Evaluation</option>
+                                <option>Contract Signing</option>
                                 <option>Waiting for Payment</option>
                                 <option>Verifying Payment</option>
                                 <option>In Production</option>
@@ -1362,27 +1419,42 @@ const OrderDetail = () => {
                         )}
 
                         {/* Contract Status Display */}
-                        {order.orderstatus === 'Waiting for Payment' && (
-                            <div className={`border rounded-lg p-4 ${order.contract_signed ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50'}`}>
+                        {(order.orderstatus === 'Contract Signing' || order.orderstatus === 'Waiting for Payment' || order.contract_signed || order.sales_admin_signed) && (
+                            <div className={`border rounded-lg p-4 ${order.contract_signed && order.sales_admin_signed ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50'}`}>
                                 <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     Contract Status
                                 </h3>
-                                {order.contract_signed ? (
-                                    <>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            <span className="font-semibold text-green-700">Contract Signed</span>
-                                        </div>
-                                        <div className="text-sm text-gray-700 mb-2">
+                                
+                                {/* Sales Admin Signature Status */}
+                                <div className="mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.sales_admin_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Sales Admin Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-amber-700">Sales Admin Signature Required</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {order.sales_admin_signed && (
+                                        <div className="text-sm text-gray-700 ml-10">
                                             <span className="font-medium">Signed on: </span>
-                                            {new Date(order.contract_signed_date).toLocaleDateString('en-US', {
+                                            {new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric',
@@ -1390,37 +1462,83 @@ const OrderDetail = () => {
                                                 minute: '2-digit'
                                             })}
                                         </div>
+                                    )}
+                                    {!order.sales_admin_signed && (
                                         <button
-                                            onClick={() => {
-                                                // Open contract in new window or show in modal
-                                                const contractData = order.contract_data;
-                                                if (contractData) {
-                                                    const newWindow = window.open('', '_blank');
-                                                    if (newWindow) {
-                                                        newWindow.document.write(contractData.contractHTML || '<p>Contract data not available</p>');
-                                                        newWindow.document.close();
-                                                    }
-                                                }
-                                            }}
-                                            className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                            onClick={() => setShowContractSignModal(true)}
+                                            className="mt-2 ml-10 bg-[#E6AF2E] text-[#191716] px-4 py-2 rounded hover:bg-[#d4a02a] flex items-center gap-2 cursor-pointer transition-colors font-medium"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                             </svg>
-                                            View Signed Contract
+                                            Sign Contract
                                         </button>
-                                    </>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                        <span className="font-semibold text-orange-700">Awaiting Customer Signature</span>
+                                    )}
+                                </div>
+
+                                {/* Customer Signature Status */}
+                                <div className="pt-3 border-t border-gray-300">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.contract_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Customer Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-gray-700">Awaiting Customer Signature</span>
+                                            </>
+                                        )}
                                     </div>
-                                )}
+                                    {order.contract_signed && (
+                                        <>
+                                            <div className="text-sm text-gray-700 ml-10 mb-2">
+                                                <span className="font-medium">Signed on: </span>
+                                                {new Date(order.contract_signed_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    // Open contract in new window or show in modal
+                                                    const contractData = order.contract_data;
+                                                    if (contractData) {
+                                                        const newWindow = window.open('', '_blank');
+                                                        if (newWindow) {
+                                                            newWindow.document.write(contractData.contractHTML || '<p>Contract data not available</p>');
+                                                            newWindow.document.close();
+                                                        }
+                                                    }
+                                                }}
+                                                className="mt-2 ml-10 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Signed Contract
+                                            </button>
+                                        </>
+                                    )}
+                                    {!order.contract_signed && !order.sales_admin_signed && (
+                                        <div className="text-sm text-gray-600 ml-10 italic">
+                                            Customer can sign after you sign first
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -2475,6 +2593,142 @@ const OrderDetail = () => {
                                 ) : (
                                     <>
                                         ✕ Reject & Notify Customer
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Contract Signing Modal for Sales Admin */}
+            {showContractSignModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-50 flex items-center justify-center z-[60] p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-6 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-2xl font-bold">Sign Sales Agreement</h2>
+                                <p className="text-white/90 text-sm mt-1">As sales administrator, sign to authorize this contract</p>
+                            </div>
+                            <button
+                                onClick={() => setShowContractSignModal(false)}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                disabled={isSigningContract}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Contract Details */}
+                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-4 mb-6">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Contract Summary
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Order ID:</span>
+                                        <p className="font-semibold text-gray-900">#{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Customer:</span>
+                                        <p className="font-semibold text-gray-900">{order.companyname}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Total Amount:</span>
+                                        <p className="font-semibold text-gray-900">₱{parseFloat(order.totalprice || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Deadline:</span>
+                                        <p className="font-semibold text-gray-900">
+                                            {order.deadline ? new Date(order.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Important Notice */}
+                            <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                <div className="flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900 mb-1">Important Authorization</p>
+                                        <p className="text-sm text-blue-800">
+                                            Your signature authorizes this contract on behalf of GatsisHub. After you sign, the customer will be notified 
+                                            and can proceed to sign their part of the agreement.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Signature Pad */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Your Signature <span className="text-red-500">*</span>
+                                </label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                                    <SignatureCanvas
+                                        ref={sigPadRef}
+                                        canvasProps={{
+                                            className: 'w-full h-48 bg-white cursor-crosshair'
+                                        }}
+                                        backgroundColor="white"
+                                    />
+                                </div>
+                                <div className="flex justify-end mt-2">
+                                    <button
+                                        onClick={clearSignature}
+                                        className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                                        type="button"
+                                        disabled={isSigningContract}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Clear Signature
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Legal Notice */}
+                            <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 text-xs text-amber-800">
+                                <p className="font-semibold mb-1">⚖️ Legal Notice</p>
+                                <p>By signing this contract, you confirm that all order details, pricing, and delivery terms are accurate and have been authorized by GatsisHub management.</p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+                            <button
+                                onClick={() => setShowContractSignModal(false)}
+                                disabled={isSigningContract}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSignContract}
+                                disabled={isSigningContract}
+                                className="px-6 py-2 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSigningContract ? (
+                                    <>
+                                        <LoadingSpinner size="sm" color="white" />
+                                        Signing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                        Sign Contract
                                     </>
                                 )}
                             </button>

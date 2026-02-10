@@ -1248,7 +1248,7 @@ router.patch("/:orderid/status", async (req, res) => {
   }
 });
 
-// 📝 Sign contract (PATCH)
+// 📝 Sign contract (PATCH) - Customer signature
 router.patch("/:orderid/sign-contract", async (req, res) => {
   try {
     const { orderid } = req.params;
@@ -1258,12 +1258,19 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       return res.status(400).json({ error: "Contract data is required" });
     }
 
-    // Get current order to check if this is an amendment
+    // Get current order to check if this is an amendment and if sales admin signed
     const { data: currentOrder } = await supabase
       .from("orders")
-      .select("contract_signed, requires_contract_amendment, userid")
+      .select("contract_signed, requires_contract_amendment, userid, sales_admin_signed, orderstatus")
       .eq("orderid", orderid)
       .single();
+
+    // Check if sales admin has signed first
+    if (!currentOrder?.sales_admin_signed) {
+      return res.status(400).json({ 
+        error: "Sales admin must sign the contract first before customer can proceed" 
+      });
+    }
 
     const isAmendment = currentOrder?.contract_signed && currentOrder?.requires_contract_amendment;
 
@@ -1273,6 +1280,11 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       contract_signed_date: new Date().toISOString(),
       contract_data: contract_data
     };
+
+    // If order status is "Contract Signing", move it to "Waiting for Payment"
+    if (currentOrder?.orderstatus === 'Contract Signing') {
+      updateData.orderstatus = 'Waiting for Payment';
+    }
 
     // If this was an amendment, clear the amendment requirements
     if (isAmendment) {
@@ -1357,6 +1369,91 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
     });
   } catch (err) {
     console.error('Error signing contract:', err);
+    res.status(500).json({ error: err.message || "Failed to sign contract" });
+  }
+});
+
+// 📝 Sign contract as Sales Admin (PATCH)
+router.patch("/:orderid/sign-contract-admin", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { contract_data, employeename } = req.body;
+
+    if (!contract_data) {
+      return res.status(400).json({ error: "Contract data is required" });
+    }
+
+    // Update order with sales admin signed contract
+    const updateData = {
+      sales_admin_signed: true,
+      sales_admin_signed_date: new Date().toISOString(),
+      sales_admin_signature: contract_data.signature,
+      sales_admin_contract_data: contract_data
+    };
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("orderid", orderid)
+      .select("*, userid");
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Notify customer that contract is ready for signature
+    try {
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (customerData) {
+        // Create in-app notification
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Contract Ready for Your Signature',
+              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Please review and sign the contract to proceed with payment.`,
+              type: 'contract_ready',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+
+        // Send email notification if enabled
+        if (customerData.emailaddress && customerData.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Contract Ready for Signature - Order ${orderNumber}`,
+            emailTemplates.contractReadyForCustomer(
+              customerData.companyname,
+              orderNumber,
+              employeename || 'Sales Administrator'
+            )
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Failed to create notification:', notifError);
+    }
+
+    res.status(200).json({
+      message: "Sales admin contract signed successfully. Customer will be notified.",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error('Error signing contract as sales admin:', err);
     res.status(500).json({ error: err.message || "Failed to sign contract" });
   }
 });

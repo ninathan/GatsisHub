@@ -3120,7 +3120,7 @@ Respond in JSON format:
                         {/* Price Information Modal */}
                         {showPriceInfoModal && (
                             <div className="fixed inset-0 flex items-center justify-center backdrop-blue-sm bg-opacity-50 backdrop-blur-sm z-[200] p-3 md:p-4">
-                                <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                                <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                                     {/* Header */}
                                     <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-4 md:px-6 py-4 md:py-6 text-center">
                                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
@@ -3199,7 +3199,7 @@ Respond in JSON format:
                         {/* Order Review Modal */}
                         {showModal && (
                             <div className="fixed inset-0 flex items-center justify-center backdrop-blue-sm bg-opacity-50 backdrop-blur-sm z-[200] p-3 md:p-4">
-                                <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                                <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                                     {/* Success Header with Gradient */}
                                     <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-4 md:px-6 py-4 md:py-8 text-center">
                                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
@@ -3345,8 +3345,8 @@ Respond in JSON format:
 
                         {/* Invoice/Receipt Modal */}
                         {showInvoiceModal && submittedOrderData && (
-                            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4 overflow-y-auto h-[85vh]">
-                                <div className="bg-white rounded-lg md:rounded-xl shadow-2xl max-w-3xl w-full my-4 md:my-8 animate-scaleIn">
+                            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
+                                <div className="bg-white rounded-lg md:rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-auto animate-scaleIn">
                                     {/* Header */}
                                     <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
@@ -3595,7 +3595,7 @@ Respond in JSON format:
                 {/* Instructions Modal */}
                 {showInstructionsModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-30 backdrop-blur-sm z-[9999] p-3 md:p-4">
-                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
+                        <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-2xl max-h-[90vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                             <div className="flex justify-between items-start md:items-center mb-4 md:mb-6 gap-2">
                                 <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                                     <Info className="text-[#007BFF] flex-shrink-0" size={20} />
@@ -4081,7 +4081,7 @@ Respond in JSON format:
                 {/* Save Design Modal */}
                 {saveDesignModal && (
                     <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
-                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                             {/* Modal Header with Gradient */}
                             <div className="bg-[#E6AF2E] px-4 md:px-6 py-4 md:py-6">
                                 <div className="flex items-center justify-between gap-2">
@@ -4264,7 +4264,7 @@ Respond in JSON format:
                 {/* Color Limitation Modal for 97-12 and 97-11 */}
                 {showColorLimitationModal && (
                     <div className="fixed inset-0 backdrop-blue-sm bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fadeIn">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-fadeIn">
                             {/* Modal Header */}
                             <div className="bg-[#E6AF2E] px-4 md:px-6 py-4 md:py-5">
                                 <div className="flex items-center gap-3">
@@ -4344,7 +4344,7 @@ Respond in JSON format:
                 {/* Notification Modal */}
                 {notificationModal.show && (
                     <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[200] p-3 md:p-4">
-                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                             {/* Modal Header */}
                             <div className={`px-4 md:px-6 py-3 md:py-5 ${notificationModal.type === 'success'
                                 ? 'bg-gradient-to-r from-[#4ade80] to-[#22c55e]'

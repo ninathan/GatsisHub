@@ -66,7 +66,7 @@ const Order = () => {
     // Map tab names to their corresponding order statuses
     const getStatusesForTab = (tab) => {
         const statusMap = {
-            'Pending': ['For Evaluation', 'Waiting for Payment'],
+            'Pending': ['For Evaluation', 'Contract Signing', 'Waiting for Payment'],
             'Processing': ['Verifying Payment', 'In Production', 'Waiting for Shipment'],
             'Shipped': ['In Transit'],
             'Completed': ['Completed'],
@@ -2475,7 +2475,7 @@ const Order = () => {
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
                 <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-5">
                             <div className="flex items-center gap-3">
@@ -2594,7 +2594,7 @@ const Order = () => {
             {/* Rating Modal */}
             {showRatingModal && orderToRate && (
                 <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-[#E6AF2E] px-6 py-5">
                             <div className="flex items-center gap-3">
@@ -2736,7 +2736,7 @@ const Order = () => {
             {/* Notification Modal */}
             {showNotificationModal && (
                 <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className={`rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-white' : 'bg-white'
+                    <div className={`rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn ${notificationType === 'success' ? 'bg-white' : 'bg-white'
                         }`}>
                         {/* Modal Header */}
                         <div className={`px-6 py-5 ${notificationType === 'success'
@@ -2794,9 +2794,9 @@ const Order = () => {
 
             {/* Invoice/Receipt Modal */}
             {showInvoiceModal && invoiceOrderData && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
                     {/* modal */}
-                    <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-4xl max-h-[80vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
+                    <div className="bg-white rounded-lg md:rounded-xl shadow-xl p-4 md:p-6 lg:p-8 max-w-4xl max-h-[90vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                         {/* Header */}
                         <div className="bg-[#E6AF2E]  px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">

@@ -476,6 +476,40 @@ export const emailTemplates = {
       footer();
       
     return baseTemplate(content, `Contract signed for order ${orderNumber}`);
+  },
+
+  // Contract ready for customer signature (after sales admin signs)
+  contractReadyForCustomer: (companyName, orderNumber, salesAdminName) => {
+    const content = header() +
+      contentSection(
+        'Contract Ready for Your Signature 📝',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>Your sales agreement has been reviewed and signed by <strong>${salesAdminName}</strong>.</p>
+         <p style="color: ${colors.primary}; font-weight: 600; font-size: 18px; margin-top: 20px;">📝 Action Required: Please Sign the Contract</p>`,
+        colors.primary
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Sales Representative': salesAdminName,
+        'Status': '✓ Sales Admin Signed',
+        'Next Step': 'Customer Signature Required'
+      }) +
+      infoBox(
+        `<strong>📋 What's Included:</strong><br><br>
+         Your contract includes all agreed-upon specifications, pricing, materials, and delivery timeline. 
+         Please review carefully before signing.`,
+        'info'
+      ) +
+      infoBox(
+        `<strong>💳 Ready to Proceed?</strong><br><br>
+         Once you sign the contract, you'll be able to submit payment and we'll begin production immediately. 
+         This ensures both parties are protected throughout the order process.`,
+        'success'
+      ) +
+      button('Review & Sign Contract', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Contract ready for signature - Order ${orderNumber}`);
   }
 };
 

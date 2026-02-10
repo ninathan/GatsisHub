@@ -671,6 +671,7 @@ const OrderDetailOM = () => {
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none disabled:opacity-50"
                             >
                                 <option>For Evaluation</option>
+                                <option>Contract Signing</option>
                                 <option>Waiting for Payment</option>
                                 <option>Verifying Payment</option>
                                 <option>In Production</option>

@@ -66,3 +66,4 @@ add_tracking_link.sql
 DELIVERY_TRACKING_FEATURE.md
 add_contract_amendment_fields.sql
 CONTRACT_AMENDMENT_SYSTEM.md
+add_sales_admin_contract_signature.sql
