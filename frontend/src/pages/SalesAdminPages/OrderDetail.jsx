@@ -152,63 +152,64 @@ const OrderDetail = () => {
     // Subscribe to real-time order updates
     const { isSubscribed: isOrderSubscribed } = useRealtimeSingleOrder(orderid, handleOrderUpdate);
 
-    // Fetch order details
-    useEffect(() => {
-        const fetchOrder = async () => {
-            if (!orderid) {
-                setError('No order ID provided');
-                setLoading(false);
-                return;
+    // Fetch order details function - wrapped in useCallback for reuse
+    const fetchOrder = useCallback(async () => {
+        if (!orderid) {
+            setError('No order ID provided');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch order');
             }
 
-            try {
-                setLoading(true);
-                const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch order');
-                }
-
-                const data = await response.json();
-
-                setOrder(data.order);
-                setOrderStatus(data.order.orderstatus);
-                setValidatedPrice(data.order.totalprice || '');
-                setDeadline(data.order.deadline || '');
-                
-                // Load estimated breakdown from checkout (original estimate)
-                if (data.order.estimated_breakdown) {
-                    const estimated = typeof data.order.estimated_breakdown === 'string' 
-                        ? JSON.parse(data.order.estimated_breakdown)
-                        : data.order.estimated_breakdown;
-                    setEstimatedBreakdown(estimated);
-                }
-                
-                // Load price breakdown if exists (sales admin manual breakdown)
-                if (data.order.price_breakdown) {
-                    const breakdown = typeof data.order.price_breakdown === 'string' 
-                        ? JSON.parse(data.order.price_breakdown)
-                        : data.order.price_breakdown;
-                    setPriceBreakdown({
-                        materialCost: breakdown.materialCost || '',
-                        deliveryFee: breakdown.deliveryFee || '',
-                        deliveryType: breakdown.deliveryType || 'local',
-                        vatRate: breakdown.vatRate || 12,
-                        notes: breakdown.notes || ''
-                    });
-                }
-                
-                setError(null);
-            } catch (err) {
-
-                setError(err.message);
-            } finally {
-                setLoading(false);
+            setOrder(data.order);
+            setOrderStatus(data.order.orderstatus);
+            setValidatedPrice(data.order.totalprice || '');
+            setDeadline(data.order.deadline || '');
+            
+            // Load estimated breakdown from checkout (original estimate)
+            if (data.order.estimated_breakdown) {
+                const estimated = typeof data.order.estimated_breakdown === 'string' 
+                    ? JSON.parse(data.order.estimated_breakdown)
+                    : data.order.estimated_breakdown;
+                setEstimatedBreakdown(estimated);
             }
-        };
+            
+            // Load price breakdown if exists (sales admin manual breakdown)
+            if (data.order.price_breakdown) {
+                const breakdown = typeof data.order.price_breakdown === 'string' 
+                    ? JSON.parse(data.order.price_breakdown)
+                    : data.order.price_breakdown;
+                setPriceBreakdown({
+                    materialCost: breakdown.materialCost || '',
+                    deliveryFee: breakdown.deliveryFee || '',
+                    deliveryType: breakdown.deliveryType || 'local',
+                    vatRate: breakdown.vatRate || 12,
+                    notes: breakdown.notes || ''
+                });
+            }
+            
+            setError(null);
+        } catch (err) {
 
-        fetchOrder();
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     }, [orderid]);
+
+    // Fetch order details on mount
+    useEffect(() => {
+        fetchOrder();
+    }, [fetchOrder]);
 
     // Fetch payment info for this order
     useEffect(() => {

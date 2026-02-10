@@ -203,12 +203,19 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
     
     <div class="section">
         <p class="bold">SIGNATURES:</p>
-        <p>Company Representative: <strong>${employee?.employeename || 'Sales Administrator'}</strong> &nbsp;&nbsp; Date: <strong>${today.month} ${today.day}, ${today.year}</strong></p>
+        <p>Company Representative: <strong>${employee?.employeename || 'Sales Administrator'}</strong> &nbsp;&nbsp; Date: <strong>${order.sales_admin_signed ? new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : `${today.month} ${today.day}, ${today.year}`}</strong></p>
         <p>Customer: <strong>${order.contactperson}</strong> &nbsp;&nbsp; Date: <strong>${order.contract_signed ? new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : `${today.month} ${today.day}, ${today.year}`}</strong></p>
+        ${order.sales_admin_signed && order.sales_admin_signature ? `
+        <div class="signature-box">
+            <p>Sales Admin Digital Signature:</p>
+            <img src="${order.sales_admin_signature}" class="signature-img" alt="Sales Admin Signature" />
+            <p style="font-size: 10px; color: #666; margin-top: 5px;">Signed: ${new Date(order.sales_admin_signed_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+        </div>` : ''}
         ${order.contract_signed && order.contract_data?.signature ? `
         <div class="signature-box">
             <p>Customer Digital Signature:</p>
             <img src="${order.contract_data.signature}" class="signature-img" alt="Customer Signature" />
+            <p style="font-size: 10px; color: #666; margin-top: 5px;">Signed: ${new Date(order.contract_signed_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
         </div>` : (sigPadRef.current && !sigPadRef.current.isEmpty() ? `
         <div class="signature-box">
             <p>Customer Digital Signature:</p>
@@ -371,24 +378,41 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
                         <div className="mb-4 mt-8 bg-blue-50 p-4 rounded">
                             <p className="font-bold mb-3">SIGNATURES:</p>
                             <p className="ml-4">Company Representative: <strong>{employee?.employeename || 'Sales Administrator'}</strong></p>
-                            <p className="ml-4">Date: <strong>{today.month} {today.day}, {today.year}</strong></p>
+                            <p className="ml-4">Date: <strong>{order.sales_admin_signed ? new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : `${today.month} ${today.day}, ${today.year}`}</strong></p>
                             <p className="ml-4 mt-2">Customer: <strong>{order.contactperson}</strong></p>
-                            <p className="ml-4">Date: <strong>{today.month} {today.day}, {today.year}</strong></p>
+                            <p className="ml-4">Date: <strong>{order.contract_signed ? new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : `${today.month} ${today.day}, ${today.year}`}</strong></p>
                         </div>
 
-                        {/* Show signed signature if contract is already signed */}
-                        {order.contract_signed && order.contract_data?.signature && (
-                            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
-                                <p className="text-sm font-semibold text-green-800 mb-2">Customer Digital Signature:</p>
-                                <img 
-                                    src={order.contract_data.signature} 
-                                    alt="Customer Signature" 
-                                    className="border border-gray-300 rounded bg-white p-2"
-                                    style={{ maxWidth: '300px', height: 'auto' }}
-                                />
-                                <p className="text-xs text-gray-600 mt-2">Signed on: {new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                            </div>
-                        )}
+                        {/* Show signatures if signed */}
+                        <div className="space-y-4">
+                            {/* Sales Admin Signature */}
+                            {order.sales_admin_signed && order.sales_admin_signature && (
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                                    <p className="text-sm font-semibold text-blue-800 mb-2">Sales Admin Digital Signature:</p>
+                                    <img 
+                                        src={order.sales_admin_signature} 
+                                        alt="Sales Admin Signature" 
+                                        className="border border-gray-300 rounded bg-white p-2"
+                                        style={{ maxWidth: '300px', height: 'auto' }}
+                                    />
+                                    <p className="text-xs text-gray-600 mt-2">Signed on: {new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            )}
+                            
+                            {/* Customer Signature */}
+                            {order.contract_signed && order.contract_data?.signature && (
+                                <div className="p-4 bg-green-50 border border-green-200 rounded">
+                                    <p className="text-sm font-semibold text-green-800 mb-2">Customer Digital Signature:</p>
+                                    <img 
+                                        src={order.contract_data.signature} 
+                                        alt="Customer Signature" 
+                                        className="border border-gray-300 rounded bg-white p-2"
+                                        style={{ maxWidth: '300px', height: 'auto' }}
+                                    />
+                                    <p className="text-xs text-gray-600 mt-2">Signed on: {new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
