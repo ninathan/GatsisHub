@@ -1259,19 +1259,12 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       return res.status(400).json({ error: "Contract data is required" });
     }
 
-    // Get current order to check if this is an amendment and if sales admin signed
+    // Get current order to check if this is an amendment
     const { data: currentOrder } = await supabase
       .from("orders")
-      .select("contract_signed, requires_contract_amendment, userid, sales_admin_signed, orderstatus")
+      .select("contract_signed, requires_contract_amendment, userid, orderstatus, salesadminid")
       .eq("orderid", orderid)
       .single();
-
-    // Check if sales admin has signed first
-    if (!currentOrder?.sales_admin_signed) {
-      return res.status(400).json({ 
-        error: "Sales admin must sign the contract first before customer can proceed" 
-      });
-    }
 
     const isAmendment = currentOrder?.contract_signed && currentOrder?.requires_contract_amendment;
 
@@ -1281,11 +1274,6 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       contract_signed_date: new Date().toISOString(),
       contract_data: contract_data
     };
-
-    // If order status is "Contract Signing", move it to "Waiting for Payment"
-    if (currentOrder?.orderstatus === 'Contract Signing') {
-      updateData.orderstatus = 'Waiting for Payment';
-    }
 
     // If this was an amendment, clear the amendment requirements
     if (isAmendment) {
@@ -1363,6 +1351,26 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       console.error('Failed to create contract notification:', notifError);
     }
 
+    // Notify sales admin that customer has signed
+    if (!isAmendment && currentOrder?.salesadminid) {
+      try {
+        // Create admin notification
+        await supabase
+          .from('admin_notifications')
+          .insert([{
+            employeeid: currentOrder.salesadminid,
+            orderid: orderid,
+            title: 'Customer Signed Contract',
+            message: `Customer has signed the sales agreement for order ${orderid.slice(0, 8).toUpperCase()}. Please review and sign to proceed to payment stage.`,
+            type: 'contract_customer_signed',
+            isread: false,
+            datecreated: new Date().toISOString()
+          }]);
+      } catch (adminNotifError) {
+        console.error('Failed to notify sales admin:', adminNotifError);
+      }
+    }
+
     res.status(200).json({
       message: "Contract signed successfully",
       order: order[0],
@@ -1384,6 +1392,13 @@ router.patch("/:orderid/sign-contract-admin", async (req, res) => {
       return res.status(400).json({ error: "Contract data is required" });
     }
 
+    // Get current order status
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("orderstatus, userid, contract_signed")
+      .eq("orderid", orderid)
+      .single();
+
     // Update order with sales admin signed contract
     const updateData = {
       sales_admin_signed: true,
@@ -1391,6 +1406,11 @@ router.patch("/:orderid/sign-contract-admin", async (req, res) => {
       sales_admin_signature: contract_data.signature,
       sales_admin_contract_data: contract_data
     };
+
+    // If customer has already signed and status is "Contract Signing", move to "Waiting for Payment"
+    if (currentOrder?.contract_signed && currentOrder?.orderstatus === 'Contract Signing') {
+      updateData.orderstatus = 'Waiting for Payment';
+    }
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -1406,7 +1426,7 @@ router.patch("/:orderid/sign-contract-admin", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Notify customer that contract is ready for signature
+    // Notify customer based on whether they already signed or not
     try {
       const { data: customerData } = await supabase
         .from("customers")
@@ -1415,34 +1435,65 @@ router.patch("/:orderid/sign-contract-admin", async (req, res) => {
         .single();
 
       if (customerData) {
-        // Create in-app notification
-        await supabase
-          .from('notifications')
-          .insert([
-            {
+        // Check if customer already signed before sales admin
+        const customerAlreadySigned = currentOrder?.contract_signed;
+
+        if (customerAlreadySigned) {
+          // Customer signed first - notify them payment is ready (status should have changed to Waiting for Payment)
+          await supabase
+            .from('notifications')
+            .insert([{
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Contract Fully Signed - Payment Ready',
+              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Your order is now ready for payment to begin production.`,
+              type: 'payment_ready',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }]);
+
+          // Send email notification if enabled
+          if (customerData.emailaddress && customerData.emailnotifications) {
+            const orderNumber = orderid.slice(0, 8).toUpperCase();
+
+            await sendEmail(
+              customerData.emailaddress,
+              `Payment Ready - Order ${orderNumber}`,
+              emailTemplates.contractReadyForPayment(
+                customerData.companyname,
+                orderNumber,
+                employeename || 'Sales Administrator'
+              )
+            );
+          }
+        } else {
+          // Sales admin signed first - notify customer contract is ready for their signature
+          await supabase
+            .from('notifications')
+            .insert([{
               customerid: customerData.customerid,
               orderid: orderid,
               title: 'Contract Ready for Your Signature',
-              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Please review and sign the contract to proceed with payment.`,
+              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Please review and sign the contract.`,
               type: 'contract_ready',
               isread: false,
               datecreated: new Date().toISOString()
-            }
-          ]);
+            }]);
 
-        // Send email notification if enabled
-        if (customerData.emailaddress && customerData.emailnotifications) {
-          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          // Send email notification if enabled
+          if (customerData.emailaddress && customerData.emailnotifications) {
+            const orderNumber = orderid.slice(0, 8).toUpperCase();
 
-          await sendEmail(
-            customerData.emailaddress,
-            `Contract Ready for Signature - Order ${orderNumber}`,
-            emailTemplates.contractReadyForCustomer(
-              customerData.companyname,
-              orderNumber,
-              employeename || 'Sales Administrator'
-            )
-          );
+            await sendEmail(
+              customerData.emailaddress,
+              `Contract Ready for Signature - Order ${orderNumber}`,
+              emailTemplates.contractReadyForCustomer(
+                customerData.companyname,
+                orderNumber,
+                employeename || 'Sales Administrator'
+              )
+            );
+          }
         }
       }
     } catch (notifError) {

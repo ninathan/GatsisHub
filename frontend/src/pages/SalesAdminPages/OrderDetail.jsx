@@ -674,7 +674,7 @@ const OrderDetail = () => {
             setShowContractSignModal(false);
             
             // Refresh order data
-            fetchOrderDetails();
+            fetchOrder();
         } catch (err) {
             console.error('Error signing contract:', err);
             showNotificationMessage(err.message || 'Failed to sign contract', 'error');

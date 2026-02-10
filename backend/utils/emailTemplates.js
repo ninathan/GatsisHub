@@ -510,6 +510,75 @@ export const emailTemplates = {
       footer();
       
     return baseTemplate(content, `Contract ready for signature - Order ${orderNumber}`);
+  },
+
+  // Customer signed contract - notify sales admin
+  contractSignedByCustomer: (salesAdminName, orderNumber, customerName) => {
+    const content = header() +
+      contentSection(
+        'Customer Has Signed Contract 📝',
+        `<p>Hi <strong>${salesAdminName}</strong>,</p>
+         <p><strong>${customerName}</strong> has signed the sales agreement for order <strong>${orderNumber}</strong>.</p>
+         <p style="color: ${colors.primary}; font-weight: 600; font-size: 18px; margin-top: 20px;">✅ Action Required: Please Review and Sign</p>`,
+        colors.primary
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Customer': customerName,
+        'Status': '✓ Customer Signed',
+        'Next Step': 'Sales Admin Signature Required'
+      }) +
+      infoBox(
+        `<strong>📋 Your Review:</strong><br><br>
+         Please review the contract details and sign to approve. Once you sign, the order will automatically 
+         move to payment stage and the customer will be notified to submit payment.`,
+        'info'
+      ) +
+      infoBox(
+        `<strong>⚡ Next Steps:</strong><br><br>
+         After your signature, the order status will change to "Waiting for Payment" and the customer can proceed 
+         with payment submission to begin production.`,
+        'success'
+      ) +
+      button('Review & Sign Contract', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/sales-admin/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Customer signed contract - Order ${orderNumber}`);
+  },
+
+  // Contract fully signed - ready for payment
+  contractReadyForPayment: (companyName, orderNumber, salesAdminName) => {
+    const content = header() +
+      contentSection(
+        'Contract Fully Signed - Payment Ready 💳',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>Great news! <strong>${salesAdminName}</strong> has signed the sales agreement for order <strong>${orderNumber}</strong>.</p>
+         <p style="color: ${colors.success}; font-weight: 600; font-size: 18px; margin-top: 20px;">✅ Contract Complete - Submit Payment Now</p>`,
+        colors.success
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Contract Status': '✓ Fully Signed',
+        'Customer Signature': '✓ Complete',
+        'Sales Admin Signature': '✓ Complete',
+        'Next Step': 'Payment Submission'
+      }) +
+      infoBox(
+        `<strong>💳 Submit Payment:</strong><br><br>
+         Your order is now ready for payment! Upload your proof of payment to begin production immediately. 
+         Our team is standing by to start work on your order.`,
+        'success'
+      ) +
+      infoBox(
+        `<strong>📄 Signed Contract:</strong><br><br>
+         Both you and our sales representative have signed the contract. You can view and download the 
+         fully signed contract anytime from your order details page.`,
+        'info'
+      ) +
+      button('Submit Payment', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Payment ready - Order ${orderNumber}`);
   }
 };
 

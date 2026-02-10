@@ -1717,13 +1717,25 @@ const Order = () => {
                                                                             step: 'For Evaluation',
                                                                             completed: order.orderstatus !== 'For Evaluation',
                                                                             description: 'Order is being evaluated by our team',
-                                                                            color: order.orderstatus !== 'For Evaluation' ? 'green' : 'gray'
+                                                                            color: order.orderstatus !== 'For Evaluation' ? 'green' : (order.orderstatus === 'For Evaluation' ? 'blue' : 'gray')
+                                                                        },
+                                                                        {
+                                                                            step: 'Contract Signing',
+                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing',
+                                                                            description: 'Sales agreement must be signed before payment',
+                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' ? 'green' : (order.orderstatus === 'Contract Signing' ? 'blue' : 'gray')
+                                                                        },
+                                                                        {
+                                                                            step: 'Waiting for Payment',
+                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' && order.orderstatus !== 'Waiting for Payment',
+                                                                            description: 'Payment submission pending',
+                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' && order.orderstatus !== 'Waiting for Payment' ? 'green' : (order.orderstatus === 'Waiting for Payment' ? 'blue' : 'gray')
                                                                         },
                                                                         {
                                                                             step: 'Payment Verification',
-                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment',
+                                                                            completed: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
                                                                             description: 'Payment is being verified by our team',
-                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment' ? 'green' : 'gray'
+                                                                            color: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? 'green' : (order.orderstatus === 'Verifying Payment' ? 'blue' : 'gray')
                                                                         },
                                                                         {
                                                                             step: 'In Production',
@@ -1753,7 +1765,7 @@ const Order = () => {
                                                                     ].map((item, index) => (
                                                                         <div key={index} className="flex gap-3 relative">
                                                                             {/* Timeline line */}
-                                                                            {index !== 4 && (
+                                                                            {index !== 8 && (
                                                                                 <div className={`absolute left-[15px] top-8 bottom-0 w-0.5 ${item.completed ? 'bg-green-300' : 'bg-gray-300'
                                                                                     }`}></div>
                                                                             )}
@@ -1820,11 +1832,12 @@ const Order = () => {
                                                                         </div>
                                                                         <span className="text-sm font-bold text-blue-800">
                                                                             {order.orderstatus === 'For Evaluation' ? 'Awaiting Evaluation' :
-                                                                                order.orderstatus === 'Waiting for Payment' ? 'Payment Verification' :
-                                                                                    order.orderstatus === 'Verifying Payment' ? 'Production Start' :
-                                                                                        order.orderstatus === 'In Production' ? 'Quality Check' :
-                                                                                            order.orderstatus === 'Waiting for Shipment' ? 'Shipment' :
-                                                                                                'Processing'}
+                                                                                order.orderstatus === 'Contract Signing' ? 'Sign Contract' :
+                                                                                    order.orderstatus === 'Waiting for Payment' ? 'Submit Payment' :
+                                                                                        order.orderstatus === 'Verifying Payment' ? 'Production Start' :
+                                                                                            order.orderstatus === 'In Production' ? 'Quality Check' :
+                                                                                                order.orderstatus === 'Waiting for Shipment' ? 'Shipment' :
+                                                                                                    'Processing'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -1977,8 +1990,8 @@ const Order = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Contract Signing - Show when Waiting for Payment AND contract not signed */}
-                                                    {order.orderstatus === 'Waiting for Payment' && !order.contract_signed && (
+                                                    {/* Contract Signing - Show when Contract Signing status AND contract not signed */}
+                                                    {order.orderstatus === 'Contract Signing' && !order.contract_signed && (
                                                         <button
                                                             onClick={() => openContractModal(order)}
                                                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"

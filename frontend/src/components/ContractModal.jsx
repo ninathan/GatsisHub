@@ -54,12 +54,6 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
     };
 
     const handleSign = async () => {
-        // Check if sales admin has signed first
-        if (!order.sales_admin_signed) {
-            alert('The sales administrator must sign the contract first before you can proceed. Please wait for notification.');
-            return;
-        }
-
         if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
             alert('Please provide your signature');
             return;
