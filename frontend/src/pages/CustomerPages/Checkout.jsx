@@ -5,7 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useRef, Suspense } from 'react'
 import ProductCard from '../../components/Checkout/productcard'
 import preview3d from '../../images/preview3d.png'
-import { Plus, Minus, Download, ChevronDown, PartyPopper, X, BotMessageSquare, Info, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
+import { Plus, Minus, Download, ChevronDown, PartyPopper, X, BotMessageSquare, Info, Box, Upload, Type, Image as ImageIcon, Maximize2, Minimize2, Save } from 'lucide-react';
 import validationIcon from '../../images/validation ico.png'
 import MB3ProductPage from '../../images/MB3ProductPage.png'
 import Product9712 from '../../images/97-12ProductPage.png'
@@ -1688,7 +1688,7 @@ Respond in JSON format:
                                                 className="absolute top-4 right-4 bg-yellow-400 hover:bg-yellow-300 text-[#353f94] p-2 rounded-lg transition-colors shadow-lg"
                                                 title="Fullscreen"
                                             >
-                                                <Maximize2 size={20} />
+                                                <Maximize2 className="cursor-pointer" size={20} />
                                             </button>
 
                                             {/* Three.js Canvas */}
@@ -2361,14 +2361,11 @@ Respond in JSON format:
                                                 )}
 
                                                 {/* Card Content */}
-                                                <div className="p-5 md:p-6 flex flex-col h-full cursor-pointer">
+                                                <div className="p-5 md:p-6  cursor-pointer">
                                                     {/* Material Icon & Name */}
                                                     <div className="flex items-center gap-3 mb-4">
-                                                        <div className={`text-4xl transform transition-transform group-hover:scale-110 ${isSelected ? 'animate-bounce' : ''}`}>
-                                                            {materialInfo.icon}
-                                                        </div>
                                                         <div className="flex-1 text-left">
-                                                            <h3 className={`text-lg md:text-xl font-bold mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                                                            <h3 className={`text-lg md:text-xl flex items-start font-bold mb-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                                                                 {material.name}
                                                             </h3>
                                                             <p className={`text-xs md:text-sm ${isSelected ? 'text-white/90' : 'text-gray-600'}`}>
@@ -2378,16 +2375,17 @@ Respond in JSON format:
                                                     </div>
 
                                                     {/* Features */}
-                                                    <div className={`mb-4 p-3 rounded-lg ${isSelected ? 'bg-white/20' : 'bg-gray-50'}`}>
-                                                        <p className={`text-xs font-semibold mb-2 ${isSelected ? 'text-white' : 'text-gray-700'}`}>
-                                                            ✨ Key Features:
+                                                    <div className={`mb-4 mt-4 p-3 rounded-lg  min-h-[120px] ${isSelected ? 'bg-white/20' : 'bg-gray-50'}`}>
+                                                        <p className={`text-sm font-semibold mb-2 ${isSelected ? 'text-white' : 'text-black'}`}>
+                                                            Key Features:
                                                         </p>
-                                                        <ul className="space-y-1">
+                                                        <ul className="flex flex-col items-start space-y-1">
                                                             {material.features && material.features.length > 0 ? (
                                                                 material.features.slice(0, 3).map((feature, i) => (
-                                                                    <li key={i} className={`text-xs md:text-sm flex items-start gap-2 ${isSelected ? 'text-white' : 'text-gray-600'}`}>
-                                                                        <span className="mt-0.5">•</span>
-                                                                        <span>{feature}</span>
+                                                                    <li key={i} className={`text-xs md:text-sm text-left ${isSelected ? 'text-white' : 'text-black'}`}>
+                                                                        •&nbsp;
+                                                                        {feature}
+                                                                        
                                                                     </li>
                                                                 ))
                                                             ) : (
@@ -2401,7 +2399,7 @@ Respond in JSON format:
                                                     {/* Best For Section */}
                                                     <div className={`p-3 rounded-lg border-2 ${isSelected ? 'bg-white/10 border-white/30' : 'bg-blue-50 border-blue-200'}`}>
                                                         <p className={`text-xs font-semibold mb-2 flex items-center gap-1 ${isSelected ? 'text-white' : 'text-blue-900'}`}>
-                                                            <span>👍</span> Best For:
+                                                            Best For:
                                                         </p>
                                                         <div className="flex flex-wrap gap-1.5">
                                                             {materialInfo.clothes.slice(0, 3).map((clothing, i) => (
@@ -2551,7 +2549,6 @@ Respond in JSON format:
                                 {/* No Materials Selected Message */}
                                 {Object.keys(selectedMaterials).length === 0 && (
                                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
-                                        <div className="text-6xl mb-4">🎨</div>
                                         <h3 className="text-xl font-bold text-gray-900 mb-2">
                                             No materials selected yet
                                         </h3>
@@ -2566,9 +2563,9 @@ Respond in JSON format:
                         {/* Describe Your Needs Modal */}
                         {showDescribeModal && (
                             <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
-                                <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-3xl my-8 animate-scaleIn">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8 animate-scaleIn">
                                     {/* Modal Header */}
-                                    <div className="bg-[#E6AF2E] px-6 py-5">
+                                    <div className="bg-[#E6AF2E] rounded-t-2xl px-6 py-5">
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
@@ -2716,7 +2713,7 @@ Respond in JSON format:
                                     </div>
 
                                     {/* Modal Footer */}
-                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                    <div className="bg-gray-50 rounded-b-2xl px-6 py-4 border-t border-gray-200">
                                         <div className="flex flex-col sm:flex-row gap-3">
                                             <button
                                                 onClick={() => {
@@ -3445,7 +3442,7 @@ Respond in JSON format:
                                     onClick={() => setShowInstructionsModal(false)}
                                     className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 p-1"
                                 >
-                                    <X size={20} className="md:w-6 md:h-6" />
+                                    <X size={20} className="md:w-6 md:h-6 cursor-pointer" />
                                 </button>
                             </div>
 
