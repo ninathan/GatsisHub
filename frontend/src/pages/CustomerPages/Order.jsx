@@ -1965,6 +1965,7 @@ const Order = () => {
                                                         <button
                                                             onClick={() => openContractModal(order)}
                                                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#2563eb', color: 'white' }}
                                                         >
                                                             <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1978,12 +1979,30 @@ const Order = () => {
                                                         <button
                                                             onClick={() => openContractModal(order)}
                                                             className="bg-gray-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#4b5563', color: 'white' }}
                                                         >
                                                             <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                             </svg>
                                                             <span>View Contract</span>
                                                         </button>
+                                                    )}
+
+                                                    {/* Track Delivery - Show when In Transit with tracking link */}
+                                                    {order.orderstatus === 'In Transit' && order.tracking_link && (
+                                                        <a
+                                                            href={order.tracking_link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#16a34a', color: 'white', textDecoration: 'none' }}
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            <span>Track Delivery</span>
+                                                        </a>
                                                     )}
 
                                                     {/* Payment - Show when Waiting for Payment AND contract signed AND (no payment OR payment rejected) */}

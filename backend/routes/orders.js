@@ -912,7 +912,7 @@ router.patch("/:orderid/deadline", async (req, res) => {
 router.patch("/:orderid/status", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { status, employeeid, employeename } = req.body;
+    const { status, employeeid, employeename, tracking_link } = req.body;
 
 
     // Validate status
@@ -942,9 +942,17 @@ router.patch("/:orderid/status", async (req, res) => {
       .eq("orderid", orderid)
       .single();
 
+    // Prepare update object
+    const updateData = { orderstatus: status };
+    
+    // Add tracking link if provided (for "In Transit" status)
+    if (tracking_link) {
+      updateData.tracking_link = tracking_link;
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ orderstatus: status })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -967,7 +975,7 @@ router.patch("/:orderid/status", async (req, res) => {
       'orderstatus',
       oldOrder?.orderstatus,
       status,
-      `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"`
+      `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"${tracking_link ? '. Tracking link added.' : ''}`
     );
 
     // Notify OM for important status changes

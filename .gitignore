@@ -62,3 +62,5 @@ frontend/src/pages/SalesAdminPages/ProductSA.jsx
 add_price_breakdown_column.sql
 add_estimated_breakdown_column.sql
 add_contract_fields.sql
+add_tracking_link.sql
+DELIVERY_TRACKING_FEATURE.md

@@ -72,6 +72,11 @@ const OrderDetail = () => {
     const [materialsData, setMaterialsData] = useState([]); // Store material prices from DB
     const [productsData, setProductsData] = useState([]); // Store product data from DB
 
+    // Tracking link states
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [trackingLink, setTrackingLink] = useState('');
+    const [pendingStatus, setPendingStatus] = useState(null);
+
     
 
     // Real-time payment update handler
@@ -325,6 +330,31 @@ const OrderDetail = () => {
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
+        
+        // If changing to "In Transit", prompt for tracking link
+        if (newStatus === 'In Transit') {
+            setPendingStatus(newStatus);
+            setTrackingLink(order.tracking_link || ''); // Pre-fill if exists
+            setShowTrackingModal(true);
+            return;
+        }
+        
+        // For other statuses, update directly
+        await updateOrderStatus(newStatus, null);
+    };
+
+    const handleTrackingSubmit = async () => {
+        if (!trackingLink.trim()) {
+            showNotificationMessage('Please enter a tracking link', 'error');
+            return;
+        }
+        
+        await updateOrderStatus(pendingStatus, trackingLink);
+        setShowTrackingModal(false);
+        setPendingStatus(null);
+    };
+
+    const updateOrderStatus = async (newStatus, trackingUrl) => {
         setOrderStatus(newStatus);
 
         try {
@@ -333,16 +363,23 @@ const OrderDetail = () => {
             // Get employee info from localStorage
             const employee = JSON.parse(localStorage.getItem('employee'));
 
+            const requestBody = {
+                status: newStatus,
+                employeeid: employee?.employeeid,
+                employeename: employee?.employeename
+            };
+
+            // Add tracking link if provided
+            if (trackingUrl) {
+                requestBody.tracking_link = trackingUrl;
+            }
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    status: newStatus,
-                    employeeid: employee?.employeeid,
-                    employeename: employee?.employeename
-                })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -2306,6 +2343,69 @@ const OrderDetail = () => {
                                     }`}
                             >
                                 OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tracking Link Modal */}
+            {showTrackingModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-xl font-semibold">Delivery Tracking Link</h2>
+                                <p className="text-white/90 text-sm mt-1">Enter the tracking URL for this shipment</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Tracking URL <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="url"
+                                value={trackingLink}
+                                onChange={(e) => setTrackingLink(e.target.value)}
+                                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                placeholder="https://tracking.example.com/track?id=123456"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                💡 This link will be displayed to the customer so they can track their delivery in real-time.
+                            </p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleTrackingSubmit}
+                                disabled={isSavingStatus || !trackingLink.trim()}
+                                className="px-6 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#191716] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSavingStatus ? 'Saving...' : 'Confirm & Update Status'}
                             </button>
                         </div>
                     </div>

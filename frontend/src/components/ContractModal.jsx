@@ -2,11 +2,30 @@ import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { X, Download, FileText, CheckCircle } from 'lucide-react';
 
-const ContractModal = ({ order, onClose, onSign, employee }) => {
+const ContractModal = ({ order, onClose, onContractSigned }) => {
     const sigPadRef = useRef(null);
     const [agreed, setAgreed] = useState(false);
     const [isSigning, setIsSigning] = useState(false);
     const [showSignaturePad, setShowSignaturePad] = useState(false);
+    const [employee, setEmployee] = useState(null);
+
+    // Fetch employee data for contract
+    useEffect(() => {
+        const fetchEmployee = async () => {
+            if (order.salesadminid) {
+                try {
+                    const response = await fetch(`https://gatsis-hub.vercel.app/employees/${order.salesadminid}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setEmployee(data);
+                    }
+                } catch (error) {
+                    console.error('Error fetching employee:', error);
+                }
+            }
+        };
+        fetchEmployee();
+    }, [order.salesadminid]);
 
     // Format date for contract
     const formatContractDate = (date) => {
@@ -50,33 +69,52 @@ const ContractModal = ({ order, onClose, onSign, employee }) => {
         try {
             const signatureDataURL = sigPadRef.current.toDataURL();
             
+            const contractHTML = generateContractHTML();
+            
             const contractData = {
-                companyName: 'GT Gatsis Corporation',
-                companyAddress: 'Victoria Wave Special Economic Zone, Siera Madre Building, Brgy. 186 North Caloocan City, Metro Manila Philippines 1427',
-                customerName: order.companyname,
-                customerAddress: order.deliveryaddress || 'Address on file',
-                contactPerson: order.contactperson,
-                productDescription: order.hangertype,
-                quantity: order.quantity,
-                materials: formatMaterials(order.materials),
-                deliveryDate: deliveryDate,
-                delayDays: 7,
-                compensation: `₱${parseFloat(compensation).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
-                inspectionDays: 7,
-                governingLaw: 'Metro Manila, Philippines',
-                companyRepresentative: employee?.employeename || 'Sales Administrator',
-                companySignDate: new Date().toISOString(),
-                customerName: order.contactperson,
-                customerSignature: signatureDataURL,
-                customerSignDate: new Date().toISOString(),
-                totalPrice: order.totalprice,
-                signedDate: today
+                signature: signatureDataURL,
+                contractHTML: contractHTML,
+                signedDate: new Date().toISOString(),
+                terms: {
+                    companyName: 'GT Gatsis Corporation',
+                    companyAddress: 'Victoria Wave Special Economic Zone, Siera Madre Building, Brgy. 186 North Caloocan City, Metro Manila Philippines 1427',
+                    customerName: order.companyname,
+                    customerAddress: order.deliveryaddress || 'Address on file',
+                    contactPerson: order.contactperson,
+                    productDescription: order.hangertype,
+                    quantity: order.quantity,
+                    materials: formatMaterials(order.materials),
+                    deliveryDate: deliveryDate,
+                    delayDays: 7,
+                    compensation: `₱${parseFloat(compensation).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+                    inspectionDays: 7,
+                    governingLaw: 'Metro Manila, Philippines',
+                    companyRepresentative: employee?.employeename || 'Sales Administrator',
+                    totalPrice: order.totalprice
+                }
             };
 
-            await onSign(contractData);
+            // Call API to sign contract
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${order.orderid}/sign-contract`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ contract_data: contractData })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to sign contract');
+            }
+
+            // Call parent callback on success
+            if (onContractSigned) {
+                await onContractSigned();
+            }
         } catch (error) {
             console.error('Error signing contract:', error);
-            alert('Failed to sign contract. Please try again.');
+            alert(error.message || 'Failed to sign contract. Please try again.');
         } finally {
             setIsSigning(false);
         }
@@ -166,15 +204,20 @@ const ContractModal = ({ order, onClose, onSign, employee }) => {
     <div class="section">
         <p class="bold">SIGNATURES:</p>
         <p>Company Representative: <strong>${employee?.employeename || 'Sales Administrator'}</strong> &nbsp;&nbsp; Date: <strong>${today.month} ${today.day}, ${today.year}</strong></p>
-        <p>Customer: <strong>${order.contactperson}</strong> &nbsp;&nbsp; Date: <strong>${today.month} ${today.day}, ${today.year}</strong></p>
+        <p>Customer: <strong>${order.contactperson}</strong> &nbsp;&nbsp; Date: <strong>${order.contract_signed ? new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : `${today.month} ${today.day}, ${today.year}`}</strong></p>
+        ${order.contract_signed && order.contract_data?.signature ? `
         <div class="signature-box">
             <p>Customer Digital Signature:</p>
-            <img src="${sigPadRef.current?.toDataURL()}" class="signature-img" />
-        </div>
+            <img src="${order.contract_data.signature}" class="signature-img" alt="Customer Signature" />
+        </div>` : (sigPadRef.current && !sigPadRef.current.isEmpty() ? `
+        <div class="signature-box">
+            <p>Customer Digital Signature:</p>
+            <img src="${sigPadRef.current.toDataURL()}" class="signature-img" alt="Customer Signature" />
+        </div>` : '')}
     </div>
     
     <p style="margin-top: 40px; font-size: 10px; color: #666;">
-        This is a legally binding digital contract signed on ${new Date().toLocaleString()}.
+        This is a legally binding digital contract${order.contract_signed ? ' signed on ' + new Date(order.contract_signed_date).toLocaleString() : ''}.
     </p>
 </body>
 </html>
@@ -182,27 +225,29 @@ const ContractModal = ({ order, onClose, onSign, employee }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full my-8">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+            <div className="bg-white rounded-lg md:rounded-xl shadow-xl max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto relative z-[10000] animate-scaleIn">
                 {/* Header */}
-                <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between rounded-t-lg">
+                <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <FileText size={24} />
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-blue-600" />
+                        </div>
                         <div>
-                            <h2 className="text-xl font-bold">Sales Agreement</h2>
-                            <p className="text-sm text-gray-300">Please review and sign the contract to proceed</p>
+                            <h2 className="text-2xl font-bold text-white">Sales Agreement</h2>
+                            <p className="text-white/90 text-sm">Please review and sign the contract to proceed</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-white hover:text-gray-300 transition-colors"
+                        className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Contract Content */}
-                <div className="p-6 max-h-[60vh] overflow-y-auto bg-gray-50">
+                <div className="p-6 bg-gray-50">
                     <div className="bg-white p-8 rounded-lg shadow">
                         <div className="text-center mb-6">
                             <h1 className="text-2xl font-bold text-gray-900">SALES AGREEMENT</h1>
@@ -275,23 +320,39 @@ const ContractModal = ({ order, onClose, onSign, employee }) => {
                             <p className="ml-4 mt-2">Customer: <strong>{order.contactperson}</strong></p>
                             <p className="ml-4">Date: <strong>{today.month} {today.day}, {today.year}</strong></p>
                         </div>
+
+                        {/* Show signed signature if contract is already signed */}
+                        {order.contract_signed && order.contract_data?.signature && (
+                            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
+                                <p className="text-sm font-semibold text-green-800 mb-2">Customer Digital Signature:</p>
+                                <img 
+                                    src={order.contract_data.signature} 
+                                    alt="Customer Signature" 
+                                    className="border border-gray-300 rounded bg-white p-2"
+                                    style={{ maxWidth: '300px', height: 'auto' }}
+                                />
+                                <p className="text-xs text-gray-600 mt-2">Signed on: {new Date(order.contract_signed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Signature Section */}
-                {!showSignaturePad ? (
-                    <div className="p-6 border-t">
-                        <button
-                            onClick={() => setShowSignaturePad(true)}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                        >
-                            <FileText size={20} />
-                            Proceed to Sign Contract
-                        </button>
-                    </div>
-                ) : (
-                    <div className="p-6 border-t bg-gray-50">
-                        <div className="bg-white p-6 rounded-lg border-2 border-blue-200">
+                {/* Signature Section - Only show if not already signed */}
+                {!order.contract_signed && (
+                    !showSignaturePad ? (
+                        <div className="p-6 border-t bg-white">
+                            <button
+                                onClick={() => setShowSignaturePad(true)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                style={{ backgroundColor: '#2563eb', color: 'white' }}
+                            >
+                                <FileText size={20} />
+                                <span>Proceed to Sign Contract</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="p-6 border-t bg-gray-50">
+                            <div className="bg-white p-6 rounded-lg border-2 border-blue-200">
                             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <FileText size={20} className="text-blue-600" />
                                 Digital Signature Required
@@ -355,23 +416,48 @@ const ContractModal = ({ order, onClose, onSign, employee }) => {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                        </div>
+                    )
                 )}
 
                 {/* Download Option */}
-                {!showSignaturePad && (
-                    <div className="px-6 pb-6">
+                <div className="px-6 pb-6">
+                    <button
+                        onClick={handleDownloadContract}
+                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 mb-3"
+                    >
+                        <Download size={18} />
+                        {order.contract_signed ? 'Download Signed Contract' : 'Download Contract (Preview)'}
+                    </button>
+
+                    {/* Close button for already signed contracts */}
+                    {order.contract_signed && (
                         <button
-                            onClick={handleDownloadContract}
-                            disabled={!sigPadRef.current || sigPadRef.current.isEmpty()}
-                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            onClick={onClose}
+                            className="w-full bg-[#E6AF2E] hover:bg-[#191716] text-white py-2 rounded-lg font-semibold transition-colors"
                         >
-                            <Download size={18} />
-                            Download Contract (Preview)
+                            Close
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
+
+            {/* Add animation styles */}
+            <style jsx>{`
+                @keyframes scaleIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                .animate-scaleIn {
+                    animation: scaleIn 0.2s ease-out;
+                }
+            `}</style>
         </div>
     );
 };
