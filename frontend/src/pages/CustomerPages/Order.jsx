@@ -10,6 +10,7 @@ import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
 import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import StarRating from '../../components/StarRating';
+import ContractModal from '../../components/ContractModal';
 import styled from 'styled-components';
 
 
@@ -55,6 +56,10 @@ const Order = () => {
     // Invoice modal state
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [invoiceOrderData, setInvoiceOrderData] = useState(null);
+
+    // Contract modal state
+    const [showContractModal, setShowContractModal] = useState(false);
+    const [orderToSign, setOrderToSign] = useState(null);
 
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'];
 
@@ -464,6 +469,30 @@ const Order = () => {
         }
     };
 
+    // Contract modal handlers
+    const openContractModal = (order) => {
+        setOrderToSign(order);
+        setShowContractModal(true);
+    };
+
+    const closeContractModal = () => {
+        setShowContractModal(false);
+        setOrderToSign(null);
+    };
+
+    const handleContractSigned = async () => {
+        // Refresh orders to get updated contract status
+        closeContractModal();
+        showNotification('Contract signed successfully! You can now proceed with payment.');
+        
+        // Refresh current page
+        try {
+            await fetchOrders();
+        } catch (err) {
+            console.error('Error refreshing orders:', err);
+        }
+    };
+
     const handleCancelOrder = async () => {
         if (!orderToCancel) return;
 
@@ -687,7 +716,7 @@ const Order = () => {
 
     ${invoiceOrderData.breakdown ? `
     <div class="breakdown-section">
-        <h3>Price Breakdown</h3>
+        <h3>${invoiceOrderData.isPriceFinal ? '💰 Final Price Breakdown' : '📊 Estimated Price Breakdown'}</h3>
         <div class="info-row">
             <span class="label">Product Weight:</span> ${invoiceOrderData.breakdown.productWeight}g per unit
         </div>
@@ -695,6 +724,7 @@ const Order = () => {
             <span class="label">Total Weight:</span> ${invoiceOrderData.breakdown.totalWeight.toFixed(3)} kg
         </div>
         
+        ${!invoiceOrderData.isPriceFinal && invoiceOrderData.breakdown.materials.length > 0 ? `
         <h4 style="margin-top: 20px;">Material Costs:</h4>
         ${invoiceOrderData.breakdown.materials.map(mat => `
         <div class="breakdown-item">
@@ -707,6 +737,7 @@ const Order = () => {
             </div>
         </div>
         `).join('')}
+        ` : ''}
     </div>
 
     <div class="total-section">
@@ -714,14 +745,44 @@ const Order = () => {
             <span>Total Material Cost:</span>
             <span>₱${invoiceOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
-        <div class="total-row">
-            <span>Delivery Fee:</span>
-            <span>₱${invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        <div class="total-row" style="margin-bottom: 5px;">
+            <span><strong>Delivery Fee (${invoiceOrderData.breakdown.deliveryBreakdown?.isLocal ? 'Local' : 'International'}):</strong></span>
+            <span><strong>₱${invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
         </div>
+        ${invoiceOrderData.breakdown.deliveryBreakdown ? `
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Base cost:</span>
+            <span>₱${invoiceOrderData.breakdown.deliveryBreakdown.baseCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        ${invoiceOrderData.breakdown.deliveryBreakdown.additionalCost > 0 ? `
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Extra weight (${Math.ceil(invoiceOrderData.breakdown.deliveryBreakdown.excessWeight)} kg over ${invoiceOrderData.breakdown.deliveryBreakdown.weightLimit} kg):</span>
+            <span>₱${invoiceOrderData.breakdown.deliveryBreakdown.additionalCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>` : ''}
+        ` : ''}
+        ${invoiceOrderData.breakdown.subtotal ? `
+        <div class="total-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 5px;">
+            <span><strong>Subtotal:</strong></span>
+            <span><strong>₱${invoiceOrderData.breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
+        </div>
+        ` : ''}
+        ${invoiceOrderData.breakdown.vatRate ? `
+        <div class="total-row">
+            <span>VAT (${invoiceOrderData.breakdown.vatRate}%${invoiceOrderData.breakdown.country ? ` - ${invoiceOrderData.breakdown.country}` : ''}):</span>
+            <span>₱${invoiceOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        ` : ''}
         <div class="total-amount">
-            <span>TOTAL AMOUNT:</span>
+            <span>${invoiceOrderData.isPriceFinal ? 'FINAL AMOUNT:' : 'ESTIMATED AMOUNT:'}</span>
             <span>₱${invoiceOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
+    </div>
+    ` : ''}
+
+    ${invoiceOrderData.breakdown?.notes ? `
+    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+        <strong>📝 Note from Sales Team:</strong><br>
+        <span style="color: #666;">${invoiceOrderData.breakdown.notes}</span>
     </div>
     ` : ''}
 
@@ -760,33 +821,166 @@ const Order = () => {
             if (!materialsRes.ok) throw new Error('Failed to fetch materials data');
             const materialsData = await materialsRes.json();
 
-            // Calculate price breakdown
-            const breakdown = {
-                productWeight: product?.weight || 0,
-                totalWeight: ((product?.weight || 0) * order.quantity) / 1000, // Convert to kg
-                materials: [],
-                totalMaterialCost: 0,
-                deliveryCost: 2500,
-                totalPrice: parseFloat(order.totalprice) || 0
-            };
+            // Priority: price_breakdown (sales admin final) > estimated_breakdown (checkout) > calculated fallback
+            let breakdown;
+            let isPriceFinal = false;
 
-            // Calculate material costs
-            if (order.materials && typeof order.materials === 'object') {
-                breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
-                    const material = materialsData.materials.find(m => m.materialname === name);
-                    const pricePerKg = material?.price_per_kg || 0;
-                    const weight = breakdown.totalWeight * (percentage / 100);
-                    const cost = weight * pricePerKg;
-                    breakdown.totalMaterialCost += cost;
+            // Check for sales admin's final price breakdown first
+            if (order.price_breakdown) {
+                isPriceFinal = true;
+                const finalBreakdown = typeof order.price_breakdown === 'string' 
+                    ? JSON.parse(order.price_breakdown) 
+                    : order.price_breakdown;
+                
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: parseFloat(finalBreakdown.totalWeightKg) || (((product?.weight || 0) * order.quantity) / 1000),
+                    materials: [],
+                    totalMaterialCost: parseFloat(finalBreakdown.materialCost) || 0,
+                    deliveryCost: parseFloat(finalBreakdown.deliveryFee) || 0,
+                    deliveryBreakdown: {
+                        isLocal: finalBreakdown.deliveryType === 'local',
+                        baseCost: parseFloat(finalBreakdown.deliveryFee) || 0, // Show full delivery as base for final price
+                        excessWeight: 0,
+                        additionalCost: 0,
+                        weightLimit: 10
+                    },
+                    subtotal: parseFloat(finalBreakdown.materialCost) + parseFloat(finalBreakdown.deliveryFee),
+                    vatRate: parseFloat(finalBreakdown.vatRate) || 12,
+                    vatAmount: (parseFloat(finalBreakdown.materialCost) + parseFloat(finalBreakdown.deliveryFee)) * (parseFloat(finalBreakdown.vatRate) / 100),
+                    totalPrice: parseFloat(order.totalprice) || 0,
+                    country: 'Philippines',
+                    notes: finalBreakdown.notes || null
+                };
 
-                    return {
-                        name,
-                        percentage: Math.round(percentage),
-                        pricePerKg,
-                        weight,
-                        cost
-                    };
-                });
+                // Calculate material breakdown if available
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+            }
+            // Check if order has estimated_breakdown saved (from checkout)
+            else if (order.estimated_breakdown) {
+                // Use saved estimated breakdown from checkout
+                const savedBreakdown = typeof order.estimated_breakdown === 'string' 
+                    ? JSON.parse(order.estimated_breakdown) 
+                    : order.estimated_breakdown;
+                
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: savedBreakdown.totalWeight || (((product?.weight || 0) * order.quantity) / 1000),
+                    materials: [],
+                    totalMaterialCost: savedBreakdown.materialCost || savedBreakdown.totalMaterialCost || 0,
+                    deliveryCost: savedBreakdown.deliveryFee || savedBreakdown.deliveryCost || 0,
+                    deliveryBreakdown: savedBreakdown.deliveryBreakdown || {
+                        isLocal: savedBreakdown.deliveryType === 'local',
+                        baseCost: savedBreakdown.baseCost || 0,
+                        excessWeight: savedBreakdown.excessWeight || 0,
+                        additionalCost: savedBreakdown.excessWeightCost || 0,
+                        weightLimit: savedBreakdown.deliveryType === 'local' ? 10 : 10
+                    },
+                    subtotal: savedBreakdown.subtotal || 0,
+                    vatRate: savedBreakdown.vatRate || 12,
+                    vatAmount: savedBreakdown.vatAmount || 0,
+                    totalPrice: parseFloat(order.totalprice) || 0,
+                    country: savedBreakdown.country || 'Philippines'
+                };
+
+                // Calculate material breakdown if available
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+            } else {
+                // Fallback: Calculate price breakdown dynamically
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: ((product?.weight || 0) * order.quantity) / 1000, // Convert to kg
+                    materials: [],
+                    totalMaterialCost: 0,
+                    deliveryCost: 0, // Will be calculated below
+                    totalPrice: parseFloat(order.totalprice) || 0
+                };
+
+                // Calculate material costs
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+                        breakdown.totalMaterialCost += cost;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+
+                // Calculate delivery cost dynamically (fallback if no estimated_breakdown)
+                const totalWeightKg = breakdown.totalWeight;
+                const deliveryAddress = order.deliveryaddress || '';
+                
+                // Determine if local or international
+                const isLocalDelivery = typeof deliveryAddress === 'string' 
+                    ? deliveryAddress.toLowerCase().includes('philippines')
+                    : true;  // Default to local
+
+                const weightLimit = 10; // kg
+                const localBaseCost = 1000;
+                const internationalBaseCost = 5000;
+                const localRatePerKg = 500;
+                const internationalRatePerKg = 1000;
+
+                const baseCost = isLocalDelivery ? localBaseCost : internationalBaseCost;
+                const ratePerKg = isLocalDelivery ? localRatePerKg : internationalRatePerKg;
+
+                let deliveryCost = baseCost;
+                let additionalCost = 0;
+                let excessWeight = 0;
+
+                if (totalWeightKg > weightLimit) {
+                    excessWeight = totalWeightKg - weightLimit;
+                    additionalCost = Math.ceil(excessWeight) * ratePerKg;
+                    deliveryCost = baseCost + additionalCost;
+                }
+
+                breakdown.deliveryCost = deliveryCost;
+                breakdown.deliveryBreakdown = {
+                    isLocal: isLocalDelivery,
+                    baseCost,
+                    excessWeight,
+                    additionalCost,
+                    weightLimit
+                };
             }
 
             // Check if payment exists
@@ -806,6 +1000,7 @@ const Order = () => {
                 selectedMaterials: order.materials,
                 breakdown,
                 hasPayment,
+                isPriceFinal, // Flag to indicate if sales admin set final price
                 deliveryaddress: order.deliveryaddress,
                 customtext: order.customtext,
                 customlogo: order.customlogo,
@@ -1765,8 +1960,35 @@ const Order = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Payment - Show when Waiting for Payment AND (no payment OR payment rejected) */}
+                                                    {/* Contract Signing - Show when Waiting for Payment AND contract not signed */}
+                                                    {order.orderstatus === 'Waiting for Payment' && !order.contract_signed && (
+                                                        <button
+                                                            onClick={() => openContractModal(order)}
+                                                            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span>Sign Contract</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* View Contract - Show when contract is signed */}
+                                                    {order.contract_signed && order.orderstatus !== 'Cancelled' && (
+                                                        <button
+                                                            onClick={() => openContractModal(order)}
+                                                            className="bg-gray-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span>View Contract</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* Payment - Show when Waiting for Payment AND contract signed AND (no payment OR payment rejected) */}
                                                     {order.orderstatus === 'Waiting for Payment' &&
+                                                        order.contract_signed &&
                                                         (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
                                                             <Link
                                                                 to="/payment"
@@ -2734,6 +2956,15 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Contract Modal */}
+            {showContractModal && orderToSign && (
+                <ContractModal
+                    order={orderToSign}
+                    onClose={closeContractModal}
+                    onContractSigned={handleContractSigned}
+                />
             )}
 
             {/* Add animation styles */}

@@ -61,3 +61,4 @@ backend/routes/products.js
 frontend/src/pages/SalesAdminPages/ProductSA.jsx
 add_price_breakdown_column.sql
 add_estimated_breakdown_column.sql
+add_contract_fields.sql

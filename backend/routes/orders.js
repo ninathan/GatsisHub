@@ -755,6 +755,83 @@ router.patch("/:orderid/price-breakdown", async (req, res) => {
       `Final price set to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })} (Material: ₱${priceBreakdown.materialCost}, Delivery: ₱${priceBreakdown.deliveryFee}, VAT: ${priceBreakdown.vatRate}%)`
     );
 
+    // Notify customer about price update
+    try {
+      // Get customer data
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (!customerError && customerData) {
+        const orderNumber = orderid.slice(0, 8).toUpperCase();
+        const priceChangeMessage = oldOrder?.price_breakdown 
+          ? `The final price for your order has been updated to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}.`
+          : `The final price for your order has been set to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}.`;
+
+        // Create in-app notification
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Final Price Updated',
+              message: `${priceChangeMessage} View your updated invoice for detailed breakdown.`,
+              type: 'order_update',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+
+        // Send email notification if enabled
+        if (customerData.emailnotifications) {
+          try {
+            const resendApiKey = process.env.RESEND_API_KEY;
+            
+            if (resendApiKey) {
+              const emailResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: 'GatsisHub <noreply@gatsishub.com>',
+                  to: [customerData.emailaddress],
+                  subject: `Final Price Updated - Order #${orderNumber}`,
+                  html: emailTemplates.orderStatusUpdate(
+                    customerData.companyname, 
+                    orderNumber, 
+                    'Price Updated',
+                    'Final Price Set',
+                    `${priceChangeMessage}<br><br>
+                    <strong>Price Breakdown:</strong><br>
+                    • Material Cost: ₱${parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    • Delivery Fee: ₱${parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    • VAT (${priceBreakdown.vatRate}%): ₱${((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * priceBreakdown.vatRate / 100).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    <strong>Total: ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong><br><br>
+                    ${priceBreakdown.notes ? `<em>Note: ${priceBreakdown.notes}</em><br><br>` : ''}
+                    Please log in to view your updated invoice.`
+                  )
+                })
+              });
+
+              if (!emailResponse.ok) {
+                console.error('Email sending failed:', await emailResponse.json());
+              }
+            }
+          } catch (emailErr) {
+            console.error('Error sending price update email:', emailErr);
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('Error creating price update notification:', notifErr);
+      // Don't fail the request if notification fails
+    }
+
     res.status(200).json({
       message: "Price breakdown saved successfully",
       order: order[0]
@@ -1013,6 +1090,72 @@ router.patch("/:orderid/status", async (req, res) => {
 
 
     res.status(500).json({ error: err.message || "Failed to update status" });
+  }
+});
+
+// 📝 Sign contract (PATCH)
+router.patch("/:orderid/sign-contract", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { contractData } = req.body;
+
+    if (!contractData) {
+      return res.status(400).json({ error: "Contract data is required" });
+    }
+
+    // Update order with signed contract
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({
+        contract_signed: true,
+        contract_signed_date: new Date().toISOString(),
+        contract_data: contractData
+      })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Create notification for customer
+    try {
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (customerData) {
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Contract Signed Successfully',
+              message: 'You have successfully signed the sales agreement. You may now proceed with payment.',
+              type: 'contract_signed',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+      }
+    } catch (notifError) {
+      console.error('Failed to create contract notification:', notifError);
+    }
+
+    res.status(200).json({
+      message: "Contract signed successfully",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error('Error signing contract:', err);
+    res.status(500).json({ error: err.message || "Failed to sign contract" });
   }
 });
 

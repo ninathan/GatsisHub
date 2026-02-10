@@ -64,10 +64,13 @@ const OrderDetail = () => {
         deliveryFee: '',
         deliveryType: 'local', // 'local' or 'international'
         vatRate: 12,
-        notes: ''
+        notes: '',
+        totalWeightKg: '' // Add weight field
     });
     const [estimatedBreakdown, setEstimatedBreakdown] = useState(null); // Original estimate from checkout
     const [isSavingBreakdown, setIsSavingBreakdown] = useState(false);
+    const [materialsData, setMaterialsData] = useState([]); // Store material prices from DB
+    const [productsData, setProductsData] = useState([]); // Store product data from DB
 
     
 
@@ -235,6 +238,78 @@ const OrderDetail = () => {
         fetchPaymentHistory();
     }, [orderid, showProofModal]); // Refetch when modal closes
 
+    // Fetch materials and products data for price calculation
+    useEffect(() => {
+        const fetchPricingData = async () => {
+            try {
+                const [materialsRes, productsRes] = await Promise.all([
+                    fetch('https://gatsis-hub.vercel.app/materials'),
+                    fetch('https://gatsis-hub.vercel.app/products')
+                ]);
+
+                if (materialsRes.ok) {
+                    const data = await materialsRes.json();
+                    setMaterialsData(data.materials || []);
+                }
+
+                if (productsRes.ok) {
+                    const data = await productsRes.json();
+                    setProductsData(data.products || []);
+                }
+            } catch (error) {
+                console.error('Error fetching pricing data:', error);
+            }
+        };
+
+        fetchPricingData();
+    }, []);
+
+    // Calculate material cost based on weight and materials
+    const calculateMaterialCost = (weightKg, orderMaterials) => {
+        if (!weightKg || !orderMaterials || !materialsData.length) return 0;
+
+        let totalCost = 0;
+        Object.entries(orderMaterials).forEach(([materialName, percentage]) => {
+            const material = materialsData.find(m => m.materialname === materialName);
+            if (material) {
+                const materialWeight = weightKg * (percentage / 100);
+                totalCost += materialWeight * material.price_per_kg;
+            }
+        });
+
+        return totalCost;
+    };
+
+    // Auto-calculate material cost when weight changes
+    useEffect(() => {
+        if (priceBreakdown.totalWeightKg && order?.materials) {
+            const calculatedCost = calculateMaterialCost(
+                parseFloat(priceBreakdown.totalWeightKg), 
+                order.materials
+            );
+            if (calculatedCost > 0) {
+                setPriceBreakdown(prev => ({
+                    ...prev,
+                    materialCost: calculatedCost.toFixed(2)
+                }));
+            }
+        }
+    }, [priceBreakdown.totalWeightKg, order, materialsData]);
+
+    // Initialize weight from order data when modal opens
+    useEffect(() => {
+        if (showPriceBreakdownModal && order && productsData.length) {
+            const product = productsData.find(p => p.productname === order.hangertype);
+            if (product && product.weight) {
+                const totalWeightKg = ((product.weight * order.quantity) / 1000).toFixed(3);
+                setPriceBreakdown(prev => ({
+                    ...prev,
+                    totalWeightKg: totalWeightKg
+                }));
+            }
+        }
+    }, [showPriceBreakdownModal, order, productsData]);
+
     // Helper functions
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -328,16 +403,17 @@ const OrderDetail = () => {
 
     const handleSavePriceBreakdown = async () => {
         // Validate inputs
-        if (!priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
-            showNotificationMessage('Please enter material cost and delivery fee', 'error');
+        if (!priceBreakdown.totalWeightKg || !priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
+            showNotificationMessage('Please enter weight, material cost, and delivery fee', 'error');
             return;
         }
 
+        const totalWeightKg = parseFloat(priceBreakdown.totalWeightKg);
         const materialCost = parseFloat(priceBreakdown.materialCost);
         const deliveryFee = parseFloat(priceBreakdown.deliveryFee);
         const vatRate = parseFloat(priceBreakdown.vatRate);
 
-        if (isNaN(materialCost) || isNaN(deliveryFee) || isNaN(vatRate)) {
+        if (isNaN(totalWeightKg) || isNaN(materialCost) || isNaN(deliveryFee) || isNaN(vatRate)) {
             showNotificationMessage('Please enter valid numbers', 'error');
             return;
         }
@@ -354,6 +430,7 @@ const OrderDetail = () => {
             const employee = JSON.parse(localStorage.getItem('employee'));
 
             const breakdownData = {
+                totalWeightKg, // Include weight in breakdown
                 materialCost,
                 deliveryFee,
                 deliveryType: priceBreakdown.deliveryType,
@@ -1247,6 +1324,69 @@ const OrderDetail = () => {
                             </div>
                         )}
 
+                        {/* Contract Status Display */}
+                        {order.orderstatus === 'Waiting for Payment' && (
+                            <div className={`border rounded-lg p-4 ${order.contract_signed ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50'}`}>
+                                <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Contract Status
+                                </h3>
+                                {order.contract_signed ? (
+                                    <>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            <span className="font-semibold text-green-700">Contract Signed</span>
+                                        </div>
+                                        <div className="text-sm text-gray-700 mb-2">
+                                            <span className="font-medium">Signed on: </span>
+                                            {new Date(order.contract_signed_date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                // Open contract in new window or show in modal
+                                                const contractData = order.contract_data;
+                                                if (contractData) {
+                                                    const newWindow = window.open('', '_blank');
+                                                    if (newWindow) {
+                                                        newWindow.document.write(contractData.contractHTML || '<p>Contract data not available</p>');
+                                                        newWindow.document.close();
+                                                    }
+                                                }
+                                            }}
+                                            className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            View Signed Contract
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-semibold text-orange-700">Awaiting Customer Signature</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Delivery Address */}
                         <div className="border border-gray-300 rounded-lg p-4">
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Delivery Address</h3>
@@ -1781,19 +1921,71 @@ const OrderDetail = () => {
 
                         {/* Modal Body */}
                         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                            {/* Material Cost */}
+                            {/* Order Information */}
+                            {order && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                    <h4 className="font-semibold text-gray-800 mb-2">Order Details</h4>
+                                    <div className="text-sm space-y-1">
+                                        <p><span className="font-medium">Product:</span> {order.hangertype}</p>
+                                        <p><span className="font-medium">Quantity:</span> {order.quantity} units</p>
+                                        <p><span className="font-medium">Materials:</span> {formatMaterials(order.materials)}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Total Weight Input */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Material Cost (₱) <span className="text-red-500">*</span>
+                                    Total Weight (kg) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
-                                    step="0.01"
-                                    value={priceBreakdown.materialCost}
-                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, materialCost: e.target.value})}
+                                    step="0.001"
+                                    value={priceBreakdown.totalWeightKg}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, totalWeightKg: e.target.value})}
                                     className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                                    placeholder="Enter total material cost"
+                                    placeholder="Enter total weight in kg"
                                 />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    💡 System will calculate material cost based on this weight
+                                </p>
+                            </div>
+
+                            {/* Material Cost (Auto-calculated) */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Material Cost (₱) <span className="text-green-600 text-xs">Auto-calculated</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={priceBreakdown.materialCost}
+                                        onChange={(e) => setPriceBreakdown({...priceBreakdown, materialCost: e.target.value})}
+                                        className="w-full border-2 border-green-300 bg-green-50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                        placeholder="Will auto-calculate from weight"
+                                    />
+                                    <span className="absolute right-3 top-2.5 text-green-600 text-sm">✓ Calculated</span>
+                                </div>
+                                {priceBreakdown.totalWeightKg && order?.materials && materialsData.length > 0 && (
+                                    <div className="mt-2 bg-green-50 border border-green-200 rounded p-3 text-xs space-y-1">
+                                        <p className="font-semibold text-gray-700 mb-1">Calculation Breakdown:</p>
+                                        {Object.entries(order.materials).map(([materialName, percentage]) => {
+                                            const material = materialsData.find(m => m.materialname === materialName);
+                                            if (!material) return null;
+                                            const materialWeight = parseFloat(priceBreakdown.totalWeightKg) * (percentage / 100);
+                                            const cost = materialWeight * material.price_per_kg;
+                                            return (
+                                                <p key={materialName} className="text-gray-600">
+                                                    • {materialName} ({percentage}%): {materialWeight.toFixed(3)} kg × ₱{material.price_per_kg.toLocaleString()} = ₱{cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Can be manually adjusted if needed
+                                </p>
                             </div>
 
                             {/* Delivery Type */}
@@ -1914,7 +2106,7 @@ const OrderDetail = () => {
                             </button>
                             <button
                                 onClick={handleSavePriceBreakdown}
-                                disabled={!priceBreakdown.materialCost || !priceBreakdown.deliveryFee || isSavingBreakdown}
+                                disabled={!priceBreakdown.totalWeightKg || !priceBreakdown.materialCost || !priceBreakdown.deliveryFee || isSavingBreakdown}
                                 className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isSavingBreakdown ? (
@@ -1975,12 +2167,29 @@ const OrderDetail = () => {
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Price Components</h3>
                                 
+                                {/* Weight Information (if available) */}
+                                {priceBreakdown.totalWeightKg && (
+                                    <div className="border-l-4 border-purple-400 pl-4 py-2 bg-purple-50">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-700">Total Weight</p>
+                                                <p className="text-xs text-gray-500 mt-1">Used for material cost calculation</p>
+                                            </div>
+                                            <p className="text-xl font-bold text-gray-900">{parseFloat(priceBreakdown.totalWeightKg).toFixed(3)} kg</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 {/* Material Cost */}
                                 <div className="border-l-4 border-yellow-400 pl-4 py-2 bg-yellow-50">
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-700">Material Cost</p>
-                                            <p className="text-xs text-gray-500 mt-1">Total cost of materials used in production</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {priceBreakdown.totalWeightKg 
+                                                    ? 'Calculated from weight and material prices' 
+                                                    : 'Total cost of materials used in production'}
+                                            </p>
                                         </div>
                                         <p className="text-xl font-bold text-gray-900">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
                                     </div>
