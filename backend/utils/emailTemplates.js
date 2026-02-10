@@ -408,6 +408,74 @@ export const emailTemplates = {
       footer();
       
     return baseTemplate(content, `Payment resubmission needed for order ${orderNumber}`);
+  },
+
+  // Contract amendment required template
+  contractAmendmentRequired: (companyName, orderNumber, reason, changes) => {
+    const content = header() +
+      contentSection(
+        'Order Update - Signature Required',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>We've made updates to your order <strong>${orderNumber}</strong>. To proceed, we need your acknowledgment and signature on these changes.</p>
+         <p style="font-weight: 600; color: ${colors.dark}; margin-top: 20px;">Reason: ${reason}</p>`,
+        colors.warning
+      ) +
+      detailsSection(changes) +
+      infoBox(
+        `<strong>📋 Action Required:</strong><br><br>
+         Please review the changes above and sign the contract amendment to continue with your order. 
+         This ensures both parties are aligned on the updated specifications, pricing, or timeline.`,
+        'warning'
+      ) +
+      infoBox(
+        `⏱️ <strong>Important:</strong> Your order processing will be paused until you review and sign the amendment. 
+         Please complete this at your earliest convenience to avoid delays.`,
+        'info'
+      ) +
+      button('Review & Sign Amendment', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Order ${orderNumber} - Signature Required for Updates`);
+  },
+
+  // Contract signed confirmation template
+  contractSigned: (companyName, orderNumber, signedDate, isAmendment = false) => {
+    const title = isAmendment ? 'Contract Amendment Signed! ✓' : 'Contract Signed Successfully! ✓';
+    const message = isAmendment 
+      ? 'Thank you for signing the contract amendment. Your order will now proceed with the updated details.'
+      : 'Thank you for signing the sales agreement. You can now proceed with payment.';
+    
+    const content = header() +
+      contentSection(
+        title,
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>${message}</p>
+         <p style="color: ${colors.success}; font-weight: 600; font-size: 18px; margin-top: 20px;">✓ Contract Signed</p>`,
+        colors.success
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Document': isAmendment ? 'Contract Amendment' : 'Sales Agreement',
+        'Signed On': signedDate,
+        'Status': '✓ Legally Binding'
+      }) +
+      infoBox(
+        isAmendment 
+          ? `<strong>🎉 What's Next?</strong><br><br>
+             Your order will continue processing with the updated specifications. Our team will keep you informed of progress at each stage.`
+          : `<strong>💳 Next Step:</strong><br><br>
+             Please submit your payment to begin production. You can upload your proof of payment from your order page.`,
+        'success'
+      ) +
+      infoBox(
+        `📄 <strong>Your Signed Contract:</strong> You can view and download your signed contract anytime from your order details page. 
+         This serves as a legal agreement between you and GatsisHub.`,
+        'info'
+      ) +
+      button('View Order Details', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Contract signed for order ${orderNumber}`);
   }
 };
 

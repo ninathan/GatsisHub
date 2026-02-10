@@ -234,8 +234,14 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
                             <FileText className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Sales Agreement</h2>
-                            <p className="text-white/90 text-sm">Please review and sign the contract to proceed</p>
+                            <h2 className="text-2xl font-bold text-white">
+                                {order.requires_contract_amendment ? 'Contract Amendment' : 'Sales Agreement'}
+                            </h2>
+                            <p className="text-white/90 text-sm">
+                                {order.requires_contract_amendment 
+                                    ? 'Please review the changes and sign to acknowledge' 
+                                    : 'Please review and sign the contract to proceed'}
+                            </p>
                         </div>
                     </div>
                     <button
@@ -248,6 +254,55 @@ const ContractModal = ({ order, onClose, onContractSigned }) => {
 
                 {/* Contract Content */}
                 <div className="p-6 bg-gray-50">
+                    {/* Amendment Notice - Show if this is an amendment */}
+                    {order.requires_contract_amendment && order.amendment_details && (
+                        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-6">
+                            <div className="flex items-start gap-3">
+                                <svg className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-amber-900 text-lg mb-2">Contract Amendment Required</h3>
+                                    <p className="text-amber-800 text-sm mb-3">
+                                        <strong>Reason:</strong> {order.amendment_reason || 'Order Update'}
+                                    </p>
+                                    <div className="bg-white rounded p-3 border border-amber-200">
+                                        <p className="font-semibold text-amber-900 text-sm mb-2">What Changed:</p>
+                                        {order.amendment_details.type === 'price' && (
+                                            <div className="space-y-1 text-sm">
+                                                <p className="text-gray-700">
+                                                    <span className="font-medium">Previous Price:</span> ₱{order.amendment_details.oldPrice?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                                </p>
+                                                <p className="text-gray-700">
+                                                    <span className="font-medium">New Price:</span> ₱{order.amendment_details.newPrice?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                                </p>
+                                                <p className={`font-semibold ${order.amendment_details.changeAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                                    {order.amendment_details.changeAmount > 0 ? '+' : ''}₱{Math.abs(order.amendment_details.changeAmount)?.toLocaleString('en-PH', { minimumFractionDigits: 2 })} ({order.amendment_details.changePercentage}%)
+                                                </p>
+                                            </div>
+                                        )}
+                                        {order.amendment_details.type === 'deadline' && (
+                                            <div className="space-y-1 text-sm">
+                                                <p className="text-gray-700">
+                                                    <span className="font-medium">Previous Deadline:</span> {order.amendment_details.oldDeadlineFormatted}
+                                                </p>
+                                                <p className="text-gray-700">
+                                                    <span className="font-medium">New Deadline:</span> {order.amendment_details.newDeadlineFormatted}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-gray-600 mt-2">
+                                            Updated by {order.amendment_details.updatedBy} on {new Date(order.amendment_details.updatedAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <p className="text-amber-800 text-sm mt-3">
+                                        By signing this amendment, you acknowledge and accept the changes outlined above. The rest of the contract terms remain unchanged.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="bg-white p-8 rounded-lg shadow">
                         <div className="text-center mb-6">
                             <h1 className="text-2xl font-bold text-gray-900">SALES AGREEMENT</h1>

@@ -5,6 +5,39 @@ import emailTemplates from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
+// Helper function to send email using Resend API
+const sendEmail = async (to, subject, html) => {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not configured');
+      return;
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'GatsisHub <noreply@gatsishub.com>',
+        to: [to],
+        subject: subject,
+        html: html
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Email send error:', errorData);
+    } else {
+      console.log(`Email sent to ${to}`);
+    }
+  } catch (error) {
+    console.error('Email send error:', error);
+  }
+};
+
 // Helper function to create order log
 async function createOrderLog(orderid, employeeid, employeename, action, fieldChanged, oldValue, newValue, description) {
   try {
@@ -656,16 +689,37 @@ router.patch("/:orderid/price", async (req, res) => {
       return res.status(400).json({ error: "Price must be a valid number" });
     }
 
-    // Get old price before updating
+    // Get old price and customer info before updating
     const { data: oldOrder } = await supabase
       .from("orders")
-      .select("totalprice")
+      .select("totalprice, userid, companyname")
       .eq("orderid", orderid)
       .single();
 
+    const oldPrice = oldOrder?.totalprice || 0;
+    const priceChanged = oldPrice !== priceValue;
+
+    const updateData = { totalprice: priceValue };
+    
+    // If price changed significantly, require contract amendment
+    if (priceChanged && oldPrice > 0) {
+      updateData.requires_contract_amendment = true;
+      updateData.amendment_reason = 'Price Change';
+      updateData.amendment_details = {
+        type: 'price',
+        oldPrice: oldPrice,
+        newPrice: priceValue,
+        changeAmount: priceValue - oldPrice,
+        changePercentage: ((priceValue - oldPrice) / oldPrice * 100).toFixed(2),
+        updatedBy: employeename || 'Sales Admin',
+        updatedAt: new Date().toISOString()
+      };
+      updateData.amendment_requested_date = new Date().toISOString();
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ totalprice: priceValue })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -686,14 +740,50 @@ router.patch("/:orderid/price", async (req, res) => {
       employeename,
       'Price Updated',
       'totalprice',
-      oldOrder?.totalprice,
+      oldPrice,
       priceValue,
-      `Price changed from ₱${oldOrder?.totalprice || 0} to ₱${priceValue}`
+      `Price changed from ₱${oldPrice} to ₱${priceValue}`
     );
+
+    // Send email notification if price changed and customer has email
+    if (priceChanged && oldPrice > 0 && oldOrder?.userid) {
+      try {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("emailaddress, emailnotifications")
+          .eq("userid", oldOrder.userid)
+          .single();
+
+        if (customerData?.emailaddress && customerData?.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const changes = {
+            'Order Number': orderNumber,
+            'Previous Price': `₱${oldPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+            'New Price': `₱${priceValue.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+            'Difference': `₱${Math.abs(priceValue - oldPrice).toLocaleString('en-PH', { minimumFractionDigits: 2 })} ${priceValue > oldPrice ? 'increase' : 'decrease'}`,
+            'Updated By': employeename || 'Sales Administrator'
+          };
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Order ${orderNumber} - Price Updated - Signature Required`,
+            emailTemplates.contractAmendmentRequired(
+              oldOrder.companyname,
+              orderNumber,
+              'Price Change',
+              changes
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+    }
 
     res.status(200).json({
       message: "Order price updated",
-      order: order[0]
+      order: order[0],
+      requiresAmendment: priceChanged && oldPrice > 0
     });
   } catch (err) {
 
@@ -862,16 +952,38 @@ router.patch("/:orderid/deadline", async (req, res) => {
       return res.status(400).json({ error: "Invalid deadline date format" });
     }
 
-    // Get old deadline before updating
+    // Get old deadline and customer info before updating
     const { data: oldOrder } = await supabase
       .from("orders")
-      .select("deadline")
+      .select("deadline, userid, companyname, contract_signed")
       .eq("orderid", orderid)
       .single();
 
+    const oldDeadline = oldOrder?.deadline;
+    const deadlineChanged = oldDeadline !== deadline;
+    const hasSignedContract = oldOrder?.contract_signed;
+
+    const updateData = { deadline: deadline };
+    
+    // If deadline changed and contract was already signed, require amendment
+    if (deadlineChanged && hasSignedContract && oldDeadline) {
+      updateData.requires_contract_amendment = true;
+      updateData.amendment_reason = 'Deadline Change';
+      updateData.amendment_details = {
+        type: 'deadline',
+        oldDeadline: oldDeadline,
+        newDeadline: deadline,
+        oldDeadlineFormatted: new Date(oldDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        newDeadlineFormatted: new Date(deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        updatedBy: employeename || 'Sales Admin',
+        updatedAt: new Date().toISOString()
+      };
+      updateData.amendment_requested_date = new Date().toISOString();
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ deadline: deadline })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -892,14 +1004,49 @@ router.patch("/:orderid/deadline", async (req, res) => {
       employeename,
       'Deadline Updated',
       'deadline',
-      oldOrder?.deadline,
+      oldDeadline,
       deadline,
-      `Deadline changed from ${oldOrder?.deadline ? new Date(oldOrder.deadline).toLocaleDateString() : 'Not set'} to ${new Date(deadline).toLocaleDateString()}`
+      `Deadline changed from ${oldDeadline ? new Date(oldDeadline).toLocaleDateString() : 'Not set'} to ${new Date(deadline).toLocaleDateString()}`
     );
+
+    // Send email notification if deadline changed significantly and customer has email
+    if (deadlineChanged && hasSignedContract && oldDeadline && oldOrder?.userid) {
+      try {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("emailaddress, emailnotifications")
+          .eq("userid", oldOrder.userid)
+          .single();
+
+        if (customerData?.emailaddress && customerData?.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const changes = {
+            'Order Number': orderNumber,
+            'Previous Deadline': new Date(oldDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            'New Deadline': new Date(deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            'Updated By': employeename || 'Sales Administrator'
+          };
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Order ${orderNumber} - Deadline Updated - Signature Required`,
+            emailTemplates.contractAmendmentRequired(
+              oldOrder.companyname,
+              orderNumber,
+              'Deadline Change',
+              changes
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+    }
 
     res.status(200).json({
       message: "Order deadline updated",
-      order: order[0]
+      order: order[0],
+      requiresAmendment: deadlineChanged && hasSignedContract && oldDeadline
     });
   } catch (err) {
 
@@ -1105,20 +1252,38 @@ router.patch("/:orderid/status", async (req, res) => {
 router.patch("/:orderid/sign-contract", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { contractData } = req.body;
+    const { contract_data } = req.body;
 
-    if (!contractData) {
+    if (!contract_data) {
       return res.status(400).json({ error: "Contract data is required" });
     }
 
+    // Get current order to check if this is an amendment
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("contract_signed, requires_contract_amendment, userid")
+      .eq("orderid", orderid)
+      .single();
+
+    const isAmendment = currentOrder?.contract_signed && currentOrder?.requires_contract_amendment;
+
     // Update order with signed contract
+    const updateData = {
+      contract_signed: true,
+      contract_signed_date: new Date().toISOString(),
+      contract_data: contract_data
+    };
+
+    // If this was an amendment, clear the amendment requirements
+    if (isAmendment) {
+      updateData.requires_contract_amendment = false;
+      updateData.amendment_reason = null;
+      updateData.last_amendment_date = new Date().toISOString();
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({
-        contract_signed: true,
-        contract_signed_date: new Date().toISOString(),
-        contract_data: contractData
-      })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -1130,7 +1295,7 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Create notification for customer
+    // Create notification and send email
     try {
       const { data: customerData } = await supabase
         .from("customers")
@@ -1139,19 +1304,47 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
         .single();
 
       if (customerData) {
+        // Create in-app notification
+        const notificationMessage = isAmendment 
+          ? 'You have successfully signed the contract amendment. Your order will continue processing with the updated details.'
+          : 'You have successfully signed the sales agreement. You may now proceed with payment.';
+
         await supabase
           .from('notifications')
           .insert([
             {
               customerid: customerData.customerid,
               orderid: orderid,
-              title: 'Contract Signed Successfully',
-              message: 'You have successfully signed the sales agreement. You may now proceed with payment.',
+              title: isAmendment ? 'Contract Amendment Signed' : 'Contract Signed Successfully',
+              message: notificationMessage,
               type: 'contract_signed',
               isread: false,
               datecreated: new Date().toISOString()
             }
           ]);
+
+        // Send email notification if enabled
+        if (customerData.emailaddress && customerData.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const signedDate = new Date().toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Contract Signed - Order ${orderNumber}`,
+            emailTemplates.contractSigned(
+              customerData.companyname,
+              orderNumber,
+              signedDate,
+              isAmendment
+            )
+          );
+        }
       }
     } catch (notifError) {
       console.error('Failed to create contract notification:', notifError);
@@ -1159,7 +1352,8 @@ router.patch("/:orderid/sign-contract", async (req, res) => {
 
     res.status(200).json({
       message: "Contract signed successfully",
-      order: order[0]
+      order: order[0],
+      isAmendment: isAmendment
     });
   } catch (err) {
     console.error('Error signing contract:', err);
