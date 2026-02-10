@@ -700,7 +700,70 @@ router.patch("/:orderid/price", async (req, res) => {
   }
 });
 
-// 📅 Update order deadline (PATCH)
+// � Update order price breakdown (PATCH)
+router.patch("/:orderid/price-breakdown", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { priceBreakdown, totalPrice, employeeid, employeename } = req.body;
+
+    // Validate breakdown
+    if (!priceBreakdown || typeof priceBreakdown !== 'object') {
+      return res.status(400).json({ error: "Invalid price breakdown" });
+    }
+
+    // Validate required fields
+    if (!priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
+      return res.status(400).json({ error: "Material cost and delivery fee are required" });
+    }
+
+    // Get old data before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("totalprice, price_breakdown")
+      .eq("orderid", orderid)
+      .single();
+
+    // Update order with breakdown and total price
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ 
+        price_breakdown: JSON.stringify(priceBreakdown),
+        totalprice: totalPrice
+      })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Log the breakdown creation/update
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Price Breakdown Updated',
+      'price_breakdown',
+      oldOrder?.price_breakdown ? 'Existing breakdown' : null,
+      'New breakdown',
+      `Final price set to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })} (Material: ₱${priceBreakdown.materialCost}, Delivery: ₱${priceBreakdown.deliveryFee}, VAT: ${priceBreakdown.vatRate}%)`
+    );
+
+    res.status(200).json({
+      message: "Price breakdown saved successfully",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error('Error updating price breakdown:', err);
+    res.status(500).json({ error: err.message || "Failed to save price breakdown" });
+  }
+});
+
+// �📅 Update order deadline (PATCH)
 router.patch("/:orderid/deadline", async (req, res) => {
   try {
     const { orderid } = req.params;

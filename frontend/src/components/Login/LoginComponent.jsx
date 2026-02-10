@@ -294,14 +294,13 @@ const Login = () => {
 
             {/* Google Login */}
             <div className='flex justify-center'>
-              <div className="w-full max-w-xs">
+              <div className="flex justify-center items-center w-full">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
                   shape='rectangular'
                   size='large'
                   text='continue_with'
-                  width='100%'
                 />
               </div>
             </div>

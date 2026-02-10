@@ -1546,7 +1546,7 @@ const Order = () => {
                                                                         {
                                                                             step: 'Out for Delivery',
                                                                             completed: order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
-                                                                            description: 'Quality inspection in progress',
+                                                                            description: 'The delivery has been handed over to the courier and is on its way to you',
                                                                             color: order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? (order.orderstatus === 'In Transit' ? 'green' : 'green') : 'gray'
                                                                         },
                                                                         {

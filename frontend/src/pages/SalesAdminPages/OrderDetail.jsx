@@ -56,6 +56,17 @@ const OrderDetail = () => {
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
+    // Price breakdown states
+    const [showPriceBreakdownModal, setShowPriceBreakdownModal] = useState(false);
+    const [priceBreakdown, setPriceBreakdown] = useState({
+        materialCost: '',
+        deliveryFee: '',
+        deliveryType: 'local', // 'local' or 'international'
+        vatRate: 12,
+        notes: ''
+    });
+    const [isSavingBreakdown, setIsSavingBreakdown] = useState(false);
+
     
 
     // Real-time payment update handler
@@ -148,6 +159,21 @@ const OrderDetail = () => {
                 setOrderStatus(data.order.orderstatus);
                 setValidatedPrice(data.order.totalprice || '');
                 setDeadline(data.order.deadline || '');
+                
+                // Load price breakdown if exists
+                if (data.order.price_breakdown) {
+                    const breakdown = typeof data.order.price_breakdown === 'string' 
+                        ? JSON.parse(data.order.price_breakdown)
+                        : data.order.price_breakdown;
+                    setPriceBreakdown({
+                        materialCost: breakdown.materialCost || '',
+                        deliveryFee: breakdown.deliveryFee || '',
+                        deliveryType: breakdown.deliveryType || 'local',
+                        vatRate: breakdown.vatRate || 12,
+                        notes: breakdown.notes || ''
+                    });
+                }
+                
                 setError(null);
             } catch (err) {
 
@@ -287,6 +313,76 @@ const OrderDetail = () => {
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
+        }
+    };
+
+    const handleSavePriceBreakdown = async () => {
+        // Validate inputs
+        if (!priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
+            showNotificationMessage('Please enter material cost and delivery fee', 'error');
+            return;
+        }
+
+        const materialCost = parseFloat(priceBreakdown.materialCost);
+        const deliveryFee = parseFloat(priceBreakdown.deliveryFee);
+        const vatRate = parseFloat(priceBreakdown.vatRate);
+
+        if (isNaN(materialCost) || isNaN(deliveryFee) || isNaN(vatRate)) {
+            showNotificationMessage('Please enter valid numbers', 'error');
+            return;
+        }
+
+        // Calculate totals
+        const subtotal = materialCost + deliveryFee;
+        const vatAmount = subtotal * (vatRate / 100);
+        const totalPrice = subtotal + vatAmount;
+
+        try {
+            setIsSavingBreakdown(true);
+
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            const breakdownData = {
+                materialCost,
+                deliveryFee,
+                deliveryType: priceBreakdown.deliveryType,
+                vatRate,
+                subtotal,
+                vatAmount,
+                totalPrice,
+                notes: priceBreakdown.notes,
+                createdBy: employee?.employeename,
+                createdAt: new Date().toISOString()
+            };
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/price-breakdown`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priceBreakdown: breakdownData,
+                    totalPrice: totalPrice,
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to save price breakdown');
+            }
+
+            // Update local state
+            setValidatedPrice(totalPrice.toFixed(2));
+            setShowPriceBreakdownModal(false);
+            showNotificationMessage('Price breakdown saved successfully', 'success');
+        } catch (err) {
+            showNotificationMessage(err.message || 'Failed to save price breakdown', 'error');
+        } finally {
+            setIsSavingBreakdown(false);
         }
     };
 
@@ -978,7 +1074,7 @@ const OrderDetail = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Validated Price */}
                             <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                                <label className="font-semibold text-gray-800 block mb-2">Validated Price:</label>
+                                <label className="font-semibold text-gray-800 block mb-2">Final Price:</label>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="number"
@@ -997,6 +1093,13 @@ const OrderDetail = () => {
                                         {isSavingPrice ? 'Saving...' : isEditingPrice ? "Save" : "Edit"}
                                     </button>
                                 </div>
+                                <button
+                                    onClick={() => setShowPriceBreakdownModal(true)}
+                                    className="mt-2 text-sm text-yellow-600 hover:text-yellow-700 font-medium flex items-center gap-1"
+                                >
+                                    <FileSpreadsheet size={14} />
+                                    {priceBreakdown.materialCost ? 'Edit' : 'Create'} Price Breakdown
+                                </button>
                             </div>
 
                             {/* Deadline */}
@@ -1021,6 +1124,44 @@ const OrderDetail = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Price Breakdown Display */}
+                        {priceBreakdown.materialCost && (
+                            <div className="border border-yellow-300 rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-amber-50">
+                                <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    <FileSpreadsheet size={20} className="text-yellow-600" />
+                                    Final Price Breakdown
+                                </h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Material Cost:</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Delivery Fee ({priceBreakdown.deliveryType}):</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm pt-2 border-t border-yellow-300">
+                                        <span className="text-gray-700 font-semibold">Subtotal:</span>
+                                        <span className="font-bold">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">VAT ({priceBreakdown.vatRate}%):</span>
+                                        <span className="font-semibold">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-yellow-400">
+                                        <span className="text-gray-900">Final Total:</span>
+                                        <span className="text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    {priceBreakdown.notes && (
+                                        <div className="mt-3 pt-3 border-t border-yellow-300">
+                                            <p className="text-xs text-gray-600 font-semibold mb-1">Notes:</p>
+                                            <p className="text-sm text-gray-700">{priceBreakdown.notes}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Delivery Address */}
                         <div className="border border-gray-300 rounded-lg p-4">
@@ -1530,6 +1671,179 @@ const OrderDetail = () => {
                                 className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Price Breakdown Modal */}
+            {showPriceBreakdownModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-yellow-400 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-gray-900 text-xl font-semibold">Create Final Price Breakdown</h2>
+                                <p className="text-gray-700 text-sm mt-1">Set detailed pricing for the customer</p>
+                            </div>
+                            <button
+                                onClick={() => setShowPriceBreakdownModal(false)}
+                                className="text-gray-900 hover:text-gray-700 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {/* Material Cost */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Material Cost (₱) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={priceBreakdown.materialCost}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, materialCost: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter total material cost"
+                                />
+                            </div>
+
+                            {/* Delivery Type */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Delivery Type
+                                </label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            value="local"
+                                            checked={priceBreakdown.deliveryType === 'local'}
+                                            onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryType: e.target.value})}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-gray-700">Local (Philippines)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            value="international"
+                                            checked={priceBreakdown.deliveryType === 'international'}
+                                            onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryType: e.target.value})}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-gray-700">International</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Delivery Fee */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Delivery Fee (₱) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={priceBreakdown.deliveryFee}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryFee: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter delivery fee"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                     Suggested: ₱{priceBreakdown.deliveryType === 'local' ? '1000' : '5000'} base + additional for weight
+                                </p>
+                            </div>
+
+                            {/* VAT Rate */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    VAT Rate (%)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={priceBreakdown.vatRate}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, vatRate: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter VAT rate"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                     Philippines: 12%, varies by country
+                                </p>
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Notes (Optional)
+                                </label>
+                                <textarea
+                                    value={priceBreakdown.notes}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, notes: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+                                    rows="3"
+                                    placeholder="Add any pricing notes or adjustments..."
+                                />
+                            </div>
+
+                            {/* Price Summary */}
+                            {priceBreakdown.materialCost && priceBreakdown.deliveryFee && (
+                                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg p-4 space-y-2">
+                                    <h4 className="font-semibold text-gray-800 mb-3">Price Summary</h4>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Material Cost:</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Delivery Fee ({priceBreakdown.deliveryType}):</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm pt-2 border-t border-yellow-300">
+                                        <span className="text-gray-700 font-semibold">Subtotal:</span>
+                                        <span className="font-bold">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">VAT ({priceBreakdown.vatRate}%):</span>
+                                        <span className="font-semibold">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-yellow-400">
+                                        <span className="text-gray-900">Final Total:</span>
+                                        <span className="text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowPriceBreakdownModal(false)}
+                                disabled={isSavingBreakdown}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSavePriceBreakdown}
+                                disabled={!priceBreakdown.materialCost || !priceBreakdown.deliveryFee || isSavingBreakdown}
+                                className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSavingBreakdown ? (
+                                    <>
+                                        <LoadingSpinner size="sm" color="black" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={18} />
+                                        Save Breakdown
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

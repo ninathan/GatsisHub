@@ -170,6 +170,37 @@ const Checkout = () => {
         return VAT_RATES[userCountry] || VAT_RATES['default'];
     };
 
+    // Calculate delivery cost based on location and weight
+    const calculateDeliveryCost = (totalWeightKg) => {
+        const userCountry = user?.country || 'Philippines';
+        const isLocal = userCountry === 'Philippines';
+        
+        // Base delivery cost
+        const baseCost = isLocal ? 1000 : 5000;
+        
+        // Additional cost per kg over 10kg limit
+        const weightLimit = 10;
+        const additionalCostPerKg = isLocal ? 500 : 1000;
+        
+        // Calculate additional cost if weight exceeds limit
+        let additionalCost = 0;
+        let excessWeight = 0;
+        if (totalWeightKg > weightLimit) {
+            excessWeight = totalWeightKg - weightLimit;
+            additionalCost = Math.ceil(excessWeight) * additionalCostPerKg;
+        }
+        
+        return {
+            total: baseCost + additionalCost,
+            baseCost: baseCost,
+            additionalCost: additionalCost,
+            excessWeight: excessWeight,
+            weightLimit: weightLimit,
+            isLocal: isLocal,
+            location: userCountry
+        };
+    };
+
     // Hanger image mapping
     const hangerImages = {
         'MB3': MB3ProductPage,
@@ -320,8 +351,9 @@ const Checkout = () => {
                 }
             }
 
-            // Add delivery cost (fixed 2500 PHP)
-            const deliveryCost = 2500;
+            // Calculate delivery cost based on location and weight
+            const deliveryCostBreakdown = calculateDeliveryCost(totalWeight);
+            const deliveryCost = deliveryCostBreakdown.total;
             const subtotal = materialCost + deliveryCost;
 
             // Calculate VAT based on user's country
@@ -447,13 +479,16 @@ Respond in JSON format:
             const weightInKg = parseFloat(product.weight) / 1000;
             const totalWeight = weightInKg * quantity;
 
+            const deliveryCostBreakdown = calculateDeliveryCost(totalWeight);
+            
             const breakdown = {
                 productWeight: parseFloat(product.weight),
                 weightPerUnit: weightInKg,
                 totalWeight: totalWeight,
                 materials: [],
                 totalMaterialCost: 0,
-                deliveryCost: 2500,
+                deliveryCost: deliveryCostBreakdown.total,
+                deliveryBreakdown: deliveryCostBreakdown,
                 vatRate: getVATRate(),
                 country: user?.country || 'Philippines'
             };
@@ -706,10 +741,19 @@ Respond in JSON format:
             <span>Total Material Cost:</span>
             <span>₱${submittedOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
-        <div class="total-row">
-            <span>Delivery Fee:</span>
-            <span>₱${submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        <div class="total-row" style="margin-bottom: 5px;">
+            <span><strong>Delivery Fee (${submittedOrderData.breakdown.deliveryBreakdown.isLocal ? 'Local' : 'International'}):</strong></span>
+            <span><strong>₱${submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
         </div>
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Base cost:</span>
+            <span>₱${submittedOrderData.breakdown.deliveryBreakdown.baseCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        ${submittedOrderData.breakdown.deliveryBreakdown.additionalCost > 0 ? `
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Extra weight (${Math.ceil(submittedOrderData.breakdown.deliveryBreakdown.excessWeight)} kg over ${submittedOrderData.breakdown.deliveryBreakdown.weightLimit} kg):</span>
+            <span>₱${submittedOrderData.breakdown.deliveryBreakdown.additionalCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>` : ''}
         <div class="total-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 5px;">
             <span><strong>Subtotal:</strong></span>
             <span><strong>₱${submittedOrderData.breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
@@ -719,7 +763,7 @@ Respond in JSON format:
             <span>₱${submittedOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
         <div class="total-amount">
-            <span>TOTAL AMOUNT:</span>
+            <span>${submittedOrderData.hasPayment ? 'FINAL AMOUNT:' : 'ESTIMATED AMOUNT:'}</span>
             <span>₱${submittedOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
     </div>
@@ -2946,9 +2990,21 @@ Respond in JSON format:
                                                         <span>Total Material Cost:</span>
                                                         <span className="font-semibold">₱{breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <div className="flex justify-between text-gray-700">
-                                                        <span>Delivery Fee:</span>
-                                                        <span className="font-semibold">₱{breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    <div className="border-l-2 border-gray-300 pl-2 py-1 space-y-1">
+                                                        <div className="flex justify-between text-gray-700">
+                                                            <span className="font-medium">Delivery Fee ({breakdown.deliveryBreakdown.isLocal ? 'Local' : 'International'}):</span>
+                                                            <span className="font-semibold">₱{breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs text-gray-600 ml-3">
+                                                            <span>• Base cost:</span>
+                                                            <span>₱{breakdown.deliveryBreakdown.baseCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        {breakdown.deliveryBreakdown.additionalCost > 0 && (
+                                                            <div className="flex justify-between text-xs text-gray-600 ml-3">
+                                                                <span>• Extra weight ({Math.ceil(breakdown.deliveryBreakdown.excessWeight)} kg over {breakdown.deliveryBreakdown.weightLimit} kg):</span>
+                                                                <span>₱{breakdown.deliveryBreakdown.additionalCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="flex justify-between text-gray-700 pt-1 border-t border-gray-300">
                                                         <span className="font-semibold">Subtotal:</span>
@@ -2959,7 +3015,7 @@ Respond in JSON format:
                                                         <span className="font-semibold">₱{breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                     <div className="flex justify-between font-bold text-lg pt-2 border-t-2">
-                                                        <span className="text-gray-900">Total Price:</span>
+                                                        <span className="text-gray-900">Estimated Total Price:</span>
                                                         <span className="text-green-600">₱{breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                 </div>
@@ -3320,9 +3376,21 @@ Respond in JSON format:
                                                         <span className="text-gray-700">Total Material Cost:</span>
                                                         <span className="font-semibold">₱{submittedOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <div className="flex justify-between text-sm">
-                                                        <span className="text-gray-700">Delivery Fee:</span>
-                                                        <span className="font-semibold">₱{submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                    <div className="border-l-2 border-green-300 pl-2 py-1 space-y-1">
+                                                        <div className="flex justify-between text-sm">
+                                                            <span className="text-gray-700 font-medium">Delivery Fee ({submittedOrderData.breakdown.deliveryBreakdown.isLocal ? 'Local' : 'International'}):</span>
+                                                            <span className="font-semibold">₱{submittedOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs text-gray-600 ml-3">
+                                                            <span>• Base cost:</span>
+                                                            <span>₱{submittedOrderData.breakdown.deliveryBreakdown.baseCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        {submittedOrderData.breakdown.deliveryBreakdown.additionalCost > 0 && (
+                                                            <div className="flex justify-between text-xs text-gray-600 ml-3">
+                                                                <span>• Extra weight ({Math.ceil(submittedOrderData.breakdown.deliveryBreakdown.excessWeight)} kg over {submittedOrderData.breakdown.deliveryBreakdown.weightLimit} kg):</span>
+                                                                <span>₱{submittedOrderData.breakdown.deliveryBreakdown.additionalCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="flex justify-between text-sm pt-2 border-t border-green-300">
                                                         <span className="text-gray-700 font-semibold">Subtotal:</span>
@@ -3333,7 +3401,7 @@ Respond in JSON format:
                                                         <span className="font-semibold">₱{submittedOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                     <div className="flex justify-between font-bold text-xl pt-2 border-t-2 border-green-400">
-                                                        <span className="text-gray-900">Total Amount:</span>
+                                                        <span className="text-gray-900">Estimated Total Amount:</span>
                                                         <span className="text-green-600">₱{submittedOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                 </div>
