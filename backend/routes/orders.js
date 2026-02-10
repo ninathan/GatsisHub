@@ -617,8 +617,8 @@ router.delete("/:orderid", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Check if order can be cancelled (only For Evaluation or Waiting for Payment)
-    const cancellableStatuses = ['For Evaluation', 'Waiting for Payment'];
+    // Check if order can be cancelled (only For Evaluation, Contract Signing, or Waiting for Payment)
+    const cancellableStatuses = ['For Evaluation', 'Contract Signing', 'Waiting for Payment'];
     if (!cancellableStatuses.includes(existingOrder.orderstatus)) {
       return res.status(400).json({ 
         error: "Order cannot be cancelled at this stage",
@@ -1065,6 +1065,7 @@ router.patch("/:orderid/status", async (req, res) => {
     // Validate status
     const validStatuses = [
       'For Evaluation',
+      'Contract Signing',
       'Waiting for Payment',
       'Verifying Payment',
       'In Production',
