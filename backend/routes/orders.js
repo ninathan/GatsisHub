@@ -53,7 +53,6 @@ router.post("/create", async (req, res) => {
       deliveryAddress, // Add delivery address field
       threeDDesignData, // Complete 3D design JSON string
       totalprice, // Add total price
-      clothingPreferences, // Clothing description from customer
       estimatedBreakdown // Estimated price breakdown from checkout
     } = req.body;
 
@@ -123,7 +122,6 @@ router.post("/create", async (req, res) => {
       deliveryaddress: deliveryAddress || null, // Store delivery address
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
       totalprice: totalprice || null, // Store calculated price
-      clothingpreferences: clothingPreferences || null, // Store clothing description
       estimated_breakdown: estimatedBreakdown ? JSON.parse(estimatedBreakdown) : null, // Store estimated price breakdown
       orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()

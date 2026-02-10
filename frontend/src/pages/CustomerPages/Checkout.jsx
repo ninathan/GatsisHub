@@ -1039,7 +1039,6 @@ Respond in JSON format:
                     ? addresses[selectedAddress].address
                     : `${companyName}, ${contactPhone}`, // Use company info as fallback address
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
-            clothingPreferences: savedClothingDescription || null, // New: save clothing description
             totalprice: totalPrice, // Add calculated price
             estimatedBreakdown: priceBreakdown ? JSON.stringify({
                 ...priceBreakdown,
