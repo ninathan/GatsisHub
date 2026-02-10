@@ -58,6 +58,7 @@ const OrderDetail = () => {
 
     // Price breakdown states
     const [showPriceBreakdownModal, setShowPriceBreakdownModal] = useState(false);
+    const [showViewBreakdownModal, setShowViewBreakdownModal] = useState(false);
     const [priceBreakdown, setPriceBreakdown] = useState({
         materialCost: '',
         deliveryFee: '',
@@ -65,6 +66,7 @@ const OrderDetail = () => {
         vatRate: 12,
         notes: ''
     });
+    const [estimatedBreakdown, setEstimatedBreakdown] = useState(null); // Original estimate from checkout
     const [isSavingBreakdown, setIsSavingBreakdown] = useState(false);
 
     
@@ -160,7 +162,15 @@ const OrderDetail = () => {
                 setValidatedPrice(data.order.totalprice || '');
                 setDeadline(data.order.deadline || '');
                 
-                // Load price breakdown if exists
+                // Load estimated breakdown from checkout (original estimate)
+                if (data.order.estimated_breakdown) {
+                    const estimated = typeof data.order.estimated_breakdown === 'string' 
+                        ? JSON.parse(data.order.estimated_breakdown)
+                        : data.order.estimated_breakdown;
+                    setEstimatedBreakdown(estimated);
+                }
+                
+                // Load price breakdown if exists (sales admin manual breakdown)
                 if (data.order.price_breakdown) {
                     const breakdown = typeof data.order.price_breakdown === 'string' 
                         ? JSON.parse(data.order.price_breakdown)
@@ -573,6 +583,12 @@ const OrderDetail = () => {
             return;
         }
 
+        // Determine which breakdown to use for invoice
+        // Priority: manual breakdown (price_breakdown) > estimated breakdown (estimated_breakdown) > totalprice
+        const useBreakdown = priceBreakdown.materialCost ? priceBreakdown : estimatedBreakdown;
+        const breakdownLabel = priceBreakdown.materialCost ? 'Final Price' : 'Estimated Price';
+        const isPaid = order.orderstatus === 'Paid' || paymentInfo?.payment_status === 'verified';
+
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
 
@@ -747,8 +763,16 @@ const OrderDetail = () => {
                                 ${order.materials ? `<br><small>Material: ${formatMaterialsForInvoice(order.materials)}</small>` : ''}
                             </td>
                             <td style="text-align: center;">${order.quantity}</td>
-                            <td style="text-align: right;">₱${order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
-                            <td style="text-align: right;">₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                            <td style="text-align: right;">₱${
+                                useBreakdown 
+                                    ? (((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    : (order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                            }</td>
+                            <td style="text-align: right;">₱${
+                                useBreakdown 
+                                    ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                            }</td>
                         </tr>
                     </tbody>
                 </table>
@@ -770,12 +794,63 @@ const OrderDetail = () => {
                 </div>
                 ` : ''}
 
+                ${useBreakdown ? `
+                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #191716; margin-bottom: 15px;">${breakdownLabel} Breakdown</h3>
+                    
+                    <table style="width: 100%; border: none;">
+                        <tbody>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">Material Cost:</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">Delivery Fee (${useBreakdown.deliveryType === 'local' ? 'Local' : 'International'}):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ${useBreakdown.baseCost ? `
+                            <tr>
+                                <td style="border: none; padding: 8px 12px; padding-left: 30px; color: #666; font-size: 0.9em;">Base Cost:</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; color: #666; font-size: 0.9em;">₱${parseFloat(useBreakdown.baseCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ` : ''}
+                            ${useBreakdown.excessWeightCost ? `
+                            <tr>
+                                <td style="border: none; padding: 8px 12px; padding-left: 30px; color: #666; font-size: 0.9em;">Excess Weight (${useBreakdown.excessWeight ? useBreakdown.excessWeight.toFixed(2) : '0'} kg × ₱${useBreakdown.ratePerKg || '0'}/kg):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; color: #666; font-size: 0.9em;">₱${parseFloat(useBreakdown.excessWeightCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ` : ''}
+                            <tr style="border-top: 2px solid #ddd;">
+                                <td style="border: none; padding: 8px 12px; padding-top: 15px;"><strong>Subtotal:</strong></td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; padding-top: 15px; font-weight: bold;">₱${(parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">VAT (${useBreakdown.vatRate}%):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    ${useBreakdown.notes ? `
+                    <div style="margin-top: 15px; padding: 10px; background: white; border-left: 3px solid #E6AF2E;">
+                        <strong>Notes:</strong><br>
+                        <span style="color: #666;">${useBreakdown.notes}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
                 <div class="total-section">
+                    ${!useBreakdown ? `
                     <div class="total-row">
                         Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
                     </div>
+                    ` : ''}
                     <div class="total-amount">
-                        Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
+                        Total Amount: ₱${useBreakdown 
+                            ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                            : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                        }
                     </div>
                 </div>
 
@@ -1128,10 +1203,19 @@ const OrderDetail = () => {
                         {/* Price Breakdown Display */}
                         {priceBreakdown.materialCost && (
                             <div className="border border-yellow-300 rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-amber-50">
-                                <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                    <FileSpreadsheet size={20} className="text-yellow-600" />
-                                    Final Price Breakdown
-                                </h3>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                        <FileSpreadsheet size={20} className="text-yellow-600" />
+                                        Final Price Breakdown
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowViewBreakdownModal(true)}
+                                        className="text-yellow-600 hover:text-yellow-700 font-medium text-sm flex items-center gap-1 transition-colors"
+                                    >
+                                        <Eye size={16} />
+                                        View Details
+                                    </button>
+                                </div>
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-700">Material Cost:</span>
@@ -1844,6 +1928,143 @@ const OrderDetail = () => {
                                         Save Breakdown
                                     </>
                                 )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Price Breakdown Modal */}
+            {showViewBreakdownModal && priceBreakdown.materialCost && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-yellow-400 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-gray-900 text-xl font-semibold flex items-center gap-2">
+                                    <FileSpreadsheet size={24} />
+                                    Final Price Breakdown Details
+                                </h2>
+                                <p className="text-gray-700 text-sm mt-1">Complete pricing information for Order #{order?.orderid}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowViewBreakdownModal(false)}
+                                className="text-gray-900 hover:text-gray-700 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Order Info */}
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Customer:</span>
+                                        <p className="font-semibold text-gray-900">{order?.companyname}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Product:</span>
+                                        <p className="font-semibold text-gray-900">{order?.hangertype} ({order?.quantity} units)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Breakdown Details */}
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Price Components</h3>
+                                
+                                {/* Material Cost */}
+                                <div className="border-l-4 border-yellow-400 pl-4 py-2 bg-yellow-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">Material Cost</p>
+                                            <p className="text-xs text-gray-500 mt-1">Total cost of materials used in production</p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Delivery Fee */}
+                                <div className="border-l-4 border-blue-400 pl-4 py-2 bg-blue-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">Delivery Fee</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {priceBreakdown.deliveryType === 'local' ? '🇵🇭 Local' : '🌍 International'} shipping charges
+                                            </p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Subtotal */}
+                                <div className="border-t-2 border-gray-300 pt-3">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-base font-semibold text-gray-700">Subtotal</p>
+                                        <p className="text-xl font-bold text-gray-900">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* VAT */}
+                                <div className="border-l-4 border-green-400 pl-4 py-2 bg-green-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">VAT ({priceBreakdown.vatRate}%)</p>
+                                            <p className="text-xs text-gray-500 mt-1">Value Added Tax</p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Final Total */}
+                                <div className="bg-gradient-to-br from-yellow-100 to-amber-100 border-2 border-yellow-400 rounded-lg p-4 mt-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-lg font-bold text-gray-800">Final Total Amount</p>
+                                            <p className="text-xs text-gray-600 mt-1">Total price including all charges and taxes</p>
+                                        </div>
+                                        <p className="text-3xl font-bold text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Notes */}
+                                {priceBreakdown.notes && (
+                                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mt-4">
+                                        <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                            <FileText size={16} />
+                                            Additional Notes
+                                        </p>
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{priceBreakdown.notes}</p>
+                                    </div>
+                                )}
+
+                                {/* Metadata */}
+                                {priceBreakdown.createdBy && (
+                                    <div className="text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
+                                        <p>Created by: <span className="font-semibold">{priceBreakdown.createdBy}</span></p>
+                                        {priceBreakdown.createdAt && (
+                                            <p>Date: <span className="font-semibold">{new Date(priceBreakdown.createdAt).toLocaleString('en-US', { 
+                                                year: 'numeric', 
+                                                month: 'long', 
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</span></p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowViewBreakdownModal(false)}
+                                className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-semibold transition-colors"
+                            >
+                                Close
                             </button>
                         </div>
                     </div>

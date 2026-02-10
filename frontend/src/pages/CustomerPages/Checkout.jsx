@@ -1009,6 +1009,9 @@ Respond in JSON format:
         // Calculate total price
         const totalPrice = calculateTotalPrice();
 
+        // Get detailed price breakdown for saving
+        const priceBreakdown = getPriceBreakdown();
+
         // Prepare order data
         const orderData = {
             userid: userId,
@@ -1037,7 +1040,12 @@ Respond in JSON format:
                     : `${companyName}, ${contactPhone}`, // Use company info as fallback address
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
             clothingPreferences: savedClothingDescription || null, // New: save clothing description
-            totalprice: totalPrice // Add calculated price
+            totalprice: totalPrice, // Add calculated price
+            estimatedBreakdown: priceBreakdown ? JSON.stringify({
+                ...priceBreakdown,
+                isEstimate: true,
+                createdAt: new Date().toISOString()
+            }) : null // Save estimated breakdown for sales admin reference
         };
 
 
