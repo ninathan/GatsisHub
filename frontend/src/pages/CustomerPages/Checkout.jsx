@@ -1037,8 +1037,8 @@ Respond in JSON format:
             orderInstructions: orderInstructions || null,
             deliveryAddress:
                 addresses.length > 0 && addresses[selectedAddress]?.address
-                    ? addresses[selectedAddress].address
-                    : `${companyName}, ${contactPhone}`, // Use company info as fallback address
+                    ? `${addresses[selectedAddress].address}${addresses[selectedAddress].address.toLowerCase().includes(user?.country?.toLowerCase() || '') ? '' : `, ${user?.country || 'Philippines'}`}`
+                    : `${companyName}, ${contactPhone}, ${user?.country || 'Philippines'}`, // Use company info as fallback address with country
             threeDDesignData: JSON.stringify(threeDDesignData), // Store complete design as JSON
             totalprice: totalPrice, // Add calculated price
             estimatedBreakdown: priceBreakdown ? JSON.stringify({
@@ -1098,8 +1098,9 @@ Respond in JSON format:
                         })
                     ),
                     deliveryAddress: addresses.length > 0 && addresses[selectedAddress]?.address
-                        ? addresses[selectedAddress].address
-                        : `${companyName}, ${contactPhone}`,
+                        ? `${addresses[selectedAddress].address}${addresses[selectedAddress].address.toLowerCase().includes(user?.country?.toLowerCase() || '') ? '' : `, ${user?.country || 'Philippines'}`}`
+                        : `${companyName}, ${contactPhone}, ${user?.country || 'Philippines'}`,
+                    deliveryCountry: user?.country || 'Philippines',
                     notesAndInstruction: orderInstructions,
                     deliveryNotes: deliveryNotes,
                     designFile: customDesignFile ? customDesignFile.name : null,
@@ -1132,8 +1133,9 @@ Respond in JSON format:
                 color,
                 breakdown: getPriceBreakdown(),
                 deliveryAddress: addresses.length > 0 && addresses[selectedAddress]?.address
-                    ? addresses[selectedAddress].address
-                    : `${companyName}, ${contactPhone}`,
+                    ? `${addresses[selectedAddress].address}${addresses[selectedAddress].address.toLowerCase().includes(user?.country?.toLowerCase() || '') ? '' : `, ${user?.country || 'Philippines'}`}`
+                    : `${companyName}, ${contactPhone}, ${user?.country || 'Philippines'}`,
+                deliveryCountry: user?.country || 'Philippines',
                 hasPayment: false // Will be updated when payment is submitted
             };
             console.log('Setting submitted order data:', orderDataForInvoice);

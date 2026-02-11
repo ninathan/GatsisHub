@@ -620,6 +620,7 @@ router.post("/login", async (req, res) => {
           companyname: user.companyname,
           emailaddress: user.emailaddress,
           companynumber: user.companynumber,
+          country: user.country || 'Philippines',
           addresses: user.addresses || []
         }
       });
@@ -768,6 +769,7 @@ router.post("/verify-login-code", async (req, res) => {
         companyname: user.companyname,
         emailaddress: user.emailaddress,
         companynumber: user.companynumber,
+        country: user.country || 'Philippines',
         addresses: user.addresses || []
       },
     });
