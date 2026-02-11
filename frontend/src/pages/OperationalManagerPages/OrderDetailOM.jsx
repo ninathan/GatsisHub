@@ -296,6 +296,156 @@ const OrderDetailOM = () => {
         invoiceWindow.document.close();
     };
 
+    // Real-time payment update handler
+    const handlePaymentUpdate = useCallback(async (payload) => {
+        console.log('Payment realtime update:', payload);
+
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Payment added or updated - refresh payment info
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    setPaymentInfo(payment);
+                }
+            } catch (error) {
+                console.error('Error fetching updated payment:', error);
+            }
+
+            // Also refresh payment history
+            try {
+                const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (historyResponse.ok) {
+                    const data = await historyResponse.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        } else if (payload.eventType === 'DELETE') {
+            // Payment deleted (rejected) - clear payment info
+            setPaymentInfo(null);
+
+            // Refresh payment history to show the rejection
+            try {
+                const historyResponse = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (historyResponse.ok) {
+                    const data = await historyResponse.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        }
+    }, [orderid]);
+
+    const handleApprovePayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to approve', 'error');
+            return;
+        }
+
+        setIsProcessingPayment(true);
+        try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            // Approve payment
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}/verify`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: 'Verified',
+                    verifiedby: employee?.employeeid
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to approve payment');
+            }
+
+            // Payment verification already updates order status to 'In Production' in backend
+            // No need to manually update order status here anymore
+
+            showNotificationMessage('Payment approved and order moved to production', 'success');
+            setShowProofModal(false);
+
+            // Refresh payment and order data
+            const paymentResponse = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+            if (paymentResponse.ok) {
+                const payment = await paymentResponse.json();
+                setPaymentInfo(payment);
+            }
+
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+
+            showNotificationMessage('Failed to approve payment', 'error');
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
+
+    const handleRejectPayment = async () => {
+        if (!paymentInfo || !paymentInfo.paymentid) {
+            showNotificationMessage('No payment to reject', 'error');
+            return;
+        }
+
+        setShowRejectModal(true);
+    };
+
+    const confirmRejectPayment = async () => {
+        if (!rejectionReason.trim()) {
+            showNotificationMessage('Please provide a reason for rejection', 'error');
+            return;
+        }
+
+        setIsProcessingPayment(true);
+        try {
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/payments/${paymentInfo.paymentid}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    verifiedby: employee?.employeeid,
+                    notes: rejectionReason
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reject payment');
+            }
+
+            showNotificationMessage('Payment rejected and archived. Customer has been notified via email.', 'success');
+            setShowProofModal(false);
+            setShowRejectModal(false);
+            setPaymentInfo(null);
+            setRejectionReason('Unable to verify payment details. Please resubmit with clearer information.');
+
+            // Refresh order data
+            const orderResponse = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            if (orderResponse.ok) {
+                const data = await orderResponse.json();
+                setOrder(data.order);
+                setOrderStatus(data.order.orderstatus);
+            }
+        } catch (err) {
+
+            showNotificationMessage('Failed to reject payment', 'error');
+        } finally {
+            setIsProcessingPayment(false);
+        }
+    };
 
     // Real-time order update handler
     const handleOrderUpdate = useCallback((payload) => {
@@ -309,6 +459,45 @@ const OrderDetailOM = () => {
 
     // Subscribe to real-time order updates
     useRealtimeSingleOrder(orderid, handleOrderUpdate);
+
+    // Fetch payment info for this order
+    useEffect(() => {
+        const fetchPaymentInfo = async () => {
+            if (!orderid) return;
+
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/order/${orderid}`);
+                if (response.ok) {
+                    const payment = await response.json();
+                    setPaymentInfo(payment);
+
+                }
+            } catch (error) {
+
+            }
+        };
+
+        fetchPaymentInfo();
+    }, [orderid]);
+
+    // Fetch payment history for this order
+    useEffect(() => {
+        const fetchPaymentHistory = async () => {
+            if (!orderid) return;
+
+            try {
+                const response = await fetch(`https://gatsis-hub.vercel.app/payments/history/${orderid}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPaymentHistory(data.history || []);
+                }
+            } catch (error) {
+                console.error('Error fetching payment history:', error);
+            }
+        };
+
+        fetchPaymentHistory();
+    }, [orderid, showProofModal]); // Refetch when modal closes
 
     // Fetch order details
     useEffect(() => {
@@ -605,8 +794,14 @@ const OrderDetailOM = () => {
     };
 
     const handleViewProof = () => {
+        if (!paymentInfo || !paymentInfo.proofofpayment) {
+            showNotificationMessage('No payment proof available for this order', 'error');
+            return;
+        }
 
-        showNotificationMessage('Proof of payment viewer coming soon', 'success');
+        setShowProofModal(true);
+
+        // showNotificationMessage('Proof of payment viewer coming soon', 'success');
     };
 
     if (loading) {
@@ -671,6 +866,7 @@ const OrderDetailOM = () => {
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none disabled:opacity-50"
                             >
                                 <option>For Evaluation</option>
+                                <option>Contract Signing</option>
                                 <option>Waiting for Payment</option>
                                 <option>Verifying Payment</option>
                                 <option>In Production</option>
@@ -931,6 +1127,327 @@ const OrderDetailOM = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Proof of Payment Modal */}
+            {showProofModal && paymentInfo && (
+                <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-4 flex items-center justify-between flex-shrink-0">
+                            <div>
+                                <h2 className="text-white text-xl md:text-2xl font-bold flex items-center gap-2">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Payment Information
+                                </h2>
+                                <p className="text-white/90 text-sm mt-1 flex items-center gap-2">
+                                    <span className="font-semibold">Method: {paymentInfo.paymentmethod}</span>
+                                    <span className="mx-1">•</span>
+                                    <span className="flex items-center gap-1">
+                                        Status:
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${paymentInfo.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
+                                                paymentInfo.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
+                                                    paymentInfo.paymentstatus === 'Pending Verification' ? 'bg-yellow-400 text-gray-900' :
+                                                        'bg-gray-400 text-white'
+                                            }`}>
+                                            {paymentInfo.paymentstatus}
+                                        </span>
+                                    </span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowProofModal(false);
+                                    setActiveTab('current');
+                                }}
+                                className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Tab Navigation */}
+                        <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
+                            <div className="flex px-6">
+                                <button
+                                    onClick={() => setActiveTab('current')}
+                                    className={`px-6 py-3 font-semibold text-sm transition-all relative ${activeTab === 'current'
+                                            ? 'text-[#E6AF2E] bg-white'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                        }`}
+                                >
+                                    Current Payment
+                                    {activeTab === 'current' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E6AF2E]"></div>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('history')}
+                                    className={`px-6 py-3 font-semibold text-sm transition-all relative ${activeTab === 'history'
+                                            ? 'text-[#E6AF2E] bg-white'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                        }`}
+                                >
+                                    Transaction History ({paymentHistory.length})
+                                    {activeTab === 'history' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E6AF2E]"></div>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tab Content - Scrollable */}
+                        <div className="bg-gray-50 p-6 overflow-auto flex-1">
+                            {activeTab === 'current' ? (
+                                // Current Payment Tab
+                                <>
+                                    {/* Payment Proof Display */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                                        {paymentInfo.proofofpayment && paymentInfo.proofofpayment.toLowerCase().endsWith('.pdf') ? (
+                                            <div className="flex flex-col items-center gap-4 py-12">
+                                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center">
+                                                    <FileText size={40} className="text-indigo-600" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-gray-900 font-bold text-xl mb-2">PDF Payment Proof</p>
+                                                    <p className="text-gray-600 text-sm">Click below to view the document</p>
+                                                </div>
+                                                <a
+                                                    href={paymentInfo.proofofpayment}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-8 py-3 rounded-lg transition-all font-semibold flex items-center gap-2 shadow-md hover:shadow-lg"
+                                                >
+                                                    <Eye size={20} />
+                                                    Open PDF Document
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4">
+                                                <img
+                                                    src={paymentInfo.proofofpayment}
+                                                    alt="Proof of Payment"
+                                                    className="w-full h-auto max-h-[60vh] object-contain rounded-lg"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Current Payment Details */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                                            <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Payment Details
+                                        </h3>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                <span className="text-gray-600 font-medium">Submitted:</span>
+                                                <span className="font-semibold text-gray-900">{formatDate(paymentInfo.datesubmitted)}</span>
+                                            </div>
+                                            {paymentInfo.amountpaid && (
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Amount:</span>
+                                                    <span className="font-semibold text-gray-900">₱{parseFloat(paymentInfo.amountpaid).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                            )}
+                                            {paymentInfo.transactionreference && (
+                                                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                                                    <span className="text-gray-600 font-medium">Reference:</span>
+                                                    <span className="font-mono text-sm font-semibold text-gray-900">{paymentInfo.transactionreference}</span>
+                                                </div>
+                                            )}
+                                            {paymentInfo.notes && (
+                                                <div className="pt-3 border-t border-gray-200">
+                                                    <span className="text-gray-600 font-medium block mb-2">Notes:</span>
+                                                    <p className="text-gray-800 bg-gray-50 p-3 rounded-lg text-sm">{paymentInfo.notes}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                // Transaction History Tab
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <svg className="w-6 h-6 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <h3 className="font-bold text-gray-900 text-xl">Payment Transaction History</h3>
+                                    </div>
+
+                                    {paymentHistory.length === 0 ? (
+                                        <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
+                                            <FileText size={48} className="mx-auto mb-4 text-gray-400" />
+                                            <p className="text-gray-600 font-medium">No transaction history available</p>
+                                            <p className="text-gray-400 text-sm mt-1">Past payment actions will appear here</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {paymentHistory.map((transaction, index) => (
+                                                <div
+                                                    key={transaction.historyid || index}
+                                                    className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all hover:shadow-md ${transaction.action === 'approved' ? 'border-green-200' :
+                                                            transaction.action === 'rejected' ? 'border-red-200' :
+                                                                'border-gray-200'
+                                                        }`}
+                                                >
+                                                    {/* Transaction Header */}
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${transaction.action === 'approved' ? 'bg-green-100 text-green-700' :
+                                                                        transaction.action === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                            'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                    {transaction.action}
+                                                                </span>
+                                                                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${transaction.paymentstatus === 'Verified' ? 'bg-green-500 text-white' :
+                                                                        transaction.paymentstatus === 'Rejected' ? 'bg-red-500 text-white' :
+                                                                            'bg-yellow-400 text-gray-900'
+                                                                    }`}>
+                                                                    {transaction.paymentstatus}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-500 flex items-center gap-1">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                {formatDate(transaction.datesubmitted)}
+                                                            </p>
+                                                        </div>
+                                                        {transaction.proofofpayment && (
+                                                            <a
+                                                                href={transaction.proofofpayment}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center gap-1 transition-colors"
+                                                            >
+                                                                <Eye size={16} />
+                                                                View Proof
+                                                            </a>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Transaction Details */}
+                                                    <div className="space-y-3">
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div>
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Method</span>
+                                                                <p className="font-semibold text-gray-900">{transaction.paymentmethod}</p>
+                                                            </div>
+                                                            {transaction.amountpaid && (
+                                                                <div>
+                                                                    <span className="text-gray-500 text-xs uppercase tracking-wide">Amount</span>
+                                                                    <p className="font-semibold text-gray-900">₱{parseFloat(transaction.amountpaid).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {transaction.transactionreference && (
+                                                            <div>
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Reference</span>
+                                                                <p className="font-mono text-sm font-semibold text-gray-900">{transaction.transactionreference}</p>
+                                                            </div>
+                                                        )}
+                                                        {transaction.notes && (
+                                                            <div className="pt-3 border-t border-gray-200">
+                                                                <span className="text-gray-500 text-xs uppercase tracking-wide">Notes</span>
+                                                                <p className="text-gray-800 mt-1 bg-gray-50 p-3 rounded-lg text-sm">{transaction.notes}</p>
+                                                            </div>
+                                                        )}
+                                                        {transaction.dateverified && (
+                                                            <div className="pt-3 border-t border-gray-200 bg-blue-50 -mx-5 -mb-5 px-5 py-3 rounded-b-xl">
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                    <span className="text-blue-900 font-medium">
+                                                                        Verified: {formatDate(transaction.dateverified)}
+                                                                    </span>
+                                                                    {transaction.employees && (
+                                                                        <span className="text-blue-700">
+                                                                            by {transaction.employees.employeename}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer - Action Buttons */}
+                        {activeTab === 'current' && (
+                            <div className="bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
+                                <div className="flex gap-3 w-full sm:w-auto">
+                                    {paymentInfo.paymentstatus !== 'Verified' && (
+                                        <button
+                                            onClick={handleApprovePayment}
+                                            disabled={isProcessingPayment}
+                                            className="flex-1 sm:flex-none bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isProcessingPayment ? (
+                                                <>
+                                                    <LoadingSpinner size="sm" color="white" />
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Check size={18} />
+                                                    Approve Payment
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                    {paymentInfo.paymentstatus !== 'Rejected' && (
+                                        <button
+                                            onClick={handleRejectPayment}
+                                            disabled={isProcessingPayment}
+                                            className="flex-1 sm:flex-none bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Reject Payment
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowProofModal(false);
+                                        setActiveTab('current');
+                                    }}
+                                    className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg transition-all"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        )}
+                        {activeTab === 'history' && (
+                            <div className="bg-white border-t border-gray-200 px-6 py-4 flex justify-end flex-shrink-0">
+                                <button
+                                    onClick={() => {
+                                        setShowProofModal(false);
+                                        setActiveTab('current');
+                                    }}
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-2.5 rounded-lg transition-all"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* 3D Design Viewer Modal */}
             {show3DModal && selected3DDesign && (

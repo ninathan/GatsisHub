@@ -5,6 +5,39 @@ import emailTemplates from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
+// Helper function to send email using Resend API
+const sendEmail = async (to, subject, html) => {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY not configured');
+      return;
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'GatsisHub <noreply@gatsishub.com>',
+        to: [to],
+        subject: subject,
+        html: html
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Email send error:', errorData);
+    } else {
+      console.log(`Email sent to ${to}`);
+    }
+  } catch (error) {
+    console.error('Email send error:', error);
+  }
+};
+
 // Helper function to create order log
 async function createOrderLog(orderid, employeeid, employeename, action, fieldChanged, oldValue, newValue, description) {
   try {
@@ -52,7 +85,8 @@ router.post("/create", async (req, res) => {
       orderInstructions,
       deliveryAddress, // Add delivery address field
       threeDDesignData, // Complete 3D design JSON string
-      totalprice // Add total price
+      totalprice, // Add total price
+      estimatedBreakdown // Estimated price breakdown from checkout
     } = req.body;
 
     // Validate required fields
@@ -121,6 +155,7 @@ router.post("/create", async (req, res) => {
       deliveryaddress: deliveryAddress || null, // Store delivery address
       threeddesigndata: threeDDesignData || null, // Store complete 3D design
       totalprice: totalprice || null, // Store calculated price
+      estimated_breakdown: estimatedBreakdown ? JSON.parse(estimatedBreakdown) : null, // Store estimated price breakdown
       orderstatus: 'For Evaluation',
       datecreated: new Date().toISOString()
     };
@@ -582,8 +617,8 @@ router.delete("/:orderid", async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Check if order can be cancelled (only For Evaluation or Waiting for Payment)
-    const cancellableStatuses = ['For Evaluation', 'Waiting for Payment'];
+    // Check if order can be cancelled (only For Evaluation, Contract Signing, or Waiting for Payment)
+    const cancellableStatuses = ['For Evaluation', 'Contract Signing', 'Waiting for Payment'];
     if (!cancellableStatuses.includes(existingOrder.orderstatus)) {
       return res.status(400).json({ 
         error: "Order cannot be cancelled at this stage",
@@ -654,16 +689,37 @@ router.patch("/:orderid/price", async (req, res) => {
       return res.status(400).json({ error: "Price must be a valid number" });
     }
 
-    // Get old price before updating
+    // Get old price and customer info before updating
     const { data: oldOrder } = await supabase
       .from("orders")
-      .select("totalprice")
+      .select("totalprice, userid, companyname")
       .eq("orderid", orderid)
       .single();
 
+    const oldPrice = oldOrder?.totalprice || 0;
+    const priceChanged = oldPrice !== priceValue;
+
+    const updateData = { totalprice: priceValue };
+    
+    // If price changed significantly, require contract amendment
+    if (priceChanged && oldPrice > 0) {
+      updateData.requires_contract_amendment = true;
+      updateData.amendment_reason = 'Price Change';
+      updateData.amendment_details = {
+        type: 'price',
+        oldPrice: oldPrice,
+        newPrice: priceValue,
+        changeAmount: priceValue - oldPrice,
+        changePercentage: ((priceValue - oldPrice) / oldPrice * 100).toFixed(2),
+        updatedBy: employeename || 'Sales Admin',
+        updatedAt: new Date().toISOString()
+      };
+      updateData.amendment_requested_date = new Date().toISOString();
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ totalprice: priceValue })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -684,14 +740,50 @@ router.patch("/:orderid/price", async (req, res) => {
       employeename,
       'Price Updated',
       'totalprice',
-      oldOrder?.totalprice,
+      oldPrice,
       priceValue,
-      `Price changed from ₱${oldOrder?.totalprice || 0} to ₱${priceValue}`
+      `Price changed from ₱${oldPrice} to ₱${priceValue}`
     );
+
+    // Send email notification if price changed and customer has email
+    if (priceChanged && oldPrice > 0 && oldOrder?.userid) {
+      try {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("emailaddress, emailnotifications")
+          .eq("userid", oldOrder.userid)
+          .single();
+
+        if (customerData?.emailaddress && customerData?.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const changes = {
+            'Order Number': orderNumber,
+            'Previous Price': `₱${oldPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+            'New Price': `₱${priceValue.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+            'Difference': `₱${Math.abs(priceValue - oldPrice).toLocaleString('en-PH', { minimumFractionDigits: 2 })} ${priceValue > oldPrice ? 'increase' : 'decrease'}`,
+            'Updated By': employeename || 'Sales Administrator'
+          };
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Order ${orderNumber} - Price Updated - Signature Required`,
+            emailTemplates.contractAmendmentRequired(
+              oldOrder.companyname,
+              orderNumber,
+              'Price Change',
+              changes
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+    }
 
     res.status(200).json({
       message: "Order price updated",
-      order: order[0]
+      order: order[0],
+      requiresAmendment: priceChanged && oldPrice > 0
     });
   } catch (err) {
 
@@ -700,7 +792,147 @@ router.patch("/:orderid/price", async (req, res) => {
   }
 });
 
-// 📅 Update order deadline (PATCH)
+// � Update order price breakdown (PATCH)
+router.patch("/:orderid/price-breakdown", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { priceBreakdown, totalPrice, employeeid, employeename } = req.body;
+
+    // Validate breakdown
+    if (!priceBreakdown || typeof priceBreakdown !== 'object') {
+      return res.status(400).json({ error: "Invalid price breakdown" });
+    }
+
+    // Validate required fields
+    if (!priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
+      return res.status(400).json({ error: "Material cost and delivery fee are required" });
+    }
+
+    // Get old data before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("totalprice, price_breakdown")
+      .eq("orderid", orderid)
+      .single();
+
+    // Update order with breakdown and total price
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ 
+        price_breakdown: JSON.stringify(priceBreakdown),
+        totalprice: totalPrice
+      })
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Log the breakdown creation/update
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Price Breakdown Updated',
+      'price_breakdown',
+      oldOrder?.price_breakdown ? 'Existing breakdown' : null,
+      'New breakdown',
+      `Final price set to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })} (Material: ₱${priceBreakdown.materialCost}, Delivery: ₱${priceBreakdown.deliveryFee}, VAT: ${priceBreakdown.vatRate}%)`
+    );
+
+    // Notify customer about price update
+    try {
+      // Get customer data
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (!customerError && customerData) {
+        const orderNumber = orderid.slice(0, 8).toUpperCase();
+        const priceChangeMessage = oldOrder?.price_breakdown 
+          ? `The final price for your order has been updated to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}.`
+          : `The final price for your order has been set to ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}.`;
+
+        // Create in-app notification
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Final Price Updated',
+              message: `${priceChangeMessage} View your updated invoice for detailed breakdown.`,
+              type: 'order_update',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+
+        // Send email notification if enabled
+        if (customerData.emailnotifications) {
+          try {
+            const resendApiKey = process.env.RESEND_API_KEY;
+            
+            if (resendApiKey) {
+              const emailResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: 'GatsisHub <noreply@gatsishub.com>',
+                  to: [customerData.emailaddress],
+                  subject: `Final Price Updated - Order #${orderNumber}`,
+                  html: emailTemplates.orderStatusUpdate(
+                    customerData.companyname, 
+                    orderNumber, 
+                    'Price Updated',
+                    'Final Price Set',
+                    `${priceChangeMessage}<br><br>
+                    <strong>Price Breakdown:</strong><br>
+                    • Material Cost: ₱${parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    • Delivery Fee: ₱${parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    • VAT (${priceBreakdown.vatRate}%): ₱${((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * priceBreakdown.vatRate / 100).toLocaleString('en-PH', { minimumFractionDigits: 2 })}<br>
+                    <strong>Total: ₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong><br><br>
+                    ${priceBreakdown.notes ? `<em>Note: ${priceBreakdown.notes}</em><br><br>` : ''}
+                    Please log in to view your updated invoice.`
+                  )
+                })
+              });
+
+              if (!emailResponse.ok) {
+                console.error('Email sending failed:', await emailResponse.json());
+              }
+            }
+          } catch (emailErr) {
+            console.error('Error sending price update email:', emailErr);
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('Error creating price update notification:', notifErr);
+      // Don't fail the request if notification fails
+    }
+
+    res.status(200).json({
+      message: "Price breakdown saved successfully",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error('Error updating price breakdown:', err);
+    res.status(500).json({ error: err.message || "Failed to save price breakdown" });
+  }
+});
+
+// �📅 Update order deadline (PATCH)
 router.patch("/:orderid/deadline", async (req, res) => {
   try {
     const { orderid } = req.params;
@@ -720,16 +952,38 @@ router.patch("/:orderid/deadline", async (req, res) => {
       return res.status(400).json({ error: "Invalid deadline date format" });
     }
 
-    // Get old deadline before updating
+    // Get old deadline and customer info before updating
     const { data: oldOrder } = await supabase
       .from("orders")
-      .select("deadline")
+      .select("deadline, userid, companyname, contract_signed")
       .eq("orderid", orderid)
       .single();
 
+    const oldDeadline = oldOrder?.deadline;
+    const deadlineChanged = oldDeadline !== deadline;
+    const hasSignedContract = oldOrder?.contract_signed;
+
+    const updateData = { deadline: deadline };
+    
+    // If deadline changed and contract was already signed, require amendment
+    if (deadlineChanged && hasSignedContract && oldDeadline) {
+      updateData.requires_contract_amendment = true;
+      updateData.amendment_reason = 'Deadline Change';
+      updateData.amendment_details = {
+        type: 'deadline',
+        oldDeadline: oldDeadline,
+        newDeadline: deadline,
+        oldDeadlineFormatted: new Date(oldDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        newDeadlineFormatted: new Date(deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        updatedBy: employeename || 'Sales Admin',
+        updatedAt: new Date().toISOString()
+      };
+      updateData.amendment_requested_date = new Date().toISOString();
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ deadline: deadline })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -750,14 +1004,49 @@ router.patch("/:orderid/deadline", async (req, res) => {
       employeename,
       'Deadline Updated',
       'deadline',
-      oldOrder?.deadline,
+      oldDeadline,
       deadline,
-      `Deadline changed from ${oldOrder?.deadline ? new Date(oldOrder.deadline).toLocaleDateString() : 'Not set'} to ${new Date(deadline).toLocaleDateString()}`
+      `Deadline changed from ${oldDeadline ? new Date(oldDeadline).toLocaleDateString() : 'Not set'} to ${new Date(deadline).toLocaleDateString()}`
     );
+
+    // Send email notification if deadline changed significantly and customer has email
+    if (deadlineChanged && hasSignedContract && oldDeadline && oldOrder?.userid) {
+      try {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("emailaddress, emailnotifications")
+          .eq("userid", oldOrder.userid)
+          .single();
+
+        if (customerData?.emailaddress && customerData?.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const changes = {
+            'Order Number': orderNumber,
+            'Previous Deadline': new Date(oldDeadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            'New Deadline': new Date(deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            'Updated By': employeename || 'Sales Administrator'
+          };
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Order ${orderNumber} - Deadline Updated - Signature Required`,
+            emailTemplates.contractAmendmentRequired(
+              oldOrder.companyname,
+              orderNumber,
+              'Deadline Change',
+              changes
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+    }
 
     res.status(200).json({
       message: "Order deadline updated",
-      order: order[0]
+      order: order[0],
+      requiresAmendment: deadlineChanged && hasSignedContract && oldDeadline
     });
   } catch (err) {
 
@@ -770,12 +1059,13 @@ router.patch("/:orderid/deadline", async (req, res) => {
 router.patch("/:orderid/status", async (req, res) => {
   try {
     const { orderid } = req.params;
-    const { status, employeeid, employeename } = req.body;
+    const { status, employeeid, employeename, tracking_link } = req.body;
 
 
     // Validate status
     const validStatuses = [
       'For Evaluation',
+      'Contract Signing',
       'Waiting for Payment',
       'Verifying Payment',
       'In Production',
@@ -800,9 +1090,17 @@ router.patch("/:orderid/status", async (req, res) => {
       .eq("orderid", orderid)
       .single();
 
+    // Prepare update object
+    const updateData = { orderstatus: status };
+    
+    // Add tracking link if provided (for "In Transit" status)
+    if (tracking_link) {
+      updateData.tracking_link = tracking_link;
+    }
+
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ orderstatus: status })
+      .update(updateData)
       .eq("orderid", orderid)
       .select();
 
@@ -825,7 +1123,7 @@ router.patch("/:orderid/status", async (req, res) => {
       'orderstatus',
       oldOrder?.orderstatus,
       status,
-      `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"`
+      `Status changed from "${oldOrder?.orderstatus || 'Unknown'}" to "${status}"${tracking_link ? '. Tracking link added.' : ''}`
     );
 
     // Notify OM for important status changes
@@ -948,6 +1246,267 @@ router.patch("/:orderid/status", async (req, res) => {
 
 
     res.status(500).json({ error: err.message || "Failed to update status" });
+  }
+});
+
+// 📝 Sign contract (PATCH) - Customer signature
+router.patch("/:orderid/sign-contract", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { contract_data } = req.body;
+
+    if (!contract_data) {
+      return res.status(400).json({ error: "Contract data is required" });
+    }
+
+    // Get current order to check if this is an amendment
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("contract_signed, requires_contract_amendment, userid, orderstatus, salesadminid")
+      .eq("orderid", orderid)
+      .single();
+
+    const isAmendment = currentOrder?.contract_signed && currentOrder?.requires_contract_amendment;
+
+    // Update order with signed contract
+    const updateData = {
+      contract_signed: true,
+      contract_signed_date: new Date().toISOString(),
+      contract_data: contract_data
+    };
+
+    // If this was an amendment, clear the amendment requirements
+    if (isAmendment) {
+      updateData.requires_contract_amendment = false;
+      updateData.amendment_reason = null;
+      updateData.last_amendment_date = new Date().toISOString();
+    }
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Create notification and send email
+    try {
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (customerData) {
+        // Create in-app notification
+        const notificationMessage = isAmendment 
+          ? 'You have successfully signed the contract amendment. Your order will continue processing with the updated details.'
+          : 'You have successfully signed the sales agreement. You may now proceed with payment.';
+
+        await supabase
+          .from('notifications')
+          .insert([
+            {
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: isAmendment ? 'Contract Amendment Signed' : 'Contract Signed Successfully',
+              message: notificationMessage,
+              type: 'contract_signed',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }
+          ]);
+
+        // Send email notification if enabled
+        if (customerData.emailaddress && customerData.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const signedDate = new Date().toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Contract Signed - Order ${orderNumber}`,
+            emailTemplates.contractSigned(
+              customerData.companyname,
+              orderNumber,
+              signedDate,
+              isAmendment
+            )
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Failed to create contract notification:', notifError);
+    }
+
+    // Notify sales admin that customer has signed
+    if (!isAmendment && currentOrder?.salesadminid) {
+      try {
+        // Create admin notification
+        await supabase
+          .from('admin_notifications')
+          .insert([{
+            employeeid: currentOrder.salesadminid,
+            orderid: orderid,
+            title: 'Customer Signed Contract',
+            message: `Customer has signed the sales agreement for order ${orderid.slice(0, 8).toUpperCase()}. Please review and sign to proceed to payment stage.`,
+            type: 'contract_customer_signed',
+            isread: false,
+            datecreated: new Date().toISOString()
+          }]);
+      } catch (adminNotifError) {
+        console.error('Failed to notify sales admin:', adminNotifError);
+      }
+    }
+
+    res.status(200).json({
+      message: "Contract signed successfully",
+      order: order[0],
+      isAmendment: isAmendment
+    });
+  } catch (err) {
+    console.error('Error signing contract:', err);
+    res.status(500).json({ error: err.message || "Failed to sign contract" });
+  }
+});
+
+// 📝 Sign contract as Sales Admin (PATCH)
+router.patch("/:orderid/sign-contract-admin", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { contract_data, employeename } = req.body;
+
+    if (!contract_data) {
+      return res.status(400).json({ error: "Contract data is required" });
+    }
+
+    // Get current order status
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("orderstatus, userid, contract_signed")
+      .eq("orderid", orderid)
+      .single();
+
+    // Update order with sales admin signed contract
+    const updateData = {
+      sales_admin_signed: true,
+      sales_admin_signed_date: new Date().toISOString(),
+      sales_admin_signature: contract_data.signature,
+      sales_admin_contract_data: contract_data
+    };
+
+    // If customer has already signed and status is "Contract Signing", move to "Waiting for Payment"
+    if (currentOrder?.contract_signed && currentOrder?.orderstatus === 'Contract Signing') {
+      updateData.orderstatus = 'Waiting for Payment';
+    }
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("orderid", orderid)
+      .select("*, userid");
+
+    if (error) {
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Notify customer based on whether they already signed or not
+    try {
+      const { data: customerData } = await supabase
+        .from("customers")
+        .select("customerid, companyname, emailaddress, emailnotifications")
+        .eq("userid", order[0].userid)
+        .single();
+
+      if (customerData) {
+        // Check if customer already signed before sales admin
+        const customerAlreadySigned = currentOrder?.contract_signed;
+
+        if (customerAlreadySigned) {
+          // Customer signed first - notify them payment is ready (status should have changed to Waiting for Payment)
+          await supabase
+            .from('notifications')
+            .insert([{
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Contract Fully Signed - Payment Ready',
+              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Your order is now ready for payment to begin production.`,
+              type: 'payment_ready',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }]);
+
+          // Send email notification if enabled
+          if (customerData.emailaddress && customerData.emailnotifications) {
+            const orderNumber = orderid.slice(0, 8).toUpperCase();
+
+            await sendEmail(
+              customerData.emailaddress,
+              `Payment Ready - Order ${orderNumber}`,
+              emailTemplates.contractReadyForPayment(
+                customerData.companyname,
+                orderNumber,
+                employeename || 'Sales Administrator'
+              )
+            );
+          }
+        } else {
+          // Sales admin signed first - notify customer contract is ready for their signature
+          await supabase
+            .from('notifications')
+            .insert([{
+              customerid: customerData.customerid,
+              orderid: orderid,
+              title: 'Contract Ready for Your Signature',
+              message: `${employeename || 'Sales Administrator'} has signed the sales agreement. Please review and sign the contract.`,
+              type: 'contract_ready',
+              isread: false,
+              datecreated: new Date().toISOString()
+            }]);
+
+          // Send email notification if enabled
+          if (customerData.emailaddress && customerData.emailnotifications) {
+            const orderNumber = orderid.slice(0, 8).toUpperCase();
+
+            await sendEmail(
+              customerData.emailaddress,
+              `Contract Ready for Signature - Order ${orderNumber}`,
+              emailTemplates.contractReadyForCustomer(
+                customerData.companyname,
+                orderNumber,
+                employeename || 'Sales Administrator'
+              )
+            );
+          }
+        }
+      }
+    } catch (notifError) {
+      console.error('Failed to create notification:', notifError);
+    }
+
+    res.status(200).json({
+      message: "Sales admin contract signed successfully. Customer will be notified.",
+      order: order[0]
+    });
+  } catch (err) {
+    console.error('Error signing contract as sales admin:', err);
+    res.status(500).json({ error: err.message || "Failed to sign contract" });
   }
 });
 

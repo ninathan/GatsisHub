@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, useCallback } from "react";
+import React, { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import {
     Home,
     Package,
@@ -15,6 +15,7 @@ import {
     Edit2,
     ClipboardClock
 } from "lucide-react";
+import SignatureCanvas from 'react-signature-canvas';
 import logo from '../../images/logo.png'
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import HangerScene from '../../components/Checkout/HangerScene';
@@ -55,6 +56,32 @@ const OrderDetail = () => {
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+
+    // Contract signing states
+    const [showContractSignModal, setShowContractSignModal] = useState(false);
+    const [isSigningContract, setIsSigningContract] = useState(false);
+    const sigPadRef = useRef(null);
+
+    // Price breakdown states
+    const [showPriceBreakdownModal, setShowPriceBreakdownModal] = useState(false);
+    const [showViewBreakdownModal, setShowViewBreakdownModal] = useState(false);
+    const [priceBreakdown, setPriceBreakdown] = useState({
+        materialCost: '',
+        deliveryFee: '',
+        deliveryType: 'local', // 'local' or 'international'
+        vatRate: 12,
+        notes: '',
+        totalWeightKg: '' // Add weight field
+    });
+    const [estimatedBreakdown, setEstimatedBreakdown] = useState(null); // Original estimate from checkout
+    const [isSavingBreakdown, setIsSavingBreakdown] = useState(false);
+    const [materialsData, setMaterialsData] = useState([]); // Store material prices from DB
+    const [productsData, setProductsData] = useState([]); // Store product data from DB
+
+    // Tracking link states
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [trackingLink, setTrackingLink] = useState('');
+    const [pendingStatus, setPendingStatus] = useState(null);
 
     
 
@@ -125,40 +152,64 @@ const OrderDetail = () => {
     // Subscribe to real-time order updates
     const { isSubscribed: isOrderSubscribed } = useRealtimeSingleOrder(orderid, handleOrderUpdate);
 
-    // Fetch order details
-    useEffect(() => {
-        const fetchOrder = async () => {
-            if (!orderid) {
-                setError('No order ID provided');
-                setLoading(false);
-                return;
+    // Fetch order details function - wrapped in useCallback for reuse
+    const fetchOrder = useCallback(async () => {
+        if (!orderid) {
+            setError('No order ID provided');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch order');
             }
 
-            try {
-                setLoading(true);
-                const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}`);
+            const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch order');
-                }
-
-                const data = await response.json();
-
-                setOrder(data.order);
-                setOrderStatus(data.order.orderstatus);
-                setValidatedPrice(data.order.totalprice || '');
-                setDeadline(data.order.deadline || '');
-                setError(null);
-            } catch (err) {
-
-                setError(err.message);
-            } finally {
-                setLoading(false);
+            setOrder(data.order);
+            setOrderStatus(data.order.orderstatus);
+            setValidatedPrice(data.order.totalprice || '');
+            setDeadline(data.order.deadline || '');
+            
+            // Load estimated breakdown from checkout (original estimate)
+            if (data.order.estimated_breakdown) {
+                const estimated = typeof data.order.estimated_breakdown === 'string' 
+                    ? JSON.parse(data.order.estimated_breakdown)
+                    : data.order.estimated_breakdown;
+                setEstimatedBreakdown(estimated);
             }
-        };
+            
+            // Load price breakdown if exists (sales admin manual breakdown)
+            if (data.order.price_breakdown) {
+                const breakdown = typeof data.order.price_breakdown === 'string' 
+                    ? JSON.parse(data.order.price_breakdown)
+                    : data.order.price_breakdown;
+                setPriceBreakdown({
+                    materialCost: breakdown.materialCost || '',
+                    deliveryFee: breakdown.deliveryFee || '',
+                    deliveryType: breakdown.deliveryType || 'local',
+                    vatRate: breakdown.vatRate || 12,
+                    notes: breakdown.notes || ''
+                });
+            }
+            
+            setError(null);
+        } catch (err) {
 
-        fetchOrder();
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     }, [orderid]);
+
+    // Fetch order details on mount
+    useEffect(() => {
+        fetchOrder();
+    }, [fetchOrder]);
 
     // Fetch payment info for this order
     useEffect(() => {
@@ -199,6 +250,78 @@ const OrderDetail = () => {
         fetchPaymentHistory();
     }, [orderid, showProofModal]); // Refetch when modal closes
 
+    // Fetch materials and products data for price calculation
+    useEffect(() => {
+        const fetchPricingData = async () => {
+            try {
+                const [materialsRes, productsRes] = await Promise.all([
+                    fetch('https://gatsis-hub.vercel.app/materials'),
+                    fetch('https://gatsis-hub.vercel.app/products')
+                ]);
+
+                if (materialsRes.ok) {
+                    const data = await materialsRes.json();
+                    setMaterialsData(data.materials || []);
+                }
+
+                if (productsRes.ok) {
+                    const data = await productsRes.json();
+                    setProductsData(data.products || []);
+                }
+            } catch (error) {
+                console.error('Error fetching pricing data:', error);
+            }
+        };
+
+        fetchPricingData();
+    }, []);
+
+    // Calculate material cost based on weight and materials
+    const calculateMaterialCost = (weightKg, orderMaterials) => {
+        if (!weightKg || !orderMaterials || !materialsData.length) return 0;
+
+        let totalCost = 0;
+        Object.entries(orderMaterials).forEach(([materialName, percentage]) => {
+            const material = materialsData.find(m => m.materialname === materialName);
+            if (material) {
+                const materialWeight = weightKg * (percentage / 100);
+                totalCost += materialWeight * material.price_per_kg;
+            }
+        });
+
+        return totalCost;
+    };
+
+    // Auto-calculate material cost when weight changes
+    useEffect(() => {
+        if (priceBreakdown.totalWeightKg && order?.materials) {
+            const calculatedCost = calculateMaterialCost(
+                parseFloat(priceBreakdown.totalWeightKg), 
+                order.materials
+            );
+            if (calculatedCost > 0) {
+                setPriceBreakdown(prev => ({
+                    ...prev,
+                    materialCost: calculatedCost.toFixed(2)
+                }));
+            }
+        }
+    }, [priceBreakdown.totalWeightKg, order, materialsData]);
+
+    // Initialize weight from order data when modal opens
+    useEffect(() => {
+        if (showPriceBreakdownModal && order && productsData.length) {
+            const product = productsData.find(p => p.productname === order.hangertype);
+            if (product && product.weight) {
+                const totalWeightKg = ((product.weight * order.quantity) / 1000).toFixed(3);
+                setPriceBreakdown(prev => ({
+                    ...prev,
+                    totalWeightKg: totalWeightKg
+                }));
+            }
+        }
+    }, [showPriceBreakdownModal, order, productsData]);
+
     // Helper functions
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -214,6 +337,31 @@ const OrderDetail = () => {
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
+        
+        // If changing to "In Transit", prompt for tracking link
+        if (newStatus === 'In Transit') {
+            setPendingStatus(newStatus);
+            setTrackingLink(order.tracking_link || ''); // Pre-fill if exists
+            setShowTrackingModal(true);
+            return;
+        }
+        
+        // For other statuses, update directly
+        await updateOrderStatus(newStatus, null);
+    };
+
+    const handleTrackingSubmit = async () => {
+        if (!trackingLink.trim()) {
+            showNotificationMessage('Please enter a tracking link', 'error');
+            return;
+        }
+        
+        await updateOrderStatus(pendingStatus, trackingLink);
+        setShowTrackingModal(false);
+        setPendingStatus(null);
+    };
+
+    const updateOrderStatus = async (newStatus, trackingUrl) => {
         setOrderStatus(newStatus);
 
         try {
@@ -222,16 +370,23 @@ const OrderDetail = () => {
             // Get employee info from localStorage
             const employee = JSON.parse(localStorage.getItem('employee'));
 
+            const requestBody = {
+                status: newStatus,
+                employeeid: employee?.employeeid,
+                employeename: employee?.employeename
+            };
+
+            // Add tracking link if provided
+            if (trackingUrl) {
+                requestBody.tracking_link = trackingUrl;
+            }
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    status: newStatus,
-                    employeeid: employee?.employeeid,
-                    employeename: employee?.employeename
-                })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -287,6 +442,78 @@ const OrderDetail = () => {
             showNotificationMessage(err.message || 'Failed to update price', 'error');
         } finally {
             setIsSavingPrice(false);
+        }
+    };
+
+    const handleSavePriceBreakdown = async () => {
+        // Validate inputs
+        if (!priceBreakdown.totalWeightKg || !priceBreakdown.materialCost || !priceBreakdown.deliveryFee) {
+            showNotificationMessage('Please enter weight, material cost, and delivery fee', 'error');
+            return;
+        }
+
+        const totalWeightKg = parseFloat(priceBreakdown.totalWeightKg);
+        const materialCost = parseFloat(priceBreakdown.materialCost);
+        const deliveryFee = parseFloat(priceBreakdown.deliveryFee);
+        const vatRate = parseFloat(priceBreakdown.vatRate);
+
+        if (isNaN(totalWeightKg) || isNaN(materialCost) || isNaN(deliveryFee) || isNaN(vatRate)) {
+            showNotificationMessage('Please enter valid numbers', 'error');
+            return;
+        }
+
+        // Calculate totals
+        const subtotal = materialCost + deliveryFee;
+        const vatAmount = subtotal * (vatRate / 100);
+        const totalPrice = subtotal + vatAmount;
+
+        try {
+            setIsSavingBreakdown(true);
+
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            const breakdownData = {
+                totalWeightKg, // Include weight in breakdown
+                materialCost,
+                deliveryFee,
+                deliveryType: priceBreakdown.deliveryType,
+                vatRate,
+                subtotal,
+                vatAmount,
+                totalPrice,
+                notes: priceBreakdown.notes,
+                createdBy: employee?.employeename,
+                createdAt: new Date().toISOString()
+            };
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/price-breakdown`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    priceBreakdown: breakdownData,
+                    totalPrice: totalPrice,
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to save price breakdown');
+            }
+
+            // Update local state
+            setValidatedPrice(totalPrice.toFixed(2));
+            setShowPriceBreakdownModal(false);
+            showNotificationMessage('Price breakdown saved successfully', 'success');
+        } catch (err) {
+            showNotificationMessage(err.message || 'Failed to save price breakdown', 'error');
+        } finally {
+            setIsSavingBreakdown(false);
         }
     };
 
@@ -411,6 +638,56 @@ const OrderDetail = () => {
         }
     };
 
+    const handleSignContract = async () => {
+        if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+            showNotificationMessage('Please provide your signature', 'error');
+            return;
+        }
+
+        setIsSigningContract(true);
+
+        try {
+            const signatureDataURL = sigPadRef.current.toDataURL();
+            const employee = JSON.parse(localStorage.getItem('employee'));
+            
+            const contractData = {
+                signature: signatureDataURL,
+                signedDate: new Date().toISOString(),
+                signedBy: employee?.employeename || 'Sales Administrator'
+            };
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/sign-contract-admin`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    contract_data: contractData,
+                    employeename: employee?.employeename
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to sign contract');
+            }
+
+            showNotificationMessage('Contract signed successfully! Customer has been notified.', 'success');
+            setShowContractSignModal(false);
+            
+            // Refresh order data
+            fetchOrder();
+        } catch (err) {
+            console.error('Error signing contract:', err);
+            showNotificationMessage(err.message || 'Failed to sign contract', 'error');
+        } finally {
+            setIsSigningContract(false);
+        }
+    };
+
+    const clearSignature = () => {
+        sigPadRef.current?.clear();
+    };
+
     const handleContactCustomer = async () => {
         try {
             const employee = JSON.parse(localStorage.getItem('employee'));
@@ -476,6 +753,12 @@ const OrderDetail = () => {
             showNotificationMessage('Order data not available', 'error');
             return;
         }
+
+        // Determine which breakdown to use for invoice
+        // Priority: manual breakdown (price_breakdown) > estimated breakdown (estimated_breakdown) > totalprice
+        const useBreakdown = priceBreakdown.materialCost ? priceBreakdown : estimatedBreakdown;
+        const breakdownLabel = priceBreakdown.materialCost ? 'Final Price' : 'Estimated Price';
+        const isPaid = order.orderstatus === 'Paid' || paymentInfo?.payment_status === 'verified';
 
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
@@ -651,8 +934,16 @@ const OrderDetail = () => {
                                 ${order.materials ? `<br><small>Material: ${formatMaterialsForInvoice(order.materials)}</small>` : ''}
                             </td>
                             <td style="text-align: center;">${order.quantity}</td>
-                            <td style="text-align: right;">₱${order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
-                            <td style="text-align: right;">₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</td>
+                            <td style="text-align: right;">₱${
+                                useBreakdown 
+                                    ? (((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    : (order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                            }</td>
+                            <td style="text-align: right;">₱${
+                                useBreakdown 
+                                    ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                            }</td>
                         </tr>
                     </tbody>
                 </table>
@@ -674,12 +965,63 @@ const OrderDetail = () => {
                 </div>
                 ` : ''}
 
+                ${useBreakdown ? `
+                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #191716; margin-bottom: 15px;">${breakdownLabel} Breakdown</h3>
+                    
+                    <table style="width: 100%; border: none;">
+                        <tbody>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">Material Cost:</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">Delivery Fee (${useBreakdown.deliveryType === 'local' ? 'Local' : 'International'}):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ${useBreakdown.baseCost ? `
+                            <tr>
+                                <td style="border: none; padding: 8px 12px; padding-left: 30px; color: #666; font-size: 0.9em;">Base Cost:</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; color: #666; font-size: 0.9em;">₱${parseFloat(useBreakdown.baseCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ` : ''}
+                            ${useBreakdown.excessWeightCost ? `
+                            <tr>
+                                <td style="border: none; padding: 8px 12px; padding-left: 30px; color: #666; font-size: 0.9em;">Excess Weight (${useBreakdown.excessWeight ? useBreakdown.excessWeight.toFixed(2) : '0'} kg × ₱${useBreakdown.ratePerKg || '0'}/kg):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; color: #666; font-size: 0.9em;">₱${parseFloat(useBreakdown.excessWeightCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            ` : ''}
+                            <tr style="border-top: 2px solid #ddd;">
+                                <td style="border: none; padding: 8px 12px; padding-top: 15px;"><strong>Subtotal:</strong></td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; padding-top: 15px; font-weight: bold;">₱${(parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                                <td style="border: none; padding: 8px 12px;">VAT (${useBreakdown.vatRate}%):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    ${useBreakdown.notes ? `
+                    <div style="margin-top: 15px; padding: 10px; background: white; border-left: 3px solid #E6AF2E;">
+                        <strong>Notes:</strong><br>
+                        <span style="color: #666;">${useBreakdown.notes}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
                 <div class="total-section">
+                    ${!useBreakdown ? `
                     <div class="total-row">
                         Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
                     </div>
+                    ` : ''}
                     <div class="total-amount">
-                        Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
+                        Total Amount: ₱${useBreakdown 
+                            ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                            : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
+                        }
                     </div>
                 </div>
 
@@ -891,6 +1233,7 @@ const OrderDetail = () => {
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none disabled:opacity-50"
                             >
                                 <option>For Evaluation</option>
+                                <option>Contract Signing</option>
                                 <option>Waiting for Payment</option>
                                 <option>Verifying Payment</option>
                                 <option>In Production</option>
@@ -978,7 +1321,7 @@ const OrderDetail = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Validated Price */}
                             <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                                <label className="font-semibold text-gray-800 block mb-2">Validated Price:</label>
+                                <label className="font-semibold text-gray-800 block mb-2">Final Price:</label>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="number"
@@ -997,6 +1340,13 @@ const OrderDetail = () => {
                                         {isSavingPrice ? 'Saving...' : isEditingPrice ? "Save" : "Edit"}
                                     </button>
                                 </div>
+                                <button
+                                    onClick={() => setShowPriceBreakdownModal(true)}
+                                    className="mt-2 text-sm text-yellow-600 hover:text-yellow-700 font-medium flex items-center gap-1"
+                                >
+                                    <FileSpreadsheet size={14} />
+                                    {priceBreakdown.materialCost ? 'Edit' : 'Create'} Price Breakdown
+                                </button>
                             </div>
 
                             {/* Deadline */}
@@ -1021,6 +1371,177 @@ const OrderDetail = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Price Breakdown Display */}
+                        {priceBreakdown.materialCost && (
+                            <div className="border border-yellow-300 rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-amber-50">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                        <FileSpreadsheet size={20} className="text-yellow-600" />
+                                        Final Price Breakdown
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowViewBreakdownModal(true)}
+                                        className="text-yellow-600 hover:text-yellow-700 font-medium text-sm flex items-center gap-1 transition-colors"
+                                    >
+                                        <Eye size={16} />
+                                        View Details
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Material Cost:</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Delivery Fee ({priceBreakdown.deliveryType}):</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm pt-2 border-t border-yellow-300">
+                                        <span className="text-gray-700 font-semibold">Subtotal:</span>
+                                        <span className="font-bold">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">VAT ({priceBreakdown.vatRate}%):</span>
+                                        <span className="font-semibold">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-yellow-400">
+                                        <span className="text-gray-900">Final Total:</span>
+                                        <span className="text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    {priceBreakdown.notes && (
+                                        <div className="mt-3 pt-3 border-t border-yellow-300">
+                                            <p className="text-xs text-gray-600 font-semibold mb-1">Notes:</p>
+                                            <p className="text-sm text-gray-700">{priceBreakdown.notes}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Contract Status Display */}
+                        {(order.orderstatus === 'Contract Signing' || order.orderstatus === 'Waiting for Payment' || order.contract_signed || order.sales_admin_signed) && (
+                            <div className={`border rounded-lg p-4 ${order.contract_signed && order.sales_admin_signed ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50'}`}>
+                                <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Contract Status
+                                </h3>
+                                
+                                {/* Sales Admin Signature Status */}
+                                <div className="mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.sales_admin_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Sales Admin Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-amber-700">Sales Admin Signature Required</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {order.sales_admin_signed && (
+                                        <div className="text-sm text-gray-700 ml-10">
+                                            <span className="font-medium">Signed on: </span>
+                                            {new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </div>
+                                    )}
+                                    {!order.sales_admin_signed && (
+                                        <button
+                                            onClick={() => setShowContractSignModal(true)}
+                                            className="mt-2 ml-10 bg-[#E6AF2E] text-[#191716] px-4 py-2 rounded hover:bg-[#d4a02a] flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            Sign Contract
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Customer Signature Status */}
+                                <div className="pt-3 border-t border-gray-300">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.contract_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Customer Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-gray-700">Awaiting Customer Signature</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {order.contract_signed && (
+                                        <>
+                                            <div className="text-sm text-gray-700 ml-10 mb-2">
+                                                <span className="font-medium">Signed on: </span>
+                                                {new Date(order.contract_signed_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    // Open contract in new window or show in modal
+                                                    const contractData = order.contract_data;
+                                                    if (contractData) {
+                                                        const newWindow = window.open('', '_blank');
+                                                        if (newWindow) {
+                                                            newWindow.document.write(contractData.contractHTML || '<p>Contract data not available</p>');
+                                                            newWindow.document.close();
+                                                        }
+                                                    }
+                                                }}
+                                                className="mt-2 ml-10 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Signed Contract
+                                            </button>
+                                        </>
+                                    )}
+                                    {!order.contract_signed && !order.sales_admin_signed && (
+                                        <div className="text-sm text-gray-600 ml-10 italic">
+                                            Customer can sign after you sign first
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Delivery Address */}
                         <div className="border border-gray-300 rounded-lg p-4">
@@ -1536,6 +2057,385 @@ const OrderDetail = () => {
                 </div>
             )}
 
+            {/* Price Breakdown Modal */}
+            {showPriceBreakdownModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-yellow-400 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-gray-900 text-xl font-semibold">Create Final Price Breakdown</h2>
+                                <p className="text-gray-700 text-sm mt-1">Set detailed pricing for the customer</p>
+                            </div>
+                            <button
+                                onClick={() => setShowPriceBreakdownModal(false)}
+                                className="text-gray-900 hover:text-gray-700 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {/* Order Information */}
+                            {order && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                    <h4 className="font-semibold text-gray-800 mb-2">Order Details</h4>
+                                    <div className="text-sm space-y-1">
+                                        <p><span className="font-medium">Product:</span> {order.hangertype}</p>
+                                        <p><span className="font-medium">Quantity:</span> {order.quantity} units</p>
+                                        <p><span className="font-medium">Materials:</span> {formatMaterials(order.materials)}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Total Weight Input */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Total Weight (kg) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    value={priceBreakdown.totalWeightKg}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, totalWeightKg: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter total weight in kg"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    💡 System will calculate material cost based on this weight
+                                </p>
+                            </div>
+
+                            {/* Material Cost (Auto-calculated) */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Material Cost (₱) <span className="text-green-600 text-xs">Auto-calculated</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={priceBreakdown.materialCost}
+                                        onChange={(e) => setPriceBreakdown({...priceBreakdown, materialCost: e.target.value})}
+                                        className="w-full border-2 border-green-300 bg-green-50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                        placeholder="Will auto-calculate from weight"
+                                    />
+                                    <span className="absolute right-3 top-2.5 text-green-600 text-sm">✓ Calculated</span>
+                                </div>
+                                {priceBreakdown.totalWeightKg && order?.materials && materialsData.length > 0 && (
+                                    <div className="mt-2 bg-green-50 border border-green-200 rounded p-3 text-xs space-y-1">
+                                        <p className="font-semibold text-gray-700 mb-1">Calculation Breakdown:</p>
+                                        {Object.entries(order.materials).map(([materialName, percentage]) => {
+                                            const material = materialsData.find(m => m.materialname === materialName);
+                                            if (!material) return null;
+                                            const materialWeight = parseFloat(priceBreakdown.totalWeightKg) * (percentage / 100);
+                                            const cost = materialWeight * material.price_per_kg;
+                                            return (
+                                                <p key={materialName} className="text-gray-600">
+                                                    • {materialName} ({percentage}%): {materialWeight.toFixed(3)} kg × ₱{material.price_per_kg.toLocaleString()} = ₱{cost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Can be manually adjusted if needed
+                                </p>
+                            </div>
+
+                            {/* Delivery Type */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Delivery Type
+                                </label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            value="local"
+                                            checked={priceBreakdown.deliveryType === 'local'}
+                                            onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryType: e.target.value})}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-gray-700">Local (Philippines)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            value="international"
+                                            checked={priceBreakdown.deliveryType === 'international'}
+                                            onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryType: e.target.value})}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-gray-700">International</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Delivery Fee */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Delivery Fee (₱) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={priceBreakdown.deliveryFee}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, deliveryFee: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter delivery fee"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                     Suggested: ₱{priceBreakdown.deliveryType === 'local' ? '1000' : '5000'} base + additional for weight
+                                </p>
+                            </div>
+
+                            {/* VAT Rate */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    VAT Rate (%)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={priceBreakdown.vatRate}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, vatRate: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                    placeholder="Enter VAT rate"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                     Philippines: 12%, varies by country
+                                </p>
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Notes (Optional)
+                                </label>
+                                <textarea
+                                    value={priceBreakdown.notes}
+                                    onChange={(e) => setPriceBreakdown({...priceBreakdown, notes: e.target.value})}
+                                    className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+                                    rows="3"
+                                    placeholder="Add any pricing notes or adjustments..."
+                                />
+                            </div>
+
+                            {/* Price Summary */}
+                            {priceBreakdown.materialCost && priceBreakdown.deliveryFee && (
+                                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg p-4 space-y-2">
+                                    <h4 className="font-semibold text-gray-800 mb-3">Price Summary</h4>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Material Cost:</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">Delivery Fee ({priceBreakdown.deliveryType}):</span>
+                                        <span className="font-semibold">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm pt-2 border-t border-yellow-300">
+                                        <span className="text-gray-700 font-semibold">Subtotal:</span>
+                                        <span className="font-bold">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-700">VAT ({priceBreakdown.vatRate}%):</span>
+                                        <span className="font-semibold">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t-2 border-yellow-400">
+                                        <span className="text-gray-900">Final Total:</span>
+                                        <span className="text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowPriceBreakdownModal(false)}
+                                disabled={isSavingBreakdown}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSavePriceBreakdown}
+                                disabled={!priceBreakdown.totalWeightKg || !priceBreakdown.materialCost || !priceBreakdown.deliveryFee || isSavingBreakdown}
+                                className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSavingBreakdown ? (
+                                    <>
+                                        <LoadingSpinner size="sm" color="black" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={18} />
+                                        Save Breakdown
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Price Breakdown Modal */}
+            {showViewBreakdownModal && priceBreakdown.materialCost && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-yellow-400 px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-gray-900 text-xl font-semibold flex items-center gap-2">
+                                    <FileSpreadsheet size={24} />
+                                    Final Price Breakdown Details
+                                </h2>
+                                <p className="text-gray-700 text-sm mt-1">Complete pricing information for Order #{order?.orderid}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowViewBreakdownModal(false)}
+                                className="text-gray-900 hover:text-gray-700 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Order Info */}
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Customer:</span>
+                                        <p className="font-semibold text-gray-900">{order?.companyname}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Product:</span>
+                                        <p className="font-semibold text-gray-900">{order?.hangertype} ({order?.quantity} units)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Breakdown Details */}
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Price Components</h3>
+                                
+                                {/* Weight Information (if available) */}
+                                {priceBreakdown.totalWeightKg && (
+                                    <div className="border-l-4 border-purple-400 pl-4 py-2 bg-purple-50">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-semibold text-gray-700">Total Weight</p>
+                                                <p className="text-xs text-gray-500 mt-1">Used for material cost calculation</p>
+                                            </div>
+                                            <p className="text-xl font-bold text-gray-900">{parseFloat(priceBreakdown.totalWeightKg).toFixed(3)} kg</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Material Cost */}
+                                <div className="border-l-4 border-yellow-400 pl-4 py-2 bg-yellow-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">Material Cost</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {priceBreakdown.totalWeightKg 
+                                                    ? 'Calculated from weight and material prices' 
+                                                    : 'Total cost of materials used in production'}
+                                            </p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{parseFloat(priceBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Delivery Fee */}
+                                <div className="border-l-4 border-blue-400 pl-4 py-2 bg-blue-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">Delivery Fee</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {priceBreakdown.deliveryType === 'local' ? '🇵🇭 Local' : '🌍 International'} shipping charges
+                                            </p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{parseFloat(priceBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Subtotal */}
+                                <div className="border-t-2 border-gray-300 pt-3">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-base font-semibold text-gray-700">Subtotal</p>
+                                        <p className="text-xl font-bold text-gray-900">₱{(parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* VAT */}
+                                <div className="border-l-4 border-green-400 pl-4 py-2 bg-green-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-700">VAT ({priceBreakdown.vatRate}%)</p>
+                                            <p className="text-xs text-gray-500 mt-1">Value Added Tax</p>
+                                        </div>
+                                        <p className="text-xl font-bold text-gray-900">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Final Total */}
+                                <div className="bg-gradient-to-br from-yellow-100 to-amber-100 border-2 border-yellow-400 rounded-lg p-4 mt-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-lg font-bold text-gray-800">Final Total Amount</p>
+                                            <p className="text-xs text-gray-600 mt-1">Total price including all charges and taxes</p>
+                                        </div>
+                                        <p className="text-3xl font-bold text-yellow-600">₱{((parseFloat(priceBreakdown.materialCost) + parseFloat(priceBreakdown.deliveryFee)) * (1 + parseFloat(priceBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                </div>
+
+                                {/* Notes */}
+                                {priceBreakdown.notes && (
+                                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mt-4">
+                                        <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                            <FileText size={16} />
+                                            Additional Notes
+                                        </p>
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{priceBreakdown.notes}</p>
+                                    </div>
+                                )}
+
+                                {/* Metadata */}
+                                {priceBreakdown.createdBy && (
+                                    <div className="text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
+                                        <p>Created by: <span className="font-semibold">{priceBreakdown.createdBy}</span></p>
+                                        {priceBreakdown.createdAt && (
+                                            <p>Date: <span className="font-semibold">{new Date(priceBreakdown.createdAt).toLocaleString('en-US', { 
+                                                year: 'numeric', 
+                                                month: 'long', 
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}</span></p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowViewBreakdownModal(false)}
+                                className="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg font-semibold transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Notification Modal */}
             {showNotification && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-transparent flex items-center justify-center z-50 p-4">
@@ -1562,6 +2462,69 @@ const OrderDetail = () => {
                                     }`}
                             >
                                 OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tracking Link Modal */}
+            {showTrackingModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-xl font-semibold">Delivery Tracking Link</h2>
+                                <p className="text-white/90 text-sm mt-1">Enter the tracking URL for this shipment</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Tracking URL <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="url"
+                                value={trackingLink}
+                                onChange={(e) => setTrackingLink(e.target.value)}
+                                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                placeholder="https://tracking.example.com/track?id=123456"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                💡 This link will be displayed to the customer so they can track their delivery in real-time.
+                            </p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleTrackingSubmit}
+                                disabled={isSavingStatus || !trackingLink.trim()}
+                                className="px-6 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#191716] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSavingStatus ? 'Saving...' : 'Confirm & Update Status'}
                             </button>
                         </div>
                     </div>
@@ -1631,6 +2594,142 @@ const OrderDetail = () => {
                                 ) : (
                                     <>
                                         ✕ Reject & Notify Customer
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Contract Signing Modal for Sales Admin */}
+            {showContractSignModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-3 md:p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-6 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-2xl font-bold">Sign Sales Agreement</h2>
+                                <p className="text-white/90 text-sm mt-1">As sales administrator, sign to authorize this contract</p>
+                            </div>
+                            <button
+                                onClick={() => setShowContractSignModal(false)}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                disabled={isSigningContract}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Contract Details */}
+                            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-4 mb-6">
+                                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-[#E6AF2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Contract Summary
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Order ID:</span>
+                                        <p className="font-semibold text-gray-900">#{order.orderid.slice(0, 8).toUpperCase()}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Customer:</span>
+                                        <p className="font-semibold text-gray-900">{order.companyname}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Total Amount:</span>
+                                        <p className="font-semibold text-gray-900">₱{parseFloat(order.totalprice || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Deadline:</span>
+                                        <p className="font-semibold text-gray-900">
+                                            {order.deadline ? new Date(order.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Important Notice */}
+                            <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                <div className="flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900 mb-1">Important Authorization</p>
+                                        <p className="text-sm text-blue-800">
+                                            Your signature authorizes this contract on behalf of GatsisHub. After you sign, the customer will be notified 
+                                            and can proceed to sign their part of the agreement.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Signature Pad */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Your Signature <span className="text-red-500">*</span>
+                                </label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                                    <SignatureCanvas
+                                        ref={sigPadRef}
+                                        canvasProps={{
+                                            className: 'w-full h-48 bg-white cursor-crosshair'
+                                        }}
+                                        backgroundColor="white"
+                                    />
+                                </div>
+                                <div className="flex justify-end mt-2">
+                                    <button
+                                        onClick={clearSignature}
+                                        className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                                        type="button"
+                                        disabled={isSigningContract}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Clear Signature
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Legal Notice */}
+                            <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 text-xs text-amber-800">
+                                <p className="font-semibold mb-1">⚖️ Legal Notice</p>
+                                <p>By signing this contract, you confirm that all order details, pricing, and delivery terms are accurate and have been authorized by GatsisHub management.</p>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+                            <button
+                                onClick={() => setShowContractSignModal(false)}
+                                disabled={isSigningContract}
+                                className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSignContract}
+                                disabled={isSigningContract}
+                                className="px-6 py-2 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] hover:from-[#d4a02a] hover:to-[#c49723] text-white rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSigningContract ? (
+                                    <>
+                                        <LoadingSpinner size="sm" color="white" />
+                                        Signing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                        Sign Contract
                                     </>
                                 )}
                             </button>

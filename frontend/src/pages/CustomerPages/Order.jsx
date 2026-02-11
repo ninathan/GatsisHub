@@ -10,6 +10,7 @@ import { useRealtimeOrders } from '../../hooks/useRealtimeOrders';
 import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import StarRating from '../../components/StarRating';
+import ContractModal from '../../components/ContractModal';
 import styled from 'styled-components';
 
 
@@ -56,12 +57,16 @@ const Order = () => {
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [invoiceOrderData, setInvoiceOrderData] = useState(null);
 
+    // Contract modal state
+    const [showContractModal, setShowContractModal] = useState(false);
+    const [orderToSign, setOrderToSign] = useState(null);
+
     const tabs = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'];
 
     // Map tab names to their corresponding order statuses
     const getStatusesForTab = (tab) => {
         const statusMap = {
-            'Pending': ['For Evaluation', 'Waiting for Payment'],
+            'Pending': ['For Evaluation', 'Contract Signing', 'Waiting for Payment'],
             'Processing': ['Verifying Payment', 'In Production', 'Waiting for Shipment'],
             'Shipped': ['In Transit'],
             'Completed': ['Completed'],
@@ -464,6 +469,30 @@ const Order = () => {
         }
     };
 
+    // Contract modal handlers
+    const openContractModal = (order) => {
+        setOrderToSign(order);
+        setShowContractModal(true);
+    };
+
+    const closeContractModal = () => {
+        setShowContractModal(false);
+        setOrderToSign(null);
+    };
+
+    const handleContractSigned = async () => {
+        // Refresh orders to get updated contract status
+        closeContractModal();
+        showNotification('Contract signed successfully! You can now proceed with payment.');
+        
+        // Refresh current page
+        try {
+            await fetchOrders();
+        } catch (err) {
+            console.error('Error refreshing orders:', err);
+        }
+    };
+
     const handleCancelOrder = async () => {
         if (!orderToCancel) return;
 
@@ -687,7 +716,7 @@ const Order = () => {
 
     ${invoiceOrderData.breakdown ? `
     <div class="breakdown-section">
-        <h3>Price Breakdown</h3>
+        <h3>${invoiceOrderData.isPriceFinal ? '💰 Final Price Breakdown' : '📊 Estimated Price Breakdown'}</h3>
         <div class="info-row">
             <span class="label">Product Weight:</span> ${invoiceOrderData.breakdown.productWeight}g per unit
         </div>
@@ -695,6 +724,7 @@ const Order = () => {
             <span class="label">Total Weight:</span> ${invoiceOrderData.breakdown.totalWeight.toFixed(3)} kg
         </div>
         
+        ${!invoiceOrderData.isPriceFinal && invoiceOrderData.breakdown.materials.length > 0 ? `
         <h4 style="margin-top: 20px;">Material Costs:</h4>
         ${invoiceOrderData.breakdown.materials.map(mat => `
         <div class="breakdown-item">
@@ -707,6 +737,7 @@ const Order = () => {
             </div>
         </div>
         `).join('')}
+        ` : ''}
     </div>
 
     <div class="total-section">
@@ -714,14 +745,44 @@ const Order = () => {
             <span>Total Material Cost:</span>
             <span>₱${invoiceOrderData.breakdown.totalMaterialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
-        <div class="total-row">
-            <span>Delivery Fee:</span>
-            <span>₱${invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        <div class="total-row" style="margin-bottom: 5px;">
+            <span><strong>Delivery Fee (${invoiceOrderData.breakdown.deliveryBreakdown?.isLocal ? 'Local' : 'International'}):</strong></span>
+            <span><strong>₱${invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
         </div>
+        ${invoiceOrderData.breakdown.deliveryBreakdown ? `
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Base cost:</span>
+            <span>₱${invoiceOrderData.breakdown.deliveryBreakdown.baseCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        ${invoiceOrderData.breakdown.deliveryBreakdown.additionalCost > 0 ? `
+        <div class="total-row" style="margin-left: 20px; font-size: 0.9em; color: #666;">
+            <span>• Extra weight (${Math.ceil(invoiceOrderData.breakdown.deliveryBreakdown.excessWeight)} kg over ${invoiceOrderData.breakdown.deliveryBreakdown.weightLimit} kg):</span>
+            <span>₱${invoiceOrderData.breakdown.deliveryBreakdown.additionalCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>` : ''}
+        ` : ''}
+        ${invoiceOrderData.breakdown.subtotal ? `
+        <div class="total-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 5px;">
+            <span><strong>Subtotal:</strong></span>
+            <span><strong>₱${invoiceOrderData.breakdown.subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></span>
+        </div>
+        ` : ''}
+        ${invoiceOrderData.breakdown.vatRate ? `
+        <div class="total-row">
+            <span>VAT (${invoiceOrderData.breakdown.vatRate}%${invoiceOrderData.breakdown.country ? ` - ${invoiceOrderData.breakdown.country}` : ''}):</span>
+            <span>₱${invoiceOrderData.breakdown.vatAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+        ` : ''}
         <div class="total-amount">
-            <span>TOTAL AMOUNT:</span>
+            <span>${invoiceOrderData.isPriceFinal ? 'FINAL AMOUNT:' : 'ESTIMATED AMOUNT:'}</span>
             <span>₱${invoiceOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
+    </div>
+    ` : ''}
+
+    ${invoiceOrderData.breakdown?.notes ? `
+    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+        <strong>📝 Note from Sales Team:</strong><br>
+        <span style="color: #666;">${invoiceOrderData.breakdown.notes}</span>
     </div>
     ` : ''}
 
@@ -760,33 +821,166 @@ const Order = () => {
             if (!materialsRes.ok) throw new Error('Failed to fetch materials data');
             const materialsData = await materialsRes.json();
 
-            // Calculate price breakdown
-            const breakdown = {
-                productWeight: product?.weight || 0,
-                totalWeight: ((product?.weight || 0) * order.quantity) / 1000, // Convert to kg
-                materials: [],
-                totalMaterialCost: 0,
-                deliveryCost: 2500,
-                totalPrice: parseFloat(order.totalprice) || 0
-            };
+            // Priority: price_breakdown (sales admin final) > estimated_breakdown (checkout) > calculated fallback
+            let breakdown;
+            let isPriceFinal = false;
 
-            // Calculate material costs
-            if (order.materials && typeof order.materials === 'object') {
-                breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
-                    const material = materialsData.materials.find(m => m.materialname === name);
-                    const pricePerKg = material?.price_per_kg || 0;
-                    const weight = breakdown.totalWeight * (percentage / 100);
-                    const cost = weight * pricePerKg;
-                    breakdown.totalMaterialCost += cost;
+            // Check for sales admin's final price breakdown first
+            if (order.price_breakdown) {
+                isPriceFinal = true;
+                const finalBreakdown = typeof order.price_breakdown === 'string' 
+                    ? JSON.parse(order.price_breakdown) 
+                    : order.price_breakdown;
+                
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: parseFloat(finalBreakdown.totalWeightKg) || (((product?.weight || 0) * order.quantity) / 1000),
+                    materials: [],
+                    totalMaterialCost: parseFloat(finalBreakdown.materialCost) || 0,
+                    deliveryCost: parseFloat(finalBreakdown.deliveryFee) || 0,
+                    deliveryBreakdown: {
+                        isLocal: finalBreakdown.deliveryType === 'local',
+                        baseCost: parseFloat(finalBreakdown.deliveryFee) || 0, // Show full delivery as base for final price
+                        excessWeight: 0,
+                        additionalCost: 0,
+                        weightLimit: 10
+                    },
+                    subtotal: parseFloat(finalBreakdown.materialCost) + parseFloat(finalBreakdown.deliveryFee),
+                    vatRate: parseFloat(finalBreakdown.vatRate) || 12,
+                    vatAmount: (parseFloat(finalBreakdown.materialCost) + parseFloat(finalBreakdown.deliveryFee)) * (parseFloat(finalBreakdown.vatRate) / 100),
+                    totalPrice: parseFloat(order.totalprice) || 0,
+                    country: 'Philippines',
+                    notes: finalBreakdown.notes || null
+                };
 
-                    return {
-                        name,
-                        percentage: Math.round(percentage),
-                        pricePerKg,
-                        weight,
-                        cost
-                    };
-                });
+                // Calculate material breakdown if available
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+            }
+            // Check if order has estimated_breakdown saved (from checkout)
+            else if (order.estimated_breakdown) {
+                // Use saved estimated breakdown from checkout
+                const savedBreakdown = typeof order.estimated_breakdown === 'string' 
+                    ? JSON.parse(order.estimated_breakdown) 
+                    : order.estimated_breakdown;
+                
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: savedBreakdown.totalWeight || (((product?.weight || 0) * order.quantity) / 1000),
+                    materials: [],
+                    totalMaterialCost: savedBreakdown.materialCost || savedBreakdown.totalMaterialCost || 0,
+                    deliveryCost: savedBreakdown.deliveryFee || savedBreakdown.deliveryCost || 0,
+                    deliveryBreakdown: savedBreakdown.deliveryBreakdown || {
+                        isLocal: savedBreakdown.deliveryType === 'local',
+                        baseCost: savedBreakdown.baseCost || 0,
+                        excessWeight: savedBreakdown.excessWeight || 0,
+                        additionalCost: savedBreakdown.excessWeightCost || 0,
+                        weightLimit: savedBreakdown.deliveryType === 'local' ? 10 : 10
+                    },
+                    subtotal: savedBreakdown.subtotal || 0,
+                    vatRate: savedBreakdown.vatRate || 12,
+                    vatAmount: savedBreakdown.vatAmount || 0,
+                    totalPrice: parseFloat(order.totalprice) || 0,
+                    country: savedBreakdown.country || 'Philippines'
+                };
+
+                // Calculate material breakdown if available
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+            } else {
+                // Fallback: Calculate price breakdown dynamically
+                breakdown = {
+                    productWeight: product?.weight || 0,
+                    totalWeight: ((product?.weight || 0) * order.quantity) / 1000, // Convert to kg
+                    materials: [],
+                    totalMaterialCost: 0,
+                    deliveryCost: 0, // Will be calculated below
+                    totalPrice: parseFloat(order.totalprice) || 0
+                };
+
+                // Calculate material costs
+                if (order.materials && typeof order.materials === 'object') {
+                    breakdown.materials = Object.entries(order.materials).map(([name, percentage]) => {
+                        const material = materialsData.materials.find(m => m.materialname === name);
+                        const pricePerKg = material?.price_per_kg || 0;
+                        const weight = breakdown.totalWeight * (percentage / 100);
+                        const cost = weight * pricePerKg;
+                        breakdown.totalMaterialCost += cost;
+
+                        return {
+                            name,
+                            percentage: Math.round(percentage),
+                            pricePerKg,
+                            weight,
+                            cost
+                        };
+                    });
+                }
+
+                // Calculate delivery cost dynamically (fallback if no estimated_breakdown)
+                const totalWeightKg = breakdown.totalWeight;
+                const deliveryAddress = order.deliveryaddress || '';
+                
+                // Determine if local or international
+                const isLocalDelivery = typeof deliveryAddress === 'string' 
+                    ? deliveryAddress.toLowerCase().includes('philippines')
+                    : true;  // Default to local
+
+                const weightLimit = 10; // kg
+                const localBaseCost = 1000;
+                const internationalBaseCost = 5000;
+                const localRatePerKg = 500;
+                const internationalRatePerKg = 1000;
+
+                const baseCost = isLocalDelivery ? localBaseCost : internationalBaseCost;
+                const ratePerKg = isLocalDelivery ? localRatePerKg : internationalRatePerKg;
+
+                let deliveryCost = baseCost;
+                let additionalCost = 0;
+                let excessWeight = 0;
+
+                if (totalWeightKg > weightLimit) {
+                    excessWeight = totalWeightKg - weightLimit;
+                    additionalCost = Math.ceil(excessWeight) * ratePerKg;
+                    deliveryCost = baseCost + additionalCost;
+                }
+
+                breakdown.deliveryCost = deliveryCost;
+                breakdown.deliveryBreakdown = {
+                    isLocal: isLocalDelivery,
+                    baseCost,
+                    excessWeight,
+                    additionalCost,
+                    weightLimit
+                };
             }
 
             // Check if payment exists
@@ -806,6 +1000,7 @@ const Order = () => {
                 selectedMaterials: order.materials,
                 breakdown,
                 hasPayment,
+                isPriceFinal, // Flag to indicate if sales admin set final price
                 deliveryaddress: order.deliveryaddress,
                 customtext: order.customtext,
                 customlogo: order.customlogo,
@@ -1522,13 +1717,25 @@ const Order = () => {
                                                                             step: 'For Evaluation',
                                                                             completed: order.orderstatus !== 'For Evaluation',
                                                                             description: 'Order is being evaluated by our team',
-                                                                            color: order.orderstatus !== 'For Evaluation' ? 'green' : 'gray'
+                                                                            color: order.orderstatus !== 'For Evaluation' ? 'green' : (order.orderstatus === 'For Evaluation' ? 'blue' : 'gray')
+                                                                        },
+                                                                        {
+                                                                            step: 'Contract Signing',
+                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing',
+                                                                            description: 'Sales agreement must be signed before payment',
+                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' ? 'green' : (order.orderstatus === 'Contract Signing' ? 'blue' : 'gray')
+                                                                        },
+                                                                        {
+                                                                            step: 'Waiting for Payment',
+                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' && order.orderstatus !== 'Waiting for Payment',
+                                                                            description: 'Payment submission pending',
+                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Contract Signing' && order.orderstatus !== 'Waiting for Payment' ? 'green' : (order.orderstatus === 'Waiting for Payment' ? 'blue' : 'gray')
                                                                         },
                                                                         {
                                                                             step: 'Payment Verification',
-                                                                            completed: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment',
+                                                                            completed: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
                                                                             description: 'Payment is being verified by our team',
-                                                                            color: order.orderstatus !== 'For Evaluation' && order.orderstatus !== 'Waiting for Payment' ? 'green' : 'gray'
+                                                                            color: order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? 'green' : (order.orderstatus === 'Verifying Payment' ? 'blue' : 'gray')
                                                                         },
                                                                         {
                                                                             step: 'In Production',
@@ -1546,7 +1753,7 @@ const Order = () => {
                                                                         {
                                                                             step: 'Out for Delivery',
                                                                             completed: order.orderstatus === 'In Transit' || order.orderstatus === 'Completed',
-                                                                            description: 'Quality inspection in progress',
+                                                                            description: 'The delivery has been handed over to the courier and is on its way to you',
                                                                             color: order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' ? (order.orderstatus === 'In Transit' ? 'green' : 'green') : 'gray'
                                                                         },
                                                                         {
@@ -1558,7 +1765,7 @@ const Order = () => {
                                                                     ].map((item, index) => (
                                                                         <div key={index} className="flex gap-3 relative">
                                                                             {/* Timeline line */}
-                                                                            {index !== 4 && (
+                                                                            {index !== 8 && (
                                                                                 <div className={`absolute left-[15px] top-8 bottom-0 w-0.5 ${item.completed ? 'bg-green-300' : 'bg-gray-300'
                                                                                     }`}></div>
                                                                             )}
@@ -1625,11 +1832,12 @@ const Order = () => {
                                                                         </div>
                                                                         <span className="text-sm font-bold text-blue-800">
                                                                             {order.orderstatus === 'For Evaluation' ? 'Awaiting Evaluation' :
-                                                                                order.orderstatus === 'Waiting for Payment' ? 'Payment Verification' :
-                                                                                    order.orderstatus === 'Verifying Payment' ? 'Production Start' :
-                                                                                        order.orderstatus === 'In Production' ? 'Quality Check' :
-                                                                                            order.orderstatus === 'Waiting for Shipment' ? 'Shipment' :
-                                                                                                'Processing'}
+                                                                                order.orderstatus === 'Contract Signing' ? 'Sign Contract' :
+                                                                                    order.orderstatus === 'Waiting for Payment' ? 'Submit Payment' :
+                                                                                        order.orderstatus === 'Verifying Payment' ? 'Production Start' :
+                                                                                            order.orderstatus === 'In Production' ? 'Quality Check' :
+                                                                                                order.orderstatus === 'Waiting for Shipment' ? 'Shipment' :
+                                                                                                    'Processing'}
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -1765,8 +1973,84 @@ const Order = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Payment - Show when Waiting for Payment AND (no payment OR payment rejected) */}
+                                                    {/* Contract Amendment Required Notice */}
+                                                    {order.requires_contract_amendment && (
+                                                        <div className="bg-amber-50 border-l-4 border-amber-500 rounded px-3 py-2.5 flex items-start gap-2">
+                                                            <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                            </svg>
+                                                            <div className="flex-1">
+                                                                <p className="text-amber-800 text-xs md:text-sm font-semibold">
+                                                                    Order Update - Signature Required
+                                                                </p>
+                                                                <p className="text-amber-700 text-xs mt-1">
+                                                                    {order.amendment_reason || 'Order details have been updated'}. Please review and sign the amendment.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Contract Signing - Show when Contract Signing status AND contract not signed */}
+                                                    {order.orderstatus === 'Contract Signing' && !order.contract_signed && (
+                                                        <button
+                                                            onClick={() => openContractModal(order)}
+                                                            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#2563eb', color: 'white' }}
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span>Sign Contract</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* Sign Amendment - Show when amendment is required */}
+                                                    {order.requires_contract_amendment && order.contract_signed && (
+                                                        <button
+                                                            onClick={() => openContractModal(order)}
+                                                            className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px] animate-pulse"
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                            <span>Sign Amendment</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* View Contract - Show when contract is signed */}
+                                                    {order.contract_signed && order.orderstatus !== 'Cancelled' && !order.requires_contract_amendment && (
+                                                        <button
+                                                            onClick={() => openContractModal(order)}
+                                                            className="bg-gray-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#4b5563', color: 'white' }}
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span>View Contract</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* Track Delivery - Show when In Transit with tracking link */}
+                                                    {order.orderstatus === 'In Transit' && order.tracking_link && (
+                                                        <a
+                                                            href={order.tracking_link}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
+                                                            style={{ backgroundColor: '#16a34a', color: 'white', textDecoration: 'none' }}
+                                                        >
+                                                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            <span>Track Delivery</span>
+                                                        </a>
+                                                    )}
+
+                                                    {/* Payment - Show when Waiting for Payment AND contract signed AND (no payment OR payment rejected) */}
                                                     {order.orderstatus === 'Waiting for Payment' &&
+                                                        order.contract_signed &&
                                                         (!orderPayments[order.orderid] || orderPayments[order.orderid]?.paymentstatus === 'Rejected') && (
                                                             <Link
                                                                 to="/payment"
@@ -2204,7 +2488,7 @@ const Order = () => {
             {/* Cancel Order Modal */}
             {showCancelModal && orderToCancel && (
                 <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-5">
                             <div className="flex items-center gap-3">
@@ -2323,7 +2607,7 @@ const Order = () => {
             {/* Rating Modal */}
             {showRatingModal && orderToRate && (
                 <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-scaleIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
                         {/* Modal Header */}
                         <div className="bg-[#E6AF2E] px-6 py-5">
                             <div className="flex items-center gap-3">
@@ -2465,7 +2749,7 @@ const Order = () => {
             {/* Notification Modal */}
             {showNotificationModal && (
                 <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-                    <div className={`rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn ${notificationType === 'success' ? 'bg-white' : 'bg-white'
+                    <div className={`rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scaleIn ${notificationType === 'success' ? 'bg-white' : 'bg-white'
                         }`}>
                         {/* Modal Header */}
                         <div className={`px-6 py-5 ${notificationType === 'success'
@@ -2523,7 +2807,7 @@ const Order = () => {
 
             {/* Invoice/Receipt Modal */}
             {showInvoiceModal && invoiceOrderData && (
-                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
                     {/* modal */}
                     <div className="bg-white rounded-lg md:rounded-xl shadow-xl max-w-3xl max-h-[90vh] md:max-h-[80vh] overflow-y-auto w-full relative z-[10000] animate-scaleIn">
                         {/* Header */}
@@ -2734,6 +3018,15 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Contract Modal */}
+            {showContractModal && orderToSign && (
+                <ContractModal
+                    order={orderToSign}
+                    onClose={closeContractModal}
+                    onContractSigned={handleContractSigned}
+                />
             )}
 
             {/* Add animation styles */}

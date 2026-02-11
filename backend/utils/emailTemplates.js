@@ -408,6 +408,177 @@ export const emailTemplates = {
       footer();
       
     return baseTemplate(content, `Payment resubmission needed for order ${orderNumber}`);
+  },
+
+  // Contract amendment required template
+  contractAmendmentRequired: (companyName, orderNumber, reason, changes) => {
+    const content = header() +
+      contentSection(
+        'Order Update - Signature Required',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>We've made updates to your order <strong>${orderNumber}</strong>. To proceed, we need your acknowledgment and signature on these changes.</p>
+         <p style="font-weight: 600; color: ${colors.dark}; margin-top: 20px;">Reason: ${reason}</p>`,
+        colors.warning
+      ) +
+      detailsSection(changes) +
+      infoBox(
+        `<strong>📋 Action Required:</strong><br><br>
+         Please review the changes above and sign the contract amendment to continue with your order. 
+         This ensures both parties are aligned on the updated specifications, pricing, or timeline.`,
+        'warning'
+      ) +
+      infoBox(
+        `⏱️ <strong>Important:</strong> Your order processing will be paused until you review and sign the amendment. 
+         Please complete this at your earliest convenience to avoid delays.`,
+        'info'
+      ) +
+      button('Review & Sign Amendment', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Order ${orderNumber} - Signature Required for Updates`);
+  },
+
+  // Contract signed confirmation template
+  contractSigned: (companyName, orderNumber, signedDate, isAmendment = false) => {
+    const title = isAmendment ? 'Contract Amendment Signed! ✓' : 'Contract Signed Successfully! ✓';
+    const message = isAmendment 
+      ? 'Thank you for signing the contract amendment. Your order will now proceed with the updated details.'
+      : 'Thank you for signing the sales agreement. You can now proceed with payment.';
+    
+    const content = header() +
+      contentSection(
+        title,
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>${message}</p>
+         <p style="color: ${colors.success}; font-weight: 600; font-size: 18px; margin-top: 20px;">✓ Contract Signed</p>`,
+        colors.success
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Document': isAmendment ? 'Contract Amendment' : 'Sales Agreement',
+        'Signed On': signedDate,
+        'Status': '✓ Legally Binding'
+      }) +
+      infoBox(
+        isAmendment 
+          ? `<strong>🎉 What's Next?</strong><br><br>
+             Your order will continue processing with the updated specifications. Our team will keep you informed of progress at each stage.`
+          : `<strong>💳 Next Step:</strong><br><br>
+             Please submit your payment to begin production. You can upload your proof of payment from your order page.`,
+        'success'
+      ) +
+      infoBox(
+        `📄 <strong>Your Signed Contract:</strong> You can view and download your signed contract anytime from your order details page. 
+         This serves as a legal agreement between you and GatsisHub.`,
+        'info'
+      ) +
+      button('View Order Details', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Contract signed for order ${orderNumber}`);
+  },
+
+  // Contract ready for customer signature (after sales admin signs)
+  contractReadyForCustomer: (companyName, orderNumber, salesAdminName) => {
+    const content = header() +
+      contentSection(
+        'Contract Ready for Your Signature 📝',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>Your sales agreement has been reviewed and signed by <strong>${salesAdminName}</strong>.</p>
+         <p style="color: ${colors.primary}; font-weight: 600; font-size: 18px; margin-top: 20px;">📝 Action Required: Please Sign the Contract</p>`,
+        colors.primary
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Sales Representative': salesAdminName,
+        'Status': '✓ Sales Admin Signed',
+        'Next Step': 'Customer Signature Required'
+      }) +
+      infoBox(
+        `<strong>📋 What's Included:</strong><br><br>
+         Your contract includes all agreed-upon specifications, pricing, materials, and delivery timeline. 
+         Please review carefully before signing.`,
+        'info'
+      ) +
+      infoBox(
+        `<strong>💳 Ready to Proceed?</strong><br><br>
+         Once you sign the contract, you'll be able to submit payment and we'll begin production immediately. 
+         This ensures both parties are protected throughout the order process.`,
+        'success'
+      ) +
+      button('Review & Sign Contract', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Contract ready for signature - Order ${orderNumber}`);
+  },
+
+  // Customer signed contract - notify sales admin
+  contractSignedByCustomer: (salesAdminName, orderNumber, customerName) => {
+    const content = header() +
+      contentSection(
+        'Customer Has Signed Contract 📝',
+        `<p>Hi <strong>${salesAdminName}</strong>,</p>
+         <p><strong>${customerName}</strong> has signed the sales agreement for order <strong>${orderNumber}</strong>.</p>
+         <p style="color: ${colors.primary}; font-weight: 600; font-size: 18px; margin-top: 20px;">✅ Action Required: Please Review and Sign</p>`,
+        colors.primary
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Customer': customerName,
+        'Status': '✓ Customer Signed',
+        'Next Step': 'Sales Admin Signature Required'
+      }) +
+      infoBox(
+        `<strong>📋 Your Review:</strong><br><br>
+         Please review the contract details and sign to approve. Once you sign, the order will automatically 
+         move to payment stage and the customer will be notified to submit payment.`,
+        'info'
+      ) +
+      infoBox(
+        `<strong>⚡ Next Steps:</strong><br><br>
+         After your signature, the order status will change to "Waiting for Payment" and the customer can proceed 
+         with payment submission to begin production.`,
+        'success'
+      ) +
+      button('Review & Sign Contract', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/sales-admin/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Customer signed contract - Order ${orderNumber}`);
+  },
+
+  // Contract fully signed - ready for payment
+  contractReadyForPayment: (companyName, orderNumber, salesAdminName) => {
+    const content = header() +
+      contentSection(
+        'Contract Fully Signed - Payment Ready 💳',
+        `<p>Hi <strong>${companyName}</strong>,</p>
+         <p>Great news! <strong>${salesAdminName}</strong> has signed the sales agreement for order <strong>${orderNumber}</strong>.</p>
+         <p style="color: ${colors.success}; font-weight: 600; font-size: 18px; margin-top: 20px;">✅ Contract Complete - Submit Payment Now</p>`,
+        colors.success
+      ) +
+      detailsSection({
+        'Order Number': orderNumber,
+        'Contract Status': '✓ Fully Signed',
+        'Customer Signature': '✓ Complete',
+        'Sales Admin Signature': '✓ Complete',
+        'Next Step': 'Payment Submission'
+      }) +
+      infoBox(
+        `<strong>💳 Submit Payment:</strong><br><br>
+         Your order is now ready for payment! Upload your proof of payment to begin production immediately. 
+         Our team is standing by to start work on your order.`,
+        'success'
+      ) +
+      infoBox(
+        `<strong>📄 Signed Contract:</strong><br><br>
+         Both you and our sales representative have signed the contract. You can view and download the 
+         fully signed contract anytime from your order details page.`,
+        'info'
+      ) +
+      button('Submit Payment', `${process.env.FRONTEND_URL || 'https://gatsishub.com'}/orders`) +
+      footer();
+      
+    return baseTemplate(content, `Payment ready - Order ${orderNumber}`);
   }
 };
 

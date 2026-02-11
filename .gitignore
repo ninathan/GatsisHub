@@ -59,3 +59,11 @@ add_product_weight.sql
 backend/routes/materials.js
 backend/routes/products.js
 frontend/src/pages/SalesAdminPages/ProductSA.jsx
+add_price_breakdown_column.sql
+add_estimated_breakdown_column.sql
+add_contract_fields.sql
+add_tracking_link.sql
+DELIVERY_TRACKING_FEATURE.md
+add_contract_amendment_fields.sql
+CONTRACT_AMENDMENT_SYSTEM.md
+add_sales_admin_contract_signature.sql
