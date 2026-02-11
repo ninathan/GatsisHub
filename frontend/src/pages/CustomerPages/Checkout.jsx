@@ -1783,7 +1783,7 @@ Respond in JSON format:
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
                                     <div className="flex flex-col gap-4 md:gap-6">
                                         {/* Three.js 3D Preview Container */}
-                                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+                                        <div className="bg-[#191716] rounded-lg p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center relative border-2 border-[#DC3545] min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
                                             {/* Fullscreen Button */}
                                             <button
                                                 onClick={toggleFullscreen}
@@ -1823,7 +1823,7 @@ Respond in JSON format:
                                         </div>
 
                                         {/* Hanger Selection - Compact Version */}
-                                        <div className="bg-gradient-to-br from-[#e6af2e] to-[#c82333] rounded-lg border-2 border-gray-300 p-3">
+                                        <div className="bg-[#191716] rounded-lg border-2 border-gray-300 p-3">
                                             <h3 className="font-semibold mb-3 text-sm text-white">Type of Hanger</h3>
                                             <div className="flex gap-2 overflow-x-auto pb-2">
                                                 {hangers.map((hanger) => (
@@ -1847,7 +1847,7 @@ Respond in JSON format:
                                                                 className="w-full h-full object-contain"
                                                             />
                                                         </div>
-                                                        <div className="bg-[#DC3545] text-white py-1 font-semibold text-center text-xs">
+                                                        <div className="bg-yellow-500 text-white py-1 font-semibold text-center text-xs">
                                                             {hanger.name}
                                                         </div>
                                                     </button>
