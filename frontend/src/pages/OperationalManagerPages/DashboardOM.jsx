@@ -242,7 +242,8 @@ const DashboardOM = () => {
                     weeklyProgress: weeklyPercentageCapped,
                     currentProgress: overallPercentage,
                     remaining: totalRemaining,
-                    total: totalTarget
+                    total: totalTarget,
+                    activeQuotasCount: activeQuotas.length
                 }
             };
 
@@ -468,14 +469,14 @@ const DashboardOM = () => {
                             {/* first bar - Total target quota */}
                             <div>
                                 <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-xs md:text-sm font-medium'>Total Target Quota</span>
-                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.percentage}%</span>
+                                    <span className='text-xs md:text-sm font-medium'>End Quota to be reached</span>
+                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.currentProgress}%</span>
                                 </div>
                                 <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
-                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full transition-all duration-1000' style={{ width: `${dashboardData.finalQuota.percentage}%` }}></div>
+                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full transition-all duration-1000' style={{ width: `${dashboardData.finalQuota.currentProgress}%` }}></div>
                                 </div>
                                 <p className='text-xs text-blue-200 mt-1'>
-                                    {dashboardData.producedHangers} / {dashboardData.producedHangers + (dashboardData.finalQuota.remaining || 0)} units
+                                    {dashboardData.producedHangers} / {dashboardData.finalQuota.total || 0} units from {dashboardData.finalQuota.activeQuotasCount || 0} active {dashboardData.finalQuota.activeQuotasCount === 1 ? 'quota' : 'quotas'}
                                 </p>
                             </div>
                             {/* second bar */}
@@ -497,17 +498,6 @@ const DashboardOM = () => {
                                 </div>
                                 <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
                                     <div className='bg-[#DAC325] h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-white mb-2">
-                                    <span className="text-xs md:text-sm font-medium">Current Quota</span>
-                                    <span className="text-xs md:text-sm">{dashboardData.finalQuota.currentProgress}%</span>
-                                </div>
-                                <div className="w-full bg-blue-800 rounded-full h-2 md:h-3">
-                                    <div className="bg-blue-400 h-2 md:h-3 rounded-full transition-all duration-1000"
-                                        style={{ width: `${dashboardData.finalQuota.currentProgress}%` }}></div>
                                 </div>
                             </div>
                         </div>

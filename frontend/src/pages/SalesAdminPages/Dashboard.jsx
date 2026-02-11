@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, CalendarDays, MessageSquare, TrendingUp, TrendingDown, Clock, CheckCircle, DollarSign } from 'lucide-react';
 import { div } from 'framer-motion/client';
 import useScrollAnimation from '../../hooks/useScrollAnimation';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -9,32 +9,14 @@ const Dashboard = () => {
     //state for dashboard data
     const [dashboardData, setDashboardData] = useState({
         totalOrders: 0,
-        producedHangers: 0,
         pendingOrders: 0,
-        todayQuota: {
-            quotaId: null,
-            target: 0,
-            reached: 0,
-            percentage: 0,
-            actualPercentage: 0,
-            isExceeded: false,
-            quotasCount: 0
-        },
-        weeklyQuota: {
-            quotaId: null,
-            target: 0,
-            reached: 0,
-            percentage: 0,
-            actualPercentage: 0,
-            isExceeded: false,
-            quotasCount: 0
-        },
-        finalQuota: {
-            percentage: 0,
-            dailyProgress: 0,
-            weeklyProgress: 0,
-            currentProgress: 0
-        }
+        ongoingOrders: 0,
+        completedOrders: 0,
+        yearlyProfit: 0,
+        monthlyProfit: 0,
+        pendingOrdersList: [],
+        ongoingOrdersList: [],
+        monthlyData: []
     })
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -48,191 +30,131 @@ const Dashboard = () => {
         try {
             setLoading(true);
             
-            // Fetch all active quotas
-            const quotasResponse = await fetch('https://gatsis-hub.vercel.app/quotas?status=Active');
-            const quotasData = await quotasResponse.json();
-            
             // Fetch all orders
             const ordersResponse = await fetch('https://gatsis-hub.vercel.app/orders/all');
             const ordersData = await ordersResponse.json();
 
-            console.log('Quotas Data:', quotasData);
             console.log('Orders Data:', ordersData);
 
-            const activeQuotas = quotasData.quotas || [];
             const allOrders = ordersData.orders || [];
             
-            console.log('Active Quotas:', activeQuotas);
             console.log('All Orders:', allOrders);
             
-            // Calculate total orders and pending orders
+            // Get current year range
+            const currentYear = new Date().getFullYear();
+            const yearStart = new Date(currentYear, 0, 1); // Jan 1
+            const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59); // Dec 31
+            
+            // Calculate total orders
             const totalOrders = allOrders.length;
-            const pendingOrders = allOrders.filter(order => 
-                order.orderstatus === 'For Evaluation' || order.orderstatus === 'In Production'
-            ).length;
-
-            // Helper functions for working days calculation
-            const getRemainingWorkingDays = (startDate, endDate) => {
-                let workingDays = 0;
-                const current = new Date(startDate);
-                const end = new Date(endDate);
-                
-                while (current <= end) {
-                    // Exclude Sundays (0 = Sunday)
-                    if (current.getDay() !== 0) {
-                        workingDays++;
-                    }
-                    current.setDate(current.getDate() + 1);
-                }
-                
-                return workingDays;
-            };
-
-            const getRemainingWeeks = (startDate, endDate) => {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return Math.ceil(diffDays / 7);
-            };
-
-            // Get today's date range (fix timezone issue)
-            const today = new Date();
-            const todayStart = new Date(today);
-            todayStart.setHours(0, 0, 0, 0);
-            const todayEnd = new Date(today);
-            todayEnd.setHours(23, 59, 59, 999);
-
-            // Get week range
-            const weekStart = new Date(today);
-            weekStart.setDate(today.getDate() - today.getDay());
-            weekStart.setHours(0, 0, 0, 0);
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-            weekEnd.setHours(23, 59, 59, 999);
-
-            console.log('Today range:', todayStart, '-', todayEnd);
-            console.log('Week range:', weekStart, '-', weekEnd);
-
-            // Filter quotas that are active today and this week
-            const todayQuotas = activeQuotas.filter(quota => {
-                if (!quota.startdate || !quota.enddate) return false;
-                const startDate = new Date(quota.startdate);
-                const endDate = new Date(quota.enddate);
-                
-                // Fix timezone offset by resetting time components
-                startDate.setHours(0, 0, 0, 0);
-                endDate.setHours(23, 59, 59, 999);
-                
-                const isActive = startDate <= todayEnd && endDate >= todayStart;
-                console.log(`Quota ${quota.quotaid}: startDate=${startDate}, endDate=${endDate}, isActive=${isActive}`);
-                return isActive;
-            });
-
-            const weeklyQuotas = activeQuotas.filter(quota => {
-                if (!quota.startdate || !quota.enddate) return false;
-                const startDate = new Date(quota.startdate);
-                const endDate = new Date(quota.enddate);
-                
-                startDate.setHours(0, 0, 0, 0);
-                endDate.setHours(23, 59, 59, 999);
-                
-                return startDate <= weekEnd && endDate >= weekStart;
-            });
-
-            console.log('Today Quotas:', todayQuotas);
-            console.log('Weekly Quotas:', weeklyQuotas);
-
-            // Calculate overall progress from all active quotas
-            const totalTarget = activeQuotas.reduce((sum, q) => sum + (q.targetquota || 0), 0);
-            const totalFinished = activeQuotas.reduce((sum, q) => sum + (q.finishedquota || 0), 0);
-            const overallPercentage = totalTarget > 0 ? Math.round((totalFinished / totalTarget) * 100) : 0;
-
-            // Track processed orders to detect duplicates
-            const processedOrderIds = new Set();
-
-            // Calculate today's quota - aggregate all active quotas for today
-            let todayTarget = 0;
-            let todayProduction = 0;
             
-            todayQuotas.forEach(quota => {
-                const remainingDays = getRemainingWorkingDays(todayStart, new Date(quota.enddate));
-                console.log(`Quota ${quota.quotaid}: Remaining working days = ${remainingDays}`);
-                
-                const dailyTarget = remainingDays > 0 
-                    ? Math.ceil((quota.targetquota - quota.finishedquota) / remainingDays)
-                    : 0;
-                    
-                todayTarget += dailyTarget;
-                todayProduction += quota.finishedquota || 0;
-                
-                console.log(`Quota ${quota.quotaid}: Daily target = ${dailyTarget}, Production = ${quota.finishedquota}`);
-                
-                // Check for duplicate orders
-                if (quota.assignedorders && Array.isArray(quota.assignedorders)) {
-                    quota.assignedorders.forEach(orderId => {
-                        if (processedOrderIds.has(orderId)) {
-                            console.warn(`⚠️ Duplicate order detected: Order ${orderId} is in multiple quotas!`);
-                        }
-                        processedOrderIds.add(orderId);
-                    });
-                }
-            });
-
-            const todayPercentage = todayTarget > 0 ? Math.round((todayProduction / todayTarget) * 100) : 0;
-            const todayPercentageCapped = Math.min(todayPercentage, 100);
-            console.log(`Today Percentage: ${todayPercentage} % (Display: ${todayPercentageCapped} %)`);
-
-            // Calculate weekly quota - aggregate all active quotas for this week
-            let weeklyTarget = 0;
-            let weeklyProduction = 0;
+            // Pending orders: For Evaluation, Contract Signing, Waiting for Payment
+            const pendingStatuses = ['For Evaluation', 'Contract Signing', 'Waiting for Payment'];
+            const pendingOrdersList = allOrders.filter(order => 
+                pendingStatuses.includes(order.orderstatus)
+            );
+            const pendingOrders = pendingOrdersList.length;
             
-            weeklyQuotas.forEach(quota => {
-                const remainingWeeks = getRemainingWeeks(todayStart, new Date(quota.enddate));
-                console.log(`Quota ${quota.quotaid}: Remaining weeks = ${remainingWeeks}`);
-                
-                const weekTarget = remainingWeeks > 0 
-                    ? Math.ceil((quota.targetquota - quota.finishedquota) / remainingWeeks)
-                    : 0;
-                    
-                weeklyTarget += weekTarget;
-                weeklyProduction += quota.finishedquota || 0;
-                
-                console.log(`Quota ${quota.quotaid}: Weekly target = ${weekTarget}, Production = ${quota.finishedquota}`);
+            // Ongoing orders: In Production, Waiting for Shipment, In Transit
+            const ongoingStatuses = ['Paid', 'In Production', 'Waiting for Shipment', 'In Transit'];
+            const ongoingOrdersList = allOrders.filter(order => 
+                ongoingStatuses.includes(order.orderstatus)
+            );
+            const ongoingOrders = ongoingOrdersList.length;
+            
+            // Completed orders (all completed orders, not filtered by year initially for debugging)
+            const completedOrdersAll = allOrders.filter(order => order.orderstatus === 'Completed');
+            
+            console.log('All Completed Orders:', completedOrdersAll);
+            console.log('Completed Orders Count:', completedOrdersAll.length);
+            
+            // Log first few completed orders to check data
+            if (completedOrdersAll.length > 0) {
+                console.log('Sample Completed Order:', completedOrdersAll[0]);
+                console.log('Order Date:', completedOrdersAll[0].datecreated);
+                console.log('Total Price:', completedOrdersAll[0].totalprice);
+            }
+            
+            // Completed orders for the current year (using datecreated)
+            const completedOrdersThisYear = completedOrdersAll.filter(order => {
+                const orderDate = new Date(order.datecreated);
+                const orderYear = orderDate.getFullYear();
+                console.log(`Order ${order.orderid}: Year=${orderYear}, currentYear=${currentYear}`);
+                return orderYear === currentYear;
             });
-
-            const weeklyPercentage = weeklyTarget > 0 ? Math.round((weeklyProduction / weeklyTarget) * 100) : 0;
-            const weeklyPercentageCapped = Math.min(weeklyPercentage, 100);
-            console.log(`Weekly Percentage: ${weeklyPercentage} % (Display: ${weeklyPercentageCapped} %)`);
+            
+            console.log('Completed Orders This Year:', completedOrdersThisYear.length);
+            
+            const completedOrders = completedOrdersThisYear.length;
+            
+            // Calculate yearly profit from completed orders
+            const yearlyProfit = completedOrdersThisYear.reduce((sum, order) => {
+                const price = parseFloat(order.totalprice) || 0;
+                console.log(`Adding order ${order.orderid}: price=${price}`);
+                return sum + price;
+            }, 0);
+            
+            console.log('Yearly Profit Total:', yearlyProfit);
+            console.log('Yearly Profit Total:', yearlyProfit);
+            
+            // Calculate monthly profit (current month)
+            const currentMonth = new Date().getMonth();
+            const monthStart = new Date(currentYear, currentMonth, 1);
+            const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+            
+            console.log('Current Month:', currentMonth, 'Month Range:', monthStart, 'to', monthEnd);
+            
+            const completedOrdersThisMonth = completedOrdersAll.filter(order => {
+                const orderDate = new Date(order.datecreated);
+                const isInMonth = orderDate >= monthStart && orderDate <= monthEnd;
+                console.log(`Order ${order.orderid}: date=${orderDate}, isInMonth=${isInMonth}`);
+                return isInMonth;
+            });
+            
+            console.log('Completed Orders This Month:', completedOrdersThisMonth.length);
+            
+            const monthlyProfit = completedOrdersThisMonth.reduce((sum, order) => {
+                const price = parseFloat(order.totalprice) || 0;
+                return sum + price;
+            }, 0);
+            
+            console.log('Monthly Profit Total:', monthlyProfit);
+            
+            // Calculate monthly data for the year (for visualization)
+            const monthlyData = [];
+            for (let month = 0; month < 12; month++) {
+                const mStart = new Date(currentYear, month, 1);
+                const mEnd = new Date(currentYear, month + 1, 0, 23, 59, 59);
+                
+                const monthOrders = completedOrdersAll.filter(order => {
+                    const orderDate = new Date(order.datecreated);
+                    return orderDate >= mStart && orderDate <= mEnd;
+                });
+                
+                const monthProfit = monthOrders.reduce((sum, order) => {
+                    const price = parseFloat(order.totalprice) || 0;
+                    return sum + price;
+                }, 0);
+                
+                monthlyData.push({
+                    month: new Date(currentYear, month).toLocaleString('default', { month: 'short' }),
+                    profit: monthProfit,
+                    orders: monthOrders.length
+                });
+            }
+            
+            console.log('Monthly Data:', monthlyData);
 
             const newData = {
                 totalOrders,
-                producedHangers: totalFinished,
                 pendingOrders,
-                todayQuota: {
-                    quotaId: null,
-                    target: todayTarget,
-                    reached: todayProduction,
-                    percentage: todayPercentageCapped,
-                    actualPercentage: todayPercentage,
-                    isExceeded: todayPercentage > 100,
-                    quotasCount: todayQuotas.length
-                },
-                weeklyQuota: {
-                    quotaId: null,
-                    target: weeklyTarget,
-                    reached: weeklyProduction,
-                    percentage: weeklyPercentageCapped,
-                    actualPercentage: weeklyPercentage,
-                    isExceeded: weeklyPercentage > 100,
-                    quotasCount: weeklyQuotas.length
-                },
-                finalQuota: {
-                    percentage: overallPercentage,
-                    dailyProgress: todayPercentageCapped,
-                    weeklyProgress: weeklyPercentageCapped,
-                    currentProgress: overallPercentage
-                }
+                ongoingOrders,
+                completedOrders,
+                yearlyProfit,
+                monthlyProfit,
+                pendingOrdersList: pendingOrdersList.slice(0, 5), // Top 5 for display
+                ongoingOrdersList: ongoingOrdersList.slice(0, 5), // Top 5 for display
+                monthlyData
             };
 
             console.log('Setting Dashboard Data:', newData);
@@ -247,100 +169,86 @@ const Dashboard = () => {
         }
     };
 
-    const CircularProgress = ({ percentage, size = 120, strokeWidth = 12 }) => {
-        const radius = (size - strokeWidth) / 2
-        const circumference = radius * 2 * Math.PI
-        const offset = circumference - (percentage / 100) * circumference
-
-        return (
-            <svg width={size} height={size} className="transform -rotate-90">
-                {/* Background circle */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    stroke="#3b4d7a"
-                    strokeWidth={strokeWidth}
-                    fill="none"
-                />
-                {/* Progress circle */}
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    stroke="#fbbf24"
-                    strokeWidth={strokeWidth}
-                    fill="none"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-out"
-                />
-            </svg>
-        );
+    // Helper function to format currency
+    const formatCurrency = (amount) => {
+        return `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+    
+    // Helper function to get status badge color
+    const getStatusBadge = (status) => {
+        const statusColors = {
+            'For Evaluation': 'bg-yellow-100 text-yellow-700 border-yellow-300',
+            'Contract Signing': 'bg-blue-100 text-blue-700 border-blue-300',
+            'Waiting for Payment': 'bg-purple-100 text-purple-700 border-purple-300',
+            'Paid': 'bg-green-100 text-green-700 border-green-300',
+            'In Production': 'bg-indigo-100 text-indigo-700 border-indigo-300',
+            'Waiting for Shipment': 'bg-cyan-100 text-cyan-700 border-cyan-300',
+            'In Transit': 'bg-teal-100 text-teal-700 border-teal-300',
+            'Completed': 'bg-green-200 text-green-800 border-green-400'
+        };
+        return statusColors[status] || 'bg-gray-100 text-gray-700 border-gray-300';
     };
 
     // Stat card component for reusable metric displays
-    const StatCard = ({ title, value, subtitle, trend }) => (
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-[#E6AF2E]">
-            <div className="text-lg md:text-2xl text-[#191716] font-medium mb-2">{title}</div>
-            <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
-            {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
-            {trend && (
-                <div className={`flex items-center mt-2 text-xs md:text-sm ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {trend > 0 ? <TrendingUp size={14} className="mr-1 md:w-4 md:h-4" /> : <TrendingDown size={14} className="mr-1 md:w-4 md:h-4" />}
-                    <span>{Math.abs(trend)}% vs last period</span>
+    const StatCard = ({ title, value, subtitle, icon: Icon, color = 'blue' }) => {
+        const colorClasses = {
+            blue: 'border-blue-500 bg-blue-50',
+            green: 'border-green-500 bg-green-50',
+            yellow: 'border-yellow-500 bg-yellow-50',
+            purple: 'border-purple-500 bg-purple-50'
+        };
+        
+        return (
+            <div className={`bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 ${colorClasses[color]}`}>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="text-lg md:text-xl text-[#191716] font-medium">{title}</div>
+                    {Icon && <Icon className="text-gray-400" size={24} />}
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{value}</div>
+                {subtitle && <div className="text-xs md:text-sm text-gray-500">{subtitle}</div>}
+            </div>
+        );
+    };
+
+    // Order card component for displaying order lists
+    const OrderCard = ({ title, orders, icon: Icon, emptyMessage }) => (
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+            <div className="flex items-center mb-4">
+                {Icon && <Icon className="mr-2 text-[#E6AF2E]" size={24} />}
+                <h3 className="text-lg md:text-xl font-bold text-gray-900">{title}</h3>
+            </div>
+            {orders.length === 0 ? (
+                <p className="text-gray-500 text-sm">{emptyMessage}</p>
+            ) : (
+                <div className="space-y-3">
+                    {orders.map((order, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex-1">
+                                <p className="font-semibold text-gray-900">Order #{order.ordernumber || order.orderid}</p>
+                                <p className="text-sm text-gray-600">{order.companyname || 'N/A'}</p>
+                            </div>
+                            <div className="text-right">
+                                <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getStatusBadge(order.orderstatus)}`}>
+                                    {order.orderstatus}
+                                </span>
+                                {order.totalprice && (
+                                    <p className="text-sm font-semibold text-green-600 mt-1">
+                                        {formatCurrency(parseFloat(order.totalprice))}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>
     );
 
-    // Quota card component for displaying progress metrics
-    const QuotaCard = ({ title, subtitle, percentage, reached, target, quotasCount, isExceeded, actualPercentage }) => {
-        const remaining = Math.max(0, target - reached);
-        const excess = Math.max(0, reached - target);
-        
-        return (
-            <div className="bg-[#191716] rounded-xl shadow-lg p-6 md:p-8 text-white relative">
-                <h3 className="text-lg md:text-xl font-bold mb-2">{title}</h3>
-                <p className="text-blue-200 text-xs md:text-sm mb-4 md:mb-6">{subtitle}</p>
-
-                {/* Circular progress indicator */}
-                <div className="flex justify-center items-center mb-4 md:mb-6 relative">
-                    <CircularProgress percentage={percentage} size={100} strokeWidth={10} />
-                    <div className="absolute text-2xl md:text-3xl font-bold">{percentage}%</div>
-                </div>
-
-                {/* Progress statistics */}
-                {quotasCount === 0 ? (
-                    <div className="text-center">
-                        <p className="text-blue-200 text-xs md:text-sm">No active quotas</p>
-                    </div>
-                ) : (
-                    <div className="text-center space-y-1">
-                        <p className="text-blue-200 text-xs md:text-sm">
-                            Quota reached: <span className="font-bold text-white">{reached}</span> / {target}
-                        </p>
-                        {isExceeded ? (
-                            <>
-                                <p className="text-green-400 text-sm font-semibold">🎉 Quota Exceeded!</p>
-                                <p className="text-green-300 text-xs">+{excess} units over target</p>
-                                <p className="text-blue-200 text-xs">({actualPercentage}% of target)</p>
-                            </>
-                        ) : (
-                            <p className="text-yellow-300 text-xs">{remaining} units remaining</p>
-                        )}
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     // Scroll animations
     const titleAnim = useScrollAnimation({ threshold: 0.3 });
     const statsAnim = useScrollAnimation({ threshold: 0.2 });
-    const quotaAnim = useScrollAnimation({ threshold: 0.2 });
-    const dailyWeeklyAnim = useScrollAnimation({ threshold: 0.2 });
+    const profitAnim = useScrollAnimation({ threshold: 0.2 });
+    const ordersAnim = useScrollAnimation({ threshold: 0.2 });
 
     console.log('Render - Loading:', loading, 'Error:', error);
 
@@ -356,8 +264,7 @@ const Dashboard = () => {
                     }`}
                 >
                     <h1 className='text-2xl md:text-4xl font-bold text-gray-900'>Dashboard</h1>
-                    {/* <p>Welcome back, {User.name}! Here's your business overview </p> */}
-                    <p className='text-gray-600 mt-1 text-sm md:text-base'>Welcome back user! Here's your business overview</p>
+                    <p className='text-gray-600 mt-1 text-sm md:text-base'>Welcome back! Here's your business overview</p>
                 </div>
             </div>
 
@@ -366,7 +273,7 @@ const Dashboard = () => {
                 <div className='flex-1 flex items-center justify-center p-8'>
                     <div className='text-center'>
                         <LoadingSpinner size="lg" />
-                        <p className='text-gray-600'>Loading dashboard data...</p>
+                        <p className='text-gray-600 mt-4'>Loading dashboard data...</p>
                     </div>
                 </div>
             )}
@@ -393,124 +300,112 @@ const Dashboard = () => {
                 {/* Top Statistics card */}
                 <div 
                     ref={statsAnim.ref}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8"
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6"
                 >
                     <StatCard
                         title="Total Orders"
                         value={dashboardData.totalOrders}
-                        subtitle="As of today"
-                    />
-                    <StatCard
-                        title="Total Produced Hangers"
-                        value={dashboardData.producedHangers}
-                        subtitle="Across all quotas"
+                        subtitle="All time"
+                        icon={ShoppingCart}
+                        color="blue"
                     />
                     <StatCard
                         title="Pending Orders"
                         value={dashboardData.pendingOrders}
-                        subtitle="To be fulfilled"
+                        subtitle="Awaiting action"
+                        icon={Clock}
+                        color="yellow"
+                    />
+                    <StatCard
+                        title="On-Going Orders"
+                        value={dashboardData.ongoingOrders}
+                        subtitle="In progress"
+                        icon={Package}
+                        color="purple"
+                    />
+                    <StatCard
+                        title="Completed Orders"
+                        value={dashboardData.completedOrders}
+                        subtitle={`This year (${new Date().getFullYear()})`}
+                        icon={CheckCircle}
+                        color="green"
                     />
                 </div>
 
-                {/* Main Quota Overview card */}
+                {/* Profit Overview Section */}
                 <div 
-                    ref={quotaAnim.ref}
-                    className="bg-[#191716] rounded-2xl shadow-2xl p-4 md:p-8 mb-4 md:mb-8 mt-4 md:mt-8"
+                    ref={profitAnim.ref}
+                    className="bg-gradient-to-br from-[#191716] to-[#2d2a28] rounded-2xl shadow-2xl p-6 md:p-8 mb-6 md:mb-8 mt-6 md:mt-8"
                 >
-                    <h2 className='text-xl md:text-3xl font-bold text-white mb-4'>Final Quota Overview</h2>
+                    <div className="flex items-center mb-6">
+                        <DollarSign className="mr-3 text-[#E6AF2E]" size={32} />
+                        <h2 className='text-2xl md:text-3xl font-bold text-white'>Profit Overview</h2>
+                    </div>
 
-                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8'>
-                        {/* Large circle progress indicator */}
-                        <div className='flex flex-col items-center justify-center'>
-                            <div className='relative mb-4'>
-                                <CircularProgress percentage={dashboardData.finalQuota.percentage} size={160} strokeWidth={14} />
-                                <div className='absolute inset-0 flex items-center justify-center'>
-                                    <span className='text-3xl md:text-5xl font-bold text-white'>
-                                        {dashboardData.finalQuota.percentage}%
-                                    </span>
-                                </div>
-                            </div>
-                            <p className='text-center text-white text-sm md:text-base'>Overall Progress</p>
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8'>
+                        {/* Yearly Profit */}
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                            <p className="text-blue-200 text-sm md:text-base mb-2">Yearly Profit ({new Date().getFullYear()})</p>
+                            <p className="text-3xl md:text-5xl font-bold text-[#E6AF2E] mb-2">
+                                {formatCurrency(dashboardData.yearlyProfit)}
+                            </p>
+                            <p className="text-blue-200 text-xs md:text-sm">
+                                From {dashboardData.completedOrders} completed orders
+                            </p>
                         </div>
 
-                        {/* Progress breakdown bars */}
-                        <div className='flex flex-col justify-center space-y-4 md:space-y-6'>
-                            {/* first bar */}
-                            <div>
-                                <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-xs md:text-sm font-medium'>End Quota to be reached</span>
-                                </div>
-                                <div className='w-full bg-[#E6AF2E] rounded-full h-2 md:h-3'>
-                                    <div className='bg-[#EC6666] h-2 md:h-3 rounded-full' style={{ width: '100%' }}></div>
-                                </div>
-
-                            </div>
-                            {/* second bar */}
-                            <div>
-                                <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-xs md:text-sm font-medium'>Today's Quota</span>
-                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.dailyProgress}%</span>
-                                </div>
-                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
-                                    <div className='bg-[#DAC325] h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.dailyProgress}%` }}></div>
-                                </div>
-                            </div>
-
-                            {/* third bar */}
-                            <div>
-                                <div className='flex justify-between text-white mb-2'>
-                                    <span className='text-xs md:text-sm font-medium'>Weekly Quota</span>
-                                    <span className='text-xs md:text-sm'>{dashboardData.finalQuota.weeklyProgress}%</span>
-                                </div>
-                                <div className='w-full bg-blue-800 rounded-full h-2 md:h-3'>
-                                    <div className='bg-[#DAC325] h-2 md:h-3 rounded-full' style={{ width: `${dashboardData.finalQuota.weeklyProgress}%` }}></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-white mb-2">
-                                    <span className="text-xs md:text-sm font-medium">Current Quota</span>
-                                    <span className="text-xs md:text-sm">{dashboardData.finalQuota.currentProgress}%</span>
-                                </div>
-                                <div className="w-full bg-blue-800 rounded-full h-2 md:h-3">
-                                    <div className="bg-blue-400 h-2 md:h-3 rounded-full transition-all duration-1000"
-                                        style={{ width: `${dashboardData.finalQuota.currentProgress}%` }}></div>
-                                </div>
-                            </div>
+                        {/* Monthly Profit */}
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                            <p className="text-blue-200 text-sm md:text-base mb-2">
+                                This Month ({new Date().toLocaleString('default', { month: 'long' })})
+                            </p>
+                            <p className="text-3xl md:text-5xl font-bold text-white mb-2">
+                                {formatCurrency(dashboardData.monthlyProfit)}
+                            </p>
+                            <p className="text-blue-200 text-xs md:text-sm">
+                                {dashboardData.yearlyProfit > 0 
+                                    ? `${((dashboardData.monthlyProfit / dashboardData.yearlyProfit) * 100).toFixed(1)}% of yearly profit`
+                                    : 'No profit recorded yet'
+                                }
+                            </p>
                         </div>
                     </div>
 
+                    {/* Monthly Breakdown */}
+                    <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                        <h3 className="text-lg md:text-xl font-bold text-white mb-4">Monthly Breakdown</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {dashboardData.monthlyData.map((month, index) => (
+                                <div key={index} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                                    <p className="text-blue-200 text-xs font-semibold mb-1">{month.month}</p>
+                                    <p className="text-white text-sm font-bold truncate" title={formatCurrency(month.profit)}>
+                                        {month.profit > 0 ? formatCurrency(month.profit) : '₱0.00'}
+                                    </p>
+                                    <p className="text-blue-300 text-xs">{month.orders} orders</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                    {/* bottom quota cards row */}
-                    <div 
-                        ref={dailyWeeklyAnim.ref}
-                        className="grid grid-cols-1 mt-4 md:mt-5 md:grid-cols-2 gap-4 md:gap-8"
-                    >
-                        <QuotaCard 
-                            title="Today's Quota"
-                            subtitle={dashboardData.todayQuota.quotasCount > 0 
-                                ? `Auto-calculated from ${dashboardData.todayQuota.quotasCount} active ${dashboardData.todayQuota.quotasCount === 1 ? 'quota' : 'quotas'}`
-                                : 'No active quotas for today'}
-                            percentage={dashboardData.todayQuota.percentage}
-                            reached={dashboardData.todayQuota.reached}
-                            target={dashboardData.todayQuota.target}
-                            quotasCount={dashboardData.todayQuota.quotasCount}
-                            isExceeded={dashboardData.todayQuota.isExceeded}
-                            actualPercentage={dashboardData.todayQuota.actualPercentage}
-                        />
-                        <QuotaCard 
-                            title="Weekly Quota"
-                            subtitle={dashboardData.weeklyQuota.quotasCount > 0 
-                                ? `Auto-calculated from ${dashboardData.weeklyQuota.quotasCount} active ${dashboardData.weeklyQuota.quotasCount === 1 ? 'quota' : 'quotas'}`
-                                : 'No active quotas for this week'}
-                            percentage={dashboardData.weeklyQuota.percentage}
-                            reached={dashboardData.weeklyQuota.reached}
-                            target={dashboardData.weeklyQuota.target}
-                            quotasCount={dashboardData.weeklyQuota.quotasCount}
-                            isExceeded={dashboardData.weeklyQuota.isExceeded}
-                            actualPercentage={dashboardData.weeklyQuota.actualPercentage}
-                        />
-                    </div>
+
+                {/* Orders Section */}
+                <div 
+                    ref={ordersAnim.ref}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8"
+                >
+                    <OrderCard 
+                        title="Pending Orders"
+                        orders={dashboardData.pendingOrdersList}
+                        icon={Clock}
+                        emptyMessage="No pending orders at the moment"
+                    />
+                    <OrderCard 
+                        title="On-Going Orders"
+                        orders={dashboardData.ongoingOrdersList}
+                        icon={Package}
+                        emptyMessage="No ongoing orders at the moment"
+                    />
+                </div>
             </div>
             )}
         </div>

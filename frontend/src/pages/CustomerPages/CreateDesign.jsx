@@ -244,6 +244,20 @@ const CreateDesign = () => {
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Check file size (limit to 5MB)
+            const maxSizeInMB = 5;
+            const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+            
+            if (file.size > maxSizeInBytes) {
+                setNotificationModal({
+                    show: true,
+                    type: 'error',
+                    message: `Image size is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Please upload an image smaller than ${maxSizeInMB}MB.`
+                });
+                e.target.value = ''; // Reset file input
+                return;
+            }
+            
             setCustomLogo(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -355,9 +369,9 @@ const CreateDesign = () => {
         }
 
         setIsSaving(true);
+        let thumbnailBase64 = null;
 
         try {
-            let thumbnailBase64 = null;
             try {
                 await new Promise(resolve => setTimeout(resolve, 300));
                 const canvas = threeCanvasRef.current?.querySelector('canvas');
@@ -427,10 +441,37 @@ const CreateDesign = () => {
             });
         } catch (error) {
             console.error('Save error:', error);
+            
+            let errorMessage = 'Failed to save design. Please try again.';
+            
+            // Check if it's a fetch/network error
+            if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+                try {
+                    // Try to calculate approximate payload size to diagnose the issue
+                    const estimatedSize = JSON.stringify({
+                        logoPreview: logoPreview,
+                        thumbnail: thumbnailBase64
+                    }).length;
+                    const estimatedSizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
+                    
+                    if (estimatedSize > 10 * 1024 * 1024) { // If larger than 10MB
+                        errorMessage = `Design data is too large (approximately ${estimatedSizeMB}MB). Please try using a smaller logo image or reducing the design complexity.`;
+                    } else {
+                        errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection and try again.';
+                    }
+                } catch (sizeError) {
+                    errorMessage = 'Failed to save design. The image might be too large. Please try using a smaller logo image.';
+                }
+            } else if (error.message.includes('too large') || error.message.includes('size')) {
+                errorMessage = 'The design content is too large. Please try using a smaller logo image.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
             setNotificationModal({
                 show: true,
                 type: 'error',
-                message: error.message || 'Failed to save design. Please try again.'
+                message: errorMessage
             });
         } finally {
             setIsSaving(false);
