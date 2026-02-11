@@ -531,7 +531,7 @@ const Order = () => {
     const handleDownloadInvoiceFromOrder = () => {
         if (!invoiceOrderData) return;
 
-        const docType = invoiceOrderData.hasPayment ? 'Receipt' : 'Invoice';
+        const docType = invoiceOrderData.hasPayment ? 'Official Receipt' : 'Invoice';
         const invoiceHTML = `
 <!DOCTYPE html>
 <html lang="en">
@@ -716,7 +716,7 @@ const Order = () => {
 
     ${invoiceOrderData.breakdown ? `
     <div class="breakdown-section">
-        <h3>${invoiceOrderData.isPriceFinal ? '💰 Final Price Breakdown' : '📊 Estimated Price Breakdown'}</h3>
+        <h3>${invoiceOrderData.isPriceFinal || invoiceOrderData.hasPayment ? '💰 Final Price Breakdown' : '📊 Estimated Price Breakdown'}</h3>
         <div class="info-row">
             <span class="label">Product Weight:</span> ${invoiceOrderData.breakdown.productWeight}g per unit
         </div>
@@ -724,7 +724,7 @@ const Order = () => {
             <span class="label">Total Weight:</span> ${invoiceOrderData.breakdown.totalWeight.toFixed(3)} kg
         </div>
         
-        ${!invoiceOrderData.isPriceFinal && invoiceOrderData.breakdown.materials.length > 0 ? `
+        ${(!invoiceOrderData.isPriceFinal && !invoiceOrderData.hasPayment) && invoiceOrderData.breakdown.materials.length > 0 ? `
         <h4 style="margin-top: 20px;">Material Costs:</h4>
         ${invoiceOrderData.breakdown.materials.map(mat => `
         <div class="breakdown-item">
@@ -773,7 +773,7 @@ const Order = () => {
         </div>
         ` : ''}
         <div class="total-amount">
-            <span>${invoiceOrderData.isPriceFinal ? 'FINAL AMOUNT:' : 'ESTIMATED AMOUNT:'}</span>
+            <span>${invoiceOrderData.isPriceFinal || invoiceOrderData.hasPayment ? 'FINAL AMOUNT:' : 'ESTIMATED AMOUNT:'}</span>
             <span>₱${invoiceOrderData.breakdown.totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
     </div>
@@ -1889,27 +1889,45 @@ const Order = () => {
 
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2 md:gap-3 mt-4 md:mt-6  flex-wrap">
-                                                    {/* View Invoice - Show for orders with totalprice */}
+                                                    {/* View Invoice/Receipt - Show for orders with totalprice */}
                                                     {order.totalprice && (
                                                         <button
                                                             onClick={() => handleViewInvoice(order)}
                                                             className="bg-blue-600 text-white px-3 md:px-6 py-2 rounded hover:bg-blue-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
                                                         >
                                                             <FileText size={16} className="md:w-[18px] md:h-[18px]" />
-                                                            <span className="hidden sm:inline">View Invoice</span>
-                                                            <span className="sm:hidden">Invoice</span>
+                                                            {orderPayments[order.orderid]?.paymentstatus === 'Verified' || ['Paid', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) ? (
+                                                                <>
+                                                                    <span className="hidden sm:inline">View Receipt</span>
+                                                                    <span className="sm:hidden">Receipt</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="hidden sm:inline">View Invoice</span>
+                                                                    <span className="sm:hidden">Invoice</span>
+                                                                </>
+                                                            )}
                                                         </button>
                                                     )}
 
-                                                    {/* Download Invoice - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
+                                                    {/* Download Invoice/Receipt - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
                                                     {['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
                                                         <button
                                                             onClick={() => handleDownloadInvoice(order)}
                                                             className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
                                                         >
                                                             <Download size={16} className="md:w-[18px] md:h-[18px]" />
-                                                            <span className="hidden sm:inline">Download Invoice</span>
-                                                            <span className="sm:hidden">Download</span>
+                                                            {orderPayments[order.orderid]?.paymentstatus === 'Verified' || ['Paid', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) ? (
+                                                                <>
+                                                                    <span className="hidden sm:inline">Download Receipt</span>
+                                                                    <span className="sm:hidden">Receipt</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="hidden sm:inline">Download Invoice</span>
+                                                                    <span className="sm:hidden">Download</span>
+                                                                </>
+                                                            )}
                                                         </button>
                                                     )}
 

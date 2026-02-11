@@ -2,8 +2,26 @@ import express from "express";
 import supabase from "../supabaseClient.js";
 import { v4 as uuidv4 } from "uuid";
 import emailTemplates from "../utils/emailTemplates.js";
+import redisClient from "../redisClient.js";
 
 const router = express.Router();
+
+// Helper function to invalidate orders cache
+const invalidateOrdersCache = async (userid = null, orderid = null) => {
+  try {
+    if (userid) {
+      await redisClient.clearUserOrdersCache(userid);
+    }
+    if (orderid) {
+      await redisClient.invalidateCache(`orders:*${orderid}*`);
+    }
+    // Always clear admin "all orders" cache
+    await redisClient.clearAllOrdersCache();
+  } catch (error) {
+    console.error('Cache invalidation error:', error);
+    // Don't throw - cache errors shouldn't break the request
+  }
+};
 
 // Helper function to send email using Resend API
 const sendEmail = async (to, subject, html) => {
@@ -281,6 +299,9 @@ router.post("/create", async (req, res) => {
       // Don't fail the request if notification creation fails
     }
 
+    // Invalidate cache for this user and all orders
+    await invalidateOrdersCache(userid, order[0].orderid);
+
     res.status(201).json({
       message: "Order created successfully!",
       order: order[0]
@@ -292,7 +313,7 @@ router.post("/create", async (req, res) => {
 });
 
 // 📋 Get all orders for a user
-router.get("/user/:userid", async (req, res) => {
+router.get("/user/:userid", redisClient.cacheMiddleware('orders', 180), async (req, res) => {
   try {
     const { userid } = req.params;
 
@@ -355,7 +376,7 @@ router.get("/user/:userid", async (req, res) => {
 });
 
 // 📋 Get user orders WITH payments and materials (optimized with pagination)
-router.get("/user/:userid/full", async (req, res) => {
+router.get("/user/:userid/full", redisClient.cacheMiddleware('orders', 180), async (req, res) => {
   console.log('📋 Full orders endpoint called for userid:', req.params.userid);
   console.log('Query params:', req.query);
   
@@ -482,7 +503,7 @@ router.get("/user/:userid/full", async (req, res) => {
 });
 
 // 📋 Get all orders (admin)
-router.get("/all", async (req, res) => {
+router.get("/all", redisClient.cacheMiddleware('orders', 120), async (req, res) => {
   try {
     const { data: orders, error } = await supabase
       .from("orders")
@@ -527,7 +548,7 @@ router.get("/all", async (req, res) => {
 });
 
 // 📋 Get single order by ID
-router.get("/:orderid", async (req, res) => {
+router.get("/:orderid", redisClient.cacheMiddleware('orders', 300), async (req, res) => {
   try {
     const { orderid } = req.params;
 

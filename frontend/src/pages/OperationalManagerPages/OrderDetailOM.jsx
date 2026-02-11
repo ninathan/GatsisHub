@@ -53,6 +53,11 @@ const OrderDetailOM = () => {
     const [isApprovingOrder, setIsApprovingOrder] = useState(false);
     const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
+    // Tracking link states
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [trackingLink, setTrackingLink] = useState('');
+    const [pendingStatus, setPendingStatus] = useState(null);
+
 
     const handleDownloadInvoice = () => {
         if (!order) {
@@ -60,8 +65,81 @@ const OrderDetailOM = () => {
             return;
         }
 
+        // Calculate price breakdown before template literal
+        // Priority: price_breakdown (sales admin manual) > estimated_breakdown (from checkout) > totalprice only
+        let breakdown = null;
+        let breakdownLabel = isPaid ? 'Price Breakdown' : 'Estimated Price Breakdown';
+        
+        if (order.price_breakdown) {
+            breakdown = typeof order.price_breakdown === 'string' 
+                ? JSON.parse(order.price_breakdown) 
+                : order.price_breakdown;
+            breakdownLabel = 'Final Price Breakdown';
+        } else if (order.estimated_breakdown) {
+            breakdown = typeof order.estimated_breakdown === 'string'
+                ? JSON.parse(order.estimated_breakdown)
+                : order.estimated_breakdown;
+            if (!isPaid) {
+                breakdownLabel = 'Estimated Price Breakdown';
+            }
+        }
+        
+        let breakdownHTML = '';
+        if (breakdown) {
+            // Handle different possible property names from estimated_breakdown vs price_breakdown
+            const materialCost = parseFloat(breakdown.materialCost || breakdown.totalMaterialCost) || 0;
+            const deliveryFee = parseFloat(breakdown.deliveryFee || breakdown.deliveryCost) || 0;
+            const vatRate = parseFloat(breakdown.vatRate) || 12;
+            const subtotal = materialCost + deliveryFee;
+            const vat = subtotal * (vatRate / 100);
+            const total = subtotal + vat;
+            
+            // Determine delivery type label
+            let deliveryTypeLabel = 'Delivery';
+            if (breakdown.deliveryType === 'local' || breakdown.isLocal === true) {
+                deliveryTypeLabel = 'Local';
+            } else if (breakdown.deliveryType === 'international' || breakdown.isLocal === false) {
+                deliveryTypeLabel = 'International';
+            }
+            
+            breakdownHTML = `
+                <h3 style="color: #191716; margin: 20px 0 15px 0;">${breakdownLabel}</h3>
+                <div class="total-row">
+                    Material Cost: <strong>₱${materialCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                </div>
+                <div class="total-row">
+                    Delivery Fee (${deliveryTypeLabel}): <strong>₱${deliveryFee.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                </div>
+                <div class="total-row" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
+                    Subtotal: <strong>₱${subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                </div>
+                <div class="total-row">
+                    VAT (${vatRate}%): <strong>₱${vat.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                </div>
+                <div class="total-amount">
+                    Total Amount: ₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                </div>
+                ${breakdown.notes ? `<div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #E6AF2E;"><strong>Notes:</strong><br><span style="color: #666;">${breakdown.notes}</span></div>` : ''}
+            `;
+        } else {
+            console.log('No breakdown available, using totalprice only');
+            breakdownHTML = `
+                <div class="total-row">
+                    Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
+                </div>
+                <div class="total-amount">
+                    Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
+                </div>
+            `;
+        }
+
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
+
+        // Check if payment is verified
+        const isPaid = order.orderstatus === 'Paid' || order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed';
+        const docType = isPaid ? 'Official Receipt' : 'Invoice';
+        const docNumber = isPaid ? 'Receipt Number' : 'Invoice Number';
 
         // Format materials as a readable string
         const formatMaterialsForInvoice = (materialsObj) => {
@@ -75,7 +153,7 @@ const OrderDetailOM = () => {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Invoice - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
+                <title>${docType} - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -89,6 +167,7 @@ const OrderDetailOM = () => {
                         border-bottom: 3px solid #E6AF2E;
                         padding-bottom: 20px;
                         margin-bottom: 30px;
+                        position: relative;
                     }
                     .company-name {
                         font-size: 32px;
@@ -100,6 +179,17 @@ const OrderDetailOM = () => {
                         font-size: 24px;
                         color: #666;
                         margin-top: 10px;
+                    }
+                    .paid-stamp {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        background: #10b981;
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
                     }
                     .info-section {
                         display: flex;
@@ -174,14 +264,15 @@ const OrderDetailOM = () => {
             <body>
                 <div class="header">
                     <div class="company-name">GatsisHub</div>
-                    <div class="invoice-title">INVOICE</div>
+                    <div class="invoice-title">${docType.toUpperCase()}</div>
+                    ${isPaid ? '<div class="paid-stamp">✓ PAID</div>' : ''}
                 </div>
 
                 <div class="info-section">
                     <div class="info-block">
-                        <h3>Invoice Details</h3>
+                        <h3>${docType} Details</h3>
                         <div class="info-row">
-                            <span class="label">Invoice Number:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
+                            <span class="label">${docNumber}:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
                         </div>
                         <div class="info-row">
                             <span class="label">Date:</span> ${formatDate(order.datecreated)}
@@ -258,12 +349,7 @@ const OrderDetailOM = () => {
                 ` : ''}
 
                 <div class="total-section">
-                    <div class="total-row">
-                        Subtotal: <strong>₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}</strong>
-                    </div>
-                    <div class="total-amount">
-                        Total Amount: ₱${order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00'}
-                    </div>
+                    ${breakdownHTML}
                 </div>
 
                 <div class="footer">
@@ -549,16 +635,56 @@ const OrderDetailOM = () => {
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
+        
+        // If changing to "In Transit", prompt for tracking link
+        if (newStatus === 'In Transit') {
+            setPendingStatus(newStatus);
+            setTrackingLink(order.tracking_link || ''); // Pre-fill if exists
+            setShowTrackingModal(true);
+            return;
+        }
+        
+        // For other statuses, update directly
+        await updateOrderStatus(newStatus, null);
+    };
+
+    const handleTrackingSubmit = async () => {
+        if (!trackingLink.trim()) {
+            showNotificationMessage('Please enter a tracking link', 'error');
+            return;
+        }
+        
+        await updateOrderStatus(pendingStatus, trackingLink);
+        setShowTrackingModal(false);
+        setPendingStatus(null);
+    };
+
+    const updateOrderStatus = async (newStatus, trackingUrl) => {
         setOrderStatus(newStatus);
         
         try {
             setIsSavingStatus(true);
+
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            const requestBody = {
+                status: newStatus,
+                employeeid: employee?.employeeid,
+                employeename: employee?.employeename
+            };
+
+            // Add tracking link if provided
+            if (trackingUrl) {
+                requestBody.tracking_link = trackingUrl;
+            }
+
             const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -846,6 +972,35 @@ const OrderDetailOM = () => {
         { name: "Calendar", icon: Calendar },
         { name: "Messages", icon: MessageSquare }
     ];
+
+    // Define status order and filter logic for OM
+    const allStatuses = [
+        'For Evaluation',
+        'Contract Signing',
+        'Waiting for Payment',
+        'Verifying Payment',
+        'In Production',
+        'Waiting for Shipment',
+        'In Transit',
+        'Completed',
+        'Cancelled'
+    ];
+
+    // OM can only access statuses from "In Production" onwards
+    const getAvailableStatuses = () => {
+        const currentStatusIndex = allStatuses.indexOf(order?.orderstatus);
+        const inProductionIndex = allStatuses.indexOf('In Production');
+        
+        // If current status is "In Production" or later, only show from "In Production" onwards
+        if (currentStatusIndex >= inProductionIndex) {
+            return allStatuses.slice(inProductionIndex);
+        }
+        // If current status is before "In Production", show all statuses
+        return allStatuses;
+    };
+
+    const availableStatuses = order ? getAvailableStatuses() : allStatuses;
+
     return (
         <div className="flex w-full bg-gray-50">
             {/* Main Content */}
@@ -865,15 +1020,11 @@ const OrderDetailOM = () => {
                                 disabled={isSavingStatus}
                                 className="px-4 py-2 pr-10 rounded bg-white text-gray-800 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none disabled:opacity-50"
                             >
-                                <option>For Evaluation</option>
-                                <option>Contract Signing</option>
-                                <option>Waiting for Payment</option>
-                                <option>Verifying Payment</option>
-                                <option>In Production</option>
-                                <option>Waiting for Shipment</option>
-                                <option>In Transit</option>
-                                <option>Completed</option>
-                                <option>Cancelled</option>
+                                {availableStatuses.map((status) => (
+                                    <option key={status} value={status}>
+                                        {status}
+                                    </option>
+                                ))}
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" size={16} />
                         </div>
@@ -998,6 +1149,114 @@ const OrderDetailOM = () => {
                             </div>
                         </div>
 
+                        {/* Contract Status Display (View Only for OM) */}
+                        {(order.orderstatus === 'Contract Signing' || order.orderstatus === 'Waiting for Payment' || order.contract_signed || order.sales_admin_signed) && (
+                            <div className={`border rounded-lg p-4 ${order.contract_signed && order.sales_admin_signed ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50'}`}>
+                                <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Contract Status
+                                </h3>
+                                
+                                {/* Sales Admin Signature Status */}
+                                <div className="mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.sales_admin_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Sales Admin Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-amber-700">Sales Admin Signature Required</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {order.sales_admin_signed && (
+                                        <div className="text-sm text-gray-700 ml-10">
+                                            <span className="font-medium">Signed on: </span>
+                                            {new Date(order.sales_admin_signed_date).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Customer Signature Status */}
+                                <div className="pt-3 border-t border-gray-300">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {order.contract_signed ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-green-700">Customer Signed</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="font-semibold text-gray-700">Awaiting Customer Signature</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {order.contract_signed && (
+                                        <>
+                                            <div className="text-sm text-gray-700 ml-10 mb-2">
+                                                <span className="font-medium">Signed on: </span>
+                                                {new Date(order.contract_signed_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    // Open contract in new window
+                                                    const contractData = order.contract_data;
+                                                    if (contractData) {
+                                                        const newWindow = window.open('', '_blank');
+                                                        if (newWindow) {
+                                                            newWindow.document.write(contractData.contractHTML || '<p>Contract data not available</p>');
+                                                            newWindow.document.close();
+                                                        }
+                                                    }
+                                                }}
+                                                className="mt-2 ml-10 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 cursor-pointer transition-colors font-medium"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Signed Contract
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Delivery Address */}
                         <div className="border border-gray-300 rounded-lg p-4">
                             <h3 className="text-xl font-bold text-gray-800 mb-2">Delivery Address</h3>
@@ -1107,7 +1366,7 @@ const OrderDetailOM = () => {
                                 className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <FileText size={18} />
-                                Download Invoice
+                                {['Paid', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order?.orderstatus) ? 'Download Receipt' : 'Download Invoice'}
                             </button>
                             
                             <button
@@ -1503,6 +1762,69 @@ const OrderDetailOM = () => {
                                 className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-2 rounded transition-colors"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tracking Link Modal */}
+            {showTrackingModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="bg-[#E6AF2E] px-6 py-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-white text-xl font-semibold">Delivery Tracking Link</h2>
+                                <p className="text-white/90 text-sm mt-1">Enter the tracking URL for this shipment</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Tracking URL <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="url"
+                                value={trackingLink}
+                                onChange={(e) => setTrackingLink(e.target.value)}
+                                className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                placeholder="https://tracking.example.com/track?id=123456"
+                            />
+                            <p className="text-xs text-gray-500 mt-2">
+                                💡 This link will be displayed to the customer so they can track their delivery in real-time.
+                            </p>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowTrackingModal(false);
+                                    setPendingStatus(null);
+                                    setOrderStatus(order.orderstatus); // Revert status
+                                }}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleTrackingSubmit}
+                                disabled={isSavingStatus || !trackingLink.trim()}
+                                className="px-6 py-2 bg-[#E6AF2E] text-white rounded-lg hover:bg-[#191716] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSavingStatus ? 'Saving...' : 'Confirm & Update Status'}
                             </button>
                         </div>
                     </div>

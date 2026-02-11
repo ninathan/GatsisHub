@@ -756,9 +756,24 @@ const OrderDetail = () => {
 
         // Determine which breakdown to use for invoice
         // Priority: manual breakdown (price_breakdown) > estimated breakdown (estimated_breakdown) > totalprice
-        const useBreakdown = priceBreakdown.materialCost ? priceBreakdown : estimatedBreakdown;
-        const breakdownLabel = priceBreakdown.materialCost ? 'Final Price' : 'Estimated Price';
-        const isPaid = order.orderstatus === 'Paid' || paymentInfo?.payment_status === 'verified';
+        // Use order data directly, not state variables, to ensure data is available
+        let useBreakdown = null;
+        let breakdownLabel = isPaid ? 'Price' : 'Estimated Price';
+        
+        if (order.price_breakdown) {
+            useBreakdown = typeof order.price_breakdown === 'string' 
+                ? JSON.parse(order.price_breakdown) 
+                : order.price_breakdown;
+            breakdownLabel = 'Final Price';
+        } else if (order.estimated_breakdown) {
+            useBreakdown = typeof order.estimated_breakdown === 'string'
+                ? JSON.parse(order.estimated_breakdown)
+                : order.estimated_breakdown;
+        }
+        
+        const isPaid = order.orderstatus === 'Paid' || order.orderstatus === 'In Production' || order.orderstatus === 'Waiting for Shipment' || order.orderstatus === 'In Transit' || order.orderstatus === 'Completed' || paymentInfo?.payment_status === 'verified';
+        const docType = isPaid ? 'Official Receipt' : 'Invoice';
+        const docNumber = isPaid ? 'Receipt Number' : 'Invoice Number';
 
         // Create a simple HTML invoice for printing/saving as PDF
         const invoiceWindow = window.open('', '_blank');
@@ -775,7 +790,7 @@ const OrderDetail = () => {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Invoice - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
+                <title>${docType} - ORD-${order.orderid.slice(0, 8).toUpperCase()}</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -789,6 +804,7 @@ const OrderDetail = () => {
                         border-bottom: 3px solid #E6AF2E;
                         padding-bottom: 20px;
                         margin-bottom: 30px;
+                        position: relative;
                     }
                     .company-name {
                         font-size: 32px;
@@ -800,6 +816,17 @@ const OrderDetail = () => {
                         font-size: 24px;
                         color: #666;
                         margin-top: 10px;
+                    }
+                    .paid-stamp {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        background: #10b981;
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
                     }
                     .info-section {
                         display: flex;
@@ -874,14 +901,15 @@ const OrderDetail = () => {
             <body>
                 <div class="header">
                     <div class="company-name">GatsisHub</div>
-                    <div class="invoice-title">INVOICE</div>
+                    <div class="invoice-title">${docType.toUpperCase()}</div>
+                    ${isPaid ? '<div class="paid-stamp">✓ PAID</div>' : ''}
                 </div>
 
                 <div class="info-section">
                     <div class="info-block">
-                        <h3>Invoice Details</h3>
+                        <h3>${docType} Details</h3>
                         <div class="info-row">
-                            <span class="label">Invoice Number:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
+                            <span class="label">${docNumber}:</span> ORD-${order.orderid.slice(0, 8).toUpperCase()}
                         </div>
                         <div class="info-row">
                             <span class="label">Date:</span> ${formatDate(order.datecreated)}
@@ -936,12 +964,12 @@ const OrderDetail = () => {
                             <td style="text-align: center;">${order.quantity}</td>
                             <td style="text-align: right;">₱${
                                 useBreakdown 
-                                    ? (((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    ? ((((parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0) + (parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0)) * (1 + (parseFloat(useBreakdown.vatRate) || 12) / 100)) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 })
                                     : (order.totalprice ? (parseFloat(order.totalprice) / order.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
                             }</td>
                             <td style="text-align: right;">₱${
                                 useBreakdown 
-                                    ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                                    ? (((parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0) + (parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0)) * (1 + (parseFloat(useBreakdown.vatRate) || 12) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
                                     : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
                             }</td>
                         </tr>
@@ -973,11 +1001,11 @@ const OrderDetail = () => {
                         <tbody>
                             <tr>
                                 <td style="border: none; padding: 8px 12px;">Material Cost:</td>
-                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.materialCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${(parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
                                 <td style="border: none; padding: 8px 12px;">Delivery Fee (${useBreakdown.deliveryType === 'local' ? 'Local' : 'International'}):</td>
-                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${parseFloat(useBreakdown.deliveryFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${(parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                             </tr>
                             ${useBreakdown.baseCost ? `
                             <tr>
@@ -993,11 +1021,11 @@ const OrderDetail = () => {
                             ` : ''}
                             <tr style="border-top: 2px solid #ddd;">
                                 <td style="border: none; padding: 8px 12px; padding-top: 15px;"><strong>Subtotal:</strong></td>
-                                <td style="border: none; padding: 8px 12px; text-align: right; padding-top: 15px; font-weight: bold;">₱${(parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; padding-top: 15px; font-weight: bold;">₱${((parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0) + (parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
-                                <td style="border: none; padding: 8px 12px;">VAT (${useBreakdown.vatRate}%):</td>
-                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                                <td style="border: none; padding: 8px 12px;">VAT (${parseFloat(useBreakdown.vatRate) || 12}%):</td>
+                                <td style="border: none; padding: 8px 12px; text-align: right; font-weight: bold;">₱${(((parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0) + (parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0)) * ((parseFloat(useBreakdown.vatRate) || 12) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1019,7 +1047,7 @@ const OrderDetail = () => {
                     ` : ''}
                     <div class="total-amount">
                         Total Amount: ₱${useBreakdown 
-                            ? ((parseFloat(useBreakdown.materialCost) + parseFloat(useBreakdown.deliveryFee)) * (1 + parseFloat(useBreakdown.vatRate) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+                            ? (((parseFloat(useBreakdown.materialCost || useBreakdown.totalMaterialCost) || 0) + (parseFloat(useBreakdown.deliveryFee || useBreakdown.deliveryCost) || 0)) * (1 + (parseFloat(useBreakdown.vatRate) || 12) / 100)).toLocaleString('en-PH', { minimumFractionDigits: 2 })
                             : (order.totalprice ? parseFloat(order.totalprice).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : '0.00')
                         }
                     </div>
@@ -1652,7 +1680,7 @@ const OrderDetail = () => {
                                 className="bg-[#191817] text-white px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                             >
                                 <FileText size={18} />
-                                Download Invoice
+                                {paymentInfo?.payment_status === 'verified' || ['Paid', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order?.orderstatus) ? 'Download Receipt' : 'Download Invoice'}
                             </button>
                             <button
                                 onClick={handleContactCustomer}

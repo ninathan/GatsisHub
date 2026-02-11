@@ -1,6 +1,7 @@
 // server.js
 import express from "express";
 import cors from "cors";
+import redisClient from "./redisClient.js";
 import authRoutes from "./routes/auth.js";
 import ordersRoutes from "./routes/orders.js";
 import designsRoutes from "./routes/designs.js";
@@ -20,6 +21,11 @@ import submissionsRoutes from "./routes/submissions.js";
 import contactRoutes from "./routes/contact.js";
 
 const app = express();
+
+// Initialize Redis (non-blocking - continues even if Redis fails)
+redisClient.initRedis().catch(err => {
+  console.log('⚠️  Starting without Redis cache');
+});
 
 // Middleware
 app.use(express.json({ limit: '50mb' })); // Increase limit for thumbnail images
