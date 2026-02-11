@@ -179,6 +179,7 @@ const Signup = () => {
           dateOfBirth,
           password: Password,
           addresses: addresses,
+          country: country,
         }),
       })
 

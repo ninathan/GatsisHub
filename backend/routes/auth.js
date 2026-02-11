@@ -101,7 +101,7 @@ router.post("/send-signup-verification", async (req, res) => {
 // 🔐 Verify signup code and create account
 router.post("/verify-signup-code", async (req, res) => {
   try {
-    const { emailAddress, code, firstName, lastName, companyNumber, gender, dateOfBirth, password, addresses } = req.body;
+    const { emailAddress, code, firstName, lastName, companyNumber, gender, dateOfBirth, password, addresses, country } = req.body;
 
     if (!emailAddress || !code) {
       return res.status(400).json({ error: "Email and code are required" });
@@ -223,6 +223,7 @@ router.post("/verify-signup-code", async (req, res) => {
           emailnotifications: true,
           gender: gender,
           dateofbirth: dateOfBirth,
+          country: country || 'Philippines',
           datecreated: new Date().toISOString()
         })
         .eq("userid", userId);
@@ -260,7 +261,8 @@ router.post("/verify-signup-code", async (req, res) => {
         profilePicture: null,
         emailnotifications: true,
         gender: gender,
-        dateofbirth: dateOfBirth
+        dateofbirth: dateOfBirth,
+        country: country || 'Philippines'
       }])
       .select();
 
@@ -1295,6 +1297,53 @@ router.post("/reset-password", async (req, res) => {
   } catch (err) {
 
     res.status(500).json({ error: "Server error during password reset" });
+  }
+});
+
+// Update user country (for existing users who don't have country set)
+router.post("/update-country", async (req, res) => {
+  try {
+    const { userId, country } = req.body;
+
+    if (!userId || !country) {
+      return res.status(400).json({ error: "User ID and country are required" });
+    }
+
+    // Update customer record
+    const { error: updateError } = await supabase
+      .from("customers")
+      .update({ country: country })
+      .eq("userid", userId);
+
+    if (updateError) {
+      return res.status(500).json({ error: "Failed to update country: " + updateError.message });
+    }
+
+    // Fetch updated user data
+    const { data: updatedUser, error: fetchError } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("userid", userId)
+      .single();
+
+    if (fetchError) {
+      return res.status(500).json({ error: "Failed to fetch updated user" });
+    }
+
+    res.status(200).json({
+      message: "Country updated successfully",
+      user: {
+        userid: updatedUser.userid,
+        customerid: updatedUser.customerid,
+        companyname: updatedUser.companyname,
+        emailaddress: updatedUser.emailaddress,
+        companynumber: updatedUser.companynumber,
+        country: updatedUser.country || 'Philippines',
+        addresses: updatedUser.addresses || []
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Server error: " + err.message });
   }
 });
 

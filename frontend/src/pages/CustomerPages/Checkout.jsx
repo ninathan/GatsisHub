@@ -136,7 +136,7 @@ const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const threeCanvasRef = useRef(null);
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
 
     // VAT rates by country (in percentage)
     const VAT_RATES = {
@@ -166,13 +166,17 @@ const Checkout = () => {
 
     // Get VAT rate based on user's country
     const getVATRate = () => {
+        console.log('User object:', user);
+        console.log('User country:', user?.country);
         const userCountry = user?.country || 'Philippines';
+        console.log('Using country for VAT:', userCountry);
         return VAT_RATES[userCountry] || VAT_RATES['default'];
     };
 
     // Calculate delivery cost based on location and weight
     const calculateDeliveryCost = (totalWeightKg) => {
         const userCountry = user?.country || 'Philippines';
+        console.log('Calculating delivery for country:', userCountry, '| isLocal:', userCountry === 'Philippines');
         const isLocal = userCountry === 'Philippines';
         
         // Base delivery cost
@@ -1480,6 +1484,44 @@ Respond in JSON format:
                     setCompanyName(customer.companyname || "");
                     setContactPerson(customer.companyname || ""); // You can add a separate contact person field in DB if needed
                     setContactPhone(customer.companynumber || "");
+
+                    // Check if country is missing and try to extract from address
+                    if (!customer.country && customer.addresses && customer.addresses.length > 0) {
+                        console.log('Country missing, attempting to extract from address...');
+                        // Try to extract country from the first address
+                        const firstAddress = customer.addresses[0];
+                        if (firstAddress && firstAddress.address) {
+                            const addressLines = firstAddress.address.split('\n');
+                            const lastLine = addressLines[addressLines.length - 1]?.trim();
+                            
+                            if (lastLine) {
+                                console.log('Extracted country from address:', lastLine);
+                                // Update the country in the database
+                                try {
+                                    const updateResponse = await fetch('https://gatsis-hub.vercel.app/auth/update-country', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            userId: userId,
+                                            country: lastLine
+                                        })
+                                    });
+                                    
+                                    if (updateResponse.ok) {
+                                        const updateData = await updateResponse.json();
+                                        console.log('Country updated successfully:', updateData);
+                                        // Update localStorage with new user data
+                                        localStorage.setItem('user', JSON.stringify(updateData.user));
+                                        // Update auth context
+                                        updateUser(updateData.user);
+                                        window.dispatchEvent(new Event('user-updated'));
+                                    }
+                                } catch (updateError) {
+                                    console.error('Failed to update country:', updateError);
+                                }
+                            }
+                        }
+                    }
 
                     // Load addresses from database
                     if (customer.addresses && Array.isArray(customer.addresses) && customer.addresses.length > 0) {
