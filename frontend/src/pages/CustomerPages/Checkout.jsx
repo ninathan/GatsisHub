@@ -176,11 +176,11 @@ const Checkout = () => {
         const isLocal = userCountry === 'Philippines';
         
         // Base delivery cost
-        const baseCost = isLocal ? 1000 : 5000;
+        const baseCost = isLocal ? 500 : 3000;
         
         // Additional cost per kg over 10kg limit
         const weightLimit = 10;
-        const additionalCostPerKg = isLocal ? 500 : 1000;
+        const additionalCostPerKg = isLocal ? 50 : 100;
         
         // Calculate additional cost if weight exceeds limit
         let additionalCost = 0;
@@ -2402,7 +2402,7 @@ Respond in JSON format:
                                             <button
                                                 key={material.name}
                                                 onClick={() => toggleMaterial(material.name)}
-                                                className={`group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:scale-105 ${isSelected
+                                                className={`group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:scale-105 h-full ${isSelected
                                                     ? 'bg-gradient-to-br from-[#E6AF2E] to-[#d4a02a] shadow-xl ring-4 ring-[#E6AF2E] ring-opacity-50'
                                                     : 'bg-white hover:shadow-lg border-2 border-gray-200 hover:border-[#E6AF2E]'
                                                     }`}
@@ -2419,7 +2419,7 @@ Respond in JSON format:
                                                 )}
 
                                                 {/* Card Content */}
-                                                <div className="p-5 md:p-6  cursor-pointer">
+                                                <div className="p-5 md:p-6 cursor-pointer h-full flex flex-col">
                                                     {/* Material Icon & Name */}
                                                     <div className="flex items-center gap-3 mb-4">
                                                         <div className="flex-1 text-left">
@@ -2433,11 +2433,11 @@ Respond in JSON format:
                                                     </div>
 
                                                     {/* Features */}
-                                                    <div className={`mb-4 mt-4 p-3 rounded-lg  min-h-[120px] ${isSelected ? 'bg-white/20' : 'bg-gray-50'}`}>
+                                                    <div className={`mb-4 mt-4 p-3 rounded-lg flex-grow flex flex-col ${isSelected ? 'bg-white/20' : 'bg-gray-50'}`}>
                                                         <p className={`text-sm font-semibold mb-2 ${isSelected ? 'text-white' : 'text-black'}`}>
                                                             Key Features:
                                                         </p>
-                                                        <ul className="flex flex-col items-start space-y-1">
+                                                        <ul className="flex flex-col items-start space-y-1 flex-grow">
                                                             {material.features && material.features.length > 0 ? (
                                                                 material.features.slice(0, 3).map((feature, i) => (
                                                                     <li key={i} className={`text-xs md:text-sm text-left ${isSelected ? 'text-white' : 'text-black'}`}>

@@ -1910,27 +1910,6 @@ const Order = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* Download Invoice/Receipt - Only show in Processing phase (Verifying Payment, In Production, Waiting for Shipment, In Transit, Completed) */}
-                                                    {['Verifying Payment', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) && (
-                                                        <button
-                                                            onClick={() => handleDownloadInvoice(order)}
-                                                            className="bg-green-600 text-white px-3 md:px-6 py-2 rounded hover:bg-green-700 transition-all duration-300 hover:scale-105 flex items-center gap-2 text-xs md:text-sm font-semibold cursor-pointer"
-                                                        >
-                                                            <Download size={16} className="md:w-[18px] md:h-[18px]" />
-                                                            {orderPayments[order.orderid]?.paymentstatus === 'Verified' || ['Paid', 'In Production', 'Waiting for Shipment', 'In Transit', 'Completed'].includes(order.orderstatus) ? (
-                                                                <>
-                                                                    <span className="hidden sm:inline">Download Receipt</span>
-                                                                    <span className="sm:hidden">Receipt</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="hidden sm:inline">Download Invoice</span>
-                                                                    <span className="sm:hidden">Download</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    )}
-
                                                     {/* View Proof of Payment - Show if payment exists and not rejected */}
                                                     {orderPayments[order.orderid] && orderPayments[order.orderid].paymentstatus !== 'Rejected' && (
                                                         <button
@@ -2008,8 +1987,8 @@ const Order = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Contract Signing - Show when Contract Signing status AND contract not signed */}
-                                                    {order.orderstatus === 'Contract Signing' && !order.contract_signed && (
+                                                    {/* Contract Signing - Show when Contract Signing status AND contract not signed AND no amendment required */}
+                                                    {order.orderstatus === 'Contract Signing' && !order.contract_signed && !order.requires_contract_amendment && (
                                                         <button
                                                             onClick={() => openContractModal(order)}
                                                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px]"
@@ -2023,7 +2002,7 @@ const Order = () => {
                                                     )}
 
                                                     {/* Sign Amendment - Show when amendment is required */}
-                                                    {order.requires_contract_amendment && order.contract_signed && (
+                                                    {order.requires_contract_amendment && (
                                                         <button
                                                             onClick={() => openContractModal(order)}
                                                             className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 hover:scale-105 text-sm md:text-base font-semibold cursor-pointer shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px] md:min-w-[200px] animate-pulse"
@@ -2968,6 +2947,14 @@ const Order = () => {
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-700">Delivery Fee:</span>
                                             <span className="font-semibold">₱{invoiceOrderData.breakdown.deliveryCost.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm pt-2 border-t border-green-300">
+                                            <span className="text-gray-700">Subtotal:</span>
+                                            <span className="font-semibold">₱{(invoiceOrderData.breakdown.totalMaterialCost + invoiceOrderData.breakdown.deliveryCost).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-700">VAT ({invoiceOrderData.breakdown.vatRate || 12}%):</span>
+                                            <span className="font-semibold">₱{(invoiceOrderData.breakdown.vatAmount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                                         </div>
                                         <div className="flex justify-between font-bold text-xl pt-2 border-t-2 border-green-400">
                                             <span className="text-gray-900">Total Amount:</span>
