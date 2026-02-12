@@ -83,6 +83,11 @@ const OrderDetail = () => {
     const [trackingLink, setTrackingLink] = useState('');
     const [pendingStatus, setPendingStatus] = useState(null);
 
+    // Materials editing states
+    const [showMaterialsModal, setShowMaterialsModal] = useState(false);
+    const [editedMaterials, setEditedMaterials] = useState({});
+    const [isSavingMaterials, setIsSavingMaterials] = useState(false);
+
     
 
     // Real-time payment update handler
@@ -559,6 +564,63 @@ const OrderDetail = () => {
             showNotificationMessage(err.message || 'Failed to update deadline', 'error');
         } finally {
             setIsSavingDeadline(false);
+        }
+    };
+
+    const handleMaterialsUpdate = async () => {
+        // Validate materials
+        if (!editedMaterials || Object.keys(editedMaterials).length === 0) {
+            showNotificationMessage('Please select at least one material', 'error');
+            return;
+        }
+
+        // Calculate total percentage
+        const totalPercentage = Object.values(editedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+        
+        if (Math.abs(totalPercentage - 100) > 0.01) {
+            showNotificationMessage(`Total percentage must equal 100% (currently ${totalPercentage.toFixed(1)}%)`, 'error');
+            return;
+        }
+
+        setIsSavingMaterials(true);
+        try {
+            // Get employee info from localStorage
+            const employee = JSON.parse(localStorage.getItem('employee'));
+
+            const response = await fetch(`https://gatsis-hub.vercel.app/orders/${orderid}/materials`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    materials: editedMaterials,
+                    employeeid: employee?.employeeid,
+                    employeename: employee?.employeename
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update materials');
+            }
+
+            // Update local order state
+            setOrder(data.order);
+            setShowMaterialsModal(false);
+            
+            const amendmentMsg = data.requiresAmendment 
+                ? ' Contract amendment required - customer will need to re-sign.'
+                : '';
+            showNotificationMessage(`Materials updated successfully!${amendmentMsg}`, 'success');
+            
+            // Refresh order to get latest data
+            fetchOrder();
+        } catch (err) {
+            console.error('Error updating materials:', err);
+            showNotificationMessage(err.message || 'Failed to update materials', 'error');
+        } finally {
+            setIsSavingMaterials(false);
         }
     };
 
@@ -1319,8 +1381,23 @@ const OrderDetail = () => {
                             )}
                             {order.materials && (
                                 <div className="p-3 border-b border-gray-300">
-                                    <span className="text-sm text-gray-600">Material Selected:</span>
-                                    <p className="font-semibold">{formatMaterials(order.materials)}</p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <span className="text-sm text-gray-600">Material Selected:</span>
+                                            <p className="font-semibold">{formatMaterials(order.materials)}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setEditedMaterials(order.materials);
+                                                setShowMaterialsModal(true);
+                                            }}
+                                            className="ml-3 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 text-sm transition-colors"
+                                            title="Edit materials"
+                                        >
+                                            <Edit2 size={14} />
+                                            Edit
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                             {order.customtext && (

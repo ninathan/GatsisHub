@@ -1076,6 +1076,147 @@ router.patch("/:orderid/deadline", async (req, res) => {
   }
 });
 
+// 🎨 Update order materials (PATCH)
+router.patch("/:orderid/materials", async (req, res) => {
+  try {
+    const { orderid } = req.params;
+    const { materials, employeeid, employeename } = req.body;
+
+    console.log('Updating materials for order:', orderid, 'New materials:', materials);
+
+    // Validate materials
+    if (!materials || typeof materials !== 'object' || Object.keys(materials).length === 0) {
+      return res.status(400).json({ error: "Valid materials object is required" });
+    }
+
+    // Validate that percentages add up to 100
+    const totalPercentage = Object.values(materials).reduce((sum, val) => sum + parseFloat(val || 0), 0);
+    if (Math.abs(totalPercentage - 100) > 0.01) {
+      return res.status(400).json({ error: "Material percentages must add up to 100%" });
+    }
+
+    // Validate materials exist in materials table
+    for (const materialName of Object.keys(materials)) {
+      const { data: materialExists } = await supabase
+        .from('materials')
+        .select('materialid')
+        .eq('materialname', materialName)
+        .single();
+
+      if (!materialExists) {
+        return res.status(400).json({ error: `Material "${materialName}" not found in database` });
+      }
+    }
+
+    // Get old materials and customer info before updating
+    const { data: oldOrder } = await supabase
+      .from("orders")
+      .select("materials, userid, companyname, contract_signed")
+      .eq("orderid", orderid)
+      .single();
+
+    const oldMaterials = oldOrder?.materials;
+    const materialsChanged = JSON.stringify(oldMaterials) !== JSON.stringify(materials);
+    const hasSignedContract = oldOrder?.contract_signed;
+
+    const updateData = { materials: materials };
+    
+    // If materials changed and contract was already signed, require amendment
+    if (materialsChanged && hasSignedContract && oldMaterials) {
+      updateData.requires_contract_amendment = true;
+      updateData.amendment_reason = 'Materials Change';
+      updateData.amendment_details = {
+        type: 'materials',
+        oldMaterials: oldMaterials,
+        newMaterials: materials,
+        updatedBy: employeename || 'Sales Admin',
+        updatedAt: new Date().toISOString()
+      };
+      updateData.amendment_requested_date = new Date().toISOString();
+    }
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("orderid", orderid)
+      .select();
+
+    if (error) {
+      console.error('Error updating materials:', error);
+      throw error;
+    }
+
+    if (!order || order.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Log the materials change
+    const formatMaterials = (mat) => {
+      if (!mat) return 'None';
+      return Object.entries(mat)
+        .map(([name, pct]) => `${name} ${Math.round(pct)}%`)
+        .join(', ');
+    };
+
+    await createOrderLog(
+      orderid,
+      employeeid,
+      employeename,
+      'Materials Updated',
+      'materials',
+      formatMaterials(oldMaterials),
+      formatMaterials(materials),
+      `Materials changed from ${formatMaterials(oldMaterials)} to ${formatMaterials(materials)}`
+    );
+
+    // Send email notification if materials changed and customer has signed contract
+    if (materialsChanged && hasSignedContract && oldMaterials && oldOrder?.userid) {
+      try {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("emailaddress, emailnotifications")
+          .eq("userid", oldOrder.userid)
+          .single();
+
+        if (customerData?.emailaddress && customerData?.emailnotifications) {
+          const orderNumber = orderid.slice(0, 8).toUpperCase();
+          const changes = {
+            'Order Number': orderNumber,
+            'Previous Materials': formatMaterials(oldMaterials),
+            'New Materials': formatMaterials(materials),
+            'Updated By': employeename || 'Sales Administrator'
+          };
+
+          await sendEmail(
+            customerData.emailaddress,
+            `Order ${orderNumber} - Materials Updated - Signature Required`,
+            emailTemplates.contractAmendmentRequired(
+              oldOrder.companyname,
+              orderNumber,
+              'Materials Change',
+              changes
+            )
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+      }
+    }
+
+    // Invalidate cache
+    await invalidateOrdersCache(oldOrder?.userid, orderid);
+
+    res.status(200).json({
+      message: "Order materials updated successfully",
+      order: order[0],
+      requiresAmendment: materialsChanged && hasSignedContract && oldMaterials
+    });
+  } catch (err) {
+    console.error('Error updating materials:', err);
+    res.status(500).json({ error: err.message || "Failed to update materials" });
+  }
+});
+
 // 📋🔄 Update order status (PATCH)
 router.patch("/:orderid/status", async (req, res) => {
   try {
