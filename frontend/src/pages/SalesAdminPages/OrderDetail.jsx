@@ -2636,6 +2636,211 @@ const OrderDetail = () => {
                 </div>
             )}
 
+            {/* Materials Edit Modal */}
+            {showMaterialsModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+                            <div>
+                                <h2 className="text-white text-xl font-semibold">Edit Materials</h2>
+                                <p className="text-white/90 text-sm mt-1">Adjust material percentages for this order</p>
+                            </div>
+                            <button
+                                onClick={() => setShowMaterialsModal(false)}
+                                className="text-white hover:text-gray-200 transition-colors text-3xl font-bold"
+                                disabled={isSavingMaterials}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            {/* Info Box */}
+                            <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 mb-6">
+                                <div className="flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p className="text-sm font-bold text-blue-900 mb-1">Important Notes</p>
+                                        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                                            <li>Total percentage must equal 100%</li>
+                                            <li>Select materials from available options</li>
+                                            {order?.contract_signed && (
+                                                <li className="text-amber-800 font-semibold">⚠️ Contract amendment will be required - customer must re-sign</li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Available Materials from Database */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    Available Materials
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {materialsData.map((material) => (
+                                        <button
+                                            key={material.materialid}
+                                            onClick={() => {
+                                                const newMaterials = { ...editedMaterials };
+                                                if (newMaterials[material.materialname]) {
+                                                    // Already exists, remove it
+                                                    delete newMaterials[material.materialname];
+                                                } else {
+                                                    // Add with default percentage
+                                                    const existingCount = Object.keys(newMaterials).length;
+                                                    const defaultPercentage = existingCount === 0 ? 100 : 0;
+                                                    newMaterials[material.materialname] = defaultPercentage;
+                                                }
+                                                setEditedMaterials(newMaterials);
+                                            }}
+                                            className={`p-3 rounded-lg border-2 transition-all ${
+                                                editedMaterials[material.materialname]
+                                                    ? 'border-[#E6AF2E] bg-yellow-50 text-gray-900'
+                                                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <div className="font-semibold text-sm">{material.materialname}</div>
+                                            <div className="text-xs text-gray-600 mt-1">₱{material.price_per_kg}/kg</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Selected Materials & Percentages */}
+                            {Object.keys(editedMaterials).length > 0 && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        Material Percentages
+                                    </label>
+                                    <div className="space-y-3">
+                                        {Object.entries(editedMaterials).map(([materialName, percentage]) => (
+                                            <div key={materialName} className="flex items-center gap-3">
+                                                <div className="flex-1">
+                                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                                        {materialName}
+                                                    </label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="range"
+                                                            min="0"
+                                                            max="100"
+                                                            step="1"
+                                                            value={percentage}
+                                                            onChange={(e) => {
+                                                                setEditedMaterials({
+                                                                    ...editedMaterials,
+                                                                    [materialName]: parseFloat(e.target.value)
+                                                                });
+                                                            }}
+                                                            className="flex-1"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            max="100"
+                                                            step="1"
+                                                            value={percentage}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value) || 0;
+                                                                setEditedMaterials({
+                                                                    ...editedMaterials,
+                                                                    [materialName]: Math.min(100, Math.max(0, val))
+                                                                });
+                                                            }}
+                                                            className="w-20 border-2 border-gray-300 rounded-lg px-3 py-2 text-center font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                        />
+                                                        <span className="text-gray-700 font-medium">%</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newMaterials = { ...editedMaterials };
+                                                        delete newMaterials[materialName];
+                                                        setEditedMaterials(newMaterials);
+                                                    }}
+                                                    className="text-red-600 hover:text-red-800 p-2"
+                                                    title="Remove material"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Total Percentage Display */}
+                                    <div className="mt-4 p-4 rounded-lg bg-gray-50 border-2 border-gray-300">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold text-gray-700">Total Percentage:</span>
+                                            <span className={`text-2xl font-bold ${
+                                                Math.abs(Object.values(editedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0) - 100) < 0.01
+                                                    ? 'text-green-600'
+                                                    : 'text-red-600'
+                                            }`}>
+                                                {Object.values(editedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        {Math.abs(Object.values(editedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0) - 100) >= 0.01 && (
+                                            <p className="text-sm text-red-600 mt-2">
+                                                ⚠️ Total must equal 100% to save
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {Object.keys(editedMaterials).length === 0 && (
+                                <div className="text-center py-8 text-gray-500">
+                                    <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    <p className="font-medium">No materials selected</p>
+                                    <p className="text-sm mt-1">Click on materials above to add them</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-200 sticky bottom-0">
+                            <button
+                                onClick={() => setShowMaterialsModal(false)}
+                                disabled={isSavingMaterials}
+                                className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleMaterialsUpdate}
+                                disabled={
+                                    isSavingMaterials ||
+                                    Object.keys(editedMaterials).length === 0 ||
+                                    Math.abs(Object.values(editedMaterials).reduce((sum, val) => sum + parseFloat(val || 0), 0) - 100) >= 0.01
+                                }
+                                className="px-6 py-2 bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] text-white rounded-lg hover:from-[#d4a02a] hover:to-[#c49723] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSavingMaterials ? (
+                                    <>
+                                        <LoadingSpinner size="sm" color="white" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={18} />
+                                        Save Changes
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Reject Payment Reason Modal */}
             {showRejectModal && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-[60] p-4">
