@@ -2638,7 +2638,7 @@ const OrderDetail = () => {
 
             {/* Materials Edit Modal */}
             {showMaterialsModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+                <div className="fixed inset-0 backdrop-blur-sm  bg-opacity-50 flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
                         {/* Modal Header */}
                         <div className="bg-gradient-to-r from-[#E6AF2E] to-[#d4a02a] px-6 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -2687,7 +2687,7 @@ const OrderDetail = () => {
                                             key={material.materialid}
                                             onClick={() => {
                                                 const newMaterials = { ...editedMaterials };
-                                                if (newMaterials[material.materialname]) {
+                                                if (material.materialname in newMaterials) {
                                                     // Already exists, remove it
                                                     delete newMaterials[material.materialname];
                                                 } else {
@@ -2699,7 +2699,7 @@ const OrderDetail = () => {
                                                 setEditedMaterials(newMaterials);
                                             }}
                                             className={`p-3 rounded-lg border-2 transition-all ${
-                                                editedMaterials[material.materialname]
+                                                material.materialname in editedMaterials
                                                     ? 'border-[#E6AF2E] bg-yellow-50 text-gray-900'
                                                     : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
                                             }`}
@@ -2743,7 +2743,7 @@ const OrderDetail = () => {
                                                             type="number"
                                                             min="0"
                                                             max="100"
-                                                            step="1"
+                                                            step="0.1"
                                                             value={percentage}
                                                             onChange={(e) => {
                                                                 const val = parseFloat(e.target.value) || 0;
